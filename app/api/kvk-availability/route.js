@@ -1,21 +1,41 @@
 import { NextResponse } from 'next/server';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import bcrypt from 'bcryptjs';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 
-const COLUMNS = 'name,member_id,current_alliance,availability,updated_at';
 const ALLIANCES = ['710', 'RED', 'SKY'];
-const AVAILABILITY = ['First half (12-14:30 UTC)', 'Second half (14:30-17 UTC)', 'Full battle (12-17 UTC)', 'Not Available'];
+const AVAILABILITY = [
+  'First half (12-14:30 UTC)',
+  'Second half (14:30-17 UTC)',
+  'Full battle (12-17 UTC)',
+  'Not Available',
+];
 
 export async function GET(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
   try {
-    const { data, error } = await createAdminSupabaseClient().from('submissions')
-      .select(COLUMNS).eq('member_id', session.memberId).maybeSingle();
-    if (error) throw error;
+    const coll = await getCollection(COLLECTIONS.SUBMISSIONS);
+    const data = await coll.findOne(
+      { member_id: session.memberId },
+      {
+        projection: {
+          name: 1,
+          member_id: 1,
+          current_alliance: 1,
+          availability: 1,
+          updated_at: 1,
+          _id: 0,
+        },
+      }
+    );
     return NextResponse.json({ row: data }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
-    return NextResponse.json({ error: 'Could not load your saved availability. Please try again.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Could not load your saved availability. Please try again.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -23,7 +43,9 @@ export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
   let body;
-  try { body = await request.json(); } catch {
+  try {
+    body = await request.json();
+  } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
   const name = String(body?.name || '').trim();
@@ -32,24 +54,65 @@ export async function POST(request) {
   const availability = String(body?.availability || '').trim();
   const pin = String(body?.pin || '');
   if (memberId !== session.memberId) {
-    return NextResponse.json({ error: 'Sign in with this Player ID to update its availability.' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Sign in with this Player ID to update its availability.' },
+      { status: 403 }
+    );
   }
-  if (!name || name.length > 120 || !pin || pin.length > 120 || !ALLIANCES.includes(alliance) || !AVAILABILITY.includes(availability)) {
-    return NextResponse.json({ error: 'Enter your name and PIN, and select your alliance and availability.' }, { status: 400 });
+  if (
+    !name ||
+    name.length > 120 ||
+    !pin ||
+    pin.length > 120 ||
+    !ALLIANCES.includes(alliance) ||
+    !AVAILABILITY.includes(availability)
+  ) {
+    return NextResponse.json(
+      { error: 'Enter your name and PIN, and select your alliance and availability.' },
+      { status: 400 }
+    );
   }
   try {
-    const { data, error } = await createAdminSupabaseClient().rpc('save_kvk_availability', {
-      p_member_id: memberId, p_name: name, p_current_alliance: alliance,
-      p_availability: availability, p_pin: pin,
-    });
-    if (error) {
-      if (error.message?.includes('PIN_MISMATCH')) {
-        return NextResponse.json({ error: 'Incorrect PIN for this Member ID. Please try again.' }, { status: 403 });
-      }
-      throw error;
+    const coll = await getCollection(COLLECTIONS.SUBMISSIONS);
+    const existing = await coll.findOne({ member_id: memberId });
+    if (!existing) {
+      return NextResponse.json({ error: 'Member not found.' }, { status: 404 });
     }
-    return NextResponse.json({ row: data });
+    if (existing.pin_hash) {
+      const ok = await bcrypt.compare(pin, existing.pin_hash);
+      if (!ok) {
+        return NextResponse.json(
+          { error: 'Incorrect PIN for this Member ID. Please try again.' },
+          { status: 403 }
+        );
+      }
+    }
+    const now = new Date();
+    await coll.updateOne(
+      { member_id: memberId },
+      {
+        $set: {
+          name,
+          current_alliance: alliance,
+          availability,
+          updated_at: now,
+          event_updated_at: now,
+        },
+      }
+    );
+    return NextResponse.json({
+      row: {
+        name,
+        member_id: memberId,
+        current_alliance: alliance,
+        availability,
+        updated_at: now,
+      },
+    });
   } catch {
-    return NextResponse.json({ error: 'Could not save your alliance and availability. Please try again.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Could not save your alliance and availability. Please try again.' },
+      { status: 500 }
+    );
   }
 }
