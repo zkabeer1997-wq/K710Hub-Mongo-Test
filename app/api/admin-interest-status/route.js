@@ -1,21 +1,14 @@
-import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 
 const VALID_STATUSES = ['special', 'normal', 'reject', 'waitlist', 'pending'];
 const ACCEPT_STATUSES = ['special', 'normal'];
 
-function profilePinHash(pin) {
-  return createHash('sha256').update('kvk-power-profile-v1:' + pin).digest('hex');
-}
-
 function defaultPasswordFor(playerId) {
   return '710-' + String(playerId || '').trim();
-}
-
-function isMissingTable(error) {
-  return error && error.code === '42P01';
 }
 
 export async function POST(request) {
@@ -26,7 +19,7 @@ export async function POST(request) {
   let body;
   try {
     body = await request.json();
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
@@ -40,16 +33,8 @@ export async function POST(request) {
   }
 
   try {
-    const supabase = createAdminSupabaseClient();
-
-    const { data: submission, error: fetchError } = await supabase
-      .from('interest_submissions')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-    if (fetchError) {
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
-    }
+    const interestColl = await getCollection('interest_submissions');
+    const submission = await interestColl.findOne({ $or: [{ id }, { _id: id }] });
     if (!submission) {
       return NextResponse.json({ error: 'Submission not found.' }, { status: 404 });
     }
@@ -60,63 +45,44 @@ export async function POST(request) {
       const memberId = String(submission.player_id || '').trim();
       const name = String(submission.in_game_name || '').trim();
       if (!memberId || !name) {
-        return NextResponse.json({ error: 'Applicant is missing a Player ID or in-game name, so an account cannot be created.' }, { status: 400 });
+        return NextResponse.json(
+          {
+            error:
+              'Applicant is missing a Player ID or in-game name, so an account cannot be created.',
+          },
+          { status: 400 }
+        );
       }
       const password = defaultPasswordFor(memberId);
-
-      const { data: existingRecord, error: recordLookupError } = await supabase
-        .from('submissions')
-        .select('member_id')
-        .eq('member_id', memberId)
-        .maybeSingle();
-      if (recordLookupError && !isMissingTable(recordLookupError)) {
-        return NextResponse.json({ error: recordLookupError.message }, { status: 500 });
-      }
+      const submissions = await getCollection(COLLECTIONS.SUBMISSIONS);
+      const existingRecord = await submissions.findOne({ member_id: memberId });
 
       let recordCreated = false;
       if (!existingRecord) {
-        const { error: rpcError } = await supabase.rpc('submit_troop_form', {
-          p_name: name,
-          p_member_id: memberId,
-          p_infantry_tier: null,
-          p_infantry_tg: null,
-          p_cavalry_tier: null,
-          p_cavalry_tg: null,
-          p_archer_tier: null,
-          p_archer_tg: null,
-          p_heroes: [],
-          p_availability: null,
-          p_pin: password,
+        const pin_hash = await bcrypt.hash(password, 10);
+        const now = new Date();
+        await submissions.insertOne({
+          name,
+          member_id: memberId,
+          pin_hash,
+          heroes: [],
+          created_at: now,
+          updated_at: now,
+          event_updated_at: now,
         });
-        if (rpcError) {
-          return NextResponse.json({ error: 'Failed to create player record: ' + rpcError.message }, { status: 500 });
-        }
         recordCreated = true;
       }
 
-      const { data: existingProfile, error: profileLookupError } = await supabase
-        .from('power_profiles')
-        .select('member_id')
-        .eq('member_id', memberId)
-        .maybeSingle();
-      if (profileLookupError && !isMissingTable(profileLookupError)) {
-        return NextResponse.json({ error: profileLookupError.message }, { status: 500 });
-      }
-
+      const profiles = await getCollection(COLLECTIONS.POWER_PROFILES);
+      const existingProfile = await profiles.findOne({ member_id: memberId });
       let profileCreated = false;
       if (!existingProfile) {
-        const { error: profileInsertError } = await supabase
-          .from('power_profiles')
-          .insert({
-            member_id: memberId,
-            name,
-            pin_hash: profilePinHash(password),
-            updated_at: new Date().toISOString(),
-          });
-        if (profileInsertError && !isMissingTable(profileInsertError)) {
-          return NextResponse.json({ error: 'Failed to create player profile: ' + profileInsertError.message }, { status: 500 });
-        }
-        profileCreated = !profileInsertError;
+        await profiles.insertOne({
+          member_id: memberId,
+          name,
+          updated_at: new Date(),
+        });
+        profileCreated = true;
       }
 
       accountResult = {
@@ -130,17 +96,16 @@ export async function POST(request) {
       };
     }
 
-    const { data: updated, error: updateError } = await supabase
-      .from('interest_submissions')
-      .update({ status, decided_at: new Date().toISOString() })
-      .eq('id', id)
-      .select('*')
-      .single();
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ row: updated, account: accountResult });
+    await interestColl.updateOne(
+      { $or: [{ id }, { _id: id }] },
+      { $set: { status, decided_at: new Date() } }
+    );
+    const updated = await interestColl.findOne({ $or: [{ id }, { _id: id }] });
+    const { _id, ...row } = updated || {};
+    return NextResponse.json({
+      row: { ...row, id: row.id || String(_id) },
+      account: accountResult,
+    });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
