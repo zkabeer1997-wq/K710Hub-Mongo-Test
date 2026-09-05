@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '../../../lib/supabaseAdmin';
+import { verifyMemberPin } from '../../../lib/mongoAuth';
+import { findMemberById } from '../../../lib/mongoMembers';
 import { createMemberToken, MEMBER_COOKIE_NAME, MEMBER_TOKEN_TTL_MS } from '../../../lib/memberAuth';
 
 export async function POST(request) {
@@ -17,29 +18,14 @@ export async function POST(request) {
   }
 
   try {
-    const supabase = createSupabaseAdminClient();
-
-    // Fail closed before PIN verification. This protects the member gate even if
-    // the backing verification function is ever changed or missing-member data
-    // is handled incorrectly at the database layer.
-    const { data: member, error: memberError } = await supabase
-      .from('submissions')
-      .select('member_id')
-      .eq('member_id', memberId)
-      .maybeSingle();
-
-    if (memberError) throw memberError;
+    // Fail closed before PIN verification — same behaviour as production.
+    const member = await findMemberById(memberId);
     if (!member) {
       return NextResponse.json({ error: 'Incorrect PIN for this Member ID.' }, { status: 401 });
     }
 
-    const { data, error } = await supabase.rpc('verify_page_pin', {
-      p_member_id: memberId,
-      p_pin: pin,
-    });
-
-    if (error) throw error;
-    if (data !== true) {
+    const ok = await verifyMemberPin(memberId, pin);
+    if (!ok) {
       return NextResponse.json({ error: 'Incorrect PIN for this Member ID.' }, { status: 401 });
     }
 
