@@ -1,8 +1,9 @@
 import { randomInt } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '../../../lib/supabaseAdmin';
+import bcrypt from 'bcryptjs';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { createMemberToken, MEMBER_COOKIE_NAME, MEMBER_TOKEN_TTL_MS } from '../../../lib/memberAuth';
-import { enrollMemberForGiftCodes } from '../../../lib/giftCodes.mjs';
 
 function noStoreJson(body, init = {}) {
   const response = NextResponse.json(body, init);
@@ -29,48 +30,30 @@ export async function POST(request) {
   }
 
   try {
-    const supabase = createSupabaseAdminClient();
-
-    // Never overwrite or claim an existing Member ID through the public
-    // first-time flow. Existing members must authenticate with their PIN or
-    // have an admin reset it.
-    const { data: existing, error: lookupError } = await supabase
-      .from('submissions')
-      .select('member_id')
-      .eq('member_id', memberId)
-      .maybeSingle();
-
-    if (lookupError) throw lookupError;
+    const coll = await getCollection(COLLECTIONS.SUBMISSIONS);
+    const existing = await coll.findOne({ member_id: memberId }, { projection: { member_id: 1 } });
     if (existing) {
-      return noStoreJson({
-        error: 'This Member ID already exists. Sign in with your PIN or ask an admin to reset it.',
-      }, { status: 409 });
+      return noStoreJson(
+        {
+          error:
+            'This Member ID already exists. Sign in with your PIN or ask an admin to reset it.',
+        },
+        { status: 409 }
+      );
     }
 
     const pin = String(randomInt(0, 1_000_000)).padStart(6, '0');
-    const { data: created, error: createError } = await supabase.rpc('admin_create_member_with_pin', {
-      p_name: name,
-      p_member_id: memberId,
-      p_pin: pin,
+    const pin_hash = await bcrypt.hash(pin, 10);
+    const now = new Date();
+    await coll.insertOne({
+      name,
+      member_id: memberId,
+      pin_hash,
+      heroes: [],
+      created_at: now,
+      updated_at: now,
+      event_updated_at: now,
     });
-
-    if (createError) throw createError;
-    if (created !== true) {
-      return noStoreJson({
-        error: 'This Member ID was just registered. Sign in instead.',
-      }, { status: 409 });
-    }
-
-    // Enroll for automatic gift-code redemption (Kingdom 710). Non-blocking:
-    // registration succeeds even if enrollment fails.
-    let giftCodeNotice = null;
-    try {
-      await enrollMemberForGiftCodes(memberId, memberId, 710);
-      giftCodeNotice =
-        'We will automatically redeem available gift codes for your Kingdom 710 account.';
-    } catch (enrollErr) {
-      console.error('gift-code enrollment failed (registration still ok)', enrollErr);
-    }
 
     const token = await createMemberToken(memberId);
     const response = noStoreJson({
@@ -79,7 +62,7 @@ export async function POST(request) {
       memberId,
       pin,
       message: 'Your PIN is shown only once. Save it before continuing.',
-      giftCodeNotice,
+      giftCodeNotice: null,
     });
 
     response.cookies.set(MEMBER_COOKIE_NAME, token, {

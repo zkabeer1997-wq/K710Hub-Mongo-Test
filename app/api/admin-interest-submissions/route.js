@@ -1,22 +1,19 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
 
 export async function GET(request) {
-if (!(await isAdminRequest(request))) {
-return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-}
-try {
-const supabase = createAdminSupabaseClient();
-const { data, error } = await supabase
-.from('interest_submissions')
-.select('*')
-.order('created_at', { ascending: false });
-if (error) {
-return NextResponse.json({ error: error.message }, { status: 500 });
-}
-return NextResponse.json({ rows: data || [] });
-} catch (error) {
-return NextResponse.json({ error: error.message }, { status: 500 });
-}
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  try {
+    const coll = await getCollection('interest_submissions');
+    const data = await coll.find({}).sort({ created_at: -1 }).toArray();
+    return NextResponse.json({
+      rows: (data || []).map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id) })),
+    });
+  } catch (error) {
+    // Collection may not exist in the one-time export
+    return NextResponse.json({ rows: [] });
+  }
 }
