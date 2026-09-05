@@ -1,5 +1,5 @@
 {
-  "name": "kvk-tracker-710",
+  "name": "k710hub-mongo-test",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -23,6 +23,7 @@
     "@supabase/supabase-js": "^2.112.4",
     "@vercel/oidc": "3.8.4",
     "heic2any": "^0.0.4",
+    "mongodb": "^6.12.0",
     "next": "16.3.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
