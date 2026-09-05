@@ -3,7 +3,8 @@ import { revalidatePath } from 'next/cache';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { FORM_GATE_KEYS, getFormGates } from '../../../lib/formGates.mjs';
+import { FORM_GATE_KEYS } from '../../../lib/formGates.mjs';
+import { getFormGates } from '../../../lib/formGates.server.js';
 
 const ROUTE_BY_KEY = {
   lead: '/power-profile',
@@ -54,11 +55,7 @@ export async function PATCH(request) {
       updated_at: new Date(),
     };
 
-    await coll.updateOne(
-      { form_key: formKey },
-      { $set: doc },
-      { upsert: true }
-    );
+    await coll.updateOne({ form_key: formKey }, { $set: doc }, { upsert: true });
 
     revalidatePath('/forms');
     revalidatePath('/forms/kvk');
