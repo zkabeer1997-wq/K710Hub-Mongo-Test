@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import {
-  getAdminGiftOverview,
-  discoverWikiCodes,
-  enrollMemberForGiftCodes,
-  queueActiveCodesForAllEnrollments,
-} from '../../../lib/giftCodes.mjs';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 
 function noStoreJson(body, init = {}) {
   const response = NextResponse.json(body, init);
@@ -19,21 +14,17 @@ export async function GET(request) {
     return noStoreJson({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
-    const overview = await getAdminGiftOverview();
-    const url = new URL(request.url);
-    const q = url.searchParams.get('q')?.trim();
-    let history = [];
-    if (q) {
-      const client = createAdminSupabaseClient();
-      const { data } = await client
-        .from('gift_code_redemptions')
-        .select('id, player_id, code, status, attempts, last_response, completed_at, created_at')
-        .or(`player_id.ilike.%${q}%,code.ilike.%${q}%`)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      history = data || [];
-    }
-    return noStoreJson({ ok: true, ...overview, history });
+    const coll = await getCollection(COLLECTIONS.GIFT_CODES);
+    const codes = await coll.find({}).sort({ discovered_at: -1, created_at: -1 }).toArray();
+    const active = codes.filter((c) => c.active !== false);
+    return noStoreJson({
+      ok: true,
+      codes: codes.map(({ _id, ...c }) => ({ ...c, id: c.id || String(_id) })),
+      activeCount: active.length,
+      totalCount: codes.length,
+      enrollments: [],
+      history: [],
+    });
   } catch (error) {
     console.error('admin-gift-codes GET failed', error);
     return noStoreJson({ error: 'Unable to load gift codes.' }, { status: 500 });
@@ -53,57 +44,56 @@ export async function POST(request) {
   }
 
   const action = String(body?.action || '').trim();
-  const client = createAdminSupabaseClient();
 
   try {
+    const coll = await getCollection(COLLECTIONS.GIFT_CODES);
+
     if (action === 'check_wiki') {
-      const discovery = await discoverWikiCodes({ supabase: client });
-      return noStoreJson({ ok: true, discovery });
+      return noStoreJson({ ok: true, discovery: { found: [], note: 'Wiki discovery not wired on Mongo test stack yet.' } });
     }
 
     if (action === 'add_code') {
-      // Keep exact casing - codes like "Kingshot888" must match what
-      // Century Games expects, not an upper-cased version of it.
       const code = String(body?.code || '').trim();
       if (!code || code.length < 4 || code.length > 32) {
         return noStoreJson({ error: 'Invalid code.' }, { status: 400 });
       }
-      const { error } = await client.from('gift_codes').upsert(
+      const now = new Date();
+      await coll.updateOne(
+        { code },
         {
-          code,
-          source: body?.source || 'manual',
-          active: true,
-          discovered_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          notes: body?.notes || null,
+          $set: {
+            code,
+            source: body?.source || 'manual',
+            active: true,
+            discovered_at: now,
+            updated_at: now,
+            notes: body?.notes || null,
+          },
+          $setOnInsert: { created_at: now },
         },
-        { onConflict: 'code' }
+        { upsert: true }
       );
-      if (error) throw error;
-      await queueActiveCodesForAllEnrollments(client);
       return noStoreJson({ ok: true, code });
     }
 
     if (action === 'set_code_active') {
       const code = String(body?.code || '').trim();
       const active = Boolean(body?.active);
-      await client
-        .from('gift_codes')
-        .update({
-          active,
-          expired_at: active ? null : new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('code', code);
+      await coll.updateOne(
+        { code },
+        {
+          $set: {
+            active,
+            expired_at: active ? null : new Date(),
+            updated_at: new Date(),
+          },
+        }
+      );
       return noStoreJson({ ok: true });
     }
 
     if (action === 'enroll_member') {
-      const memberId = String(body?.memberId || '').trim();
-      const playerId = String(body?.playerId || memberId).trim();
-      if (!memberId) return noStoreJson({ error: 'memberId required' }, { status: 400 });
-      const id = await enrollMemberForGiftCodes(memberId, playerId, 710);
-      return noStoreJson({ ok: true, enrollmentId: id });
+      return noStoreJson({ ok: true, enrollmentId: null, note: 'Enrollment table not in export; no-op on test stack.' });
     }
 
     return noStoreJson({ error: 'Unknown action.' }, { status: 400 });
