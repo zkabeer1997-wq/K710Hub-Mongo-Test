@@ -1,24 +1,34 @@
 import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { publicFlamedragonRecord, sanitizeFlamedragonInput } from '../../../lib/flamedragonForm.mjs';
 
-const PUBLIC_COLUMNS = 'member_id,name,current_alliance,infantry_tier,infantry_tg,cavalry_tier,cavalry_tg,archer_tier,archer_tg,heroes,charms,governor_gear,pet_power,masters_power,mystic_trial_score,availability,voice_chat,auto_help,updated_at';
+const PUBLIC_PROJECT = {
+  member_id: 1,
+  name: 1,
+  current_alliance: 1,
+  infantry_tier: 1,
+  infantry_tg: 1,
+  cavalry_tier: 1,
+  cavalry_tg: 1,
+  archer_tier: 1,
+  archer_tg: 1,
+  heroes: 1,
+  charms: 1,
+  governor_gear: 1,
+  pet_power: 1,
+  masters_power: 1,
+  mystic_trial_score: 1,
+  availability: 1,
+  voice_chat: 1,
+  auto_help: 1,
+  updated_at: 1,
+  _id: 0,
+};
 
 function pinHash(pin) {
   return createHash('sha256').update('kvk-flamedragon-v1:' + pin).digest('hex');
-}
-
-function tableMissingResponse() {
-  return NextResponse.json({
-    error: 'Flamedragon forms are not configured yet. Apply the flamedragon_forms database migration first.',
-  }, { status: 500 });
-}
-
-function isMissingTableError(error) {
-  return error && (
-    error.code === '42P01' || String(error.message || '').toLowerCase().includes('flamedragon_forms')
-  );
 }
 
 export async function GET(request) {
@@ -28,16 +38,8 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
   }
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
-      .from('flamedragon_forms')
-      .select(PUBLIC_COLUMNS)
-      .eq('member_id', memberId)
-      .maybeSingle();
-    if (error) {
-      if (isMissingTableError(error)) return tableMissingResponse();
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
+    const data = await coll.findOne({ member_id: memberId }, { projection: PUBLIC_PROJECT });
     return NextResponse.json({ record: publicFlamedragonRecord(data) });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -53,19 +55,17 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data: existing, error: selectError } = await supabase
-      .from('flamedragon_forms')
-      .select('member_id,pin_hash')
-      .eq('member_id', record.member_id)
-      .maybeSingle();
-    if (selectError) {
-      if (isMissingTableError(selectError)) return tableMissingResponse();
-      return NextResponse.json({ error: selectError.message }, { status: 500 });
-    }
+    const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
+    const existing = await coll.findOne(
+      { member_id: record.member_id },
+      { projection: { member_id: 1, pin_hash: 1 } }
+    );
     const nextHash = pinHash(record.pin);
     if (existing && existing.pin_hash !== nextHash) {
-      return NextResponse.json({ error: 'Incorrect PIN for this Member ID. Please try again.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Incorrect PIN for this Member ID. Please try again.' },
+        { status: 403 }
+      );
     }
     const payload = {
       member_id: record.member_id,
@@ -87,17 +87,10 @@ export async function POST(request) {
       voice_chat: record.voice_chat || null,
       auto_help: record.auto_help || null,
       pin_hash: nextHash,
-      updated_at: new Date().toISOString(),
+      updated_at: new Date(),
     };
-    const { data, error } = await supabase
-      .from('flamedragon_forms')
-      .upsert(payload, { onConflict: 'member_id' })
-      .select(PUBLIC_COLUMNS)
-      .maybeSingle();
-    if (error) {
-      if (isMissingTableError(error)) return tableMissingResponse();
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    await coll.updateOne({ member_id: record.member_id }, { $set: payload }, { upsert: true });
+    const data = await coll.findOne({ member_id: record.member_id }, { projection: PUBLIC_PROJECT });
     return NextResponse.json({
       status: existing ? 'updated' : 'created',
       record: publicFlamedragonRecord(data),
