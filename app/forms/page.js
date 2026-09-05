@@ -1,5 +1,5 @@
 import MusterHall from '../../components/kingdom/world/MusterHall';
-import { getFormGates } from '../../lib/formGates.mjs';
+import { getFormGates } from '../../lib/formGates.server.js';
 
 export const metadata = {
   title: 'K710 Forms',
