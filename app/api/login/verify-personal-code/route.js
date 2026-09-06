@@ -110,7 +110,7 @@ export async function POST(request) {
       { upsert: true }
     );
     const user = await users.findOne({ player_id: flow.playerId });
-    const session = await createMemberSession(flow.playerId, request);
+    const session = await createMemberSession(flow.playerId, request, { role });
     await recordLoginEvent(request, 'login_success', flow.playerId, {
       role,
       method: 'personal_code',

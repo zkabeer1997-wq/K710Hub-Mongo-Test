@@ -93,7 +93,9 @@ export async function POST(request) {
     const user = await coll.findOne({ player_id: flow.playerId });
     if (!user) throw new Error('Account was not saved.');
 
-    const session = await createMemberSession(flow.playerId, request);
+    const session = await createMemberSession(flow.playerId, request, {
+      role: user.access_role || 'member',
+    });
     await recordLoginEvent(request, 'login_success', flow.playerId, { role: user.access_role });
 
     const response = json({ ok: true, state: 'authenticated', profile: toPublicProfile(user) });
