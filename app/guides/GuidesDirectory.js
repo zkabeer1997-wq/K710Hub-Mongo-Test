@@ -78,6 +78,12 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
       )}
 
       <Link href={backHref} className="guides-back">← Return to member page</Link>
+      <style>{`
+        .guides-toolbar{position:sticky;top:72px;z-index:5;padding:12px 0 14px;backdrop-filter:blur(10px);background:linear-gradient(180deg,rgba(11,14,19,.92),rgba(11,14,19,.72))}
+        .guides-category-tab{min-height:36px}
+        .guide-entry{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+        .guide-entry:hover,.guide-entry:focus-visible{transform:translateY(-2px)}
+      `}</style>
     </>
   );
 }
