@@ -1,17 +1,26 @@
 import { NextResponse } from 'next/server';
+import { ObjectId } from 'mongodb';
 import { isAdminRequest } from '../../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../../lib/adminSupabase';
+import { getCollection } from '../../../../lib/mongo';
+import { COLLECTIONS } from '../../../../lib/mongoCollections';
 
-const STATUSES = ['new', 'reviewed'];
+const STATUSES = ['new', 'in_progress', 'done', 'rejected'];
+
+function idFilter(id) {
+  if (ObjectId.isValid(id) && String(new ObjectId(id)) === String(id)) {
+    return { $or: [{ id: String(id) }, { _id: new ObjectId(id) }] };
+  }
+  return { id: String(id) };
+}
 
 export async function PATCH(request, { params: paramsPromise }) {
   if (!(await isAdminRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const { id } = await paramsPromise;
-  if (!id) {
-    return NextResponse.json({ error: 'Request ID is required' }, { status: 400 });
-  }
+  const params = await paramsPromise;
+  const id = params?.id;
+  if (!id) return NextResponse.json({ error: 'Missing id.' }, { status: 400 });
+
   let body;
   try {
     body = await request.json();
@@ -23,15 +32,21 @@ export async function PATCH(request, { params: paramsPromise }) {
     return NextResponse.json({ error: 'Unknown status.' }, { status: 400 });
   }
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
-      .from('website_requests')
-      .update({ status })
-      .eq('id', id)
-      .select('id,member_id,name,current_alliance,section,message,status,created_at')
-      .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ row: data });
+    const coll = await getCollection(COLLECTIONS.WEBSITE_REQUESTS);
+    const existing = await coll.findOne(idFilter(id));
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    await coll.updateOne({ _id: existing._id }, { $set: { status, updated_at: new Date().toISOString() } });
+    const data = await coll.findOne(
+      { _id: existing._id },
+      {
+        projection: {
+          id: 1, member_id: 1, name: 1, current_alliance: 1, section: 1,
+          message: 1, status: 1, created_at: 1, _id: 1,
+        },
+      }
+    );
+    const { _id, ...rest } = data;
+    return NextResponse.json({ row: { ...rest, id: rest.id || String(_id) } });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
