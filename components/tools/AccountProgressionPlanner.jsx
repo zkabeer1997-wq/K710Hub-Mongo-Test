@@ -80,6 +80,11 @@ const fmt = (value) =>
   Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const queryFor = (memberId) =>
   memberId ? `?member_id=${encodeURIComponent(memberId)}` : "";
+const guidedGoalFor = (initialGoal) => initialGoal === "kvk"
+  ? { goal: "kvk", objective: "kvkPoints", systemWeights: { ...ACCOUNT_GOAL_PROFILES.kvk.weights } }
+  : initialGoal === "stats"
+    ? { objective: "stats" }
+    : {};
 
 function download(name, content, type) {
   const url = URL.createObjectURL(new Blob([content], { type }));
@@ -93,7 +98,7 @@ function download(name, content, type) {
 export default function AccountProgressionPlanner({ memberId = "", initialGoal = "" }) {
   const [inputs, setInputs] = useState(() => ({
     ...initialInputs,
-    ...(initialGoal === "kvk" ? { goal: "kvk", objective: "kvkPoints", systemWeights: { ...ACCOUNT_GOAL_PROFILES.kvk.weights } } : initialGoal === "stats" ? { objective: "stats" } : {}),
+    ...guidedGoalFor(initialGoal),
   }));
   const [savedStates, setSavedStates] = useState({});
   const [sourceStatus, setSourceStatus] = useState("loading");
@@ -122,8 +127,9 @@ export default function AccountProgressionPlanner({ memberId = "", initialGoal =
       activeView: saved.activeView || "upgrades",
       completedChecklist: saved.completedChecklist || {},
       completionHistory: Array.isArray(saved.completionHistory) ? saved.completionHistory : [],
+      ...guidedGoalFor(initialGoal),
     }));
-  }, []);
+  }, [initialGoal]);
   const persistence = useToolPersistence({
     toolKey: "account-progression",
     schemaVersion: 1,
