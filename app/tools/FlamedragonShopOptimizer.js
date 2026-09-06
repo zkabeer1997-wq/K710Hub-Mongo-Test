@@ -209,7 +209,7 @@ export default function FlamedragonShopOptimizer({ configuration }) {
 
   return (
     <section className="ft-optimizer">
-      <SourceToolOnboarding toolKey="dragons-caravan" current={result ? 4 : 3} />
+      <SourceToolOnboarding toolKey="dragons-caravan" current={plan ? 4 : 3} />
       <SaveToRoadmap persistence={persistence} />
       <header className="ft-summary-head">
         <div>

@@ -527,7 +527,7 @@ export default function CharmPackOptimizer({ configuration }) {
 
   return (
     <section className="cpo-shell">
-      <SourceToolOnboarding toolKey="charm-pack-optimizer" current={result ? 4 : 3} />
+      <SourceToolOnboarding toolKey="charm-pack-optimizer" current={plan ? 4 : 3} />
       <SaveToRoadmap persistence={persistence} />
       <div className="cpo-toolbar">
         <div>

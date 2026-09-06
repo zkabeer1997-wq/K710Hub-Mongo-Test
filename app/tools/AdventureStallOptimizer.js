@@ -195,7 +195,7 @@ export default function AdventureStallOptimizer({ configuration }) {
 
   return (
     <section className="as-optimizer">
-      <SourceToolOnboarding toolKey="adventure-stall" current={result ? 4 : 3} />
+      <SourceToolOnboarding toolKey="adventure-stall" current={plan ? 4 : 3} />
       <SaveToRoadmap persistence={persistence} />
       <header className="as-summary-head">
         <div>
