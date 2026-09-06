@@ -22,6 +22,12 @@ function json(body, init = {}) {
   return response;
 }
 
+function resolveAccessRole(playerId, existingRole) {
+  if (isLoginSuperadmin(playerId)) return 'superadmin';
+  if (existingRole === 'admin' || existingRole === 'superadmin') return existingRole;
+  return 'member';
+}
+
 export async function POST(request) {
   const flow = readLoginFlow(request);
   if (!flow) {
@@ -84,7 +90,8 @@ export async function POST(request) {
     }
 
     const users = await getCollection('kingshot_users');
-    const role = isLoginSuperadmin(flow.playerId) ? 'superadmin' : 'member';
+    const existing = await users.findOne({ player_id: flow.playerId });
+    const role = resolveAccessRole(flow.playerId, existing?.access_role);
     await users.updateOne(
       { player_id: flow.playerId },
       {

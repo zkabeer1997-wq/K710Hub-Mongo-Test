@@ -21,11 +21,18 @@ import {
   memberSessionCookieOptions,
 } from '../../../../lib/memberAuthKingshot';
 import { recordLoginEvent } from '../../../../lib/kingshotLoginAudit';
+import { ensureInitialKingshotOwner } from '../../../../lib/kingshotAccountBootstrap';
 
 function json(body, init = {}) {
   const response = NextResponse.json(body, init);
   response.headers.set('Cache-Control', 'no-store');
   return response;
+}
+
+function resolveAccessRole(playerId, existingRole) {
+  if (isLoginSuperadmin(playerId)) return 'superadmin';
+  if (existingRole === 'admin' || existingRole === 'superadmin') return existingRole;
+  return 'member';
 }
 
 export async function POST(request) {
@@ -42,6 +49,8 @@ export async function POST(request) {
   }
 
   try {
+    await ensureInitialKingshotOwner();
+
     const { officialResponse, officialProfile } = await verifyLoginCode(flow, body?.code);
     const { searchResponse, searchMatch, profileResponse } = await loadPlayerData(flow.playerId);
     const kingdomId = deriveKingdomId({ officialProfile, searchMatch, profileResponse });
@@ -62,6 +71,9 @@ export async function POST(request) {
       return response;
     }
 
+    const coll = await getCollection('kingshot_users');
+    const existing = await coll.findOne({ player_id: flow.playerId });
+
     const storedUser = toStoredUser({
       playerId: flow.playerId,
       officialProfile,
@@ -71,10 +83,8 @@ export async function POST(request) {
       profileResponse,
       kingdomId,
     });
-    if (isLoginSuperadmin(flow.playerId)) storedUser.access_role = 'superadmin';
-    else storedUser.access_role = 'member';
+    storedUser.access_role = resolveAccessRole(flow.playerId, existing?.access_role);
 
-    const coll = await getCollection('kingshot_users');
     await coll.updateOne(
       { player_id: flow.playerId },
       { $set: { ...storedUser, updated_at: new Date() }, $setOnInsert: { created_at: new Date() } },
