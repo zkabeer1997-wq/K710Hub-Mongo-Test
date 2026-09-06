@@ -127,6 +127,18 @@ const TOOLS = {
 
 const DIRECT_TOOLS = [
   {
+    key: "account-progression",
+    category: "Cross-system planning",
+    event: "Whole-account roadmap",
+    title: "Account Progression Planner",
+    description:
+      "Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.",
+    status: "New",
+    icon: "/images/kingshot/hero-gear/infantry-helm.png",
+    href: "/tools/account-progression",
+    tags: ["Upgrade planning", "Inventory", "Packs and spending"],
+  },
+  {
     key: "ttg-production",
     category: "Construction Costs",
     event: "True Gold refining",
@@ -166,7 +178,6 @@ const DIRECT_TOOLS = [
 const PLANNED = [
   { title: "Alliance Championship Planner", category: "Alliance operations" },
   { title: "Rally & Formation Planner", category: "Alliance operations" },
-  { title: "Account Progression Planner", category: "Cross-system planning" },
 ];
 const FILTERS = [
   "All",
