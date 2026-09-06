@@ -98,6 +98,21 @@ export default async function ChronometerPage() {
           <span className="k-mark">{field('steps-head-kicker')}</span>
           <h2 className="k-display chamber-h2">{field('steps-head-title')}</h2>
         </header>
+        <div className="recruit-checklist" aria-label="What we review">
+          <p className="k-mark">Before you apply</p>
+          <h3 className="k-display recruit-checklist-title">What leadership looks for</h3>
+          <ul className="recruit-checklist-chips">
+            <li>Troop tier & T11 status</li>
+            <li>Mystic Trial progress</li>
+            <li>Governor power</li>
+            <li>KvK participation</li>
+            <li>Preferred Bear Hunt times</li>
+          </ul>
+          <p className="k-narrative recruit-checklist-note">
+            Complete the transfer form with your in-game name, player ID, Discord, and current server/alliance. Typical review is after leadership checks your account readiness.
+          </p>
+        </div>
+
         <ol className="march">
           {MARCH.map((m) => (
             <li key={m.n} className="march-stone">
@@ -122,6 +137,13 @@ export default async function ChronometerPage() {
           Approach the Registry
         </Link>
       </section>
+      <style>{`
+        .recruit-checklist{margin:0 0 28px;padding:22px 20px;border:1px solid rgba(201,164,78,.28);border-radius:14px;background:linear-gradient(180deg,rgba(28,23,13,.55),rgba(11,12,21,.72))}
+        .recruit-checklist-title{margin:8px 0 14px;font-size:clamp(1.2rem,2.5vw,1.55rem);color:var(--parchment,#f3ead2)}
+        .recruit-checklist-chips{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+        .recruit-checklist-chips li{padding:7px 12px;border-radius:999px;border:1px solid rgba(201,164,78,.28);background:rgba(201,164,78,.08);color:var(--gold-hot,#e6c36a);font-size:12px;font-weight:700;letter-spacing:.03em}
+        .recruit-checklist-note{margin:14px 0 0;color:var(--parchment-dim,#c9c0a8);font-size:14px;line-height:1.55;max-width:62ch}
+      `}</style>
     </main>
   );
 }
