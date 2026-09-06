@@ -103,6 +103,7 @@ function Field({
   onChange,
   type = "number",
   children,
+  hint,
   ...props
 }) {
   return (
@@ -122,7 +123,22 @@ function Field({
           {...props}
         />
       )}
+      {hint ? <span className={styles.hint}>{hint}</span> : null}
     </label>
+  );
+}
+
+function PlannerGuide({ steps, note }) {
+  return (
+    <div className={styles.guide}>
+      <h2>Start here</h2>
+      <ol>
+        {steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+      {note ? <p>{note}</p> : null}
+    </div>
   );
 }
 
@@ -164,6 +180,14 @@ export function TtgProductionPlanner({
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <PlannerGuide
+          steps={[
+            "Enter the True Gold you have now and the amount you refuse to spend.",
+            "Set today’s refinement attempt, your daily limit, and the TTG your building or research plan needs.",
+            "Read the daily schedule on the right; extend the horizon if the target says Beyond horizon.",
+          ]}
+          note="The planner protects both your reserve and any True Gold required by the selected construction plan."
+        />
         <div className={styles.section}>
           <h2>Inventory and safeguards</h2>
           <div className={styles.grid}>
@@ -188,9 +212,12 @@ export function TtgProductionPlanner({
               onChange={(v) => update("reserve", v)}
             />
             <Field
-              label="Refinement state/day"
+              label="Next weekly refinement attempt"
               value={inputs.refinementState}
               onChange={(v) => update("refinementState", v)}
+              min="1"
+              max="100"
+              hint="Use 1 if you have not refined since Monday; otherwise enter the next attempt number."
             />
             <Field
               label="Completed today"
@@ -202,11 +229,16 @@ export function TtgProductionPlanner({
               value={inputs.refinementsPerDay}
               onChange={(v) => update("refinementsPerDay", Math.max(1, v))}
             />
-            <Field
-              label="Starting weekday (0 Sun–6 Sat)"
-              value={inputs.startWeekday}
-              onChange={(v) => update("startWeekday", Math.min(6, v))}
-            />
+            <Field label="Starting weekday" value={inputs.startWeekday} onChange={() => {}}>
+              <select
+                value={inputs.startWeekday}
+                onChange={(e) => update("startWeekday", Number(e.target.value))}
+              >
+                {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day, index) => (
+                  <option key={day} value={index}>{day}</option>
+                ))}
+              </select>
+            </Field>
           </div>
         </div>
         <div className={styles.section}>
@@ -285,6 +317,12 @@ export function TtgProductionPlanner({
           Confidence range: {fmt(result.confidence?.p10)}–
           {fmt(result.confidence?.p90)} TTG (10th–90th percentile).
         </p>
+        {inputs.requiredTempered > result.finalTempered ? (
+          <p className={styles.status}>
+            This target is not reachable inside the current horizon. Increase
+            the planning days, daily refinements, or available True Gold.
+          </p>
+        ) : null}
         <ol className={styles.list}>
           {result.schedule?.map((day) => (
             <li key={day.day}>
@@ -342,6 +380,14 @@ export function PetProgressionPlanner() {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <PlannerGuide
+          steps={[
+            "Choose the pet, then enter its current and desired levels.",
+            "Add the Food, Manuals, Potions, and Medallions already in your bag.",
+            "Use the roadmap and shortfall on the right, or send the missing materials to the Pet Pack Optimizer.",
+          ]}
+          note="Advancement materials are included automatically when the level path crosses an advancement milestone."
+        />
         <div className={styles.section}>
           <h2>Pet target</h2>
           <div className={styles.grid}>
@@ -382,16 +428,6 @@ export function PetProgressionPlanner() {
               onChange={(v) => update("targetLevel", v)}
               min="1"
             />
-            <Field
-              label="Current advancement"
-              value={inputs.currentAdvancement}
-              onChange={(v) => update("currentAdvancement", v)}
-            />
-            <Field
-              label="Target advancement"
-              value={inputs.targetAdvancement}
-              onChange={(v) => update("targetAdvancement", v)}
-            />
           </div>
         </div>
         <div className={styles.section}>
@@ -410,17 +446,6 @@ export function PetProgressionPlanner() {
                 }
               />
             ))}
-            <Field
-              label="Optional budget"
-              value={inputs.budget}
-              onChange={(v) => update("budget", v)}
-            />
-            <Field
-              label="Optional deadline"
-              type="date"
-              value={inputs.deadline}
-              onChange={(v) => update("deadline", v)}
-            />
           </div>
         </div>
       </section>
@@ -444,6 +469,11 @@ export function PetProgressionPlanner() {
           {fmt(result.advancedChestAllocation?.potions)} Potions /{" "}
           {fmt(result.advancedChestAllocation?.medallions)} Medallions).
         </p>
+        {!result.steps.length ? (
+          <p className={styles.status}>
+            Choose a target level above the current level to create a roadmap.
+          </p>
+        ) : null}
         <ol className={styles.list}>
           {result.steps.map((step) => (
             <li key={step.toLevel}>
@@ -524,6 +554,14 @@ export function CharmStatPlanner() {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <PlannerGuide
+          steps={[
+            "Enter the Charm Guides and Designs you can spend.",
+            "Choose a build profile, then set each charm’s current and target level.",
+            "Follow the ordered upgrades on the right; the sequence never spends more materials than you entered.",
+          ]}
+          note="Each charm raises Health and Lethality together. Profiles are priorities, not game rules, and every weight remains editable."
+        />
         <div className={styles.section}>
           <h2>Resources and subjective priorities</h2>
           <div className={styles.grid}>
@@ -541,6 +579,7 @@ export function CharmStatPlanner() {
               label="Minimum balance constraint"
               value={inputs.minimumBalance}
               onChange={(v) => setInputs((c) => ({ ...c, minimumBalance: v }))}
+              hint="Keep every included charm at least this level before specializing. Leave 0 for no minimum."
             />
             <Field
               label="Optimization goal"
@@ -587,6 +626,7 @@ export function CharmStatPlanner() {
               step="0.05"
               min="1"
               max="2"
+              hint="Strengthens the difference between troop priorities. 1 means no amplification."
             />
             {Object.keys(inputs.troopWeights).map((key) => (
               <Field
@@ -596,6 +636,7 @@ export function CharmStatPlanner() {
                 onChange={(v) =>
                   setInputs((c) => ({
                     ...c,
+                    profile: "custom",
                     troopWeights: { ...c.troopWeights, [key]: v },
                   }))
                 }
@@ -700,7 +741,7 @@ export function CharmStatPlanner() {
   );
 }
 
-function EquipmentRows({ pieces, rows, setRows, hero = false }) {
+function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
   return (
     <div className={styles.section}>
       <h2>{hero ? "Twelve hero gear pieces" : "Six Governor Gear pieces"}</h2>
@@ -773,7 +814,7 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
                 }
               />
             </>
-          ) : (
+          ) : showTarget ? (
             <Field
               label="Target tier"
               value={row.targetTier}
@@ -799,7 +840,7 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
                 ))}
               </select>
             </Field>
-          )}
+          ) : null}
         </div>
       ))}
     </div>
@@ -855,20 +896,17 @@ export function HeroGearPlanner() {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <PlannerGuide
+          steps={[
+            "Choose a profile that matches your goal, or edit the six weights for a custom build.",
+            "Enter the rarity, Enhancement level, and Mastery level shown on each of your 12 pieces.",
+            "Add the resources in your bag, then follow the recommended upgrades on the right.",
+          ]}
+          note="Safe XP reforging may move XP out of non-Red gear at no loss. It never reforges Red gear, and Mastery reforging is not automatically recommended."
+        />
         <div className={styles.section}>
-          <h2>Planning controls</h2>
+          <h2>Build profile</h2>
           <div className={styles.grid}>
-            <Field label="Role" value={inputs.role} onChange={() => {}}>
-              <select
-                value={inputs.role}
-                onChange={(e) =>
-                  setInputs((c) => ({ ...c, role: e.target.value }))
-                }
-              >
-                <option value="rally-leader">Rally leader</option>
-                <option value="rally-joiner">Rally joiner</option>
-              </select>
-            </Field>
             <Field label="Profile" value={inputs.activity} onChange={() => {}}>
               <select
                 value={inputs.activity}
@@ -889,17 +927,6 @@ export function HeroGearPlanner() {
                 <option value="future">Future-proofed (Gen 4+)</option>
                 <option value="unweighted">Unweighted</option>
                 <option value="custom">Custom</option>
-              </select>
-            </Field>
-            <Field label="Mode" value={inputs.mode} onChange={() => {}}>
-              <select
-                value={inputs.mode}
-                onChange={(e) =>
-                  setInputs((c) => ({ ...c, mode: e.target.value }))
-                }
-              >
-                <option value="inventory">Available inventory</option>
-                <option value="targets">Target planning</option>
               </select>
             </Field>
           </div>
@@ -929,7 +956,6 @@ export function HeroGearPlanner() {
           <div className={styles.grid}>
             {[
               ["xp", "Enhancement XP"],
-              ["consumableGear", "Consumable gear"],
               ["forgehammers", "Forgehammers"],
               ["mythicPieces", "Mythic pieces"],
               ["mithril", "Mithril"],
@@ -977,7 +1003,12 @@ export function HeroGearPlanner() {
               <b>{plan.recommendation.stat}</b>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <p className={styles.status}>
+            Add Enhancement XP or upgrade materials to generate a plan. Your
+            current gear and selected profile are already included.
+          </p>
+        )}
         <p className={styles.note}>
           Remaining: {fmt(plan.remaining.xp)} XP ·{" "}
           {fmt(plan.remaining.forgehammers)} Forgehammers ·{" "}
@@ -1009,15 +1040,16 @@ export function HeroGearPlanner() {
 
 export function GovernorGearPlanner() {
   const [rows, setRows] = useState(() =>
-    ["Cavalry", "Infantry", "Archer"].flatMap((troop) =>
-      [1, 2].map((piece) => ({
-        id: `${troop}-${piece}`,
-        label: `${troop} ${piece}`,
+    governorPieces.map((label, index) => {
+      const troop = ["Cavalry", "Cavalry", "Infantry", "Infantry", "Archer", "Archer"][index];
+      return {
+        id: label.toLowerCase(),
+        label,
         troop,
         tier: "",
         targetTier: "",
-      })),
-    ),
+      };
+    }),
   );
   const [inputs, setInputs] = useState({
     mode: "targets",
@@ -1050,6 +1082,14 @@ export function GovernorGearPlanner() {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <PlannerGuide
+          steps={[
+            "Choose Target cost planner to price specific tiers, or Best use of materials to optimize your inventory.",
+            "Set the current tier for all six pieces. In target mode, also choose the tier you want each piece to reach.",
+            "Enter your materials and follow the ordered plan on the right.",
+          ]}
+          note="Matching three-piece tiers unlock Defense set bonuses; matching all six unlocks Attack bonuses."
+        />
         <div className={styles.section}>
           <h2>Mode and inventory</h2>
           <div className={styles.grid}>
@@ -1087,6 +1127,7 @@ export function GovernorGearPlanner() {
               label="Minimum balance"
               value={inputs.balance}
               onChange={(v) => setInputs((c) => ({ ...c, balance: v }))}
+              hint="Keeps every piece at or above this tier index before specializing. Leave 0 for no minimum."
             />
             <Field
               label="Optimization goal"
@@ -1110,10 +1151,15 @@ export function GovernorGearPlanner() {
               step="0.05"
               min="1"
               max="2"
+              hint="Strengthens the difference between troop priorities. 1 means no amplification."
             />
           </div>
         </div>
-        <EquipmentRows pieces={governorPieces} rows={rows} setRows={setRows} />
+        <EquipmentRows
+          rows={rows}
+          setRows={setRows}
+          showTarget={inputs.mode === "targets"}
+        />
         <div className={styles.section}>
           <h2>Editable priority profile</h2>
           <div className={styles.grid}>
@@ -1126,19 +1172,6 @@ export function GovernorGearPlanner() {
                   setInputs((c) => ({
                     ...c,
                     troopWeights: { ...c.troopWeights, [key]: v },
-                  }))
-                }
-              />
-            ))}
-            {Object.entries(inputs.statWeights).map(([key, value]) => (
-              <Field
-                key={key}
-                label={`${key} weight`}
-                value={value}
-                onChange={(v) =>
-                  setInputs((c) => ({
-                    ...c,
-                    statWeights: { ...c.statWeights, [key]: v },
                   }))
                 }
               />
@@ -1166,6 +1199,13 @@ export function GovernorGearPlanner() {
           {plan.steps.length} upgrades planned. Matching 3-piece tiers activate
           Defense and matching 6-piece tiers activate Attack.
         </p>
+        {!plan.steps.length ? (
+          <p className={styles.status}>
+            {inputs.mode === "targets"
+              ? "Choose a target tier above at least one current tier to calculate its cost."
+              : "Add Satin, Gilded Threads, or Artisan’s Visions to generate the best affordable upgrade order."}
+          </p>
+        ) : null}
         <ol className={styles.list}>
           {plan.steps.map((step, index) => (
             <li key={`${step.piece}-${index}`}>
@@ -1218,6 +1258,14 @@ export function MastersPlanner() {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <PlannerGuide
+          steps={[
+            "Choose a Master and enter your current and target relationship levels.",
+            "Add the Affinity, Emblems, and Manuscripts already in your inventory.",
+            "For any skill you plan to raise, enter its current level, target level, and XP already learned toward the next level.",
+          ]}
+          note="Leave a skill target equal to its current level when you do not want to upgrade that skill."
+        />
         <div className={styles.section}>
           <h2>Master progression</h2>
           <div className={styles.grid}>
@@ -1246,17 +1294,6 @@ export function MastersPlanner() {
               </select>
             </Field>
             <Field
-              label="Expert level"
-              value={inputs.expertLevel}
-              onChange={(v) => update("expertLevel", v)}
-            />
-            <Field
-              label="Relationship class"
-              type="text"
-              value={inputs.relationshipClass}
-              onChange={(v) => update("relationshipClass", v)}
-            />
-            <Field
               label="Relationship progress"
               value={inputs.relationshipProgress}
               onChange={(v) => update("relationshipProgress", v)}
@@ -1265,16 +1302,6 @@ export function MastersPlanner() {
               label="Target relationship"
               value={inputs.targetRelationship}
               onChange={(v) => update("targetRelationship", Math.min(100, v))}
-            />
-            <Field
-              label="Talent level"
-              value={inputs.talentLevel}
-              onChange={(v) => update("talentLevel", v)}
-            />
-            <Field
-              label="Learning speed (%)"
-              value={inputs.learningSpeed}
-              onChange={(v) => update("learningSpeed", v)}
             />
           </div>
         </div>
@@ -1384,14 +1411,14 @@ export function MastersPlanner() {
           {fmt(plan.manuscripts)} Manuscripts ({fmt(plan.shortfall.manuscripts)}{" "}
           short).
         </p>
-        <ol className={styles.list}>
+        {plan.skillRoadmap.length ? <ol className={styles.list}>
           {plan.skillRoadmap.map((skill) => (
             <li key={skill.name}>
               {skill.name}: level {skill.from} → {skill.to} · {fmt(skill.xp)} XP
               · {fmt(skill.manuscripts)} Manuscripts
             </li>
           ))}
-        </ol>
+        </ol> : <p className={styles.note}>No skill upgrades selected. Set a target above a skill’s current level to add it to the roadmap.</p>}
         <ExportButton name="master-progression-plan" data={plan} />
       </aside>
     </div>
