@@ -4,7 +4,8 @@ import { readKingshotSession } from '../../../lib/memberAuthKingshot';
 import { readLoginFlow } from '../../../lib/kingshotLoginState';
 
 export async function GET(request) {
-  // Prefer Kingshot opaque sessions; fall back to legacy PIN sessions.
+  // Prefer Kingshot sessions. Legacy PIN cookie fallback is transitional only
+  // and will be removed once all members are on Kingshot login.
   const kingshot = await readKingshotSession(request);
   if (kingshot) {
     const response = NextResponse.json({ state: 'authenticated', profile: kingshot });

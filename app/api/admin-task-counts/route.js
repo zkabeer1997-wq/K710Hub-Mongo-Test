@@ -13,6 +13,9 @@ export async function GET(request) {
   try {
     let website = 0;
     let transfers = 0;
+    let transfersPending = 0;
+    let transfersWaitlist = 0;
+    let members = 0;
 
     try {
       const websiteColl = await getCollection(COLLECTIONS.WEBSITE_REQUESTS);
@@ -24,23 +27,38 @@ export async function GET(request) {
     }
 
     try {
-      const interestColl = await getCollection('interest_submissions');
-      transfers = await interestColl.countDocuments({
-        $or: [
-          { status: { $in: ['pending', 'waitlist'] } },
-          { status: null },
-          { status: { $exists: false } },
-        ],
+      const interestColl = await getCollection(COLLECTIONS.INTEREST_SUBMISSIONS);
+      transfersPending = await interestColl.countDocuments({
+        $or: [{ status: 'pending' }, { status: null }, { status: { $exists: false } }],
       });
+      transfersWaitlist = await interestColl.countDocuments({ status: 'waitlist' });
+      transfers = transfersPending + transfersWaitlist;
     } catch {
-      // collection may not exist yet — treat as 0
       transfers = 0;
     }
 
-    return NextResponse.json({ website: website || 0, transfers: transfers || 0 }, { headers });
+    try {
+      const submissions = await getCollection(COLLECTIONS.SUBMISSIONS);
+      members = await submissions.countDocuments({});
+    } catch {
+      members = 0;
+    }
+
+    return NextResponse.json(
+      {
+        website: website || 0,
+        transfers: transfers || 0,
+        transfersPending: transfersPending || 0,
+        transfersWaitlist: transfersWaitlist || 0,
+        members: members || 0,
+      },
+      { headers }
+    );
   } catch (error) {
     console.error('admin-task-counts failed', error);
-    // Never 503 the admin shell — return zeros instead
-    return NextResponse.json({ website: 0, transfers: 0 }, { headers });
+    return NextResponse.json(
+      { website: 0, transfers: 0, transfersPending: 0, transfersWaitlist: 0, members: 0 },
+      { headers }
+    );
   }
 }
