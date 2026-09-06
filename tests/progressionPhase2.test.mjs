@@ -43,9 +43,55 @@ test("TTG planner preserves reserve and applies daily half cost", () => {
   assert.ok(result.schedule.every((day) => day.trueGoldRemaining >= 50));
 });
 
-test("hero gear maps helmet to lethality and exposes reforge recovery",()=>{const result=calculateHeroGearPlan([{label:"Infantry Helmet",tier:"Gold",enhancement:0}],{xp:60000,mithril:10,mythicPieces:5});assert.equal(result.recommendation.stat,"Lethality");assert.equal(result.reforging.forgehammerRecovery,.5);});
-test("governor gear totals target path",()=>{const result=calculateGovernorGearPlan([{label:"Helmet",tier:"Green",targetTier:"Green II"}],{});assert.equal(result.totals.satin,3800);assert.equal(result.shortfall.threads,40);});
-test("master plan returns next relationship milestone",()=>{const result=calculateMasterPlan({relationshipProgress:20,affinity:100});assert.equal(result.target.level,30);assert.equal(result.shortfall.affinity,660);});
+test("TTG planner stops at attempt 100 until the Monday reset", () => {
+  const result = planTtgProduction({
+    trueGold: 10000,
+    horizonDays: 2,
+    refinementState: 100,
+    refinementsPerDay: 5,
+    startWeekday: 2,
+    riskMode: "guaranteed",
+  });
+  assert.equal(result.schedule[0].runs, 1);
+  assert.equal(result.schedule[1].runs, 0);
+});
+
+test("pet progression charges advancement materials on milestone levels", () => {
+  const result = calculatePetProgression({
+    pet: "Gray Wolf",
+    generation: 1,
+    currentLevel: 9,
+    targetLevel: 10,
+    inventory: {},
+  });
+  assert.equal(result.totals.manuals, 15);
+  assert.equal(result.advancedChestEquivalents, 3);
+});
+
+test("hero gear maps helmet to lethality and exposes reforge recovery", () => {
+  const result = calculateHeroGearPlan(
+    [{ label: "Infantry Helmet", tier: "Gold", enhancement: 0 }],
+    { xp: 60000, mithril: 10, mythicPieces: 5 },
+  );
+  assert.equal(result.recommendation.stat, "Lethality");
+  assert.equal(result.reforging.forgehammerRecovery, 0.5);
+});
+test("governor gear totals target path", () => {
+  const result = calculateGovernorGearPlan(
+    [{ label: "Helmet", tier: "Green", targetTier: "Green II" }],
+    {},
+  );
+  assert.equal(result.totals.satin, 3800);
+  assert.equal(result.shortfall.threads, 40);
+});
+test("master plan returns next relationship milestone", () => {
+  const result = calculateMasterPlan({
+    relationshipProgress: 20,
+    affinity: 100,
+  });
+  assert.equal(result.target.level, 30);
+  assert.equal(result.shortfall.affinity, 660);
+});
 
 test("pet progression totals verified rows and current inventory shortfalls", () => {
   const result = calculatePetProgression(
