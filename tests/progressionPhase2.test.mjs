@@ -1,19 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  calculateGovernorGearPlan,
+  calculateHeroGearPlan,
+  calculateMasterPlan,
   calculatePetProgression,
   planTtgProduction,
   rankCharmUpgrades,
 } from "../lib/progressionPhase2.mjs";
 
-test("TTG planner blocks calculation without verified recipes", () => {
+test("TTG planner blocks calculation when recipes are explicitly absent", () => {
   assert.equal(
     planTtgProduction({ horizonDays: 7 }, []).status,
     "missing-data",
   );
 });
 
-test("TTG planner preserves reserve and reports the earliest achievable day", () => {
+test("TTG planner preserves reserve and applies daily half cost", () => {
   const result = planTtgProduction(
     {
       trueGold: 100,
@@ -35,9 +38,14 @@ test("TTG planner preserves reserve and reports the earliest achievable day", ()
       },
     ],
   );
-  assert.equal(result.earliestDay, 2);
+  assert.equal(result.earliestDay, 3);
+  assert.equal(result.schedule[0].trueGoldSpent, 10);
   assert.ok(result.schedule.every((day) => day.trueGoldRemaining >= 50));
 });
+
+test("hero gear maps helmet to lethality and exposes reforge recovery",()=>{const result=calculateHeroGearPlan([{label:"Infantry Helmet",tier:"Gold",enhancement:0}],{xp:60000,mithril:10,mythicPieces:5});assert.equal(result.recommendation.stat,"Lethality");assert.equal(result.reforging.forgehammerRecovery,.5);});
+test("governor gear totals target path",()=>{const result=calculateGovernorGearPlan([{label:"Helmet",tier:"Green",targetTier:"Green II"}],{});assert.equal(result.totals.satin,3800);assert.equal(result.shortfall.threads,40);});
+test("master plan returns next relationship milestone",()=>{const result=calculateMasterPlan({relationshipProgress:20,affinity:100});assert.equal(result.target.level,30);assert.equal(result.shortfall.affinity,660);});
 
 test("pet progression totals verified rows and current inventory shortfalls", () => {
   const result = calculatePetProgression(

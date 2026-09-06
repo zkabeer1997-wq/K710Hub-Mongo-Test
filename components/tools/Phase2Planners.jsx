@@ -4,10 +4,14 @@ import { useCallback, useMemo, useState } from "react";
 import { CHARM_COSTS } from "../../lib/charmToolData.mjs";
 import {
   PHASE2_DATASETS,
+  calculateGovernorGearPlan,
+  calculateHeroGearPlan,
+  calculateMasterPlan,
   calculatePetProgression,
   planTtgProduction,
   rankCharmUpgrades,
 } from "../../lib/progressionPhase2.mjs";
+import { GOVERNOR_GEAR_LEVELS, MASTERS, PETS } from "../../lib/phase2Data.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
 import styles from "./Phase2Planner.module.css";
 
@@ -111,7 +115,7 @@ export function TtgProductionPlanner({
   });
   const update = (key, value) =>
     setInputs((current) => ({ ...current, [key]: value }));
-  const result = useMemo(() => planTtgProduction(inputs, []), [inputs]);
+  const result = useMemo(() => planTtgProduction(inputs), [inputs]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -200,9 +204,6 @@ export function TtgProductionPlanner({
       </section>
       <aside className={styles.result}>
         <h2>Production schedule</h2>
-        {result.status === "missing-data" ? (
-          <MissingData dataset="ttg" />
-        ) : null}
         <div className={styles.metrics}>
           <div className={styles.metric}>
             <span>Imported TG need</span>
@@ -212,12 +213,13 @@ export function TtgProductionPlanner({
             <span>Imported TTG need</span>
             <b>{fmt(inputs.requiredTempered)}</b>
           </div>
+          <div className={styles.metric}><span>Projected TTG</span><b>{fmt(result.finalTempered)}</b></div>
+          <div className={styles.metric}><span>Earliest target day</span><b>{result.earliestDay || "Beyond horizon"}</b></div>
         </div>
         <p className={styles.note}>
-          Construction and advanced-research requirements remain visible, but no
-          refinement rate, probability range, or achievable date is asserted
-          until recipes are verified.
+          Plans one discounted refinement per day and applies the verified 20-attempt tier bands. Weekly attempts reset after 100.
         </p>
+        <ol className={styles.list}>{result.schedule?.map((day)=><li key={day.day}>Day {day.day}: tier {day.tier}, spend {fmt(day.trueGoldSpent)} TG, project {fmt(day.temperedProduced)} TTG</li>)}</ol>
       </aside>
     </div>
   );
@@ -225,7 +227,7 @@ export function TtgProductionPlanner({
 
 export function PetProgressionPlanner() {
   const [inputs, setInputs] = useState({
-    pet: "",
+    pet: PETS[0].name,
     generation: 1,
     currentLevel: 1,
     targetLevel: 1,
@@ -253,7 +255,7 @@ export function PetProgressionPlanner() {
   });
   const update = (key, value) =>
     setInputs((current) => ({ ...current, [key]: value }));
-  const result = useMemo(() => calculatePetProgression(inputs, []), [inputs]);
+  const result = useMemo(() => calculatePetProgression(inputs), [inputs]);
   const packQuery = new URLSearchParams(
     Object.entries(result.shortfall || {}).map(([key, value]) => [
       key,
@@ -267,13 +269,7 @@ export function PetProgressionPlanner() {
         <div className={styles.section}>
           <h2>Pet target</h2>
           <div className={styles.grid}>
-            <Field
-              label="Pet name/type"
-              type="text"
-              value={inputs.pet}
-              onChange={(v) => update("pet", v)}
-              placeholder="Select after dataset import"
-            />
+            <Field label="Pet name/type" value={inputs.pet} onChange={()=>{}}><select value={inputs.pet} onChange={(e)=>{const pet=PETS.find((item)=>item.name===e.target.value);setInputs((c)=>({...c,pet:pet.name,generation:pet.generation,targetLevel:Math.min(c.targetLevel,pet.maxLevel)}));}}>{PETS.map((pet)=><option key={pet.name}>{pet.name}</option>)}</select></Field>
             <Field
               label="Generation"
               value={inputs.generation}
@@ -336,12 +332,8 @@ export function PetProgressionPlanner() {
       </section>
       <aside className={styles.result}>
         <h2>Progression roadmap</h2>
-        <MissingData dataset="pets" />
-        <p className={styles.note}>
-          The level-by-level roadmap, reachable level, material totals, chest
-          equivalents, and remaining shortfall will activate from the same
-          verified rows.
-        </p>
+        <div className={styles.metrics}>{inventoryKeys.map((key)=><div className={styles.metric} key={key}><span>{key} needed / short</span><b>{fmt(result.totals[key])} / {fmt(result.shortfall[key])}</b></div>)}</div>
+        <p className={styles.note}>{result.steps.length} level steps in this roadmap.</p>
         <Link
           className={styles.link}
           href={`/tools/pet-pack-optimizer${packQuery ? `?${packQuery}` : ""}`}
@@ -360,7 +352,6 @@ export function CharmStatPlanner() {
     designs: 0,
     troopWeights: { Infantry: 3, Cavalry: 2, Archer: 2 },
     statWeights: { Health: 1, Lethality: 1 },
-    focus: {},
     minimumBalance: 0,
   });
   const restore = useCallback(
@@ -381,7 +372,7 @@ export function CharmStatPlanner() {
         CHARM_COSTS,
         { guides: inputs.guides, designs: inputs.designs },
         { troops: inputs.troopWeights, stats: inputs.statWeights },
-        inputs.focus,
+        {},
       ),
     [inputs],
   );
@@ -475,25 +466,7 @@ export function CharmStatPlanner() {
                   )
                 }
               />
-              <Field
-                label="Stat focus"
-                value={inputs.focus[charm.id] || ""}
-                onChange={() => {}}
-              >
-                <select
-                  value={inputs.focus[charm.id] || ""}
-                  onChange={(e) =>
-                    setInputs((c) => ({
-                      ...c,
-                      focus: { ...c.focus, [charm.id]: e.target.value },
-                    }))
-                  }
-                >
-                  <option value="">Unassigned</option>
-                  <option value="Health">Health</option>
-                  <option value="Lethality">Lethality</option>
-                </select>
-              </Field>
+              <span className={styles.note}>Health + Lethality</span>
             </div>
           ))}
         </div>
@@ -527,11 +500,7 @@ export function CharmStatPlanner() {
             sequence.
           </p>
         )}
-        <MissingData dataset="charmStats">
-          Material ordering is active from verified charm costs. Before/after
-          stat gains and weighted stat efficiency remain blocked until the
-          charm-stat table is verified.
-        </MissingData>
+        <p className={styles.note}>Every charm upgrade raises both Health and Lethality; recommendations rank combined stat gain per material.</p>
         <Link className={styles.link} href="/tools/charm-pack-optimizer">
           Build required pack schedule
         </Link>
@@ -547,18 +516,9 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
       {rows.map((row, index) => (
         <div className={styles.row} key={row.id}>
           <strong>{row.label}</strong>
-          <Field
-            label="Rarity / tier"
-            type="text"
-            value={row.tier}
-            onChange={(v) =>
-              setRows((current) =>
-                current.map((item, i) =>
-                  i === index ? { ...item, tier: v } : item,
-                ),
-              )
-            }
-          />
+          <Field label="Rarity / tier" type={hero ? "text" : "select"} value={row.tier} onChange={()=>{}}>
+            {hero ? <input type="text" value={row.tier} onChange={(e)=>setRows((current)=>current.map((item,i)=>i===index?{...item,tier:e.target.value}:item))} placeholder="Gold" /> : <select value={row.tier} onChange={(e)=>setRows((current)=>current.map((item,i)=>i===index?{...item,tier:e.target.value}:item))}><option value="">None</option>{GOVERNOR_GEAR_LEVELS.map((item)=><option key={item.index} value={item.tier}>{item.tier}</option>)}</select>}
+          </Field>
           {hero ? (
             <>
               <Field
@@ -618,18 +578,7 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
               />
             </>
           ) : (
-            <Field
-              label="Target tier"
-              type="text"
-              value={row.targetTier}
-              onChange={(v) =>
-                setRows((current) =>
-                  current.map((item, i) =>
-                    i === index ? { ...item, targetTier: v } : item,
-                  ),
-                )
-              }
-            />
+            <Field label="Target tier" value={row.targetTier} onChange={()=>{}}><select value={row.targetTier} onChange={(e)=>setRows((current)=>current.map((item,i)=>i===index?{...item,targetTier:e.target.value}:item))}><option value="">Choose target</option>{GOVERNOR_GEAR_LEVELS.map((item)=><option key={item.index} value={item.tier}>{item.tier}</option>)}</select></Field>
           )}
         </div>
       ))}
@@ -677,6 +626,7 @@ export function HeroGearPlanner() {
     restore,
     autoDetect: true,
   });
+  const plan = useMemo(()=>calculateHeroGearPlan(rows, inputs),[rows,inputs]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -784,13 +734,8 @@ export function HeroGearPlanner() {
       </section>
       <aside className={styles.result}>
         <h2>Upgrade plan</h2>
-        <MissingData dataset="heroGear" />
-        <p className={styles.note}>
-          The saved model already covers rarity, enhancement, mastery, ascension
-          and imbuement for all 12 pieces. Ordered steps, before/after stats,
-          weighted gain, alternatives and near misses activate only from
-          verified rows.
-        </p>
+        {plan.recommendation ? <div className={styles.metrics}><div className={styles.metric}><span>Next balanced upgrade</span><b>{plan.recommendation.label} → +{plan.recommendation.targetLevel}</b></div><div className={styles.metric}><span>Cost</span><b>{fmt(plan.recommendation.xp)} XP · {plan.recommendation.mithril} Mithril · {plan.recommendation.mythic} Mythic</b></div><div className={styles.metric}><span>Improves</span><b>{plan.recommendation.stat}</b></div></div>:null}
+        <p className={styles.note}>XP reforging is offered only for non-Red gear at 100% recovery. Mastery reforging recovers 50% of Forgehammers.</p>
       </aside>
     </div>
   );
@@ -826,6 +771,7 @@ export function GovernorGearPlanner() {
     restore,
     autoDetect: true,
   });
+  const plan = useMemo(()=>calculateGovernorGearPlan(rows,inputs),[rows,inputs]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -905,13 +851,8 @@ export function GovernorGearPlanner() {
       </section>
       <aside className={styles.result}>
         <h2>Governor Gear plan</h2>
-        <MissingData dataset="governorGear" />
-        <p className={styles.note}>
-          Per-piece costs, stat gains, set bonuses, milestones and
-          opportunity-cost ranking will be calculated together after the source
-          table is verified. Saved Player Profile/OCR tiers can then populate
-          these six rows.
-        </p>
+        <div className={styles.metrics}>{["satin","threads","visions"].map((key)=><div className={styles.metric} key={key}><span>{key} needed / short</span><b>{fmt(plan.totals[key])} / {fmt(plan.shortfall[key])}</b></div>)}<div className={styles.metric}><span>Power gain</span><b>{fmt(plan.totals.powerGain)}</b></div></div>
+        <p className={styles.note}>{plan.steps.length} upgrades planned. Matching 3-piece tiers activate Defense and matching 6-piece tiers activate Attack.</p>
       </aside>
     </div>
   );
@@ -943,6 +884,7 @@ export function MastersPlanner() {
   });
   const update = (key, value) =>
     setInputs((current) => ({ ...current, [key]: value }));
+  const plan = useMemo(()=>calculateMasterPlan(inputs),[inputs]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -950,12 +892,7 @@ export function MastersPlanner() {
         <div className={styles.section}>
           <h2>Master progression</h2>
           <div className={styles.grid}>
-            <Field
-              label="Master"
-              type="text"
-              value={inputs.master}
-              onChange={(v) => update("master", v)}
-            />
+            <Field label="Master" value={inputs.master} onChange={()=>{}}><select value={inputs.master} onChange={(e)=>update("master",e.target.value)}><option value="">Choose a Master</option>{MASTERS.map((name)=><option key={name}>{name}</option>)}</select></Field>
             <Field
               label="Expert level"
               value={inputs.expertLevel}
@@ -1070,12 +1007,8 @@ export function MastersPlanner() {
       </section>
       <aside className={styles.result}>
         <h2>Best next investment</h2>
-        <MissingData dataset="masters" />
-        <p className={styles.note}>
-          Required resources, remaining shortfall, learning time, power and buff
-          gains, skill roadmap, and comparisons between Masters remain
-          deliberately uncalculated until Master-specific values are verified.
-        </p>
+        <div className={styles.metrics}><div className={styles.metric}><span>Next relationship milestone</span><b>Level {plan.target.level} · +{plan.target.buff}%</b></div><div className={styles.metric}><span>Affinity needed / short</span><b>{fmt(plan.affinity)} / {fmt(plan.shortfall.affinity)}</b></div><div className={styles.metric}><span>Emblems needed / short</span><b>{fmt(plan.emblems)} / {fmt(plan.shortfall.emblems)}</b></div></div>
+        <p className={styles.note}>Relationship milestones are active for all six published Masters. Skill fields remain saved alongside the roadmap.</p>
       </aside>
     </div>
   );

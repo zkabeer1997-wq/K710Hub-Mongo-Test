@@ -6,6 +6,10 @@ Branch: `feature/tools-platform-expansion`
 
 ### Completed
 
+- Completed Phase 2 with active TTG, Pet Progression, Governor Charm Stats, Hero Gear, Governor Gear, and Masters calculations.
+- Added dated source provenance for every Phase 2 dataset and removed all verified-data blocking states.
+- Added paired Health + Lethality charm efficiency, 58 Governor Gear tiers, five TTG probability tiers, all published pet generations, six Masters, and Hero Gear reforging safeguards.
+
 - Completed Phase 0 shared persistence, dataset provenance, admin publishing history, and tool-directory infrastructure.
 - Completed Phase 1 improvements across Charm, Wavebound, Pet Pack, both event shops, Construction, and Research tools.
 - Added all Phase 2 routes: TTG Production, Pet Progression, Governor Charm Stats, Hero Gear, Governor Gear, and Masters.
