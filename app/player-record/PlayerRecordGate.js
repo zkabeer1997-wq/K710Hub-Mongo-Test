@@ -196,6 +196,8 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   }
 
   const step = view === 'player' ? '01' : '02';
+  const displayName = (profile?.nickname || '').trim() || 'Governor';
+  const memberId = profile?.playerId || '';
 
   return (
     <main className={styles.page}>
@@ -207,20 +209,33 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
         <section className={styles.intro} aria-labelledby="member-login-title">
           <div>
             <span className={styles.eyebrow}>Secure player access · Kingdom 710</span>
-            <h1 id="member-login-title">Welcome back,<br /><em>Governor.</em></h1>
+            <h1 id="member-login-title">
+              Welcome back,<br />
+              <em>{view === 'profile' ? `${displayName}.` : 'Governor.'}</em>
+            </h1>
             <p>
-              Login to your Account with a code sent directly to your game.
+              {view === 'profile'
+                ? 'Your account is connected. Choose where to go next.'
+                : 'Login to your Account with a code sent directly to your game.'}
             </p>
           </div>
 
           <div className={styles.assurance}>
             <span className={styles.assuranceMark} aria-hidden="true">◆</span>
             <div>
-              <strong>{view === 'personalCode' ? 'Secure fallback verification' : 'Official in-game verification'}</strong>
+              <strong>
+                {view === 'profile'
+                  ? 'Signed in with Kingshot'
+                  : view === 'personalCode'
+                    ? 'Secure fallback verification'
+                    : 'Official in-game verification'}
+              </strong>
               <span>
-                {view === 'personalCode'
-                  ? 'Your personal code is stored only as a protected one-way hash.'
-                  : 'Your code is checked by Kingshot and is never stored.'}
+                {view === 'profile'
+                  ? 'Session stays active for 30 days unless you log out.'
+                  : view === 'personalCode'
+                    ? 'Your personal code is stored only as a protected one-way hash.'
+                    : 'Your code is checked by Kingshot and is never stored.'}
               </span>
             </div>
           </div>
@@ -397,8 +412,12 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               </div>
 
               <nav className={styles.destinations} aria-label="Member destinations">
-                <Link href="/forms"><span>Member forms</span><b>→</b></Link>
-                <Link href="/tools"><span>Tools & calculators</span><b>→</b></Link>
+                <Link href={memberId ? `/forms?member_id=${encodeURIComponent(memberId)}` : '/forms'}>
+                  <span>Member forms</span><b>→</b>
+                </Link>
+                <Link href={memberId ? `/tools?member_id=${encodeURIComponent(memberId)}` : '/tools'}>
+                  <span>Tools & calculators</span><b>→</b>
+                </Link>
                 <Link href="/guides"><span>Kingdom guides</span><b>→</b></Link>
                 {isAdminRole(profile.role) && (
                   <Link href="/admin/dashboard/overview"><span>Admin dashboard</span><b>→</b></Link>
