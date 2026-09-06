@@ -6,6 +6,12 @@ Branch: `feature/tools-platform-expansion`
 
 ### Completed
 
+- Completed Phase 4 with a unified Account Progression Planner that reads saved Hero Gear, Governor Gear, Charm, Pet, Masters, Construction, Academy, War Academy, Advanced Research, TTG, Dragon's Caravan, and Adventure Stall inputs without modifying the source plans.
+- Added editable goal profiles and per-system weights for rally leader, Bear Hunt, PvP, balanced growth, construction, research, KvK preparation, and budget planning.
+- Added ranked cross-system actions with source-tool rationale, resource requirements, shortfalls, timelines, weekly actions, bottlenecks, deferred alternatives, sensitivity ranges, and CSV/JSON/Discord exports.
+- Kept game calculations inside their verified source engines. The cross-system score is explicitly experimental and subjective: member weight × goal fit × feasibility × deadline fit.
+- Added manual targets for systems not yet represented by a saved source plan; manual rows are labeled and never infer costs or game values.
+- Added direct source-planner and Player Profile links, saved Phase 4 preferences, responsive desktop/mobile layouts, and a live connection-status workflow.
 - Completed Phase 2 with active TTG, Pet Progression, Governor Charm Stats, Hero Gear, Governor Gear, and Masters calculations.
 - Added dated source provenance for every Phase 2 dataset and removed all verified-data blocking states.
 - Added paired Health + Lethality charm efficiency, 58 Governor Gear tiers, five TTG probability tiers, all published pet generations, six Masters, and Hero Gear reforging safeguards.
@@ -59,25 +65,24 @@ No game values were added or changed in this increment.
 
 ### Verification
 
-- `npm test`: 89 passed, 0 failed.
+- `npm test`: 121 passed, 0 failed.
+- Phase 4 focused tests: 6 passed, covering source-state immutability, weight-driven ordering, infeasible filtering, bottlenecks, manual provenance, sensitivity, safe exports, and persistence allowlisting.
 - `npm run build`: passed with expected missing-local-Supabase warnings during static generation.
-- `npm run lint`: blocked by a pre-existing unescaped apostrophe in `components/GiftCodeRewards.jsx`; no lint findings were reported in the new files.
-- Local production server: Next.js compiled, but this environment failed while enumerating network interfaces (`uv_interface_addresses`), so browser visual verification remains pending.
+- `npm run lint`: passed with 7 pre-existing warnings and no errors.
+- Phase 4 stylesheet passes targeted Stylelint. Repository-wide Stylelint remains blocked by pre-existing violations outside Phase 4.
+- Vercel preview: READY. Authenticated desktop verification confirmed four real saved-plan recommendations, source links, Player Profile link, loading/connected states, bottlenecks, weekly schedule, and sensitivity output with no Phase 4 runtime errors or horizontal overflow.
 
 ### Next work
 
-1. Add API validation for the versioned envelope and tool-key allowlisting.
-2. Migrate Charm Pack, Wavebound, Dragon's Caravan, Adventure Stall, and Cost Planner to the shared persistence lifecycle.
-3. Add safe reset/undo and input/result invalidation consistently.
-4. Expand the dataset manifest to every existing calculator dataset.
-5. Rework the Tools directory into available and in-development sections with search, filters, and saved-plan continuation.
-6. Extend admin tool configuration with provenance metadata and version history.
+1. Keep Phase 3 alliance-specific tools on the backburner as requested.
+2. Add more saved source targets as members complete the underlying planners; Phase 4 discovers them on Refresh without migrating or overwriting those plans.
+3. Re-run mobile device QA in a browser surface that exposes viewport emulation; responsive breakpoints and overflow safeguards are implemented and build-verified.
 
 ### Known limitations
 
-- Phase 2 calculation surfaces dependent on missing datasets deliberately show “Verified dataset required”; they do not claim projections or optimal recommendations.
-- Governor Gear and Hero Gear profile synchronization is structurally ready but cannot safely map OCR labels to progression rows until the corresponding dataset defines canonical piece identifiers.
-
+- Cross-system priority is intentionally subjective. It does not claim that a percentage of gear stats, building power, research power, and event currency share a universal Kingshot value.
+- One next action is imported from each eligible source plan. The source planner remains authoritative for deeper step ordering and exact game calculations.
+- Player inventory is connected through the inventory saved inside each source planner; the current Player Profile schema stores power/progression snapshots, not a universal material inventory.
 - Autosave currently requires an authenticated member; signed-out users retain only in-memory state for this first increment.
 - Reset undo lasts only until navigation or reload.
 - The optimizer still runs on the main thread; worker progress/cancellation is part of the Pet improvement phase.
