@@ -29,6 +29,37 @@ const optimizerProfiles = {
   future: { Infantry: 2.6, Cavalry: 1.6, Archer: 1.8 },
   unweighted: { Infantry: 1, Cavalry: 1, Archer: 1 },
 };
+const heroGearProfiles = {
+  growth: {
+    "Infantry.Health": 1.5,
+    "Infantry.Lethality": 0.7,
+    "Cavalry.Health": 0.2,
+    "Cavalry.Lethality": 0.4,
+    "Archer.Health": 0.7,
+    "Archer.Lethality": 1.4,
+  },
+  combat: {
+    "Infantry.Health": 1.5,
+    "Infantry.Lethality": 0.7,
+    "Cavalry.Health": 0.4,
+    "Cavalry.Lethality": 1.2,
+    "Archer.Health": 0.6,
+    "Archer.Lethality": 1.3,
+  },
+  future: {
+    "Infantry.Health": 1.5,
+    "Infantry.Lethality": 1.1,
+    "Cavalry.Health": 0.4,
+    "Cavalry.Lethality": 1.2,
+    "Archer.Health": 0.6,
+    "Archer.Lethality": 1.2,
+  },
+  unweighted: Object.fromEntries(
+    ["Infantry", "Cavalry", "Archer"].flatMap((troop) =>
+      ["Health", "Lethality"].map((stat) => [`${troop}.${stat}`, 1]),
+    ),
+  ),
+};
 const defaultCharms = ["Infantry", "Cavalry", "Archer"].flatMap((type) =>
   Array.from({ length: 6 }, (_, index) => ({
     id: `${type.toLowerCase()}-${index + 1}`,
@@ -678,13 +709,12 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
           <strong>{row.label}</strong>
           <Field
             label="Rarity / tier"
-            type={hero ? "text" : "select"}
+            type="select"
             value={row.tier}
             onChange={() => {}}
           >
             {hero ? (
-              <input
-                type="text"
+              <select
                 value={row.tier}
                 onChange={(e) =>
                   setRows((current) =>
@@ -693,8 +723,11 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
                     ),
                   )
                 }
-                placeholder="Gold"
-              />
+              >
+                <option value="Epic">Epic</option>
+                <option value="Mythic">Mythic</option>
+                <option value="Red">Red</option>
+              </select>
             ) : (
               <select
                 value={row.tier}
@@ -735,52 +768,6 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
                   setRows((current) =>
                     current.map((item, i) =>
                       i === index ? { ...item, mastery: v } : item,
-                    ),
-                  )
-                }
-              />
-              <Field
-                label="Target mastery"
-                value={row.targetMastery ?? row.mastery}
-                onChange={(v) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index
-                        ? { ...item, targetMastery: Math.max(item.mastery, v) }
-                        : item,
-                    ),
-                  )
-                }
-              />
-              <Field
-                label="Ascension"
-                value={row.ascension}
-                onChange={(v) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index ? { ...item, ascension: v } : item,
-                    ),
-                  )
-                }
-              />
-              <Field
-                label="Imbuement"
-                value={row.imbuement}
-                onChange={(v) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index ? { ...item, imbuement: v } : item,
-                    ),
-                  )
-                }
-              />
-              <Field
-                label="Current stat contribution"
-                value={row.currentStat}
-                onChange={(v) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index ? { ...item, currentStat: v } : item,
                     ),
                   )
                 }
@@ -836,7 +823,7 @@ export function HeroGearPlanner() {
   );
   const [inputs, setInputs] = useState({
     role: "rally-leader",
-    activity: "pvp",
+    activity: "growth",
     mode: "inventory",
     xp: 0,
     consumableGear: 0,
@@ -846,14 +833,7 @@ export function HeroGearPlanner() {
     safeXpReforging: true,
     troopWeights: { Infantry: 3, Cavalry: 2, Archer: 2 },
     statWeights: { Health: 1, Lethality: 1 },
-    gearWeights: {
-      "Infantry.Health": 1.5,
-      "Infantry.Lethality": 0.7,
-      "Cavalry.Health": 0.2,
-      "Cavalry.Lethality": 0.4,
-      "Archer.Health": 0.7,
-      "Archer.Lethality": 1.4,
-    },
+    gearWeights: heroGearProfiles.growth,
   });
   const saved = useMemo(() => ({ rows, ...inputs }), [rows, inputs]);
   const restore = useCallback((state) => {
@@ -892,12 +872,23 @@ export function HeroGearPlanner() {
             <Field label="Profile" value={inputs.activity} onChange={() => {}}>
               <select
                 value={inputs.activity}
-                onChange={(e) =>
-                  setInputs((c) => ({ ...c, activity: e.target.value }))
-                }
+                onChange={(e) => {
+                  const activity = e.target.value;
+                  setInputs((c) => ({
+                    ...c,
+                    activity,
+                    gearWeights:
+                      activity === "custom"
+                        ? c.gearWeights
+                        : heroGearProfiles[activity],
+                  }));
+                }}
               >
-                <option value="pvp">PvP</option>
-                <option value="pve">PvE</option>
+                <option value="growth">Early Game Growth</option>
+                <option value="combat">Early Game Combat</option>
+                <option value="future">Future-proofed (Gen 4+)</option>
+                <option value="unweighted">Unweighted</option>
+                <option value="custom">Custom</option>
               </select>
             </Field>
             <Field label="Mode" value={inputs.mode} onChange={() => {}}>
@@ -917,28 +908,16 @@ export function HeroGearPlanner() {
         <div className={styles.section}>
           <h2>Editable priority profile</h2>
           <div className={styles.grid}>
-            {Object.entries(inputs.troopWeights).map(([key, value]) => (
+            {Object.entries(inputs.gearWeights).map(([key, value]) => (
               <Field
                 key={key}
-                label={`${key} weight`}
+                label={`${key.replace(".", " ")} weight`}
                 value={value}
                 onChange={(v) =>
                   setInputs((c) => ({
                     ...c,
-                    troopWeights: { ...c.troopWeights, [key]: v },
-                  }))
-                }
-              />
-            ))}
-            {Object.entries(inputs.statWeights).map(([key, value]) => (
-              <Field
-                key={key}
-                label={`${key} weight`}
-                value={value}
-                onChange={(v) =>
-                  setInputs((c) => ({
-                    ...c,
-                    statWeights: { ...c.statWeights, [key]: v },
+                    activity: "custom",
+                    gearWeights: { ...c.gearWeights, [key]: v },
                   }))
                 }
               />
