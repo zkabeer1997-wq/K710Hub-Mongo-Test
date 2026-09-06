@@ -401,7 +401,7 @@ export function TtgProductionPlanner({
   );
 }
 
-export function PetProgressionPlanner() {
+export function PetProgressionPlanner({ memberId = "" }) {
   const [inputs, setInputs] = useState({
     pet: PETS[0].name,
     generation: 1,
@@ -433,10 +433,10 @@ export function PetProgressionPlanner() {
     setInputs((current) => ({ ...current, [key]: value }));
   const result = useMemo(() => calculatePetProgression(inputs), [inputs]);
   const packQuery = new URLSearchParams(
-    Object.entries(result.shortfall || {}).map(([key, value]) => [
-      key,
-      String(value),
-    ]),
+    [
+      ...Object.entries(result.shortfall || {}),
+      ...(memberId ? [["member_id", memberId]] : []),
+    ].map(([key, value]) => [key, String(value)]),
   ).toString();
   return (
     <div className={styles.workspace}>
@@ -572,7 +572,7 @@ export function PetProgressionPlanner() {
   );
 }
 
-export function CharmStatPlanner() {
+export function CharmStatPlanner({ memberId = "" }) {
   const [inputs, setInputs] = useState({
     charms: defaultCharms,
     guides: 0,
@@ -834,7 +834,10 @@ export function CharmStatPlanner() {
             {ranked.next.designs} Designs.
           </p>
         ) : null}
-        <Link className={styles.link} href="/tools/charm-pack-optimizer">
+        <Link
+          className={styles.link}
+          href={`/tools/charm-pack-optimizer${memberId ? `?member_id=${encodeURIComponent(memberId)}` : ""}`}
+        >
           Build required pack schedule
         </Link>
         <ExportButton name="charm-upgrade-plan" data={ranked} />
