@@ -6,6 +6,12 @@ Branch: `feature/tools-platform-expansion`
 
 ### Completed
 
+- Extended Phase 4 with a five-day KvK Preparation calendar sourced from the Kingshot Mastery Day 1–5 guide.
+- Added exact day subtotals and editable daily targets for connected Governor Charms, Governor Gear, Hero Gear, Masters, construction, and research actions when their saved resources map to a published scoring rule.
+- Added manual KvK stockpile inputs for Intel Missions, Hero Roulette, Hero Shards, Taming Marks, Widgets, four speedup types, gathering batches, and troop training/promotion by tier.
+- Added separate Balanced, KvK Preparation points, and Best verified stat increases objectives. Stat ranking compares percentage-point gains only and never mixes power, event points, or resource counts into a fabricated stat value.
+- Added daily checklists, alternate scoring days, before-Day-1 preparation, point-gap indicators, and KvK timing in CSV/JSON/Discord exports.
+- Exact pet advancement points remain withheld because the verified pet progression data does not contain advancement-score increases.
 - Completed Phase 4 with a unified Account Progression Planner that reads saved Hero Gear, Governor Gear, Charm, Pet, Masters, Construction, Academy, War Academy, Advanced Research, TTG, Dragon's Caravan, and Adventure Stall inputs without modifying the source plans.
 - Added editable goal profiles and per-system weights for rally leader, Bear Hunt, PvP, balanced growth, construction, research, KvK preparation, and budget planning.
 - Added ranked cross-system actions with source-tool rationale, resource requirements, shortfalls, timelines, weekly actions, bottlenecks, deferred alternatives, sensitivity ranges, and CSV/JSON/Discord exports.
@@ -65,8 +71,8 @@ No game values were added or changed in this increment.
 
 ### Verification
 
-- `npm test`: 121 passed, 0 failed.
-- Phase 4 focused tests: 6 passed, covering source-state immutability, weight-driven ordering, infeasible filtering, bottlenecks, manual provenance, sensitivity, safe exports, and persistence allowlisting.
+- `npm test`: 125 passed, 0 failed.
+- Phase 4 focused tests: 10 passed, covering source-state immutability, weight-driven ordering, infeasible filtering, bottlenecks, manual provenance, sensitivity, safe exports, persistence allowlisting, KvK day assignment, exact point subtotals, stat ranking, and missing-score disclosure.
 - `npm run build`: passed with expected missing-local-Supabase warnings during static generation.
 - `npm run lint`: passed with 7 pre-existing warnings and no errors.
 - Phase 4 stylesheet passes targeted Stylelint. Repository-wide Stylelint remains blocked by pre-existing violations outside Phase 4.

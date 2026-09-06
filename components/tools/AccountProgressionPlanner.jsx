@@ -10,6 +10,7 @@ import {
   ACCOUNT_GOAL_PROFILES,
   ACCOUNT_SYSTEMS,
   DEFAULT_ACCOUNT_WEIGHTS,
+  DEFAULT_STAT_WEIGHTS,
   accountPlanCsv,
   accountPlanDiscord,
   buildAccountOpportunities,
@@ -28,13 +29,49 @@ const SOURCE_KEYS = [
 const today = () => new Date().toISOString().slice(0, 10);
 const initialInputs = {
   goal: "balanced",
+  objective: "balanced",
   targetDate: "",
+  kvkStartDate: "",
+  dailyChestTarget: 200000,
   horizonDays: 28,
   maxRecommendations: 8,
   includeInfeasible: true,
   systemWeights: { ...DEFAULT_ACCOUNT_WEIGHTS },
+  statWeights: { ...DEFAULT_STAT_WEIGHTS },
+  kvkInventory: {
+    intelMissions: 0,
+    rouletteSpins: 0,
+    mythicShards: 0,
+    epicShards: 0,
+    rareShards: 0,
+    advancedTamingMarks: 0,
+    commonTamingMarks: 0,
+    widgets: 0,
+    constructionSpeedupMinutes: 0,
+    researchSpeedupMinutes: 0,
+    trainingSpeedupMinutes: 0,
+    masterSpeedupMinutes: 0,
+    gatheringBatches: 0,
+    troopTier: 11,
+    troopCount: 0,
+  },
   manual: [],
 };
+const KVK_INVENTORY_FIELDS = [
+  ["intelMissions", "Intel Missions"],
+  ["rouletteSpins", "Hero Roulette spins"],
+  ["mythicShards", "Mythic Hero Shards"],
+  ["epicShards", "Epic Hero Shards"],
+  ["rareShards", "Rare Hero Shards"],
+  ["advancedTamingMarks", "Advanced Taming Marks"],
+  ["commonTamingMarks", "Common Taming Marks"],
+  ["widgets", "Hero Widgets"],
+  ["constructionSpeedupMinutes", "Construction speedup minutes"],
+  ["researchSpeedupMinutes", "Research speedup minutes"],
+  ["trainingSpeedupMinutes", "Training speedup minutes"],
+  ["masterSpeedupMinutes", "Master Skill speedup minutes"],
+  ["gatheringBatches", "Gathering scoring batches"],
+];
 const fmt = (value) =>
   Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const queryFor = (memberId) =>
@@ -73,6 +110,14 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
       systemWeights: {
         ...DEFAULT_ACCOUNT_WEIGHTS,
         ...(saved.systemWeights || {}),
+      },
+      statWeights: {
+        ...DEFAULT_STAT_WEIGHTS,
+        ...(saved.statWeights || {}),
+      },
+      kvkInventory: {
+        ...initialInputs.kvkInventory,
+        ...(saved.kvkInventory || {}),
       },
       manual: Array.isArray(saved.manual) ? saved.manual : [],
     }));
@@ -156,6 +201,22 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
       systemWeights: {
         ...current.systemWeights,
         [system]: Math.max(0, Number(value) || 0),
+      },
+    }));
+  const updateStatWeight = (stat, value) =>
+    setInputs((current) => ({
+      ...current,
+      statWeights: {
+        ...current.statWeights,
+        [stat]: Math.max(0, Number(value) || 0),
+      },
+    }));
+  const updateKvkInventory = (key, value) =>
+    setInputs((current) => ({
+      ...current,
+      kvkInventory: {
+        ...current.kvkInventory,
+        [key]: Math.max(0, Number(value) || 0),
       },
     }));
   const addManual = () =>
@@ -257,6 +318,17 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
               </div>
             </header>
             <label>
+              Optimize for
+              <select
+                value={inputs.objective}
+                onChange={(event) => update("objective", event.target.value)}
+              >
+                <option value="balanced">Balanced account priorities</option>
+                <option value="kvkPoints">KvK Preparation points</option>
+                <option value="stats">Best verified stat increases</option>
+              </select>
+            </label>
+            <label>
               Primary goal
               <select
                 value={inputs.goal}
@@ -305,6 +377,84 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                 onChange={(event) => update("targetDate", event.target.value)}
               />
             </label>
+            <div className={styles.twoCol}>
+              <label>
+                KvK Prep Day 1
+                <input
+                  type="date"
+                  value={inputs.kvkStartDate}
+                  onChange={(event) =>
+                    update("kvkStartDate", event.target.value)
+                  }
+                />
+              </label>
+              <label>
+                Daily point goal
+                <input
+                  type="number"
+                  min="0"
+                  step="10000"
+                  value={inputs.dailyChestTarget}
+                  onChange={(event) =>
+                    update("dailyChestTarget", Number(event.target.value))
+                  }
+                />
+              </label>
+            </div>
+            <details className={styles.advanced}>
+              <summary>Enter other KvK scoring inventory</summary>
+              <p>
+                Add stockpiles that are not stored in another K710 planner.
+                Enter speedups in minutes. One gathering batch is 1,000
+                Bread/Wood, 200 Stone, or 50 Iron.
+              </p>
+              <div className={styles.weights}>
+                {KVK_INVENTORY_FIELDS.map(([key, label]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      aria-label={label}
+                      type="number"
+                      min="0"
+                      value={inputs.kvkInventory[key] || 0}
+                      onChange={(event) =>
+                        updateKvkInventory(key, event.target.value)
+                      }
+                    />
+                  </label>
+                ))}
+                <label>
+                  Troop tier
+                  <select
+                    aria-label="Troop tier for KvK training"
+                    value={inputs.kvkInventory.troopTier}
+                    onChange={(event) =>
+                      updateKvkInventory("troopTier", event.target.value)
+                    }
+                  >
+                    {Array.from({ length: 11 }, (_, index) => index + 1).map(
+                      (tier) => (
+                        <option value={tier} key={tier}>
+                          T{tier}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+                <label>
+                  Troops trained/promoted
+                  <input
+                    aria-label="Troops trained or promoted"
+                    type="number"
+                    min="0"
+                    value={inputs.kvkInventory.troopCount || 0}
+                    onChange={(event) =>
+                      updateKvkInventory("troopCount", event.target.value)
+                    }
+                  />
+                </label>
+              </div>
+            </details>
             <label className={styles.check}>
               <input
                 type="checkbox"
@@ -315,6 +465,37 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
               />{" "}
               Show actions that still need resources
             </label>
+            <details className={styles.advanced}>
+              <summary>Fine-tune stat priorities</summary>
+              <p>
+                These weights compare verified percentage-point gains only.
+                Power and event points are kept separate.
+              </p>
+              <div className={styles.weights}>
+                {Object.entries({
+                  attack: "Attack",
+                  defense: "Defense",
+                  health: "Health / HP",
+                  lethality: "Lethality",
+                  governorGear: "Governor Gear stat",
+                }).map(([key, label]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      aria-label={`${label} stat weight`}
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.25"
+                      value={inputs.statWeights[key] ?? 1}
+                      onChange={(event) =>
+                        updateStatWeight(key, event.target.value)
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+            </details>
             <details className={styles.advanced}>
               <summary>Fine-tune system weights</summary>
               <p>
@@ -508,6 +689,20 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                       </div>
                       <h3>{item.title}</h3>
                       <p className={styles.benefit}>{item.benefit}</p>
+                      {item.statDimensions.length ? (
+                        <p className={styles.impact}>
+                          <b>Stat impact</b>{" "}
+                          {item.statDimensions
+                            .map((stat) => `+${fmt(stat.value)}% ${stat.label}`)
+                            .join(" · ")}
+                        </p>
+                      ) : null}
+                      {item.bestKvkDay ? (
+                        <p className={styles.impact}>
+                          <b>Best KvK timing</b> Day {item.bestKvkDay} ·{" "}
+                          {fmt(item.kvkPoints)} exact projected points
+                        </p>
+                      ) : null}
                       <p>{item.rationale}</p>
                       <div className={styles.resourceLine}>
                         <b>Resources</b>
@@ -527,6 +722,9 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                           {item.scoreBreakdown.goalFit} × feasibility{" "}
                           {item.scoreBreakdown.feasibility} × deadline fit{" "}
                           {item.scoreBreakdown.deadline.toFixed(2)}
+                          {item.scoreBreakdown.objective !== "balanced"
+                            ? ` × ${item.scoreBreakdown.objective === "stats" ? "stat impact" : "KvK points"} ${fmt(item.scoreBreakdown.objectiveFit)}`
+                            : ""}
                         </p>
                       </details>
                     </div>
@@ -538,6 +736,102 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
               </ol>
             )}
           </section>
+
+          {plan.selected.length ? (
+            <section className={`${styles.planPanel} ${styles.kvkPanel}`}>
+              <header className={styles.resultHead}>
+                <div>
+                  <span className={styles.eyebrow}>Five-day spend plan</span>
+                  <h2>KvK Preparation calendar</h2>
+                  <p>
+                    Spend each saved upgrade on its strongest published scoring
+                    day. Exact totals include only point sources present in your
+                    connected plans.
+                  </p>
+                </div>
+                <div className={styles.kvkTotal}>
+                  <small>Exact points planned</small>
+                  <strong>{fmt(plan.kvkSchedule.totalExactPoints)}</strong>
+                </div>
+              </header>
+              {plan.kvkSchedule.beforePrep.length ? (
+                <div className={styles.beforePrep}>
+                  <b>Before Day 1</b>
+                  <span>
+                    {plan.kvkSchedule.beforePrep
+                      .map((item) => item.title)
+                      .join(" · ")}
+                  </span>
+                </div>
+              ) : null}
+              <div className={styles.kvkDays}>
+                {plan.kvkSchedule.days.map((day) => (
+                  <article className={styles.kvkDay} key={day.day}>
+                    <header>
+                      <div>
+                        <span>Day {day.day}</span>
+                        <strong>{day.date || day.focus}</strong>
+                        {day.date ? <small>{day.focus}</small> : null}
+                      </div>
+                      <b>{fmt(day.points)} pts</b>
+                    </header>
+                    <div
+                      className={styles.goalBar}
+                      aria-label={`Day ${day.day} progress toward ${fmt(plan.kvkSchedule.dailyChestTarget)} points`}
+                    >
+                      <span
+                        style={{
+                          width: `${Math.min(100, (day.points / Math.max(1, plan.kvkSchedule.dailyChestTarget)) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <small className={styles.goalLabel}>
+                      {day.points >= plan.kvkSchedule.dailyChestTarget
+                        ? "Daily goal covered"
+                        : `${fmt(plan.kvkSchedule.dailyChestTarget - day.points)} points still needed`}
+                    </small>
+                    <ul className={styles.dayChecklist}>
+                      {day.checklist.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                    {day.actions.length ? (
+                      <ul className={styles.dayActions}>
+                        {day.actions.map((item) => (
+                          <li key={item.id}>
+                            <strong>{item.title}</strong>
+                            <span>
+                              {item.kvkPoints == null
+                                ? "Correct day; exact points need more data"
+                                : `${fmt(item.kvkPoints)} points`}
+                            </span>
+                            <small>{item.kvkFormula}</small>
+                            {item.alternativeDays.length ? (
+                              <em>
+                                Also scores Day{" "}
+                                {item.alternativeDays.join(", ")}
+                              </em>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>No connected upgrade is assigned to this day yet.</p>
+                    )}
+                  </article>
+                ))}
+              </div>
+              <p className={styles.sourceNote}>
+                Point rules:{" "}
+                <a href={plan.kvkSchedule.source.url}>
+                  {plan.kvkSchedule.source.name}
+                </a>
+                , checked {plan.kvkSchedule.source.lastVerified}.
+                Community-reported event values can change; confirm the live
+                event screen before spending.
+              </p>
+            </section>
+          ) : null}
 
           {plan.selected.length ? (
             <div className={styles.detailGrid}>
@@ -644,6 +938,7 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
             datasetId="account-progression-scoring"
             toolVersion="1.0.0"
           />
+          <DataAssumptions datasetId="kvk-prep-points" toolVersion="1.1.0" />
         </main>
       </div>
     </div>

@@ -398,6 +398,17 @@ button:disabled {
   color: var(--parchment);
   font-weight: 700;
 }
+.impact {
+  display: flex;
+  gap: 7px;
+  color: var(--parchment) !important;
+}
+.impact b {
+  color: var(--brass);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .rankCard > a {
   align-self: center;
   color: var(--brass);
@@ -456,6 +467,181 @@ button:disabled {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
   margin-top: 14px;
+}
+.kvkPanel {
+  margin-top: 14px;
+}
+.kvkTotal {
+  min-width: 150px;
+  padding: 9px 12px;
+  border-left: 2px solid var(--brass);
+  text-align: right;
+}
+.kvkTotal small,
+.kvkTotal strong {
+  display: block;
+}
+.kvkTotal small {
+  color: var(--parchment-dim);
+  font-size: 8px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.kvkTotal strong {
+  margin-top: 3px;
+  color: var(--gold-hot);
+  font: 500 20px var(--font-display);
+}
+.beforePrep {
+  display: flex;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--brass) 6%, transparent);
+  font-size: 10px;
+}
+.beforePrep b {
+  color: var(--brass);
+  white-space: nowrap;
+}
+.beforePrep span {
+  color: var(--parchment-dim);
+}
+.kvkDays {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 14px;
+  border: 1px solid var(--line);
+}
+.kvkDay {
+  min-width: 0;
+  padding: 13px;
+  border-right: 1px solid var(--line);
+}
+.kvkDay:last-child {
+  border-right: 0;
+}
+.kvkDay > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 63px;
+}
+.kvkDay > header span,
+.kvkDay > header strong,
+.kvkDay > header small {
+  display: block;
+}
+.kvkDay > header span {
+  color: var(--brass);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.kvkDay > header strong {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.kvkDay > header small {
+  margin-top: 3px;
+  color: var(--parchment-dim);
+  font-size: 8px;
+  line-height: 1.35;
+}
+.kvkDay > header > b {
+  color: var(--gold-hot);
+  font: 500 13px var(--font-display);
+  text-align: right;
+  white-space: nowrap;
+}
+.goalBar {
+  height: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--parchment) 8%, transparent);
+}
+.goalBar span {
+  display: block;
+  height: 100%;
+  background: var(--brass);
+}
+.goalLabel {
+  display: block;
+  min-height: 25px;
+  margin-top: 5px;
+  color: var(--parchment-dim);
+  font-size: 8px;
+}
+.dayActions {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.dayActions li {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.dayActions li strong,
+.dayActions li span,
+.dayActions li small,
+.dayActions li em {
+  display: block;
+}
+.dayActions li strong {
+  font-size: 10px;
+  line-height: 1.35;
+}
+.dayActions li span {
+  margin-top: 3px;
+  color: var(--gold-bright);
+  font-size: 9px;
+}
+.dayActions li small,
+.kvkDay > p {
+  margin-top: 4px;
+  color: var(--parchment-dim);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.dayActions li em {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-style: normal;
+}
+.dayChecklist {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.dayChecklist li {
+  position: relative;
+  margin: 4px 0;
+  padding-left: 11px;
+  color: var(--parchment-dim);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.dayChecklist li::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--brass);
+  content: "□";
+}
+.sourceNote {
+  margin: 12px 0 0;
+  color: var(--parchment-dim);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.sourceNote a {
+  color: var(--brass);
 }
 .miniHead {
   justify-content: flex-start;
@@ -545,6 +731,12 @@ button:disabled {
   .results {
     grid-column: 1/-1;
   }
+  .kvkDays {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kvkDay {
+    border-bottom: 1px solid var(--line);
+  }
 }
 @media (max-width: 760px) {
   .intro {
@@ -583,6 +775,16 @@ button:disabled {
   }
   .resultHead {
     flex-direction: column;
+  }
+  .kvkDays {
+    grid-template-columns: 1fr;
+  }
+  .kvkDay {
+    border-right: 0;
+  }
+  .kvkTotal {
+    width: 100%;
+    text-align: left;
   }
   .actions {
     justify-content: flex-start;
