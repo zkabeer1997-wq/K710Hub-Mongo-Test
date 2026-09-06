@@ -1,0 +1,152 @@
+/* UX polish — visual audit branch */
+
+:root {
+  --focus-ring: 0 0 0 2px rgba(12, 14, 20, 0.9), 0 0 0 4px rgba(230, 195, 106, 0.85);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.site-header-polished .site-nav {
+  gap: 6px;
+  align-items: center;
+}
+
+.site-header-polished .site-nav > a,
+.site-header-polished .site-nav-more-btn {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.site-nav-more {
+  position: relative;
+}
+
+.site-nav-more-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.site-nav-more-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 164, 78, 0.28);
+  background: rgba(12, 14, 20, 0.96);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  display: grid;
+  gap: 2px;
+  z-index: 40;
+}
+
+.site-nav-more-menu a {
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.site-nav-more-menu a:hover,
+.site-nav-more-menu a.active {
+  background: rgba(201, 164, 78, 0.12);
+  color: var(--gold-hot, #e6c36a);
+}
+
+.site-nav-session {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid rgba(201, 164, 78, 0.28);
+  border-radius: 999px;
+  padding: 6px 12px !important;
+  color: var(--gold-hot, #e6c36a) !important;
+}
+
+.site-nav-discord {
+  color: #8ab4ff !important;
+}
+
+.site-nav-member {
+  font-weight: 700;
+}
+
+.site-footer-polished .site-footer-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.site-footer-lang-hint {
+  margin: 0;
+  max-width: 28ch;
+  text-align: right;
+  color: var(--parchment-dim, #a8a090);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .site-header-polished .site-nav {
+    display: none;
+  }
+}
+
+.guides-toolbar {
+  position: sticky;
+  top: 72px;
+  z-index: 5;
+  padding: 12px 0 14px;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(11, 14, 19, 0.92), rgba(11, 14, 19, 0.78));
+}
+
+.guide-entry {
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.guide-entry:hover,
+.guide-entry:focus-visible {
+  transform: translateY(-2px);
+}
+
+.tools-back,
+.guides-back,
+.muster-back-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.timeline-filters,
+.timeline-category-tabs {
+  position: sticky;
+  top: 72px;
+  z-index: 4;
+  backdrop-filter: blur(8px);
+}
