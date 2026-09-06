@@ -23,16 +23,22 @@ const number = (value) => Math.max(0, Number(value) || 0);
 const fmt = (value) =>
   Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const inventoryKeys = ["food", "manuals", "potions", "medallions"];
+const optimizerProfiles = {
+  growth: { Infantry: 2.2, Cavalry: 0.6, Archer: 2.1 },
+  combat: { Infantry: 2.2, Cavalry: 1.6, Archer: 1.9 },
+  future: { Infantry: 2.6, Cavalry: 1.6, Archer: 1.8 },
+  unweighted: { Infantry: 1, Cavalry: 1, Archer: 1 },
+};
 const defaultCharms = ["Infantry", "Cavalry", "Archer"].flatMap((type) =>
   Array.from({ length: 6 }, (_, index) => ({
     id: `${type.toLowerCase()}-${index + 1}`,
     type,
     number: index + 1,
     current: 0,
-    target: 0,
+    target: 22,
   })),
 );
-const heroPieces = ["Helmet", "Chest", "Gloves", "Boots"];
+const heroPieces = ["Helmet", "Gloves", "Chest", "Boots"];
 const governorPieces = ["Helmet", "Chest", "Ring", "Staff", "Pants", "Boots"];
 
 function ExportButton({ name, data }) {
@@ -434,7 +440,10 @@ export function CharmStatPlanner() {
     charms: defaultCharms,
     guides: 0,
     designs: 0,
-    troopWeights: { Infantry: 3, Cavalry: 2, Archer: 2 },
+    optimizationGoal: "stats",
+    profile: "growth",
+    amplification: 1.25,
+    troopWeights: optimizerProfiles.growth,
     statWeights: { Health: 1, Lethality: 1 },
     minimumBalance: 0,
   });
@@ -455,7 +464,12 @@ export function CharmStatPlanner() {
         inputs.charms,
         CHARM_COSTS,
         { guides: inputs.guides, designs: inputs.designs },
-        { troops: inputs.troopWeights, stats: inputs.statWeights },
+        {
+          troops: inputs.troopWeights,
+          stats: inputs.statWeights,
+          amplification: inputs.amplification,
+          mode: inputs.optimizationGoal,
+        },
         { minimumBalance: inputs.minimumBalance },
       ),
     [inputs],
@@ -496,6 +510,52 @@ export function CharmStatPlanner() {
               label="Minimum balance constraint"
               value={inputs.minimumBalance}
               onChange={(v) => setInputs((c) => ({ ...c, minimumBalance: v }))}
+            />
+            <Field
+              label="Optimization goal"
+              value={inputs.optimizationGoal}
+              onChange={() => {}}
+            >
+              <select
+                value={inputs.optimizationGoal}
+                onChange={(e) =>
+                  setInputs((c) => ({ ...c, optimizationGoal: e.target.value }))
+                }
+              >
+                <option value="stats">Optimize stats</option>
+                <option value="events">Optimize events</option>
+              </select>
+            </Field>
+            <Field
+              label="Build profile"
+              value={inputs.profile}
+              onChange={() => {}}
+            >
+              <select
+                value={inputs.profile}
+                onChange={(e) => {
+                  const profile = e.target.value;
+                  setInputs((c) => ({
+                    ...c,
+                    profile,
+                    troopWeights: optimizerProfiles[profile] || c.troopWeights,
+                  }));
+                }}
+              >
+                <option value="growth">Early Game Growth</option>
+                <option value="combat">Early Game Combat</option>
+                <option value="future">Future-proofed</option>
+                <option value="unweighted">Unweighted</option>
+                <option value="custom">Custom</option>
+              </select>
+            </Field>
+            <Field
+              label="Amplification factor"
+              value={inputs.amplification}
+              onChange={(v) => setInputs((c) => ({ ...c, amplification: v }))}
+              step="0.05"
+              min="1"
+              max="2"
             />
             {Object.keys(inputs.troopWeights).map((key) => (
               <Field
@@ -765,7 +825,7 @@ export function HeroGearPlanner() {
       heroPieces.map((slot) => ({
         id: `${troop}-${slot}`,
         label: `${troop} ${slot}`,
-        tier: "",
+        tier: "Mythic",
         enhancement: 0,
         mastery: 0,
         ascension: 0,
@@ -786,6 +846,14 @@ export function HeroGearPlanner() {
     safeXpReforging: true,
     troopWeights: { Infantry: 3, Cavalry: 2, Archer: 2 },
     statWeights: { Health: 1, Lethality: 1 },
+    gearWeights: {
+      "Infantry.Health": 1.5,
+      "Infantry.Lethality": 0.7,
+      "Cavalry.Health": 0.2,
+      "Cavalry.Lethality": 0.4,
+      "Archer.Health": 0.7,
+      "Archer.Lethality": 1.4,
+    },
   });
   const saved = useMemo(() => ({ rows, ...inputs }), [rows, inputs]);
   const restore = useCallback((state) => {
@@ -938,14 +1006,16 @@ export function HeroGearPlanner() {
           {fmt(plan.remaining.mithril)} Mithril. Bottleneck:{" "}
           {plan.bottleneck || "none"}.
         </p>
-        {plan.nearMisses?.length ? (
+        {plan.candidates?.some((item) => item.xp > 0) ? (
           <ol className={styles.list}>
-            {plan.nearMisses.map((item) => (
-              <li key={item.id}>
-                {item.label}: {fmt(item.xp)} XP · {fmt(item.forgehammers)}{" "}
-                Forgehammers
-              </li>
-            ))}
+            {plan.candidates
+              .filter((item) => item.xp > 0)
+              .map((item) => (
+                <li key={item.id}>
+                  {item.label}: level {item.enhancement} → {item.targetLevel} ·{" "}
+                  {fmt(item.xp)} XP · +{fmt(item.statGain)}% {item.stat}
+                </li>
+              ))}
           </ol>
         ) : null}
         <p className={styles.note}>
@@ -960,12 +1030,15 @@ export function HeroGearPlanner() {
 
 export function GovernorGearPlanner() {
   const [rows, setRows] = useState(() =>
-    governorPieces.map((piece) => ({
-      id: piece,
-      label: piece,
-      tier: "",
-      targetTier: "",
-    })),
+    ["Cavalry", "Infantry", "Archer"].flatMap((troop) =>
+      [1, 2].map((piece) => ({
+        id: `${troop}-${piece}`,
+        label: `${troop} ${piece}`,
+        troop,
+        tier: "",
+        targetTier: "",
+      })),
+    ),
   );
   const [inputs, setInputs] = useState({
     mode: "targets",
@@ -973,7 +1046,9 @@ export function GovernorGearPlanner() {
     threads: 0,
     visions: 0,
     balance: 0,
-    troopWeights: { Infantry: 3, Cavalry: 2, Archer: 2 },
+    optimizationGoal: "stats",
+    amplification: 1.25,
+    troopWeights: optimizerProfiles.growth,
     statWeights: { Health: 1, Lethality: 1 },
   });
   const saved = useMemo(() => ({ rows, ...inputs }), [rows, inputs]);
@@ -1033,6 +1108,29 @@ export function GovernorGearPlanner() {
               label="Minimum balance"
               value={inputs.balance}
               onChange={(v) => setInputs((c) => ({ ...c, balance: v }))}
+            />
+            <Field
+              label="Optimization goal"
+              value={inputs.optimizationGoal}
+              onChange={() => {}}
+            >
+              <select
+                value={inputs.optimizationGoal}
+                onChange={(e) =>
+                  setInputs((c) => ({ ...c, optimizationGoal: e.target.value }))
+                }
+              >
+                <option value="stats">Optimize stats</option>
+                <option value="events">Optimize events</option>
+              </select>
+            </Field>
+            <Field
+              label="Amplification factor"
+              value={inputs.amplification}
+              onChange={(v) => setInputs((c) => ({ ...c, amplification: v }))}
+              step="0.05"
+              min="1"
+              max="2"
             />
           </div>
         </div>
