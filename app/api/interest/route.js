@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 import {
   INTEREST_UPLOAD_LIMITS,
   isAcceptedInterestImage,
@@ -152,7 +153,6 @@ export async function POST(request) {
       );
     }
 
-    // Mongo test stack: store screenshots as data URLs (no Supabase Storage)
     const screenshotUrls = [];
     for (const file of screenshots) {
       const arrayBuffer = await file.arrayBuffer();
@@ -162,7 +162,7 @@ export async function POST(request) {
     }
 
     const id = randomUUID();
-    const coll = await getCollection('interest_submissions');
+    const coll = await getCollection(COLLECTIONS.INTEREST_SUBMISSIONS);
     await coll.insertOne({
       id,
       ...fields,
