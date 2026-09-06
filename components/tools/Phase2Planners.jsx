@@ -142,6 +142,40 @@ function PlannerGuide({ steps, note }) {
   );
 }
 
+function InputSummary({ items }) {
+  return (
+    <div className={styles.inputSummary} aria-label="Current input summary">
+      <span className={styles.summaryTitle}>Your inputs</span>
+      <div className={styles.summaryItems}>
+        {items.map(({ label, value }) => (
+          <span className={styles.summaryItem} key={label}>
+            <small>{label}</small>
+            <strong>{value}</strong>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeading({ title, description }) {
+  return (
+    <header className={styles.sectionHeading}>
+      <h2>{title}</h2>
+      {description ? <p>{description}</p> : null}
+    </header>
+  );
+}
+
+function AdvancedSettings({ title = "Advanced settings", children }) {
+  return (
+    <details className={styles.advanced}>
+      <summary>{title}</summary>
+      <div className={styles.advancedBody}>{children}</div>
+    </details>
+  );
+}
+
 export function TtgProductionPlanner({
   importedTrueGold = 0,
   importedTempered = 0,
@@ -188,8 +222,19 @@ export function TtgProductionPlanner({
           ]}
           note="The planner protects both your reserve and any True Gold required by the selected construction plan."
         />
+        <InputSummary
+          items={[
+            { label: "True Gold", value: fmt(inputs.trueGold) },
+            { label: "Tempered", value: fmt(inputs.temperedTrueGold) },
+            { label: "Target", value: `${fmt(inputs.requiredTempered)} TTG` },
+            { label: "Window", value: `${inputs.horizonDays} days` },
+          ]}
+        />
         <div className={styles.section}>
-          <h2>Inventory and safeguards</h2>
+          <SectionHeading
+            title="Inventory and safeguards"
+            description="Start with what you own and the True Gold that must stay untouched."
+          />
           <div className={styles.grid}>
             <Field
               label="Current True Gold"
@@ -229,20 +274,37 @@ export function TtgProductionPlanner({
               value={inputs.refinementsPerDay}
               onChange={(v) => update("refinementsPerDay", Math.max(1, v))}
             />
-            <Field label="Starting weekday" value={inputs.startWeekday} onChange={() => {}}>
+            <Field
+              label="Starting weekday"
+              value={inputs.startWeekday}
+              onChange={() => {}}
+            >
               <select
                 value={inputs.startWeekday}
                 onChange={(e) => update("startWeekday", Number(e.target.value))}
               >
-                {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day, index) => (
-                  <option key={day} value={index}>{day}</option>
+                {[
+                  "Sunday",
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday",
+                ].map((day, index) => (
+                  <option key={day} value={index}>
+                    {day}
+                  </option>
                 ))}
               </select>
             </Field>
           </div>
         </div>
         <div className={styles.section}>
-          <h2>Plan target</h2>
+          <SectionHeading
+            title="Plan target"
+            description="Define the deadline and materials this schedule must cover."
+          />
           <div className={styles.grid}>
             <Field
               label="Planning horizon (days)"
@@ -388,8 +450,19 @@ export function PetProgressionPlanner() {
           ]}
           note="Advancement materials are included automatically when the level path crosses an advancement milestone."
         />
+        <InputSummary
+          items={[
+            { label: "Pet", value: inputs.pet },
+            { label: "Current", value: `Level ${inputs.currentLevel}` },
+            { label: "Target", value: `Level ${inputs.targetLevel}` },
+            { label: "Reachable", value: `Level ${result.reachableLevel}` },
+          ]}
+        />
         <div className={styles.section}>
-          <h2>Pet target</h2>
+          <SectionHeading
+            title="Pet target"
+            description="Choose one pet and the exact level range you want to plan."
+          />
           <div className={styles.grid}>
             <Field label="Pet name/type" value={inputs.pet} onChange={() => {}}>
               <select
@@ -431,7 +504,10 @@ export function PetProgressionPlanner() {
           </div>
         </div>
         <div className={styles.section}>
-          <h2>Current materials</h2>
+          <SectionHeading
+            title="Current materials"
+            description="Enter only the materials currently available in your bag."
+          />
           <div className={styles.grid}>
             {inventoryKeys.map((key) => (
               <Field
@@ -562,8 +638,19 @@ export function CharmStatPlanner() {
           ]}
           note="Each charm raises Health and Lethality together. Profiles are priorities, not game rules, and every weight remains editable."
         />
+        <InputSummary
+          items={[
+            { label: "Guides", value: fmt(inputs.guides) },
+            { label: "Designs", value: fmt(inputs.designs) },
+            { label: "Profile", value: inputs.profile.replaceAll("-", " ") },
+            { label: "Reachable", value: `${ranked.upgrades.length} upgrades` },
+          ]}
+        />
         <div className={styles.section}>
-          <h2>Resources and subjective priorities</h2>
+          <SectionHeading
+            title="Resources and build profile"
+            description="Set your spendable inventory, then choose the profile that represents your priorities."
+          />
           <div className={styles.grid}>
             <Field
               label="Available Guides"
@@ -574,12 +661,6 @@ export function CharmStatPlanner() {
               label="Available Designs"
               value={inputs.designs}
               onChange={(v) => setInputs((c) => ({ ...c, designs: v }))}
-            />
-            <Field
-              label="Minimum balance constraint"
-              value={inputs.minimumBalance}
-              onChange={(v) => setInputs((c) => ({ ...c, minimumBalance: v }))}
-              hint="Keep every included charm at least this level before specializing. Leave 0 for no minimum."
             />
             <Field
               label="Optimization goal"
@@ -619,72 +700,93 @@ export function CharmStatPlanner() {
                 <option value="custom">Custom</option>
               </select>
             </Field>
-            <Field
-              label="Amplification factor"
-              value={inputs.amplification}
-              onChange={(v) => setInputs((c) => ({ ...c, amplification: v }))}
-              step="0.05"
-              min="1"
-              max="2"
-              hint="Strengthens the difference between troop priorities. 1 means no amplification."
-            />
-            {Object.keys(inputs.troopWeights).map((key) => (
-              <Field
-                key={key}
-                label={`${key} weight`}
-                value={inputs.troopWeights[key]}
-                onChange={(v) =>
-                  setInputs((c) => ({
-                    ...c,
-                    profile: "custom",
-                    troopWeights: { ...c.troopWeights, [key]: v },
-                  }))
-                }
-              />
-            ))}
-            {Object.keys(inputs.statWeights).map((key) => (
-              <Field
-                key={key}
-                label={`${key} weight`}
-                value={inputs.statWeights[key]}
-                onChange={(v) =>
-                  setInputs((c) => ({
-                    ...c,
-                    statWeights: { ...c.statWeights, [key]: v },
-                  }))
-                }
-              />
-            ))}
           </div>
+          <AdvancedSettings title="Advanced priority controls">
+            <div className={styles.grid}>
+              <Field
+                label="Minimum balance constraint"
+                value={inputs.minimumBalance}
+                onChange={(v) =>
+                  setInputs((c) => ({ ...c, minimumBalance: v }))
+                }
+                hint="Keep every included charm at least this level before specializing. Leave 0 for no minimum."
+              />
+              <Field
+                label="Amplification factor"
+                value={inputs.amplification}
+                onChange={(v) => setInputs((c) => ({ ...c, amplification: v }))}
+                step="0.05"
+                min="1"
+                max="2"
+                hint="Strengthens the difference between troop priorities. 1 means no amplification."
+              />
+              {Object.keys(inputs.troopWeights).map((key) => (
+                <Field
+                  key={key}
+                  label={`${key} weight`}
+                  value={inputs.troopWeights[key]}
+                  onChange={(v) =>
+                    setInputs((c) => ({
+                      ...c,
+                      profile: "custom",
+                      troopWeights: { ...c.troopWeights, [key]: v },
+                    }))
+                  }
+                />
+              ))}
+              {Object.keys(inputs.statWeights).map((key) => (
+                <Field
+                  key={key}
+                  label={`${key} weight`}
+                  value={inputs.statWeights[key]}
+                  onChange={(v) =>
+                    setInputs((c) => ({
+                      ...c,
+                      statWeights: { ...c.statWeights, [key]: v },
+                    }))
+                  }
+                />
+              ))}
+            </div>
+          </AdvancedSettings>
         </div>
         <div className={styles.section}>
-          <h2>All 18 charms</h2>
-          {inputs.charms.map((charm) => (
-            <div className={styles.row} key={charm.id}>
-              <strong>
-                {charm.type} #{charm.number}
-              </strong>
-              <Field
-                label="Current"
-                value={charm.current}
-                onChange={(v) =>
-                  updateCharm(charm.id, "current", Math.min(22, v))
-                }
-              />
-              <Field
-                label="Target"
-                value={charm.target}
-                onChange={(v) =>
-                  updateCharm(
-                    charm.id,
-                    "target",
-                    Math.max(charm.current, Math.min(22, v)),
-                  )
-                }
-              />
-              <span className={styles.note}>Health + Lethality</span>
-            </div>
-          ))}
+          <SectionHeading
+            title="Charm levels"
+            description="Work through one troop type at a time. Every charm raises Health and Lethality together."
+          />
+          <div className={styles.groupGrid}>
+            {["Infantry", "Cavalry", "Archer"].map((troop) => (
+              <section className={styles.equipmentGroup} key={troop}>
+                <h3>{troop}</h3>
+                {inputs.charms
+                  .filter((charm) => charm.type === troop)
+                  .map((charm) => (
+                    <div className={styles.compactRow} key={charm.id}>
+                      <strong>Charm {charm.number}</strong>
+                      <Field
+                        label="Current"
+                        value={charm.current}
+                        onChange={(v) =>
+                          updateCharm(charm.id, "current", Math.min(22, v))
+                        }
+                      />
+                      <Field
+                        label="Target"
+                        value={charm.target}
+                        onChange={(v) =>
+                          updateCharm(
+                            charm.id,
+                            "target",
+                            Math.max(charm.current, Math.min(22, v)),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+              </section>
+            ))}
+          </div>
         </div>
       </section>
       <aside className={styles.result}>
@@ -742,107 +844,138 @@ export function CharmStatPlanner() {
 }
 
 function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
+  const groups = hero
+    ? ["Infantry", "Cavalry", "Archer"].map((troop) => ({
+        name: troop,
+        rows: rows
+          .map((row, index) => ({ row, index }))
+          .filter(({ row }) => row.label.startsWith(troop)),
+      }))
+    : [
+        {
+          name: "Governor Gear",
+          rows: rows.map((row, index) => ({ row, index })),
+        },
+      ];
   return (
     <div className={styles.section}>
-      <h2>{hero ? "Twelve hero gear pieces" : "Six Governor Gear pieces"}</h2>
-      {rows.map((row, index) => (
-        <div className={styles.row} key={row.id}>
-          <strong>{row.label}</strong>
-          <Field
-            label="Rarity / tier"
-            type="select"
-            value={row.tier}
-            onChange={() => {}}
-          >
-            {hero ? (
-              <select
-                value={row.tier}
-                onChange={(e) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index ? { ...item, tier: e.target.value } : item,
-                    ),
-                  )
-                }
-              >
-                <option value="Epic">Epic</option>
-                <option value="Mythic">Mythic</option>
-                <option value="Red">Red</option>
-              </select>
-            ) : (
-              <select
-                value={row.tier}
-                onChange={(e) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index ? { ...item, tier: e.target.value } : item,
-                    ),
-                  )
-                }
-              >
-                <option value="">None</option>
-                {GOVERNOR_GEAR_LEVELS.map((item) => (
-                  <option key={item.index} value={item.tier}>
-                    {item.tier}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
-          {hero ? (
-            <>
-              <Field
-                label="Enhancement"
-                value={row.enhancement}
-                onChange={(v) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index ? { ...item, enhancement: v } : item,
-                    ),
-                  )
-                }
-              />
-              <Field
-                label="Mastery"
-                value={row.mastery}
-                onChange={(v) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index ? { ...item, mastery: v } : item,
-                    ),
-                  )
-                }
-              />
-            </>
-          ) : showTarget ? (
-            <Field
-              label="Target tier"
-              value={row.targetTier}
-              onChange={() => {}}
-            >
-              <select
-                value={row.targetTier}
-                onChange={(e) =>
-                  setRows((current) =>
-                    current.map((item, i) =>
-                      i === index
-                        ? { ...item, targetTier: e.target.value }
-                        : item,
-                    ),
-                  )
-                }
-              >
-                <option value="">Choose target</option>
-                {GOVERNOR_GEAR_LEVELS.map((item) => (
-                  <option key={item.index} value={item.tier}>
-                    {item.tier}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          ) : null}
-        </div>
-      ))}
+      <SectionHeading
+        title={hero ? "Hero gear" : "Governor Gear"}
+        description={
+          hero
+            ? "Enter the four equipped pieces for each troop type."
+            : "Enter all six pieces; target tiers appear only in target-planning mode."
+        }
+      />
+      <div className={hero ? styles.groupGrid : styles.singleGroup}>
+        {groups.map((group) => (
+          <section className={styles.equipmentGroup} key={group.name}>
+            <h3>{group.name}</h3>
+            {group.rows.map(({ row, index }) => (
+              <div className={styles.compactRow} key={row.id}>
+                <strong>{row.label}</strong>
+                <Field
+                  label="Rarity / tier"
+                  type="select"
+                  value={row.tier}
+                  onChange={() => {}}
+                >
+                  {hero ? (
+                    <select
+                      value={row.tier}
+                      onChange={(e) =>
+                        setRows((current) =>
+                          current.map((item, i) =>
+                            i === index
+                              ? { ...item, tier: e.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="Epic">Epic</option>
+                      <option value="Mythic">Mythic</option>
+                      <option value="Red">Red</option>
+                    </select>
+                  ) : (
+                    <select
+                      value={row.tier}
+                      onChange={(e) =>
+                        setRows((current) =>
+                          current.map((item, i) =>
+                            i === index
+                              ? { ...item, tier: e.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="">None</option>
+                      {GOVERNOR_GEAR_LEVELS.map((item) => (
+                        <option key={item.index} value={item.tier}>
+                          {item.tier}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+                {hero ? (
+                  <>
+                    <Field
+                      label="Enhancement"
+                      value={row.enhancement}
+                      onChange={(v) =>
+                        setRows((current) =>
+                          current.map((item, i) =>
+                            i === index ? { ...item, enhancement: v } : item,
+                          ),
+                        )
+                      }
+                    />
+                    <Field
+                      label="Mastery"
+                      value={row.mastery}
+                      onChange={(v) =>
+                        setRows((current) =>
+                          current.map((item, i) =>
+                            i === index ? { ...item, mastery: v } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </>
+                ) : showTarget ? (
+                  <Field
+                    label="Target tier"
+                    value={row.targetTier}
+                    onChange={() => {}}
+                  >
+                    <select
+                      value={row.targetTier}
+                      onChange={(e) =>
+                        setRows((current) =>
+                          current.map((item, i) =>
+                            i === index
+                              ? { ...item, targetTier: e.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="">Choose target</option>
+                      {GOVERNOR_GEAR_LEVELS.map((item) => (
+                        <option key={item.index} value={item.tier}>
+                          {item.tier}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                ) : null}
+              </div>
+            ))}
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
@@ -904,8 +1037,22 @@ export function HeroGearPlanner() {
           ]}
           note="Safe XP reforging may move XP out of non-Red gear at no loss. It never reforges Red gear, and Mastery reforging is not automatically recommended."
         />
+        <InputSummary
+          items={[
+            { label: "Profile", value: inputs.activity.replaceAll("-", " ") },
+            { label: "XP", value: fmt(inputs.xp) },
+            { label: "Forgehammers", value: fmt(inputs.forgehammers) },
+            {
+              label: "Next action",
+              value: plan.recommendation?.label || "Add resources",
+            },
+          ]}
+        />
         <div className={styles.section}>
-          <h2>Build profile</h2>
+          <SectionHeading
+            title="Build profile"
+            description="Choose the priority model the optimizer should use when comparing upgrades."
+          />
           <div className={styles.grid}>
             <Field label="Profile" value={inputs.activity} onChange={() => {}}>
               <select
@@ -932,8 +1079,7 @@ export function HeroGearPlanner() {
           </div>
         </div>
         <EquipmentRows hero rows={rows} setRows={setRows} />
-        <div className={styles.section}>
-          <h2>Editable priority profile</h2>
+        <AdvancedSettings title="Advanced profile weights">
           <div className={styles.grid}>
             {Object.entries(inputs.gearWeights).map(([key, value]) => (
               <Field
@@ -950,9 +1096,12 @@ export function HeroGearPlanner() {
               />
             ))}
           </div>
-        </div>
+        </AdvancedSettings>
         <div className={styles.section}>
-          <h2>Available resources</h2>
+          <SectionHeading
+            title="Available resources"
+            description="Enter only resources you are willing to spend in this optimization."
+          />
           <div className={styles.grid}>
             {[
               ["xp", "Enhancement XP"],
@@ -1041,7 +1190,14 @@ export function HeroGearPlanner() {
 export function GovernorGearPlanner() {
   const [rows, setRows] = useState(() =>
     governorPieces.map((label, index) => {
-      const troop = ["Cavalry", "Cavalry", "Infantry", "Infantry", "Archer", "Archer"][index];
+      const troop = [
+        "Cavalry",
+        "Cavalry",
+        "Infantry",
+        "Infantry",
+        "Archer",
+        "Archer",
+      ][index];
       return {
         id: label.toLowerCase(),
         label,
@@ -1090,8 +1246,22 @@ export function GovernorGearPlanner() {
           ]}
           note="Matching three-piece tiers unlock Defense set bonuses; matching all six unlocks Attack bonuses."
         />
+        <InputSummary
+          items={[
+            {
+              label: "Mode",
+              value: inputs.mode === "targets" ? "Target planner" : "Best use",
+            },
+            { label: "Satin", value: fmt(inputs.satin) },
+            { label: "Threads", value: fmt(inputs.threads) },
+            { label: "Planned", value: `${plan.steps.length} upgrades` },
+          ]}
+        />
         <div className={styles.section}>
-          <h2>Mode and inventory</h2>
+          <SectionHeading
+            title="Mode and inventory"
+            description="Choose a planning method, then enter the materials available to this plan."
+          />
           <div className={styles.grid}>
             <Field
               label="Planning mode"
@@ -1124,12 +1294,6 @@ export function GovernorGearPlanner() {
               onChange={(v) => setInputs((c) => ({ ...c, visions: v }))}
             />
             <Field
-              label="Minimum balance"
-              value={inputs.balance}
-              onChange={(v) => setInputs((c) => ({ ...c, balance: v }))}
-              hint="Keeps every piece at or above this tier index before specializing. Leave 0 for no minimum."
-            />
-            <Field
               label="Optimization goal"
               value={inputs.optimizationGoal}
               onChange={() => {}}
@@ -1144,6 +1308,21 @@ export function GovernorGearPlanner() {
                 <option value="events">Optimize events</option>
               </select>
             </Field>
+          </div>
+        </div>
+        <EquipmentRows
+          rows={rows}
+          setRows={setRows}
+          showTarget={inputs.mode === "targets"}
+        />
+        <AdvancedSettings title="Advanced priority controls">
+          <div className={styles.grid}>
+            <Field
+              label="Minimum balance"
+              value={inputs.balance}
+              onChange={(v) => setInputs((c) => ({ ...c, balance: v }))}
+              hint="Keeps every piece at or above this tier index before specializing. Leave 0 for no minimum."
+            />
             <Field
               label="Amplification factor"
               value={inputs.amplification}
@@ -1153,16 +1332,6 @@ export function GovernorGearPlanner() {
               max="2"
               hint="Strengthens the difference between troop priorities. 1 means no amplification."
             />
-          </div>
-        </div>
-        <EquipmentRows
-          rows={rows}
-          setRows={setRows}
-          showTarget={inputs.mode === "targets"}
-        />
-        <div className={styles.section}>
-          <h2>Editable priority profile</h2>
-          <div className={styles.grid}>
             {Object.entries(inputs.troopWeights).map(([key, value]) => (
               <Field
                 key={key}
@@ -1177,7 +1346,7 @@ export function GovernorGearPlanner() {
               />
             ))}
           </div>
-        </div>
+        </AdvancedSettings>
       </section>
       <aside className={styles.result}>
         <h2>Governor Gear plan</h2>
@@ -1266,8 +1435,22 @@ export function MastersPlanner() {
           ]}
           note="Leave a skill target equal to its current level when you do not want to upgrade that skill."
         />
+        <InputSummary
+          items={[
+            { label: "Master", value: inputs.master || "Not selected" },
+            {
+              label: "Relationship",
+              value: `${fmt(inputs.relationshipProgress)} → ${fmt(inputs.targetRelationship)}`,
+            },
+            { label: "Affinity", value: fmt(inputs.affinity) },
+            { label: "Skills", value: `${plan.skillRoadmap.length} planned` },
+          ]}
+        />
         <div className={styles.section}>
-          <h2>Master progression</h2>
+          <SectionHeading
+            title="Master progression"
+            description="Choose the Master and relationship milestone you want to reach."
+          />
           <div className={styles.grid}>
             <Field label="Master" value={inputs.master} onChange={() => {}}>
               <select
@@ -1306,7 +1489,10 @@ export function MastersPlanner() {
           </div>
         </div>
         <div className={styles.section}>
-          <h2>Inventory</h2>
+          <SectionHeading
+            title="Inventory"
+            description="Add the progression materials currently available to you."
+          />
           <div className={styles.grid}>
             <Field
               label="Affinity"
@@ -1326,7 +1512,10 @@ export function MastersPlanner() {
           </div>
         </div>
         <div className={styles.section}>
-          <h2>Skills and partially learned XP</h2>
+          <SectionHeading
+            title="Skill targets"
+            description="Set targets only for the skills you intend to raise; partial XP reduces the next cost."
+          />
           {inputs.skills.map((skill, index) => (
             <div className={styles.row} key={index}>
               <Field
@@ -1411,14 +1600,21 @@ export function MastersPlanner() {
           {fmt(plan.manuscripts)} Manuscripts ({fmt(plan.shortfall.manuscripts)}{" "}
           short).
         </p>
-        {plan.skillRoadmap.length ? <ol className={styles.list}>
-          {plan.skillRoadmap.map((skill) => (
-            <li key={skill.name}>
-              {skill.name}: level {skill.from} → {skill.to} · {fmt(skill.xp)} XP
-              · {fmt(skill.manuscripts)} Manuscripts
-            </li>
-          ))}
-        </ol> : <p className={styles.note}>No skill upgrades selected. Set a target above a skill’s current level to add it to the roadmap.</p>}
+        {plan.skillRoadmap.length ? (
+          <ol className={styles.list}>
+            {plan.skillRoadmap.map((skill) => (
+              <li key={skill.name}>
+                {skill.name}: level {skill.from} → {skill.to} · {fmt(skill.xp)}{" "}
+                XP · {fmt(skill.manuscripts)} Manuscripts
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className={styles.note}>
+            No skill upgrades selected. Set a target above a skill’s current
+            level to add it to the roadmap.
+          </p>
+        )}
         <ExportButton name="master-progression-plan" data={plan} />
       </aside>
     </div>
