@@ -335,6 +335,20 @@ test("master plan returns next relationship milestone", () => {
   assert.equal(result.shortfall.affinity, 660);
 });
 
+test("master plan does not invent skill upgrades when targets are unchanged", () => {
+  const result = calculateMasterPlan({
+    master: "Valora",
+    relationshipProgress: 0,
+    targetRelationship: 10,
+    skills: [
+      { name: "Dance of the Hunt", level: 0, targetLevel: 0, partialXp: 0 },
+    ],
+  });
+  assert.deepEqual(result.skillRoadmap, []);
+  assert.equal(result.xp, 0);
+  assert.equal(result.manuscripts, 0);
+});
+
 test("pet progression totals verified rows and current inventory shortfalls", () => {
   const result = calculatePetProgression(
     {
