@@ -7,7 +7,8 @@ import SiteAtmosphere from './SiteAtmosphere';
 
 function wantsChrome(pathname) {
   if (pathname === '/gate') return false;
-  if (pathname.startsWith('/admin/dashboard')) return false;
+  // Admin login + full war-room shell own their chrome; public header/footer look wrong here.
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) return false;
   return true;
 }
 
