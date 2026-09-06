@@ -2,7 +2,8 @@ import { cookies } from 'next/headers';
 import { readMemberSession } from '../../lib/memberAuth';
 import { isAdminRequest } from '../../lib/adminAuth';
 import { guidesTable } from '../../lib/guideAccess.mjs';
-import { createAdminSupabaseClient } from '../../lib/adminSupabase';
+import { getCollection } from '../../lib/mongo';
+import { COLLECTIONS } from '../../lib/mongoCollections';
 import Link from 'next/link';
 import GuidesDirectory from './GuidesDirectory';
 import { guideCategories, guideSummary } from '../../lib/guideValidation.mjs';
@@ -15,20 +16,34 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
+function guidesCollectionName() {
+  const table = typeof guidesTable === 'function' ? guidesTable() : 'kingdom_guides';
+  return table === 'guide_content' ? COLLECTIONS.GUIDE_CONTENT : COLLECTIONS.KINGDOM_GUIDES;
+}
+
 async function loadGuides() {
   const request = { cookies: await cookies() };
-  const allowed = Boolean(await readMemberSession(request)) || await isAdminRequest(request);
-  const supabase = createAdminSupabaseClient();
-  let query = supabase
-    .from(guidesTable())
-    .select('slug, title, category, description, body, access_level, position, updated_at')
-    .eq('is_published', true)
-    .order('position', { ascending: true })
-    .order('title', { ascending: true });
-  if (!allowed) query = query.eq('access_level', 'public');
-  const { data, error } = await query;
+  const allowed = Boolean(await readMemberSession(request)) || (await isAdminRequest(request));
+  const coll = await getCollection(guidesCollectionName());
+  const filter = { is_published: true };
+  if (!allowed) filter.access_level = 'public';
 
-  if (error) throw error;
+  const data = await coll
+    .find(filter)
+    .project({
+      slug: 1,
+      title: 1,
+      category: 1,
+      description: 1,
+      body: 1,
+      access_level: 1,
+      position: 1,
+      updated_at: 1,
+      _id: 0,
+    })
+    .sort({ position: 1, title: 1 })
+    .toArray();
+
   return (data || []).map(guideSummary);
 }
 
@@ -43,9 +58,9 @@ export default async function GuidesPage({ searchParams }) {
   let categories = [];
   try {
     guides = await loadGuides();
-    const result = await createAdminSupabaseClient().from('guide_categories').select('name').order('name');
-    if (result.error) throw result.error;
-    categories = guideCategories(guides, result.data || []);
+    const catColl = await getCollection('guide_categories');
+    const catRows = await catColl.find({}).project({ name: 1, _id: 0 }).sort({ name: 1 }).toArray();
+    categories = guideCategories(guides, catRows || []);
   } catch (error) {
     console.error('guides page load failed', error);
     loadError = 'Guides could not be loaded. Please try again.';
