@@ -168,6 +168,33 @@
   padding: 10px 0;
   border-bottom: 1px solid var(--edge);
 }
+.miniLock,
+.lockControl {
+  display: flex !important;
+  align-items: center;
+  flex-direction: row !important;
+  gap: 6px;
+  color: var(--parchment-dim) !important;
+  font-size: 8px !important;
+  text-transform: none !important;
+}
+.miniLock input,
+.lockControl input {
+  width: 14px !important;
+  height: 14px;
+  padding: 0;
+}
+.lockControl {
+  margin-top: 12px;
+}
+.guideNote {
+  margin: -8px 0 16px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--brass);
+  color: var(--parchment-dim);
+  font-size: 10px;
+  line-height: 1.5;
+}
 .compactRow:last-child {
   border-bottom: 0;
 }

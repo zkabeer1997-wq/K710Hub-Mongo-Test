@@ -18,6 +18,7 @@ import {
 } from "../../lib/accountProgression.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
 import DataAssumptions from "./DataAssumptions";
+import { DataLabel, FirstUseGuide, PlannerProgress, SaveToRoadmap } from "./PlannerExperience";
 import styles from "./AccountProgressionPlanner.module.css";
 
 const SOURCE_KEYS = [
@@ -56,6 +57,9 @@ const initialInputs = {
     troopCount: 0,
   },
   manual: [],
+  activeView: "upgrades",
+  completedChecklist: {},
+  completionHistory: [],
 };
 const KVK_INVENTORY_FIELDS = [
   ["intelMissions", "Intel Missions"],
@@ -86,16 +90,11 @@ function download(name, content, type) {
   URL.revokeObjectURL(url);
 }
 
-function SaveState({ persistence }) {
-  return (
-    <p className={styles.save} aria-live="polite">
-      {persistence.message}
-    </p>
-  );
-}
-
-export default function AccountProgressionPlanner({ memberId = "" }) {
-  const [inputs, setInputs] = useState(initialInputs);
+export default function AccountProgressionPlanner({ memberId = "", initialGoal = "" }) {
+  const [inputs, setInputs] = useState(() => ({
+    ...initialInputs,
+    ...(initialGoal === "kvk" ? { goal: "kvk", objective: "kvkPoints", systemWeights: { ...ACCOUNT_GOAL_PROFILES.kvk.weights } } : initialGoal === "stats" ? { objective: "stats" } : {}),
+  }));
   const [savedStates, setSavedStates] = useState({});
   const [sourceStatus, setSourceStatus] = useState("loading");
   const [sourceMessage, setSourceMessage] = useState(
@@ -120,6 +119,9 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
         ...(saved.kvkInventory || {}),
       },
       manual: Array.isArray(saved.manual) ? saved.manual : [],
+      activeView: saved.activeView || "upgrades",
+      completedChecklist: saved.completedChecklist || {},
+      completionHistory: Array.isArray(saved.completionHistory) ? saved.completionHistory : [],
     }));
   }, []);
   const persistence = useToolPersistence({
@@ -184,6 +186,14 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
     () => new Set(opportunities.map((item) => item.system)),
     [opportunities],
   );
+  const relevantSystems = useMemo(
+    () => ACCOUNT_SYSTEMS.filter((system) => (inputs.systemWeights[system.id] ?? 1) > 0),
+    [inputs.systemWeights],
+  );
+  const connectedRelevant = relevantSystems.filter((system) => connected.has(system.id));
+  const setupPercent = Math.round((connectedRelevant.length / Math.max(1, relevantSystems.length)) * 100);
+  const exactKvkSystems = [...new Set(plan.selected.filter((item) => item.bestKvkDay && item.kvkPoints != null).map((item) => item.systemLabel))];
+  const unavailableKvkSystems = [...new Set(plan.kvkSchedule.noExactScore.map((item) => item.systemLabel))];
   const update = (key, value) =>
     setInputs((current) => ({ ...current, [key]: value }));
   const chooseGoal = (goal) =>
@@ -219,6 +229,20 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
         [key]: Math.max(0, Number(value) || 0),
       },
     }));
+  const toggleChecklist = (day, item) => {
+    const key = `${day}:${item}`;
+    setInputs((current) => ({
+      ...current,
+      completedChecklist: { ...current.completedChecklist, [key]: !current.completedChecklist[key] },
+    }));
+  };
+  const completeDay = (day) => setInputs((current) => ({
+    ...current,
+    completionHistory: [
+      ...current.completionHistory.filter((entry) => entry.day !== day.day || entry.kvkStartDate !== current.kvkStartDate),
+      { day: day.day, date: day.date || today(), kvkStartDate: current.kvkStartDate, points: day.points, completedAt: new Date().toISOString() },
+    ].slice(-25),
+  }));
   const addManual = () =>
     update("manual", [
       ...inputs.manual,
@@ -241,6 +265,18 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
 
   return (
     <div className={styles.workspace}>
+      <PlannerProgress current={plan.selected.length ? 5 : connected.size ? 3 : 1} />
+      <FirstUseGuide
+        toolKey="account-progression"
+        title="Build your account plan"
+        steps={[
+          "Connect only the planners relevant to your goal; all eleven are not required.",
+          "Choose whether to prioritize account balance, KvK points, or verified stat gains.",
+          "Use the three views to upgrade, execute each KvK day, and resolve shortages.",
+        ]}
+        terms={[["Connected plan", "A source optimizer with a saved target that Phase 4 can rank."], ["Exact points", "Calculated only when both the scoring rule and your quantity are known."], ["Subjective priority", "An editable preference used for ordering, never presented as a game fact."]]}
+        onDemo={() => setInputs((current) => ({ ...current, goal: "kvk", objective: "kvkPoints", kvkStartDate: today(), dailyChestTarget: 200000 }))}
+      />
       <section className={styles.intro}>
         <div>
           <span className={styles.eyebrow}>Phase 4 · Unified planning</span>
@@ -266,7 +302,7 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
 
       <div className={styles.layout}>
         <aside className={styles.controls}>
-          <SaveState persistence={persistence} />
+          <SaveToRoadmap persistence={persistence} />
           <section className={styles.panel}>
             <header className={styles.panelHead}>
               <div>
@@ -587,6 +623,24 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
         </aside>
 
         <main className={styles.results}>
+          <section className={styles.readiness}>
+            <div className={styles.readinessHead}>
+              <div><small>Setup readiness for {ACCOUNT_GOAL_PROFILES[inputs.goal]?.label || "your goal"}</small><strong>{setupPercent}% ready</strong></div>
+              <span>{connectedRelevant.length} of {relevantSystems.length} relevant systems connected</span>
+            </div>
+            <div className={styles.readinessBar}><span style={{ width: `${setupPercent}%` }} /></div>
+            <div className={styles.coverageGrid}>
+              <div><b>Exact KvK coverage</b><span>{exactKvkSystems.length ? exactKvkSystems.join(" · ") : "No exact scoring source is connected yet"}</span></div>
+              <div><b>Timing known; points unavailable</b><span>{unavailableKvkSystems.length ? unavailableKvkSystems.join(" · ") : "None in the selected plan"}</span></div>
+              <div><b>Still optional</b><span>{relevantSystems.filter((system) => !connected.has(system.id)).map((system) => system.label).join(" · ") || "All relevant systems connected"}</span></div>
+            </div>
+          </section>
+
+          <nav className={styles.viewTabs} aria-label="Account planner views">
+            {[["upgrades", "What should I upgrade?"], ["calendar", "What should I do each KvK day?"], ["shortages", "What resources am I missing?"]].map(([value, label]) => (
+              <button key={value} type="button" aria-pressed={inputs.activeView === value} onClick={() => update("activeView", value)}>{label}</button>
+            ))}
+          </nav>
           <section className={styles.summary}>
             <div>
               <small>Connected systems</small>
@@ -611,7 +665,7 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
             </div>
           </section>
 
-          <section className={styles.planPanel}>
+          {inputs.activeView === "upgrades" ? <section className={styles.planPanel}>
             <header className={styles.resultHead}>
               <div>
                 <span className={styles.eyebrow}>Your next best actions</span>
@@ -687,6 +741,10 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                             : "Source planner"}
                         </span>
                       </div>
+                      <div className={styles.dataLabels}>
+                        <DataLabel type={item.verifiedStatus === "manual" ? "input" : "exact"}>{item.verifiedStatus === "manual" ? "member-entered target" : "source-tool calculation"}</DataLabel>
+                        <DataLabel type="subjective">ranking weights</DataLabel>
+                      </div>
                       <h3>{item.title}</h3>
                       <p className={styles.benefit}>{item.benefit}</p>
                       {item.statDimensions.length ? (
@@ -735,9 +793,9 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                 ))}
               </ol>
             )}
-          </section>
+          </section> : null}
 
-          {plan.selected.length ? (
+          {plan.selected.length && inputs.activeView === "calendar" ? (
             <section className={`${styles.planPanel} ${styles.kvkPanel}`}>
               <header className={styles.resultHead}>
                 <div>
@@ -773,7 +831,7 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                         <strong>{day.date || day.focus}</strong>
                         {day.date ? <small>{day.focus}</small> : null}
                       </div>
-                      <b>{fmt(day.points)} pts</b>
+                      <b>{day.actions.length ? `${fmt(day.points)} pts` : "No actions assigned"}</b>
                     </header>
                     <div
                       className={styles.goalBar}
@@ -792,7 +850,9 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                     </small>
                     <ul className={styles.dayChecklist}>
                       {day.checklist.map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}>
+                          <label><input type="checkbox" checked={Boolean(inputs.completedChecklist[`${day.day}:${item}`])} onChange={() => toggleChecklist(day.day, item)} /> {item}</label>
+                        </li>
                       ))}
                     </ul>
                     {day.actions.length ? (
@@ -802,7 +862,7 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                             <strong>{item.title}</strong>
                             <span>
                               {item.kvkPoints == null
-                                ? "Correct day; exact points need more data"
+                                ? "Timing known; exact points unavailable"
                                 : `${fmt(item.kvkPoints)} points`}
                             </span>
                             <small>{item.kvkFormula}</small>
@@ -818,6 +878,9 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                     ) : (
                       <p>No connected upgrade is assigned to this day yet.</p>
                     )}
+                    <button type="button" className={styles.completeDay} onClick={() => completeDay(day)}>
+                      {inputs.completionHistory.some((entry) => entry.day === day.day && entry.kvkStartDate === inputs.kvkStartDate) ? "Day completed ✓" : "Mark day complete"}
+                    </button>
                   </article>
                 ))}
               </div>
@@ -833,7 +896,7 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
             </section>
           ) : null}
 
-          {plan.selected.length ? (
+          {plan.selected.length && inputs.activeView === "shortages" ? (
             <div className={styles.detailGrid}>
               <section className={styles.planPanel}>
                 <header className={styles.miniHead}>
@@ -869,10 +932,8 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                   <ul className={styles.simpleList}>
                     {plan.bottlenecks.map((item, index) => (
                       <li key={`${item.system}-${item.resource}-${index}`}>
-                        <strong>
-                          {fmt(item.amount)} {item.resource}
-                        </strong>
-                        <span>{item.system}</span>
+                        <strong>{fmt(item.amount)} {item.resource}</strong>
+                        <span>{item.system} · <Link href={`${ACCOUNT_SYSTEMS.find((system) => system.label === item.system)?.href || "/tools"}${queryFor(memberId)}`}>Resolve shortage →</Link></span>
                       </li>
                     ))}
                   </ul>
@@ -882,6 +943,10 @@ export default function AccountProgressionPlanner({ memberId = "" }) {
                     planner.
                   </p>
                 )}
+              </section>
+              <section className={styles.planPanel}>
+                <header className={styles.miniHead}><span>✓</span><h2>KvK completion history</h2></header>
+                {inputs.completionHistory.length ? <ul className={styles.simpleList}>{[...inputs.completionHistory].reverse().map((entry) => <li key={`${entry.kvkStartDate}-${entry.day}-${entry.completedAt}`}><strong>Day {entry.day} · {entry.date}</strong><span>{fmt(entry.points)} exact points planned</span></li>)}</ul> : <p className={styles.help}>Completed KvK days will appear here after you mark them complete.</p>}
               </section>
               <section className={styles.planPanel}>
                 <header className={styles.miniHead}>

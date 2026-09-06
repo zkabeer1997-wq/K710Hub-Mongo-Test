@@ -9,6 +9,7 @@ import {
   optimizeEssencePacks,
 } from "../../lib/flamedragonShop.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
+import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
 import {
   allocateShopCurrency,
   maximizeCurrencyUnderBudget,
@@ -208,6 +209,7 @@ export default function FlamedragonShopOptimizer({ configuration }) {
 
   return (
     <section className="ft-optimizer">
+      <SaveToRoadmap persistence={persistence} />
       <header className="ft-summary-head">
         <div>
           <h2>Dragon’s Caravan Purchase Planner</h2>

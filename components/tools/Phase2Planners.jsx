@@ -18,6 +18,13 @@ import {
   PETS,
 } from "../../lib/phase2Data.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
+import {
+  DataLabel,
+  FirstUseGuide,
+  NextAction,
+  PlannerProgress,
+  SaveToRoadmap,
+} from "./PlannerExperience";
 import styles from "./Phase2Planner.module.css";
 
 const number = (value) => Math.max(0, Number(value) || 0);
@@ -108,11 +115,7 @@ function ExportButton({ name, data }) {
   );
 }
 function SaveState({ persistence }) {
-  return (
-    <p className={styles.save} aria-live="polite">
-      {persistence.message}
-    </p>
-  );
+  return <SaveToRoadmap persistence={persistence} />;
 }
 function Field({
   label,
@@ -145,17 +148,19 @@ function Field({
   );
 }
 
-function PlannerGuide({ steps, note }) {
+function PlannerGuide({ steps, note, toolKey = "planner", terms = [], onDemo }) {
   return (
-    <div className={styles.guide}>
-      <h2>Start here</h2>
-      <ol>
-        {steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
-      {note ? <p>{note}</p> : null}
-    </div>
+    <>
+      <PlannerProgress current={4} />
+      <FirstUseGuide
+        toolKey={toolKey}
+        title="Build a recommendation in three steps"
+        steps={steps}
+        terms={terms}
+        onDemo={onDemo}
+      />
+      {note ? <p className={styles.guideNote}>{note}</p> : null}
+    </>
   );
 }
 
@@ -232,12 +237,15 @@ export function TtgProductionPlanner({
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
         <PlannerGuide
+          toolKey="ttg-production"
           steps={[
             "Enter the True Gold you have now and the amount you refuse to spend.",
             "Set today’s refinement attempt, your daily limit, and the TTG your building or research plan needs.",
             "Read the daily schedule on the right; extend the horizon if the target says Beyond horizon.",
           ]}
           note="The planner protects both your reserve and any True Gold required by the selected construction plan."
+          terms={[["True Gold", "The base resource consumed by refinement and eligible construction."], ["Tempered True Gold", "The refined resource required by advanced construction."], ["Risk mode", "Chooses guaranteed, conservative, or expected refinement output."]]}
+          onDemo={() => setInputs((current) => ({ ...current, trueGold: 5000, temperedTrueGold: 20, dailyIncome: 200, reserve: 500, requiredTempered: 60, refinementsPerDay: 3, horizonDays: 7 }))}
         />
         <InputSummary
           items={[
@@ -369,6 +377,15 @@ export function TtgProductionPlanner({
         </div>
       </section>
       <aside className={styles.result}>
+        <NextAction
+          title={result.schedule?.[0]?.runs ? `Complete ${result.schedule[0].runs} refinement${result.schedule[0].runs === 1 ? "" : "s"} today` : "Protect more True Gold or extend the plan"}
+          reason="Refinement itself does not earn KvK Preparation points; complete it before the event so TTG is ready for an eligible construction day."
+          before={`${fmt(inputs.temperedTrueGold)} TTG`}
+          after={`${fmt(result.schedule?.[0]?.temperedTotal || inputs.temperedTrueGold)} TTG`}
+          resources={`${fmt(result.schedule?.[0]?.trueGoldSpent || 0)} True Gold`}
+          remaining={`${fmt(result.schedule?.[0]?.trueGoldRemaining ?? inputs.trueGold)} True Gold`}
+        />
+        <DataLabel type={inputs.riskMode === "expected" ? "estimated" : "exact"}>{inputs.riskMode} output model</DataLabel>
         <h2>Production schedule</h2>
         <div className={styles.metrics}>
           <div className={styles.metric}>
@@ -426,6 +443,7 @@ export function PetProgressionPlanner({ memberId = "" }) {
     targetLevel: 1,
     currentAdvancement: 0,
     targetAdvancement: 0,
+    locked: false,
     budget: 0,
     deadline: "",
     inventory: Object.fromEntries(inventoryKeys.map((key) => [key, 0])),
@@ -477,12 +495,15 @@ export function PetProgressionPlanner({ memberId = "" }) {
           </div>
         </div>
         <PlannerGuide
+          toolKey="pet-progression"
           steps={[
             "Choose the pet, then enter its current and desired levels.",
             "Add the Food, Manuals, Potions, and Medallions already in your bag.",
             "Use the roadmap and shortfall on the right, or send the missing materials to the Pet Pack Optimizer.",
           ]}
           note="Advancement materials are included automatically when the level path crosses an advancement milestone."
+          terms={[["Advancement", "The milestone step that unlocks a pet's next level range."], ["Shortfall", "The materials still missing after your current inventory is applied."]]}
+          onDemo={() => setInputs((current) => ({ ...current, pet: "Gray Wolf", generation: 1, currentLevel: 30, targetLevel: 40, inventory: { food: 18000, manuals: 25, potions: 10, medallions: 2 }, locked: false }))}
         />
         <InputSummary
           items={[
@@ -498,6 +519,14 @@ export function PetProgressionPlanner({ memberId = "" }) {
             description="Choose one pet and the exact level range you want to plan."
           />
           <div className={styles.grid}>
+            <Field label="Goal preset" value="custom" onChange={() => {}}>
+              <select defaultValue="custom" onChange={(event) => {
+                const max = PETS.find((pet) => pet.name === inputs.pet)?.maxLevel || 100;
+                if (event.target.value === "next") update("targetLevel", Math.min(max, inputs.currentLevel + 1));
+                if (event.target.value === "ten") update("targetLevel", Math.min(max, inputs.currentLevel + 10));
+                if (event.target.value === "milestone") update("targetLevel", Math.min(max, Math.ceil((inputs.currentLevel + 1) / 10) * 10));
+              }}><option value="custom">Custom target</option><option value="next">Next level</option><option value="ten">Next 10 levels</option><option value="milestone">Next advancement milestone</option></select>
+            </Field>
             <Field label="Pet name/type" value={inputs.pet} onChange={() => {}}>
               <select
                 value={inputs.pet}
@@ -536,6 +565,7 @@ export function PetProgressionPlanner({ memberId = "" }) {
               min="1"
             />
           </div>
+          <label className={styles.lockControl}><input type="checkbox" checked={inputs.locked} onChange={(event) => update("locked", event.target.checked)} /> Protect this pet from recommendations</label>
         </div>
         <div className={styles.section}>
           <SectionHeading
@@ -560,6 +590,14 @@ export function PetProgressionPlanner({ memberId = "" }) {
         </div>
       </section>
       <aside className={styles.result}>
+        <NextAction
+          title={result.steps[0] ? `${inputs.pet}: level ${result.steps[0].fromLevel} → ${result.steps[0].toLevel}` : inputs.locked ? `${inputs.pet} is protected` : "Choose a higher target level"}
+          reason={result.steps[0] ? "This is the first required level step on the path to your selected target." : "Set a target or remove protection to generate a recommendation."}
+          before={`Level ${inputs.currentLevel}`}
+          after={`Level ${result.steps[0]?.toLevel || inputs.currentLevel}`}
+          resources={result.steps[0] ? `${fmt(result.steps[0].food)} Food` : "None"}
+          remaining={`${fmt(Math.max(0, inputs.inventory.food - (result.steps[0]?.food || 0)))} Food`}
+        />
         <h2>Progression roadmap</h2>
         <div className={styles.metrics}>
           {inventoryKeys.map((key) => (
@@ -665,12 +703,15 @@ export function CharmStatPlanner({ memberId = "" }) {
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
         <PlannerGuide
+          toolKey="governor-charm-stats"
           steps={[
             "Enter the Charm Guides and Designs you can spend.",
             "Choose a build profile, then set each charm’s current and target level.",
             "Follow the ordered upgrades on the right; the sequence never spends more materials than you entered.",
           ]}
           note="Each charm raises Health and Lethality together. Profiles are priorities, not game rules, and every weight remains editable."
+          terms={[["Guides", "Charm upgrade material."], ["Designs", "Charm upgrade material consumed alongside Guides."], ["Profile", "An editable priority preset, not a game rule."]]}
+          onDemo={() => setInputs((current) => ({ ...current, guides: 900, designs: 900, profile: "growth", charms: current.charms.map((charm) => ({ ...charm, current: charm.type === "Infantry" ? 5 : 4, target: 8, locked: false })) }))}
         />
         <InputSummary
           items={[
@@ -813,6 +854,7 @@ export function CharmStatPlanner({ memberId = "" }) {
                           updateCharm(charm.id, "current", Math.min(22, v))
                         }
                       />
+                      <label className={styles.miniLock}><input aria-label={`Protect ${charm.type} charm ${charm.number}`} type="checkbox" checked={Boolean(charm.locked)} onChange={(event) => updateCharm(charm.id, "locked", event.target.checked)} /> Protect</label>
                       <Field
                         label="Target"
                         value={charm.target}
@@ -832,6 +874,15 @@ export function CharmStatPlanner({ memberId = "" }) {
         </div>
       </section>
       <aside className={styles.result}>
+        <NextAction
+          title={ranked.upgrades[0] ? `${ranked.upgrades[0].type} Charm ${ranked.upgrades[0].number} → level ${ranked.upgrades[0].level}` : "Add Guides and Designs"}
+          reason={ranked.upgrades[0] ? "This is the highest weighted Health and Lethality gain that fits your spendable inventory." : "The optimizer needs spendable inventory and at least one unlocked target."}
+          before={ranked.upgrades[0] ? `Level ${ranked.upgrades[0].level - 1}` : "Current charm levels"}
+          after={ranked.upgrades[0] ? `Level ${ranked.upgrades[0].level}` : "No affordable upgrade"}
+          resources={ranked.upgrades[0] ? `${ranked.upgrades[0].guides} Guides · ${ranked.upgrades[0].designs} Designs` : "None"}
+          remaining={`${fmt(ranked.remaining.guides)} Guides · ${fmt(ranked.remaining.designs)} Designs`}
+        />
+        <DataLabel type="exact">game dataset + member inventory</DataLabel><DataLabel type="subjective">profile weights</DataLabel>
         <h2>Recommended upgrade sequence</h2>
         <div className={styles.metrics}>
           <div className={styles.metric}>
@@ -933,6 +984,7 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
                     {hero ? row.label.replace(`${group.name} `, "") : row.label}
                   </span>
                 </strong>
+                <label className={styles.miniLock}><input aria-label={`Protect ${row.label}`} type="checkbox" checked={Boolean(row.locked)} onChange={(event) => setRows((current) => current.map((item, i) => i === index ? { ...item, locked: event.target.checked } : item))} /> Protect</label>
                 <Field
                   label="Rarity / tier"
                   type="select"
@@ -1089,12 +1141,15 @@ export function HeroGearPlanner() {
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
         <PlannerGuide
+          toolKey="hero-gear"
           steps={[
             "Choose a profile that matches your goal, or edit the six weights for a custom build.",
             "Enter the rarity, Enhancement level, and Mastery level shown on each of your 12 pieces.",
             "Add the resources in your bag, then follow the recommended upgrades on the right.",
           ]}
           note="Safe XP reforging may move XP out of non-Red gear at no loss. It never reforges Red gear, and Mastery reforging is not automatically recommended."
+          terms={[["Enhancement XP", "XP used to raise a Hero Gear piece's enhancement level."], ["Mastery", "A separate Hero Gear progression track using Forgehammers and Mythic pieces."], ["Protect", "Excludes a piece from every recommendation and reforge."]]}
+          onDemo={() => { setRows((current) => current.map((row, index) => ({ ...row, tier: "Mythic", enhancement: index % 4 === 0 ? 40 : 20, mastery: index % 3, locked: false }))); setInputs((current) => ({ ...current, xp: 180000, forgehammers: 120, mythicPieces: 8, mithril: 4 })); }}
         />
         <InputSummary
           items={[
@@ -1190,6 +1245,15 @@ export function HeroGearPlanner() {
         </div>
       </section>
       <aside className={styles.result}>
+        <NextAction
+          title={plan.recommendation ? `${plan.recommendation.label} → +${plan.recommendation.targetLevel}` : "Add spendable Hero Gear resources"}
+          reason={plan.recommendation ? `This unlocked piece gives the strongest ${plan.recommendation.stat} return for your selected build profile.` : "Your current setup is saved; inventory is needed to calculate an affordable next action."}
+          before={plan.recommendation ? `Enhancement ${plan.recommendation.enhancement}` : "Current gear"}
+          after={plan.recommendation ? `Enhancement ${plan.recommendation.targetLevel}` : "No affordable upgrade"}
+          resources={plan.recommendation ? `${fmt(plan.recommendation.xp)} XP · ${fmt(plan.recommendation.mithril)} Mithril` : "None"}
+          remaining={`${fmt(plan.remaining.xp)} XP · ${fmt(plan.remaining.forgehammers)} Forgehammers`}
+        />
+        <DataLabel type="exact">costs and stat curve</DataLabel><DataLabel type="subjective">build profile</DataLabel>
         <h2>Upgrade plan</h2>
         {plan.recommendation ? (
           <div className={styles.metrics}>
@@ -1298,12 +1362,15 @@ export function GovernorGearPlanner() {
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
         <PlannerGuide
+          toolKey="governor-gear"
           steps={[
             "Choose Target cost planner to price specific tiers, or Best use of materials to optimize your inventory.",
             "Set the current tier for all six pieces. In target mode, also choose the tier you want each piece to reach.",
             "Enter your materials and follow the ordered plan on the right.",
           ]}
           note="Matching three-piece tiers unlock Defense set bonuses; matching all six unlocks Attack bonuses."
+          terms={[["Satin", "Governor Gear upgrade material."], ["Gilded Thread", "Governor Gear upgrade material."], ["Protect", "Keeps a piece out of the upgrade order."]]}
+          onDemo={() => { setRows((current) => current.map((row, index) => ({ ...row, tier: index < 2 ? "Purple" : "Blue 3★", targetTier: "Purple 1★", locked: false }))); setInputs((current) => ({ ...current, satin: 900, threads: 180, visions: 12 })); }}
         />
         <InputSummary
           items={[
@@ -1408,6 +1475,15 @@ export function GovernorGearPlanner() {
         </AdvancedSettings>
       </section>
       <aside className={styles.result}>
+        <NextAction
+          title={plan.steps[0] ? `${plan.steps[0].piece} → ${plan.steps[0].tier}` : "Choose targets or add Governor Gear materials"}
+          reason={plan.steps[0] ? "This is the first unlocked upgrade in the selected target or inventory plan." : "No affordable unlocked upgrade is currently available."}
+          before={plan.steps[0] ? rows.find((row) => row.label === plan.steps[0].piece)?.tier || "None" : "Current tiers"}
+          after={plan.steps[0]?.tier || "No change"}
+          resources={plan.steps[0] ? `${fmt(plan.steps[0].satin)} Satin · ${fmt(plan.steps[0].threads)} Threads · ${fmt(plan.steps[0].visions)} Visions` : "None"}
+          remaining={plan.remaining ? `${fmt(plan.remaining.satin)} Satin · ${fmt(plan.remaining.threads)} Threads` : `${fmt(Math.max(0, inputs.satin - plan.totals.satin))} Satin · ${fmt(Math.max(0, inputs.threads - plan.totals.threads))} Threads`}
+        />
+        <DataLabel type="exact">tier costs and stats</DataLabel><DataLabel type="subjective">troop priorities</DataLabel>
         <h2>Governor Gear plan</h2>
         <div className={styles.metrics}>
           {["satin", "threads", "visions"].map((key) => (
@@ -1461,6 +1537,7 @@ export function MastersPlanner() {
     emblems: 0,
     manuscripts: 0,
     learningSpeed: 0,
+    locked: false,
     skills: MASTER_DATA.Valora.skills.map((name) => ({
       name,
       level: 0,
@@ -1501,12 +1578,15 @@ export function MastersPlanner() {
           </div>
         ) : null}
         <PlannerGuide
+          toolKey="masters"
           steps={[
             "Choose a Master and enter your current and target relationship levels.",
             "Add the Affinity, Emblems, and Manuscripts already in your inventory.",
             "For any skill you plan to raise, enter its current level, target level, and XP already learned toward the next level.",
           ]}
           note="Leave a skill target equal to its current level when you do not want to upgrade that skill."
+          terms={[["Affinity", "Relationship progression resource."], ["Emblem", "Relationship milestone resource that can score during KvK Prep."], ["Manuscript", "Master skill resource that can score during KvK Prep."]]}
+          onDemo={() => setInputs((current) => ({ ...current, master: "Valora", relationshipProgress: 5, targetRelationship: 10, affinity: 500, emblems: 8, manuscripts: 120, locked: false }))}
         />
         <InputSummary
           items={[
@@ -1525,6 +1605,13 @@ export function MastersPlanner() {
             description="Choose the Master and relationship milestone you want to reach."
           />
           <div className={styles.grid}>
+            <Field label="Goal preset" value="custom" onChange={() => {}}>
+              <select defaultValue="custom" onChange={(event) => {
+                if (event.target.value === "next") update("targetRelationship", Math.min(100, inputs.relationshipProgress + 1));
+                if (event.target.value === "five") update("targetRelationship", Math.min(100, Math.ceil((inputs.relationshipProgress + 1) / 5) * 5));
+                if (event.target.value === "ten") update("targetRelationship", Math.min(100, Math.ceil((inputs.relationshipProgress + 1) / 10) * 10));
+              }}><option value="custom">Custom target</option><option value="next">Next level</option><option value="five">Next 5-level milestone</option><option value="ten">Next 10-level milestone</option></select>
+            </Field>
             <Field label="Master" value={inputs.master} onChange={() => {}}>
               <select
                 value={inputs.master}
@@ -1560,6 +1647,7 @@ export function MastersPlanner() {
               onChange={(v) => update("targetRelationship", Math.min(100, v))}
             />
           </div>
+          <label className={styles.lockControl}><input type="checkbox" checked={inputs.locked} onChange={(event) => update("locked", event.target.checked)} /> Protect this Master from recommendations</label>
         </div>
         <div className={styles.section}>
           <SectionHeading
@@ -1647,6 +1735,15 @@ export function MastersPlanner() {
         </div>
       </section>
       <aside className={styles.result}>
+        <NextAction
+          title={inputs.locked ? `${inputs.master || "Master"} is protected` : `${inputs.master || "Choose a Master"} → relationship ${plan.target.level}`}
+          reason={inputs.locked ? "Remove protection when you want this Master considered again." : `This reaches the next selected relationship milestone and provides ${plan.label}.`}
+          before={`Relationship ${fmt(inputs.relationshipProgress)}`}
+          after={`Relationship ${inputs.locked ? fmt(inputs.relationshipProgress) : plan.target.level}`}
+          resources={`${fmt(plan.affinity)} Affinity · ${fmt(plan.emblems)} Emblems`}
+          remaining={`${fmt(Math.max(0, inputs.affinity - plan.affinity))} Affinity · ${fmt(Math.max(0, inputs.emblems - plan.emblems))} Emblems`}
+        />
+        <DataLabel type="exact">relationship and skill costs</DataLabel>
         <h2>Best next investment</h2>
         <div className={styles.metrics}>
           <div className={styles.metric}>

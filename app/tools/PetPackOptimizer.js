@@ -6,6 +6,7 @@ import {
 } from "../../lib/petPackOptimizer.mjs";
 import { migratePetPackState } from "../../lib/toolState.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
+import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
 import DataAssumptions from "../../components/tools/DataAssumptions";
 
 const EMPTY = { food: 0, manual: 0, potion: 0, medal: 0 };
@@ -263,6 +264,7 @@ export default function PetPackOptimizer({ configuration }) {
 
   return (
     <section className="ppo-shell">
+      <SaveToRoadmap persistence={persistence} />
       <div className="ppo-inputs">
         <div className="ppo-panel-head">
           <div>

@@ -400,6 +400,8 @@ export default function ToolsDirectory({ memberId, category }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [saved, setSaved] = useState([]);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [builderGoal, setBuilderGoal] = useState("kvk");
   const query = memberId ? `?member_id=${encodeURIComponent(memberId)}` : "";
   const categoryQuery = (name) => {
     const params = new URLSearchParams();
@@ -439,9 +441,26 @@ export default function ToolsDirectory({ memberId, category }) {
       .catch(() => {});
   }, [memberId]);
 
+  useEffect(() => {
+    try { setShowBuilder(localStorage.getItem("k710-account-builder-seen") !== "yes"); } catch {}
+  }, []);
+
   if (!selected) {
     return (
       <section className="tools-catalog">
+        <div className="tools-builder">
+          <div>
+            <span className="k-mark">New member pathway</span>
+            <h2>Build my account plan</h2>
+            <p>Tell us what matters most. We will guide you through only the relevant planners, then assemble the results into one roadmap.</p>
+          </div>
+          <button type="button" onClick={() => setShowBuilder((value) => !value)}>{showBuilder ? "Hide setup" : "Start guided setup"}</button>
+          {showBuilder ? <div className="tools-builder-flow">
+            <ol><li><b>1</b><span>Review the levels already stored in your Player Profile.</span></li><li><b>2</b><span>Complete the source optimizers relevant to your goal.</span></li><li><b>3</b><span>Open the Account Planner for your ranked upgrades and KvK calendar.</span></li></ol>
+            <label>My main goal<select value={builderGoal} onChange={(event) => setBuilderGoal(event.target.value)}><option value="kvk">Prepare for KvK</option><option value="stats">Best combat stat gains</option><option value="balanced">Balanced account growth</option></select></label>
+            <div><Link href={`/power-profile${query}`}>1. Review Player Profile</Link><Link href={`/tools/account-progression${query}${query ? "&" : "?"}goal=${builderGoal}`} onClick={() => { try { localStorage.setItem("k710-account-builder-seen", "yes"); } catch {} }}>2. Open guided roadmap →</Link></div>
+          </div> : null}
+        </div>
         <div className="tools-find">
           <label>
             <span>Search tools</span>
@@ -551,6 +570,7 @@ export default function ToolsDirectory({ memberId, category }) {
 
         <style>{`
           .tools-catalog{color:var(--parchment);perspective:1200px}
+          .tools-builder{display:grid;grid-template-columns:1fr auto;gap:14px;margin-bottom:22px;padding:20px;border:1px solid rgba(201,164,78,.4);border-left:4px solid var(--brass);border-radius:12px;background:linear-gradient(135deg,rgba(201,164,78,.12),rgba(7,12,17,.94));box-shadow:0 16px 38px rgba(0,0,0,.24)}.tools-builder h2{margin:5px 0;font:500 25px var(--font-display)}.tools-builder p{max-width:720px;margin:0;color:var(--parchment-dim);font-size:12px;line-height:1.6}.tools-builder>button,.tools-builder-flow a{align-self:center;padding:10px 13px;border:1px solid var(--brass);background:rgba(201,164,78,.08);color:var(--gold-hot);font:700 10px var(--font-body);letter-spacing:.05em;text-decoration:none;cursor:pointer}.tools-builder-flow{grid-column:1/-1;display:grid;grid-template-columns:1.5fr .7fr;gap:18px;padding-top:14px;border-top:1px solid var(--edge)}.tools-builder-flow ol{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;list-style:none;margin:0;padding:0}.tools-builder-flow li{display:flex;gap:8px;padding:9px;border:1px solid var(--edge);color:var(--parchment-dim);font-size:10px;line-height:1.45}.tools-builder-flow li b{color:var(--brass)}.tools-builder-flow label{display:grid;gap:5px;color:var(--brass);font-size:10px}.tools-builder-flow select{padding:9px;border:1px solid var(--edge);background:#071219;color:var(--parchment)}.tools-builder-flow>div{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
           .tools-find{display:flex;flex-direction:column;gap:12px;margin-bottom:26px}.tools-find label span{display:block;margin-bottom:6px;color:var(--brass-bright);font-size:11px;font-weight:800}.tools-find input{width:100%;padding:12px 14px;border:1px solid var(--edge-strong);border-radius:var(--radius-md);background:rgba(7,8,13,.8);color:var(--parchment);font-size:15px}.tools-find>div{display:flex;gap:7px;overflow:auto;padding-bottom:3px}.tools-find button{flex:none;border:1px solid var(--edge);border-radius:var(--radius-pill);padding:7px 10px;background:transparent;color:var(--parchment-dim);cursor:pointer}.tools-find button[aria-pressed=true]{border-color:var(--brass);background:rgba(201,164,78,.12);color:var(--gold-hot)}
           .tools-continue{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:15px;border:1px solid var(--edge-strong);border-radius:var(--radius-md);background:rgba(201,164,78,.06)}.tools-continue>div{margin-right:auto}.tools-continue h2{margin:4px 0 0;font-size:16px}.tools-continue a{display:flex;flex-direction:column;gap:3px;min-width:160px;padding:10px;border:1px solid var(--edge);border-radius:var(--radius-sm);color:var(--parchment);text-decoration:none}.tools-continue small{color:var(--t-secondary)}
           .tools-development{display:grid;grid-template-columns:minmax(220px,.7fr) 1.3fr;gap:28px;margin-top:38px;padding-top:24px;border-top:1px solid var(--edge)}.tools-development h2{margin:5px 0;font-size:20px}.tools-development p{color:var(--parchment-dim);font-size:12px}.tools-development ul{display:grid;grid-template-columns:1fr 1fr;gap:8px;list-style:none;margin:0;padding:0}.tools-development li{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid var(--edge);font-size:12px}.tools-development li span{color:var(--t-secondary)}
@@ -573,7 +593,7 @@ export default function ToolsDirectory({ memberId, category }) {
           .tools-menu-title{font-size:16px;letter-spacing:.06em;color:var(--parchment)}
           .tools-menu-count{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--brass)}
           @media(max-width:900px){.tools-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
-          @media(max-width:700px){.tools-continue{align-items:stretch;flex-direction:column}.tools-continue>div{margin:0}.tools-development{grid-template-columns:1fr}.tools-development ul{grid-template-columns:1fr}.tools-menu{gap:12px}.tools-menu-tile{padding:20px 12px 24px}}
+          @media(max-width:700px){.tools-builder,.tools-builder-flow{grid-template-columns:1fr}.tools-builder-flow ol{grid-template-columns:1fr}.tools-builder-flow>div{flex-direction:column}.tools-continue{align-items:stretch;flex-direction:column}.tools-continue>div{margin:0}.tools-development{grid-template-columns:1fr}.tools-development ul{grid-template-columns:1fr}.tools-menu{gap:12px}.tools-menu-tile{padding:20px 12px 24px}}
         `}</style>
       </section>
     );

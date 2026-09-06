@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { toolConfiguration } from "../../lib/toolCatalog.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
+import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
 import {
   probabilityAtLeast,
   probabilityExactly,
@@ -285,6 +286,7 @@ export default function WaveboundCharmOptimizer({
 
   return (
     <section className="wavebound-tool">
+      <SaveToRoadmap persistence={persistence} />
       <header className="wo-head">
         <span className="wo-eyebrow">Wavebound Voyage</span>
         <h2>Charm Merge Optimizer</h2>

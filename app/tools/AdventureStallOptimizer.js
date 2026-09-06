@@ -9,6 +9,7 @@ import {
   shellPackSchedule,
 } from "../../lib/adventureStall.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
+import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
 import {
   allocateShopCurrency,
   maximizeCurrencyUnderBudget,
@@ -194,6 +195,7 @@ export default function AdventureStallOptimizer({ configuration }) {
 
   return (
     <section className="as-optimizer">
+      <SaveToRoadmap persistence={persistence} />
       <header className="as-summary-head">
         <div>
           <h2>Adventure Stall Purchase Planner</h2>

@@ -13,6 +13,7 @@ import {
 import styles from "./CostPlanner.module.css";
 import DataAssumptions from "./DataAssumptions";
 import { useToolPersistence } from "../../lib/useToolPersistence";
+import { DataLabel, FirstUseGuide, NextAction, PlannerProgress, SaveToRoadmap } from "./PlannerExperience";
 const migrateCostState = (value) => value;
 const fmt = (n) =>
   Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -262,6 +263,15 @@ export default function CostPlanner({
   }
   return (
     <div className={styles.planner}>
+      <PlannerProgress current={result ? 5 : 3} />
+      <FirstUseGuide
+        toolKey={stateKey}
+        title={`Plan a ${construction ? "building" : "research"} upgrade`}
+        steps={[`Choose the current and target ${construction ? "building" : "research"} levels.`, "Enter only resources you are willing to spend and add your active bonuses.", "Calculate, review prerequisites and shortages, then save the result to your account roadmap."]}
+        terms={construction ? [["True Gold", "Advanced construction resource."], ["Tempered True Gold", "Refined construction resource; refinement itself does not score in KvK Prep."], ["Prerequisite", "Another building level required before the selected target."]] : [["True Gold Dust", "Advanced research material, separate from construction True Gold."], ["Prerequisite", "Another research node required before the target."], ["Research speed", "The total bonus shown in your account's research overview."]]}
+        onDemo={() => { const item = dataset.items[0]; const target = item.levels[Math.min(1, item.levels.length - 1)].level; setSelections([{ id: item.id, current: construction ? "1" : "0", target }]); setInventory(Object.fromEntries(resources.map((key) => [key, 100000]))); setResult(null); }}
+      />
+      <SaveToRoadmap persistence={persistence} />
       <div className={styles.topline}>
         <div>
           <span className="k-mark">
@@ -678,6 +688,15 @@ export default function CostPlanner({
               aria-label="Calculation results"
               aria-live="polite"
             >
+              <NextAction
+                title={result.steps[0] ? `${result.steps[0].name} → ${levelLabel(result.steps[0].level)}` : "No upgrade step required"}
+                reason={result.steps[0]?.prerequisite ? "Complete this prerequisite first so the selected target becomes available." : "This is the first direct step in your selected upgrade path."}
+                before={result.steps[0] ? "Current saved level" : "Current setup"}
+                after={result.steps[0] ? levelLabel(result.steps[0].level) : "Target already reached"}
+                resources={result.steps[0] ? resources.filter((key) => result.steps[0].costs[key]).map((key) => `${fmt(result.steps[0].costs[key])} ${RESOURCE_LABELS[key]}`).join(" · ") : "None"}
+                remaining={resources.map((key) => `${fmt(Math.max(0, numberValue(inventory[key]) - (result.steps[0]?.costs[key] || 0)))} ${RESOURCE_LABELS[key]}`).join(" · ")}
+              />
+              <DataLabel type="exact">dataset costs</DataLabel><DataLabel type="input">inventory and bonuses</DataLabel>
               <div className={styles.sectionHead}>
                 <div>
                   <span className={styles.eyebrow}>Your results</span>

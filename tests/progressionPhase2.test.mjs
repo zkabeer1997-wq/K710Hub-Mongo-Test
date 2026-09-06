@@ -457,3 +457,45 @@ test("governor inventory allocation matches the reference fixture", () => {
     [24, 97700, 985, 200],
   );
 });
+
+test("protected charms are excluded from recommendations", () => {
+  const result = rankCharmUpgrades(
+    [
+      { id: "protected", type: "Infantry", current: 0, target: 2, locked: true },
+      { id: "open", type: "Archer", current: 0, target: 1 },
+    ],
+    [null, [5, 5], [10, 10]],
+    { guides: 20, designs: 20 },
+    { troops: { Infantry: 3, Archer: 1 }, stats: {} },
+  );
+  assert.deepEqual(result.upgrades.map((item) => item.id), ["open"]);
+});
+
+test("protected Governor Gear pieces are excluded from target plans", () => {
+  const result = calculateGovernorGearPlan(
+    [
+      { id: "helmet", label: "Helmet", tier: "", targetTier: "Green", locked: true },
+      { id: "chest", label: "Chest", tier: "", targetTier: "Green" },
+    ],
+    { mode: "targets", satin: 99999, threads: 99999, visions: 99999 },
+  );
+  assert.ok(result.steps.length > 0);
+  assert.ok(result.steps.every((step) => step.piece === "Chest"));
+});
+
+test("protected pets and Masters generate no progression spend", () => {
+  const pet = calculatePetProgression(
+    { pet: "Wolf", generation: 1, currentLevel: 1, targetLevel: 2, locked: true, inventory: {} },
+    [{ pet: "Wolf", generation: 1, fromLevel: 1, toLevel: 2, food: 5 }],
+  );
+  assert.equal(pet.steps.length, 0);
+  const master = calculateMasterPlan({
+    master: "Valora",
+    relationshipProgress: 5,
+    targetRelationship: 10,
+    locked: true,
+    skills: [],
+  });
+  assert.equal(master.affinity, 0);
+  assert.equal(master.emblems, 0);
+});

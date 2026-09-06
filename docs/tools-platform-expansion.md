@@ -6,6 +6,10 @@ Branch: `feature/tools-platform-expansion`
 
 ### Completed
 
+- Added a first-time-member experience layer across the tool platform: guided account-plan entry, a universal five-step planner progress bar, explicit roadmap-save confirmation, first-use walkthroughs, inline term definitions, demo inputs, and ten local save snapshots with restore.
+- Standardized Phase 2 progression results around a prominent “Do this next” action, before/after state, materials used, remaining inventory, exact/member-input/estimated/subjective data labels, and protected-item controls for Hero Gear, Governor Gear, Charms, Pets, and Masters.
+- Added visible “Save to account roadmap” controls to Phase 2 progression, Construction, Research, Charm Pack, Wavebound, Pet Pack, Adventure Stall, and Dragon's Caravan tools.
+- Reworked Phase 4 into three focused views for upgrades, daily KvK execution, and shortages. Added goal-based readiness, exact-score coverage, unavailable-score disclosure, deep shortage links, persistent daily checklists, and KvK completion history.
 - Extended Phase 4 with a five-day KvK Preparation calendar sourced from the Kingshot Mastery Day 1–5 guide.
 - Added exact day subtotals and editable daily targets for connected Governor Charms, Governor Gear, Hero Gear, Masters, construction, and research actions when their saved resources map to a published scoring rule.
 - Added manual KvK stockpile inputs for Intel Missions, Hero Roulette, Hero Shards, Taming Marks, Widgets, four speedup types, gathering batches, and troop training/promotion by tier.
@@ -71,7 +75,7 @@ No game values were added or changed in this increment.
 
 ### Verification
 
-- `npm test`: 125 passed, 0 failed.
+- `npm test`: 128 passed, 0 failed.
 - Phase 4 focused tests: 10 passed, covering source-state immutability, weight-driven ordering, infeasible filtering, bottlenecks, manual provenance, sensitivity, safe exports, persistence allowlisting, KvK day assignment, exact point subtotals, stat ranking, and missing-score disclosure.
 - `npm run build`: passed with expected missing-local-Supabase warnings during static generation.
 - `npm run lint`: passed with 7 pre-existing warnings and no errors.
@@ -90,6 +94,6 @@ No game values were added or changed in this increment.
 - One next action is imported from each eligible source plan. The source planner remains authoritative for deeper step ordering and exact game calculations.
 - Player inventory is connected through the inventory saved inside each source planner; the current Player Profile schema stores power/progression snapshots, not a universal material inventory.
 - Autosave currently requires an authenticated member; signed-out users retain only in-memory state for this first increment.
-- Reset undo lasts only until navigation or reload.
+- Tool saves keep the ten most recent local snapshots for same-device restore; server state remains the authoritative cross-device plan.
 - The optimizer still runs on the main thread; worker progress/cancellation is part of the Pet improvement phase.
 - Existing Pet pack values remain explicitly unverified until source evidence is supplied.
