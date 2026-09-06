@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useEffect, useState } from 'react';
 import { BEAR_SCHEDULE_CHANGED } from '../../components/BearScheduleProvider';
 import { currentAllianceEvents } from '../../lib/allianceEvents.mjs';
@@ -61,7 +63,17 @@ export default function AllianceEventSchedule({ initialEvents, initialNow }) {
             {tags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
         </label>}
-        {visible.length === 0 ? <p>No alliance events scheduled for today or upcoming dates.</p> : <div className="alliance-schedule-grid">
+        {visible.length === 0 ? (
+          <div className="alliance-empty-state">
+            <p>No alliance-specific events are listed for today or upcoming dates.</p>
+            <p className="alliance-empty-hint">Daily rhythm is still live — use Bear Hunt times above, or open the kingdom calendar and transfer path.</p>
+            <div className="alliance-empty-actions">
+              <Link href="/events">View kingdom events</Link>
+              <Link href="/chronometer">Bear Hunt & transfers</Link>
+              <Link href="/guides">Read event guides</Link>
+            </div>
+          </div>
+        ) : <div className="alliance-schedule-grid">
           {visible.map(event => {
             const start = new Date(event.starts_at);
             const seconds = Math.max(0, Math.floor((start.getTime() - now) / 1000));
@@ -87,6 +99,12 @@ export default function AllianceEventSchedule({ initialEvents, initialNow }) {
         .alliance-schedule-countdown{font-weight:700;font-variant-numeric:tabular-nums;margin:0 0 16px}
         .alliance-schedule-card time{font-size:14px;line-height:1.6}
         .alliance-schedule-utc{font-size:12px;color:var(--color-ink-muted);margin:6px 0 0}
+        .alliance-empty-state{padding:22px 18px;border:1px dashed rgba(201,164,78,.28);border-radius:12px;background:rgba(255,255,255,.02)}
+        .alliance-empty-state p{margin:0 0 8px;color:var(--parchment-dim, #c9c0a8);line-height:1.5}
+        .alliance-empty-hint{font-size:13px}
+        .alliance-empty-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+        .alliance-empty-actions a{color:var(--gold-hot, #e6c36a);font-size:13px;font-weight:700;text-decoration:none}
+        .alliance-empty-actions a:hover{text-decoration:underline}
       `}</style>
     </div>
   );
