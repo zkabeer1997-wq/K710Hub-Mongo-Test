@@ -76,6 +76,60 @@ test("hero gear maps helmet to lethality and exposes reforge recovery", () => {
   assert.equal(result.recommendation.stat, "Lethality");
   assert.equal(result.reforging.forgehammerRecovery, 0.5);
 });
+test("hero gear never recommends an unaffordable upgrade", () => {
+  const result = calculateHeroGearPlan(
+    [{ id: "i-h", label: "Infantry Helmet", tier: "Mythic", enhancement: 0 }],
+    { xp: 0, forgehammers: 0, mythicPieces: 0, mithril: 0 },
+  );
+  assert.equal(result.recommendation, null);
+  assert.equal(result.used.xp, 0);
+  assert.equal(result.actions.length, 0);
+});
+
+test("hero XP allocation matches the published 10,000 XP reference fixture", () => {
+  const weights = {
+    "Infantry.Health": 1.5,
+    "Infantry.Lethality": 0.7,
+    "Cavalry.Health": 0.2,
+    "Cavalry.Lethality": 0.4,
+    "Archer.Health": 0.7,
+    "Archer.Lethality": 1.4,
+  };
+  const rows = ["Infantry", "Cavalry", "Archer"].flatMap((troop) =>
+    ["Helmet", "Gloves", "Chest", "Boots"].map((slot) => ({
+      id: `${troop}-${slot}`,
+      label: `${troop} ${slot}`,
+      troop,
+      tier: "Mythic",
+      enhancement: 0,
+      mastery: 0,
+    })),
+  );
+  const result = calculateHeroGearPlan(rows, {
+    xp: 10000,
+    gearWeights: weights,
+  });
+  assert.equal(result.used.xp, 10000);
+  assert.deepEqual(
+    Object.fromEntries(
+      result.candidates.map((item) => [item.id, item.targetLevel]),
+    ),
+    {
+      "Infantry-Helmet": 12,
+      "Infantry-Gloves": 27,
+      "Infantry-Chest": 27,
+      "Infantry-Boots": 12,
+      "Cavalry-Helmet": 7,
+      "Cavalry-Gloves": 2,
+      "Cavalry-Chest": 3,
+      "Cavalry-Boots": 6,
+      "Archer-Helmet": 26,
+      "Archer-Gloves": 12,
+      "Archer-Chest": 12,
+      "Archer-Boots": 26,
+    },
+  );
+});
 test("governor gear totals target path", () => {
   const result = calculateGovernorGearPlan(
     [{ label: "Helmet", tier: "Green", targetTier: "Green II" }],
@@ -127,4 +181,77 @@ test("charm ranking honors priorities, inventory, and sequential levels", () => 
     ["i1:1", "a1:1"],
   );
   assert.equal(result.remaining.guides, 0);
+});
+
+test("charm allocation matches both published bottleneck fixtures", () => {
+  const charms = ["Infantry", "Cavalry", "Archer"].flatMap((type) =>
+    Array.from({ length: 6 }, (_, index) => ({
+      id: `${type}-${index + 1}`,
+      type,
+      number: index + 1,
+      current: 0,
+      target: 22,
+    })),
+  );
+  const weights = {
+    troops: { Infantry: 2.2, Cavalry: 0.6, Archer: 2.1 },
+    stats: { Health: 1, Lethality: 1 },
+    amplification: 1.25,
+  };
+  const designsLimited = rankCharmUpgrades(
+    charms,
+    [null, [5, 5], [40, 15], [60, 40]],
+    { guides: 5000, designs: 500 },
+    weights,
+  );
+  assert.deepEqual(
+    [
+      designsLimited.upgrades.length,
+      designsLimited.totals.guides,
+      designsLimited.totals.designs,
+    ],
+    [39, 990, 480],
+  );
+  const guidesLimited = rankCharmUpgrades(
+    charms,
+    [null, [5, 5], [40, 15], [60, 40]],
+    { guides: 500, designs: 5000 },
+    weights,
+  );
+  assert.deepEqual(
+    [
+      guidesLimited.upgrades.length,
+      guidesLimited.totals.guides,
+      guidesLimited.totals.designs,
+    ],
+    [28, 490, 240],
+  );
+});
+
+test("governor inventory allocation matches the reference fixture", () => {
+  const rows = ["Cavalry", "Infantry", "Archer"].flatMap((troop) =>
+    [1, 2].map((piece) => ({
+      id: `${troop}-${piece}`,
+      label: `${troop} ${piece}`,
+      troop,
+      tier: "",
+    })),
+  );
+  const result = calculateGovernorGearPlan(rows, {
+    mode: "inventory",
+    satin: 100000,
+    threads: 1000,
+    visions: 200,
+    troopWeights: { Infantry: 2.2, Cavalry: 0.6, Archer: 2.1 },
+    amplification: 1.25,
+  });
+  assert.deepEqual(
+    [
+      result.steps.length,
+      result.totals.satin,
+      result.totals.threads,
+      result.totals.visions,
+    ],
+    [24, 97700, 985, 200],
+  );
 });
