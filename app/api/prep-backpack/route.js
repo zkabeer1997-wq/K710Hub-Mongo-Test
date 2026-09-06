@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 
 export async function POST(request) {
   try {
     const data = await request.json();
-    const supabase = createAdminSupabaseClient();
 
     const str = (v) => String(v == null ? '' : v);
     const arr = (v) => (Array.isArray(v) ? v.map(String) : []);
@@ -29,16 +29,19 @@ export async function POST(request) {
       avail_day4: arr(data.avail_day4),
       avail_day5: arr(data.avail_day5),
       notes: str(data.notes),
+      updated_at: new Date(),
     };
 
     if (!payload.member_id || !payload.in_game_name) {
       return NextResponse.json({ error: 'Missing Member ID or in-game name.' }, { status: 400 });
     }
 
-    const { error } = await supabase.from('prep_backpack_submissions').upsert(payload, { onConflict: 'member_id' });
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    const coll = await getCollection(COLLECTIONS.PREP_BACKPACK);
+    await coll.updateOne(
+      { member_id: payload.member_id },
+      { $set: payload, $setOnInsert: { created_at: new Date() } },
+      { upsert: true }
+    );
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
