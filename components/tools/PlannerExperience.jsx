@@ -99,6 +99,25 @@ export function FirstUseGuide({ toolKey, title, steps, terms = [], onDemo }) {
   );
 }
 
+export function SourceToolOnboarding({ toolKey, current = 3 }) {
+  return <>
+    <PlannerProgress current={current} />
+    <FirstUseGuide
+      toolKey={toolKey}
+      title="Build your recommendation"
+      steps={[
+        "Confirm what you already own and the resources available to spend.",
+        "Choose your goal or reward priorities, then review the calculated recommendation.",
+        "Save the result to your account roadmap so Phase 4 can use it.",
+      ]}
+      terms={[
+        ["Recommendation", "The best result supported by the inventory, constraints, and priorities entered here."],
+        ["Account roadmap", "The saved plan Phase 4 combines with your other K710 tools."],
+      ]}
+    />
+  </>;
+}
+
 export function NextAction({ title, reason, before, after, resources, remaining, href }) {
   return (
     <section className={styles.nextAction}>
@@ -110,4 +129,3 @@ export function NextAction({ title, reason, before, after, resources, remaining,
     </section>
   );
 }
-

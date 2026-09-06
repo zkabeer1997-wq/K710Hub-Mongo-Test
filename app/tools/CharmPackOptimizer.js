@@ -4,7 +4,7 @@ import { parseCharmSelections } from "../../lib/powerProfiles.mjs";
 
 import { CHARM_COSTS, CHARM_PACKS } from "../../lib/charmToolData.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
-import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
+import { SaveToRoadmap, SourceToolOnboarding } from "../../components/tools/PlannerExperience";
 const DEFAULT_CHARMS = ["Infantry", "Cavalry", "Archer"].flatMap((type) =>
   Array.from({ length: 6 }, (_, i) => ({
     id: `${type}-${i + 1}`,
@@ -527,6 +527,7 @@ export default function CharmPackOptimizer({ configuration }) {
 
   return (
     <section className="cpo-shell">
+      <SourceToolOnboarding toolKey="charm-pack-optimizer" current={result ? 4 : 3} />
       <SaveToRoadmap persistence={persistence} />
       <div className="cpo-toolbar">
         <div>

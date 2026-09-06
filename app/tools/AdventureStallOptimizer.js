@@ -9,7 +9,7 @@ import {
   shellPackSchedule,
 } from "../../lib/adventureStall.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
-import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
+import { SaveToRoadmap, SourceToolOnboarding } from "../../components/tools/PlannerExperience";
 import {
   allocateShopCurrency,
   maximizeCurrencyUnderBudget,
@@ -195,6 +195,7 @@ export default function AdventureStallOptimizer({ configuration }) {
 
   return (
     <section className="as-optimizer">
+      <SourceToolOnboarding toolKey="adventure-stall" current={result ? 4 : 3} />
       <SaveToRoadmap persistence={persistence} />
       <header className="as-summary-head">
         <div>
