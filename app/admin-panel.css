@@ -126,3 +126,48 @@
 @media (max-width: 520px) {
   .dash-xfer-grid { grid-template-columns: 1fr; }
 }
+
+/* Admin update-cutoff controls (ported from production main) */
+.admin-time-cutoff {
+  border: 1px solid var(--border-soft, var(--line));
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(190px, 1fr) auto;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0 0 16px;
+  padding: 12px;
+}
+.admin-time-cutoff label {
+  color: var(--parchment);
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-time-cutoff input {
+  border: 1px solid var(--border-soft, var(--line));
+  background: rgba(10,13,20,0.8);
+  min-height: 36px;
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 9px;
+}
+.admin-time-cutoff button {
+  border: 1px solid var(--border-soft, var(--line));
+  min-height: 36px;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: transparent;
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+.admin-time-cutoff p {
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+@media (max-width: 720px) {
+  .admin-time-cutoff { grid-template-columns: 1fr; }
+}
