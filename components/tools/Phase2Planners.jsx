@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { CHARM_COSTS } from "../../lib/charmToolData.mjs";
 import {
-  PHASE2_DATASETS,
   calculateGovernorGearPlan,
   calculateHeroGearPlan,
   calculateMasterPlan,
@@ -11,7 +10,12 @@ import {
   planTtgProduction,
   rankCharmUpgrades,
 } from "../../lib/progressionPhase2.mjs";
-import { GOVERNOR_GEAR_LEVELS, MASTERS, PETS } from "../../lib/phase2Data.mjs";
+import {
+  GOVERNOR_GEAR_LEVELS,
+  MASTER_DATA,
+  MASTERS,
+  PETS,
+} from "../../lib/phase2Data.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
 import styles from "./Phase2Planner.module.css";
 
@@ -31,21 +35,22 @@ const defaultCharms = ["Infantry", "Cavalry", "Archer"].flatMap((type) =>
 const heroPieces = ["Helmet", "Chest", "Gloves", "Boots"];
 const governorPieces = ["Helmet", "Chest", "Ring", "Staff", "Pants", "Boots"];
 
-function MissingData({ dataset, children }) {
+function ExportButton({ name, data }) {
+  const download = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${name}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
   return (
-    <div className={styles.status}>
-      <span aria-hidden="true">◇</span>
-      <div>
-        <b>Verified dataset required</b>
-        <br />
-        {children || (
-          <>
-            Calculation is intentionally blocked. Expected{" "}
-            <code>{PHASE2_DATASETS[dataset].expectedShape}</code>.
-          </>
-        )}
-      </div>
-    </div>
+    <button className={styles.button} type="button" onClick={download}>
+      Export plan
+    </button>
   );
 }
 function SaveState({ persistence }) {
@@ -95,12 +100,14 @@ export function TtgProductionPlanner({
     reserve: 0,
     refinementState: 1,
     completedToday: 0,
+    refinementsPerDay: 1,
+    startWeekday: new Date().getDay(),
     horizonDays: 7,
     requiredTrueGold: importedTrueGold,
     requiredTempered: importedTempered,
     targetDate: "",
+    startDate: new Date().toISOString().slice(0, 10),
     riskMode: "conservative",
-    seed: 710,
   });
   const restore = useCallback(
     (saved) => setInputs((current) => ({ ...current, ...saved })),
@@ -153,6 +160,16 @@ export function TtgProductionPlanner({
               value={inputs.completedToday}
               onChange={(v) => update("completedToday", v)}
             />
+            <Field
+              label="Refinements per day"
+              value={inputs.refinementsPerDay}
+              onChange={(v) => update("refinementsPerDay", Math.max(1, v))}
+            />
+            <Field
+              label="Starting weekday (0 Sun–6 Sat)"
+              value={inputs.startWeekday}
+              onChange={(v) => update("startWeekday", Math.min(6, v))}
+            />
           </div>
         </div>
         <div className={styles.section}>
@@ -163,6 +180,12 @@ export function TtgProductionPlanner({
               value={inputs.horizonDays}
               onChange={(v) => update("horizonDays", v)}
               min="1"
+            />
+            <Field
+              label="Plan start date"
+              type="date"
+              value={inputs.startDate}
+              onChange={(v) => update("startDate", v)}
             />
             <Field
               label="Required True Gold"
@@ -194,11 +217,6 @@ export function TtgProductionPlanner({
                 <option value="expected">Expected</option>
               </select>
             </Field>
-            <Field
-              label="Reproducible seed"
-              value={inputs.seed}
-              onChange={(v) => update("seed", v)}
-            />
           </div>
         </div>
       </section>
@@ -213,13 +231,34 @@ export function TtgProductionPlanner({
             <span>Imported TTG need</span>
             <b>{fmt(inputs.requiredTempered)}</b>
           </div>
-          <div className={styles.metric}><span>Projected TTG</span><b>{fmt(result.finalTempered)}</b></div>
-          <div className={styles.metric}><span>Earliest target day</span><b>{result.earliestDay || "Beyond horizon"}</b></div>
+          <div className={styles.metric}>
+            <span>Projected TTG</span>
+            <b>{fmt(result.finalTempered)}</b>
+          </div>
+          <div className={styles.metric}>
+            <span>Earliest target day</span>
+            <b>{result.earliestDate || "Beyond horizon"}</b>
+          </div>
         </div>
         <p className={styles.note}>
-          Plans one discounted refinement per day and applies the verified 20-attempt tier bands. Weekly attempts reset after 100.
+          The first refinement each day is half-cost. Attempt tiers reset every
+          Monday and stop at the weekly 100-attempt cap.
         </p>
-        <ol className={styles.list}>{result.schedule?.map((day)=><li key={day.day}>Day {day.day}: tier {day.tier}, spend {fmt(day.trueGoldSpent)} TG, project {fmt(day.temperedProduced)} TTG</li>)}</ol>
+        <p className={styles.note}>
+          Confidence range: {fmt(result.confidence?.p10)}–
+          {fmt(result.confidence?.p90)} TTG (10th–90th percentile).
+        </p>
+        <ol className={styles.list}>
+          {result.schedule?.map((day) => (
+            <li key={day.day}>
+              Day {day.day}: {day.runs} refinement{day.runs === 1 ? "" : "s"},
+              spend {fmt(day.trueGoldSpent)} TG, produce{" "}
+              {fmt(day.temperedProduced)} TTG ({fmt(day.range.min)}–
+              {fmt(day.range.max)}), {fmt(day.trueGoldRemaining)} TG remaining
+            </li>
+          ))}
+        </ol>
+        <ExportButton name="ttg-production-plan" data={result} />
       </aside>
     </div>
   );
@@ -269,13 +308,31 @@ export function PetProgressionPlanner() {
         <div className={styles.section}>
           <h2>Pet target</h2>
           <div className={styles.grid}>
-            <Field label="Pet name/type" value={inputs.pet} onChange={()=>{}}><select value={inputs.pet} onChange={(e)=>{const pet=PETS.find((item)=>item.name===e.target.value);setInputs((c)=>({...c,pet:pet.name,generation:pet.generation,targetLevel:Math.min(c.targetLevel,pet.maxLevel)}));}}>{PETS.map((pet)=><option key={pet.name}>{pet.name}</option>)}</select></Field>
+            <Field label="Pet name/type" value={inputs.pet} onChange={() => {}}>
+              <select
+                value={inputs.pet}
+                onChange={(e) => {
+                  const pet = PETS.find((item) => item.name === e.target.value);
+                  setInputs((c) => ({
+                    ...c,
+                    pet: pet.name,
+                    generation: pet.generation,
+                    targetLevel: Math.min(c.targetLevel, pet.maxLevel),
+                  }));
+                }}
+              >
+                {PETS.map((pet) => (
+                  <option key={pet.name}>{pet.name}</option>
+                ))}
+              </select>
+            </Field>
             <Field
               label="Generation"
               value={inputs.generation}
-              onChange={(v) => update("generation", v)}
-              min="1"
-            />
+              onChange={() => {}}
+            >
+              <input value={inputs.generation} readOnly />
+            </Field>
             <Field
               label="Current level"
               value={inputs.currentLevel}
@@ -332,14 +389,41 @@ export function PetProgressionPlanner() {
       </section>
       <aside className={styles.result}>
         <h2>Progression roadmap</h2>
-        <div className={styles.metrics}>{inventoryKeys.map((key)=><div className={styles.metric} key={key}><span>{key} needed / short</span><b>{fmt(result.totals[key])} / {fmt(result.shortfall[key])}</b></div>)}</div>
-        <p className={styles.note}>{result.steps.length} level steps in this roadmap.</p>
+        <div className={styles.metrics}>
+          {inventoryKeys.map((key) => (
+            <div className={styles.metric} key={key}>
+              <span>{key} needed / short</span>
+              <b>
+                {fmt(result.totals[key])} / {fmt(result.shortfall[key])}
+              </b>
+            </div>
+          ))}
+        </div>
+        <p className={styles.note}>
+          {result.steps.length} level steps · reachable now: level{" "}
+          {result.reachableLevel} · Advanced Chests needed:{" "}
+          {fmt(result.advancedChestEquivalents)} (
+          {fmt(result.advancedChestAllocation?.manuals)} Manuals /{" "}
+          {fmt(result.advancedChestAllocation?.potions)} Potions /{" "}
+          {fmt(result.advancedChestAllocation?.medallions)} Medallions).
+        </p>
+        <ol className={styles.list}>
+          {result.steps.map((step) => (
+            <li key={step.toLevel}>
+              Level {step.fromLevel} → {step.toLevel}: {fmt(step.food)} Food
+              {step.manuals ? ` · ${step.manuals} Manuals` : ""}
+              {step.potions ? ` · ${step.potions} Potions` : ""}
+              {step.medallions ? ` · ${step.medallions} Medallions` : ""}
+            </li>
+          ))}
+        </ol>
         <Link
           className={styles.link}
           href={`/tools/pet-pack-optimizer${packQuery ? `?${packQuery}` : ""}`}
         >
           Send shortfall to Pet Pack Optimizer
         </Link>
+        <ExportButton name="pet-progression-plan" data={result} />
       </aside>
     </div>
   );
@@ -372,7 +456,7 @@ export function CharmStatPlanner() {
         CHARM_COSTS,
         { guides: inputs.guides, designs: inputs.designs },
         { troops: inputs.troopWeights, stats: inputs.statWeights },
-        {},
+        { minimumBalance: inputs.minimumBalance },
       ),
     [inputs],
   );
@@ -500,10 +584,26 @@ export function CharmStatPlanner() {
             sequence.
           </p>
         )}
-        <p className={styles.note}>Every charm upgrade raises both Health and Lethality; recommendations rank combined stat gain per material.</p>
+        <p className={styles.note}>
+          Every charm upgrade raises both Health and Lethality; recommendations
+          rank combined stat gain per material.
+        </p>
+        <p className={styles.note}>
+          Gain: +{fmt(ranked.totals.health)} Health, +
+          {fmt(ranked.totals.lethality)} Lethality, +{fmt(ranked.totals.power)}{" "}
+          Power · weighted efficiency {fmt(ranked.totals.weightedValue)}.
+        </p>
+        {ranked.next ? (
+          <p className={styles.note}>
+            Bottleneck: next {ranked.next.type} #{ranked.next.number} level{" "}
+            {ranked.next.level} needs {ranked.next.guides} Guides and{" "}
+            {ranked.next.designs} Designs.
+          </p>
+        ) : null}
         <Link className={styles.link} href="/tools/charm-pack-optimizer">
           Build required pack schedule
         </Link>
+        <ExportButton name="charm-upgrade-plan" data={ranked} />
       </aside>
     </div>
   );
@@ -516,8 +616,44 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
       {rows.map((row, index) => (
         <div className={styles.row} key={row.id}>
           <strong>{row.label}</strong>
-          <Field label="Rarity / tier" type={hero ? "text" : "select"} value={row.tier} onChange={()=>{}}>
-            {hero ? <input type="text" value={row.tier} onChange={(e)=>setRows((current)=>current.map((item,i)=>i===index?{...item,tier:e.target.value}:item))} placeholder="Gold" /> : <select value={row.tier} onChange={(e)=>setRows((current)=>current.map((item,i)=>i===index?{...item,tier:e.target.value}:item))}><option value="">None</option>{GOVERNOR_GEAR_LEVELS.map((item)=><option key={item.index} value={item.tier}>{item.tier}</option>)}</select>}
+          <Field
+            label="Rarity / tier"
+            type={hero ? "text" : "select"}
+            value={row.tier}
+            onChange={() => {}}
+          >
+            {hero ? (
+              <input
+                type="text"
+                value={row.tier}
+                onChange={(e) =>
+                  setRows((current) =>
+                    current.map((item, i) =>
+                      i === index ? { ...item, tier: e.target.value } : item,
+                    ),
+                  )
+                }
+                placeholder="Gold"
+              />
+            ) : (
+              <select
+                value={row.tier}
+                onChange={(e) =>
+                  setRows((current) =>
+                    current.map((item, i) =>
+                      i === index ? { ...item, tier: e.target.value } : item,
+                    ),
+                  )
+                }
+              >
+                <option value="">None</option>
+                {GOVERNOR_GEAR_LEVELS.map((item) => (
+                  <option key={item.index} value={item.tier}>
+                    {item.tier}
+                  </option>
+                ))}
+              </select>
+            )}
           </Field>
           {hero ? (
             <>
@@ -539,6 +675,19 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
                   setRows((current) =>
                     current.map((item, i) =>
                       i === index ? { ...item, mastery: v } : item,
+                    ),
+                  )
+                }
+              />
+              <Field
+                label="Target mastery"
+                value={row.targetMastery ?? row.mastery}
+                onChange={(v) =>
+                  setRows((current) =>
+                    current.map((item, i) =>
+                      i === index
+                        ? { ...item, targetMastery: Math.max(item.mastery, v) }
+                        : item,
                     ),
                   )
                 }
@@ -578,7 +727,31 @@ function EquipmentRows({ pieces, rows, setRows, hero = false }) {
               />
             </>
           ) : (
-            <Field label="Target tier" value={row.targetTier} onChange={()=>{}}><select value={row.targetTier} onChange={(e)=>setRows((current)=>current.map((item,i)=>i===index?{...item,targetTier:e.target.value}:item))}><option value="">Choose target</option>{GOVERNOR_GEAR_LEVELS.map((item)=><option key={item.index} value={item.tier}>{item.tier}</option>)}</select></Field>
+            <Field
+              label="Target tier"
+              value={row.targetTier}
+              onChange={() => {}}
+            >
+              <select
+                value={row.targetTier}
+                onChange={(e) =>
+                  setRows((current) =>
+                    current.map((item, i) =>
+                      i === index
+                        ? { ...item, targetTier: e.target.value }
+                        : item,
+                    ),
+                  )
+                }
+              >
+                <option value="">Choose target</option>
+                {GOVERNOR_GEAR_LEVELS.map((item) => (
+                  <option key={item.index} value={item.tier}>
+                    {item.tier}
+                  </option>
+                ))}
+              </select>
+            </Field>
           )}
         </div>
       ))}
@@ -626,7 +799,10 @@ export function HeroGearPlanner() {
     restore,
     autoDetect: true,
   });
-  const plan = useMemo(()=>calculateHeroGearPlan(rows, inputs),[rows,inputs]);
+  const plan = useMemo(
+    () => calculateHeroGearPlan(rows, inputs),
+    [rows, inputs],
+  );
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -734,8 +910,49 @@ export function HeroGearPlanner() {
       </section>
       <aside className={styles.result}>
         <h2>Upgrade plan</h2>
-        {plan.recommendation ? <div className={styles.metrics}><div className={styles.metric}><span>Next balanced upgrade</span><b>{plan.recommendation.label} → +{plan.recommendation.targetLevel}</b></div><div className={styles.metric}><span>Cost</span><b>{fmt(plan.recommendation.xp)} XP · {plan.recommendation.mithril} Mithril · {plan.recommendation.mythic} Mythic</b></div><div className={styles.metric}><span>Improves</span><b>{plan.recommendation.stat}</b></div></div>:null}
-        <p className={styles.note}>XP reforging is offered only for non-Red gear at 100% recovery. Mastery reforging recovers 50% of Forgehammers.</p>
+        {plan.recommendation ? (
+          <div className={styles.metrics}>
+            <div className={styles.metric}>
+              <span>Next balanced upgrade</span>
+              <b>
+                {plan.recommendation.label} → +{plan.recommendation.targetLevel}
+              </b>
+            </div>
+            <div className={styles.metric}>
+              <span>Cost</span>
+              <b>
+                {fmt(plan.recommendation.xp)} XP · {plan.recommendation.mithril}{" "}
+                Mithril · {plan.recommendation.mythic} Mythic
+              </b>
+            </div>
+            <div className={styles.metric}>
+              <span>Improves</span>
+              <b>{plan.recommendation.stat}</b>
+            </div>
+          </div>
+        ) : null}
+        <p className={styles.note}>
+          Remaining: {fmt(plan.remaining.xp)} XP ·{" "}
+          {fmt(plan.remaining.forgehammers)} Forgehammers ·{" "}
+          {fmt(plan.remaining.mythicPieces)} Mythic pieces ·{" "}
+          {fmt(plan.remaining.mithril)} Mithril. Bottleneck:{" "}
+          {plan.bottleneck || "none"}.
+        </p>
+        {plan.nearMisses?.length ? (
+          <ol className={styles.list}>
+            {plan.nearMisses.map((item) => (
+              <li key={item.id}>
+                {item.label}: {fmt(item.xp)} XP · {fmt(item.forgehammers)}{" "}
+                Forgehammers
+              </li>
+            ))}
+          </ol>
+        ) : null}
+        <p className={styles.note}>
+          XP reforging is offered only for non-Red gear at 100% recovery.
+          Mastery reforging recovers 50% of Forgehammers.
+        </p>
+        <ExportButton name="hero-gear-plan" data={plan} />
       </aside>
     </div>
   );
@@ -771,7 +988,10 @@ export function GovernorGearPlanner() {
     restore,
     autoDetect: true,
   });
-  const plan = useMemo(()=>calculateGovernorGearPlan(rows,inputs),[rows,inputs]);
+  const plan = useMemo(
+    () => calculateGovernorGearPlan(rows, inputs),
+    [rows, inputs],
+  );
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -851,8 +1071,34 @@ export function GovernorGearPlanner() {
       </section>
       <aside className={styles.result}>
         <h2>Governor Gear plan</h2>
-        <div className={styles.metrics}>{["satin","threads","visions"].map((key)=><div className={styles.metric} key={key}><span>{key} needed / short</span><b>{fmt(plan.totals[key])} / {fmt(plan.shortfall[key])}</b></div>)}<div className={styles.metric}><span>Power gain</span><b>{fmt(plan.totals.powerGain)}</b></div></div>
-        <p className={styles.note}>{plan.steps.length} upgrades planned. Matching 3-piece tiers activate Defense and matching 6-piece tiers activate Attack.</p>
+        <div className={styles.metrics}>
+          {["satin", "threads", "visions"].map((key) => (
+            <div className={styles.metric} key={key}>
+              <span>{key} needed / short</span>
+              <b>
+                {fmt(plan.totals[key])} / {fmt(plan.shortfall[key])}
+              </b>
+            </div>
+          ))}
+          <div className={styles.metric}>
+            <span>Power gain</span>
+            <b>{fmt(plan.totals.powerGain)}</b>
+          </div>
+        </div>
+        <p className={styles.note}>
+          {plan.steps.length} upgrades planned. Matching 3-piece tiers activate
+          Defense and matching 6-piece tiers activate Attack.
+        </p>
+        <ol className={styles.list}>
+          {plan.steps.map((step, index) => (
+            <li key={`${step.piece}-${index}`}>
+              {step.piece} → {step.tier}: {fmt(step.satin)} Satin ·{" "}
+              {fmt(step.threads)} Threads · {fmt(step.visions)} Visions · +
+              {fmt(step.statGain)}% stat
+            </li>
+          ))}
+        </ol>
+        <ExportButton name="governor-gear-plan" data={plan} />
       </aside>
     </div>
   );
@@ -864,12 +1110,18 @@ export function MastersPlanner() {
     expertLevel: 0,
     relationshipClass: "",
     relationshipProgress: 0,
+    targetRelationship: 10,
     talentLevel: 0,
     affinity: 0,
     emblems: 0,
     manuscripts: 0,
     learningSpeed: 0,
-    skills: [{ name: "Skill 1", level: 0, partialXp: 0 }],
+    skills: MASTER_DATA.Valora.skills.map((name) => ({
+      name,
+      level: 0,
+      targetLevel: 0,
+      partialXp: 0,
+    })),
   });
   const restore = useCallback(
     (saved) => setInputs((current) => ({ ...current, ...saved })),
@@ -884,7 +1136,7 @@ export function MastersPlanner() {
   });
   const update = (key, value) =>
     setInputs((current) => ({ ...current, [key]: value }));
-  const plan = useMemo(()=>calculateMasterPlan(inputs),[inputs]);
+  const plan = useMemo(() => calculateMasterPlan(inputs), [inputs]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -892,7 +1144,30 @@ export function MastersPlanner() {
         <div className={styles.section}>
           <h2>Master progression</h2>
           <div className={styles.grid}>
-            <Field label="Master" value={inputs.master} onChange={()=>{}}><select value={inputs.master} onChange={(e)=>update("master",e.target.value)}><option value="">Choose a Master</option>{MASTERS.map((name)=><option key={name}>{name}</option>)}</select></Field>
+            <Field label="Master" value={inputs.master} onChange={() => {}}>
+              <select
+                value={inputs.master}
+                onChange={(e) => {
+                  const master = e.target.value || "Valora";
+                  setInputs((current) => ({
+                    ...current,
+                    master: e.target.value,
+                    skills: MASTER_DATA[master].skills.map((name, index) => ({
+                      ...current.skills[index],
+                      name,
+                      level: current.skills[index]?.level || 0,
+                      targetLevel: current.skills[index]?.targetLevel || 0,
+                      partialXp: current.skills[index]?.partialXp || 0,
+                    })),
+                  }));
+                }}
+              >
+                <option value="">Choose a Master</option>
+                {MASTERS.map((name) => (
+                  <option key={name}>{name}</option>
+                ))}
+              </select>
+            </Field>
             <Field
               label="Expert level"
               value={inputs.expertLevel}
@@ -908,6 +1183,11 @@ export function MastersPlanner() {
               label="Relationship progress"
               value={inputs.relationshipProgress}
               onChange={(v) => update("relationshipProgress", v)}
+            />
+            <Field
+              label="Target relationship"
+              value={inputs.targetRelationship}
+              onChange={(v) => update("targetRelationship", Math.min(100, v))}
             />
             <Field
               label="Talent level"
@@ -971,6 +1251,20 @@ export function MastersPlanner() {
                 }
               />
               <Field
+                label="Target level"
+                value={skill.targetLevel || 0}
+                onChange={(v) =>
+                  setInputs((c) => ({
+                    ...c,
+                    skills: c.skills.map((item, i) =>
+                      i === index
+                        ? { ...item, targetLevel: Math.max(item.level, v) }
+                        : item,
+                    ),
+                  }))
+                }
+              />
+              <Field
                 label="Partial XP"
                 value={skill.partialXp}
                 onChange={(v) =>
@@ -984,31 +1278,44 @@ export function MastersPlanner() {
               />
             </div>
           ))}
-          <button
-            className={styles.button}
-            type="button"
-            onClick={() =>
-              setInputs((c) => ({
-                ...c,
-                skills: [
-                  ...c.skills,
-                  {
-                    name: `Skill ${c.skills.length + 1}`,
-                    level: 0,
-                    partialXp: 0,
-                  },
-                ],
-              }))
-            }
-          >
-            Add skill
-          </button>
         </div>
       </section>
       <aside className={styles.result}>
         <h2>Best next investment</h2>
-        <div className={styles.metrics}><div className={styles.metric}><span>Next relationship milestone</span><b>Level {plan.target.level} · +{plan.target.buff}%</b></div><div className={styles.metric}><span>Affinity needed / short</span><b>{fmt(plan.affinity)} / {fmt(plan.shortfall.affinity)}</b></div><div className={styles.metric}><span>Emblems needed / short</span><b>{fmt(plan.emblems)} / {fmt(plan.shortfall.emblems)}</b></div></div>
-        <p className={styles.note}>Relationship milestones are active for all six published Masters. Skill fields remain saved alongside the roadmap.</p>
+        <div className={styles.metrics}>
+          <div className={styles.metric}>
+            <span>Next relationship milestone</span>
+            <b>
+              Level {plan.target.level} · +{plan.target.buff}%
+            </b>
+          </div>
+          <div className={styles.metric}>
+            <span>Affinity needed / short</span>
+            <b>
+              {fmt(plan.affinity)} / {fmt(plan.shortfall.affinity)}
+            </b>
+          </div>
+          <div className={styles.metric}>
+            <span>Emblems needed / short</span>
+            <b>
+              {fmt(plan.emblems)} / {fmt(plan.shortfall.emblems)}
+            </b>
+          </div>
+        </div>
+        <p className={styles.note}>
+          {plan.title} · {plan.label}. Skill requirements: {fmt(plan.xp)} XP and{" "}
+          {fmt(plan.manuscripts)} Manuscripts ({fmt(plan.shortfall.manuscripts)}{" "}
+          short).
+        </p>
+        <ol className={styles.list}>
+          {plan.skillRoadmap.map((skill) => (
+            <li key={skill.name}>
+              {skill.name}: level {skill.from} → {skill.to} · {fmt(skill.xp)} XP
+              · {fmt(skill.manuscripts)} Manuscripts
+            </li>
+          ))}
+        </ol>
+        <ExportButton name="master-progression-plan" data={plan} />
       </aside>
     </div>
   );
