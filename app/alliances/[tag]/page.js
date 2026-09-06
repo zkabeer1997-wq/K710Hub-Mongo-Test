@@ -1,7 +1,8 @@
 import { stripLegacyBearCopy } from '../../../lib/publicBearSchedule';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { Tag, Card, Button } from '../../../components/ui';
 import { AllianceBearTimes } from '../../../components/BearScheduleProvider';
 
@@ -13,10 +14,9 @@ const STATUS_TONE = { open: 'success', selective: 'accent', closed: 'neutral' };
 // reason to risk the DYNAMIC_SERVER_USAGE conflict at all.
 export async function generateStaticParams() {
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase.from('alliances').select('tag').eq('active', true);
-    if (error) throw error;
-    return (data || []).map((a) => ({ tag: a.tag.toLowerCase() }));
+    const coll = await getCollection(COLLECTIONS.ALLIANCES);
+    const data = await coll.find({ active: true }).project({ tag: 1, _id: 0 }).toArray();
+    return (data || []).map((a) => ({ tag: String(a.tag).toLowerCase() }));
   } catch (error) {
     console.error('alliances generateStaticParams failed', error);
     return [];
@@ -24,15 +24,24 @@ export async function generateStaticParams() {
 }
 
 async function loadAlliance(tagParam) {
-  const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from('alliances')
-    .select('tag, name, blurb, leader_player_id, timezone_focus, recruiting_status, language, roster_size, bear_times_utc')
-    .eq('tag', String(tagParam || '').toUpperCase())
-    .eq('active', true)
-    .maybeSingle();
-  if (error) throw error;
-  return data || null;
+  const coll = await getCollection(COLLECTIONS.ALLIANCES);
+  return coll.findOne(
+    { tag: String(tagParam || '').toUpperCase(), active: true },
+    {
+      projection: {
+        tag: 1,
+        name: 1,
+        blurb: 1,
+        leader_player_id: 1,
+        timezone_focus: 1,
+        recruiting_status: 1,
+        language: 1,
+        roster_size: 1,
+        bear_times_utc: 1,
+        _id: 0,
+      },
+    }
+  );
 }
 
 export async function generateMetadata({ params }) {
@@ -54,11 +63,6 @@ export default async function AlliancePage({ params }) {
     alliance = await loadAlliance(tag);
   } catch (error) {
     console.error('alliance page load failed', error);
-    // A genuinely missing alliance (bad slug) and a Supabase hiccup are
-    // different situations for a visitor - notFound() renders the site's
-    // real 404, but a load failure here would too, silently mislabeling a
-    // transient error as "this alliance doesn't exist." Surface it as a
-    // real error instead of masking it as a 404.
     return (
       <main className="theme-realm alliance-page" style={{ minHeight: '100vh', padding: '56px 24px', background: 'var(--color-bg)', color: 'var(--color-ink)' }}>
         <div className="alliance-page-inner" style={{ maxWidth: 700, margin: '0 auto' }}>
@@ -69,7 +73,6 @@ export default async function AlliancePage({ params }) {
     );
   }
   if (!alliance) notFound();
-
 
   return (
     <main className="theme-realm alliance-page">
