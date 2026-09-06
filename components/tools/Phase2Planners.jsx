@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { CHARM_COSTS } from "../../lib/charmToolData.mjs";
@@ -71,6 +72,22 @@ const defaultCharms = ["Infantry", "Cavalry", "Archer"].flatMap((type) =>
 );
 const heroPieces = ["Helmet", "Gloves", "Chest", "Boots"];
 const governorPieces = ["Helmet", "Chest", "Ring", "Staff", "Pants", "Boots"];
+const heroGearImage = (label) => {
+  const [troop, piece] = label.toLowerCase().split(" ");
+  return `/images/kingshot/hero-gear/${troop}-${piece === "helmet" ? "helm" : piece}.png`;
+};
+const governorGearImages = [
+  "/images/kingshot/governor-gear/cavalry_gear_1_green_t0_s0.webp",
+  "/images/kingshot/governor-gear/cavalry_gear_2_green_t0_s0.webp",
+  "/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp",
+  "/images/kingshot/governor-gear/infantry_gear_2_green_t0_s0.webp",
+  "/images/kingshot/governor-gear/archery_gear_1_green_t0_s0.webp",
+  "/images/kingshot/governor-gear/archery_gear_2_green_t0_s0.webp",
+];
+const petImages = {
+  "Gray Wolf": "/images/kingshot/pets/gray-wolf.webp",
+  "Grizzly Bear": "/images/kingshot/pets/grizzly-bear.webp",
+};
 
 function ExportButton({ name, data }) {
   const download = () => {
@@ -442,6 +459,23 @@ export function PetProgressionPlanner({ memberId = "" }) {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <div className={styles.subjectBanner}>
+          <Image
+            src={
+              petImages[inputs.pet] || "/images/kingshot/pets/gray-wolf.webp"
+            }
+            alt=""
+            width={92}
+            height={92}
+          />
+          <div>
+            <strong>{inputs.pet}</strong>
+            <span>
+              Generation {inputs.generation} · maximum level{" "}
+              {PETS.find((pet) => pet.name === inputs.pet)?.maxLevel}
+            </span>
+          </div>
+        </div>
         <PlannerGuide
           steps={[
             "Choose the pet, then enter its current and desired levels.",
@@ -758,7 +792,15 @@ export function CharmStatPlanner({ memberId = "" }) {
           <div className={styles.groupGrid}>
             {["Infantry", "Cavalry", "Archer"].map((troop) => (
               <section className={styles.equipmentGroup} key={troop}>
-                <h3>{troop}</h3>
+                <h3>
+                  <Image
+                    src={`/images/kingshot/charms/${troop === "Archer" ? "archery" : troop.toLowerCase()}.webp`}
+                    alt=""
+                    width={44}
+                    height={44}
+                  />
+                  {troop}
+                </h3>
                 {inputs.charms
                   .filter((charm) => charm.type === troop)
                   .map((charm) => (
@@ -876,7 +918,21 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
             <h3>{group.name}</h3>
             {group.rows.map(({ row, index }) => (
               <div className={styles.compactRow} key={row.id}>
-                <strong>{row.label}</strong>
+                <strong className={styles.pieceIdentity}>
+                  <Image
+                    src={
+                      hero
+                        ? heroGearImage(row.label)
+                        : governorGearImages[index]
+                    }
+                    alt=""
+                    width={48}
+                    height={48}
+                  />
+                  <span>
+                    {hero ? row.label.replace(`${group.name} `, "") : row.label}
+                  </span>
+                </strong>
                 <Field
                   label="Rarity / tier"
                   type="select"
@@ -1430,6 +1486,20 @@ export function MastersPlanner() {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        {inputs.master ? (
+          <div className={styles.subjectBanner}>
+            <Image
+              src={`/images/kingshot/masters/${inputs.master.toLowerCase()}.png`}
+              alt=""
+              width={92}
+              height={92}
+            />
+            <div>
+              <strong>{inputs.master}</strong>
+              <span>{MASTER_DATA[inputs.master].title} · Kingshot Master</span>
+            </div>
+          </div>
+        ) : null}
         <PlannerGuide
           steps={[
             "Choose a Master and enter your current and target relationship levels.",
