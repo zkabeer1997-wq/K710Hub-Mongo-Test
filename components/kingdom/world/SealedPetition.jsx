@@ -20,10 +20,10 @@ export default function SealedPetition({ onClose, reducedMotion = false, intakeP
   useEffect(() => {
     if (reducedMotion) return undefined;
     const at = (ms, b) => timers.current.push(setTimeout(() => setBeat(b), ms));
-    at(500, 1);   // seal presses
-    at(1250, 2);  // gold flash through the crest
-    at(2100, 3);  // document rolls, courier departs
-    at(3500, 4);  // result copy
+    at(500, 1);
+    at(1250, 2);
+    at(2100, 3);
+    at(3500, 4);
     return () => timers.current.forEach(clearTimeout);
   }, [reducedMotion]);
 
@@ -38,7 +38,6 @@ export default function SealedPetition({ onClose, reducedMotion = false, intakeP
   return (
     <div className="sealed" role="dialog" aria-modal="true" aria-labelledby="sealed-title">
       <div className="sealed-stage" data-beat={beat}>
-        {/* the petition itself */}
         <div className="sealed-doc" aria-hidden="true">
           <div className="sealed-doc-lines">
             {Array.from({ length: 9 }).map((_, i) => (
@@ -66,8 +65,6 @@ export default function SealedPetition({ onClose, reducedMotion = false, intakeP
           </div>
           <div className="sealed-flash" />
         </div>
-
-        {/* courier carrying it toward the fortress */}
         <div className="sealed-courier" aria-hidden="true">
           <span className="sealed-courier-body" />
           <span className="sealed-fortress" />
@@ -85,7 +82,10 @@ export default function SealedPetition({ onClose, reducedMotion = false, intakeP
         </p>
         {reference && (
           <p className="sealed-reference">
-            Reference <strong>{reference}</strong> — keep this for your records.
+            Reference <strong>{reference}</strong> — keep this for your records.{' '}
+            <Link href={`/interest/status?reference=${encodeURIComponent(reference)}`}>
+              Check status anytime →
+            </Link>
           </p>
         )}
         <p className="k-narrative sealed-wink">We&rsquo;ll see you at the gates.</p>
@@ -93,9 +93,18 @@ export default function SealedPetition({ onClose, reducedMotion = false, intakeP
           <button type="button" className="k-btn" onClick={onClose}>
             Continue
           </button>
-          <Link href="/chronometer" className="k-btn k-btn-quiet">
-            Back to the Chamber
-          </Link>
+          {reference ? (
+            <Link
+              href={`/interest/status?reference=${encodeURIComponent(reference)}`}
+              className="k-btn k-btn-quiet"
+            >
+              Check transfer status
+            </Link>
+          ) : (
+            <Link href="/chronometer" className="k-btn k-btn-quiet">
+              Back to the Chamber
+            </Link>
+          )}
         </div>
       </div>
 

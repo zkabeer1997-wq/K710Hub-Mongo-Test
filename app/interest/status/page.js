@@ -1,13 +1,20 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-export default function InterestStatusPage() {
+function InterestStatusInner() {
+  const searchParams = useSearchParams();
   const [reference, setReference] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const q = searchParams?.get('reference');
+    if (q) setReference(String(q).toUpperCase());
+  }, [searchParams]);
 
   const lookup = useCallback(
     async (event) => {
@@ -40,53 +47,96 @@ export default function InterestStatusPage() {
     [reference]
   );
 
+  useEffect(() => {
+    const q = searchParams?.get('reference');
+    if (q && String(q).trim()) {
+      const ref = String(q).trim().toUpperCase();
+      setReference(ref);
+      (async () => {
+        setBusy(true);
+        setError('');
+        try {
+          const res = await fetch(
+            `/api/interest/status?reference=${encodeURIComponent(ref)}`,
+            { cache: 'no-store' }
+          );
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            setError(data.error || 'Submission not found.');
+            return;
+          }
+          setResult(data);
+        } catch {
+          setError('Unable to check status right now. Try again shortly.');
+        } finally {
+          setBusy(false);
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  return (
+    <>
+      <Link href="/interest" className="interest-status-back">
+        ← Transfer form
+      </Link>
+      <h1>Check transfer status</h1>
+      <p>
+        Enter the reference code shown after you submitted the transfer form
+        (for example <code>K710-A1B2C3D4</code>).
+      </p>
+
+      <form onSubmit={lookup} className="interest-status-form">
+        <label htmlFor="interest-ref">Reference code</label>
+        <input
+          id="interest-ref"
+          value={reference}
+          onChange={(e) => setReference(e.target.value.toUpperCase())}
+          placeholder="K710-XXXXXXXX"
+          autoComplete="off"
+          spellCheck={false}
+        />
+        <button type="submit" disabled={busy}>
+          {busy ? 'Checking…' : 'Check status'}
+        </button>
+      </form>
+
+      {error && (
+        <p className="interest-status-error" role="alert">
+          {error}
+        </p>
+      )}
+
+      {result && (
+        <div className="interest-status-result" role="status">
+          <p className="interest-status-badge" data-status={result.status}>
+            {result.status}
+          </p>
+          {result.name && (
+            <p>
+              Applicant: <strong>{result.name}</strong>
+            </p>
+          )}
+          <p>{result.next_step}</p>
+          {result.status === 'accepted' && (
+            <p>
+              <Link href="/player-record">Go to member login →</Link>
+            </p>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+export default function InterestStatusPage() {
   return (
     <main className="interest-status-page">
       <div className="interest-status-inner">
-        <Link href="/interest" className="interest-status-back">
-          ← Transfer form
-        </Link>
-        <h1>Check transfer status</h1>
-        <p>
-          Enter the reference code shown after you submitted the transfer form
-          (for example <code>K710-A1B2C3D4</code>).
-        </p>
-
-        <form onSubmit={lookup} className="interest-status-form">
-          <label htmlFor="interest-ref">Reference code</label>
-          <input
-            id="interest-ref"
-            value={reference}
-            onChange={(e) => setReference(e.target.value.toUpperCase())}
-            placeholder="K710-XXXXXXXX"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <button type="submit" disabled={busy}>
-            {busy ? 'Checking…' : 'Check status'}
-          </button>
-        </form>
-
-        {error && (
-          <p className="interest-status-error" role="alert">
-            {error}
-          </p>
-        )}
-
-        {result && (
-          <div className="interest-status-result" role="status">
-            <p className="interest-status-badge" data-status={result.status}>
-              {result.status}
-            </p>
-            {result.name && <p>Applicant: <strong>{result.name}</strong></p>}
-            <p>{result.next_step}</p>
-            {result.status === 'accepted' && (
-              <p>
-                <Link href="/player-record">Go to member login →</Link>
-              </p>
-            )}
-          </div>
-        )}
+        <Suspense fallback={<p>Loading…</p>}>
+          <InterestStatusInner />
+        </Suspense>
       </div>
 
       <style>{`
