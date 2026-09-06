@@ -29,6 +29,7 @@ const NAV_SECTIONS = [
     label: 'Member and Transfer Management',
     items: [
       { href: '/admin/dashboard/member-pins', label: 'Member Profiles', match: '/admin/dashboard/member-pins' },
+      { href: '/admin/dashboard/access', label: 'User Access', match: '/admin/dashboard/access' },
       { href: '/admin/dashboard/gift-codes', label: 'Gift Codes', match: '/admin/dashboard/gift-codes' },
       { href: '/admin/dashboard/interest', label: 'Transfer Requests', badge: 'transfers', match: '/admin/dashboard/interest' },
       { href: '/admin/dashboard/website-requests', label: 'Website Requests', badge: 'website', match: '/admin/dashboard/website-requests' },
