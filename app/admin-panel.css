@@ -58,6 +58,11 @@
 .admin-table th, .admin-table td { border-bottom: 1px solid var(--border-soft, var(--line)); text-align: left; vertical-align: middle; color: var(--text); padding: 10px 11px; }
 .admin-table th { color: var(--gold-bright); text-transform: uppercase; white-space: nowrap; background: #12151d; font-size: 11px; font-weight: 900; }
 .admin-table tbody tr:hover { background: rgba(217,169,78,0.06); }
+/* Keeps the row-action buttons (Edit/Delete) fully clickable instead of
+   getting cut off at the scroll boundary when a wide table scrolls
+   horizontally inside .admin-table-wrap. */
+.admin-table-actions { display: flex; gap: 8px; position: sticky; right: 0; background: #12151d; }
+.admin-table tbody tr:hover .admin-table-actions { background: #171a24; }
 
 .admin-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 20px; }
 .admin-actions { display: flex; align-items: center; gap: 12px; }
@@ -87,6 +92,45 @@
 
 /* Dashboard overview cards (kept from prior styles) */
 .dash-stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+
+/* Troop-band wheel selector widget: chips row, donut + hub, legend, and the
+   per-band matrix. These classes shipped with the component but never got
+   their own styles, so labels ran together with zero gap ("Infantry" +
+   "Cavalry" + "Archer" rendering as one word, "exact match" glued onto the
+   band label with no space). */
+.dash-band-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.dash-band-chip { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; background: rgba(255,255,255,0.02); font-size: 11px; color: var(--text-muted); }
+.dash-band-chip strong { color: var(--parchment); font-weight: 700; }
+.dash-wheel-col { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.dash-wheel-wrap { position: relative; width: min(220px, 100%); }
+.dash-wheel-wrap svg { width: 100%; height: auto; display: block; }
+.dash-arc { cursor: pointer; transition: opacity 0.16s ease; }
+.dash-arc.is-dim { opacity: 0.35; }
+.dash-arc.is-active { opacity: 1; }
+.dash-arc:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.dash-hub { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+.dash-hub-branch { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.dash-hub-big { font-size: 28px; font-weight: 800; font-family: var(--font-display); line-height: 1.1; margin-top: 2px; }
+.dash-hub-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.dash-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
+.dash-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+.dash-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.dash-detail { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; background: rgba(15,19,32,0.55); padding: 18px 20px; }
+.dash-detail h2 { margin: 0; font-size: 16px; font-family: var(--font-display); color: var(--parchment); }
+.dash-detail-hint { margin: 4px 0 16px; font-size: 11px; color: var(--text-dim); }
+.dash-matrix { display: grid; gap: 10px; }
+.dash-band-row { display: grid; grid-template-columns: minmax(0, 1fr) 2fr auto; align-items: center; gap: 12px; width: 100%; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; background: rgba(255,255,255,0.02); cursor: pointer; text-align: left; }
+.dash-band-row.is-selected { border-color: var(--gold); background: rgba(217,169,78,0.08); }
+.dash-band-row:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.dash-band-label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; font-weight: 700; color: var(--parchment); }
+.dash-band-label span { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+.dash-bar-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.dash-bar-fill { height: 100%; border-radius: 999px; }
+.dash-band-count { font-size: 16px; font-weight: 800; font-family: var(--font-mono); text-align: right; min-width: 28px; }
+@media (max-width: 640px) {
+  .dash-band-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .dash-bar-track { grid-column: 1 / -1; }
+}
 .dash-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .dash-sum { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; background: rgba(15,19,32,0.55); }
 .dash-sum b { display: block; font-size: 22px; font-weight: 800; color: var(--gold-bright); font-family: var(--font-display); }

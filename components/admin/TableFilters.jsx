@@ -16,7 +16,8 @@ export default function TableFilters({ query, onQuery, placeholder = 'Search nam
       .admin-shell .table-filters-main>label{flex:1;min-width:min(250px,100%)}
       .admin-shell .table-filters input,.admin-shell .table-filters select{width:100%;min-width:0;height:40px;margin:0;padding:8px 11px;background:var(--field-bg,#0e1821);color:var(--parchment,#eee);border:1px solid var(--edge,#45515b);border-radius:6px;font:inherit}
       .admin-shell .table-filters-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px;margin-top:14px;align-items:end}
-      .admin-shell .table-filters-reset{height:40px;padding:8px 12px;margin:0;font-size:12px;white-space:nowrap;width:auto}
+      .admin-shell .table-filters-reset{height:40px;padding:8px 12px;margin:0;font-size:12px;font-weight:700;white-space:nowrap;width:auto;background:transparent;color:var(--parchment,#eee);border:1px solid var(--edge,#45515b);border-radius:6px;cursor:pointer}
+      .admin-shell .table-filters-reset:hover{border-color:var(--gold,#d9a94e);color:var(--gold-bright,#f0c669)}
       .admin-shell .table-filters-count{font-size:12px;white-space:nowrap;padding-bottom:10px}
       @media(max-width:600px){.admin-shell .table-filters-main>label{flex-basis:100%}}
     `}</style>

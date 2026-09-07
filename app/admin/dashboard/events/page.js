@@ -269,7 +269,7 @@ export default function AdminEventsPage() {
                 <td>{new Date(row.starts_at).toLocaleString()}</td>
                 <td>{recurrenceLabel(row)}</td>
                 <td>{row.published ? 'Published' : 'Draft'}</td>
-                <td style={{ display: 'flex', gap: 8 }}>
+                <td className="admin-table-actions">
                   <Button variant="quiet" onClick={() => openEdit(row)} disabled={editingId !== null}>Edit</Button>
                   <Button variant="quiet" onClick={() => setConfirmRow(row)} disabled={editingId !== null}>Delete</Button>
                 </td>

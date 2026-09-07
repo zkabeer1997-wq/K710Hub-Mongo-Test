@@ -194,7 +194,7 @@ export default function AdminAlliancesPage() {
                 <td>{row.scheduled_events?.length || 0}</td>
                 <td>{row.recruiting_status}</td>
                 <td>{row.active ? 'Yes' : 'No'}</td>
-                <td style={{ display: 'flex', gap: 8 }}>
+                <td className="admin-table-actions">
                   <Button variant="quiet" onClick={() => openEdit(row)} disabled={editingTag !== null}>Edit</Button>
                   <Button variant="quiet" onClick={() => setConfirmRow(row)} disabled={editingTag !== null}>Delete</Button>
                 </td>

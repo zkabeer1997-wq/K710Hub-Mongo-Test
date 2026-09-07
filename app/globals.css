@@ -28,6 +28,20 @@ input, select { padding: 10px 12px; border: 1px solid rgba(217, 169, 78, 0.25); 
 
 input:focus, select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(217, 169, 78, 0.18); }
 
+/* Chrome/Safari paint autofilled inputs with a light background regardless
+   of the site's own styles. A long transition delay is the standard trick
+   to override it, since -webkit-text-fill-color/-webkit-box-shadow can't be
+   set with !important in the usual way browsers respect. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 1000px rgba(17, 22, 34, 0.9) inset;
+  box-shadow: 0 0 0 1000px rgba(17, 22, 34, 0.9) inset;
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
 .row { display: flex; gap: 16px; }
 /* min-width:0 — a flex item defaults to min-width:auto and will not
    shrink below the intrinsic width of a <select>, so without this the
