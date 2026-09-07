@@ -2378,6 +2378,7 @@
   "is-selected",
   "is-travelling",
   "isNavActive(pathname, item.match)); return (",
+  "isSelf",
   "isTransfer",
   "it",
   "italian",

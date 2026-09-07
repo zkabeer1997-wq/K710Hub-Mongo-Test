@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readKingshotSession } from '../../../lib/memberAuthKingshot';
+import { ADMIN_COOKIE_NAME, isValidAdminToken } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 
 const ROLES = new Set(['member', 'admin', 'superadmin']);
@@ -11,6 +12,14 @@ function json(body, init = {}) {
 }
 
 async function requireSuperadmin(request) {
+  // The shared admin-password login has no Kingshot player account, but is
+  // treated as full admin access everywhere else in /admin/dashboard (see
+  // isAdminRequest in lib/adminAuth.js) - honor it here too, with a null
+  // playerId so "isSelf" checks in the UI simply never match.
+  const legacyToken = request.cookies.get(ADMIN_COOKIE_NAME);
+  if (await isValidAdminToken(legacyToken && legacyToken.value)) {
+    return { role: 'superadmin', playerId: null };
+  }
   const session = await readKingshotSession(request);
   return session?.role === 'superadmin' ? session : null;
 }

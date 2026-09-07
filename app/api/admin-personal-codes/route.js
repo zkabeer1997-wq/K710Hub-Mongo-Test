@@ -2,6 +2,7 @@ import { randomInt } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { readKingshotSession } from '../../../lib/memberAuthKingshot';
+import { ADMIN_COOKIE_NAME, isValidAdminToken } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 
 function json(body, init = {}) {
@@ -10,9 +11,21 @@ function json(body, init = {}) {
   return response;
 }
 
+async function requireSuperadmin(request) {
+  // See app/api/admin-user-roles/route.js: the shared admin-password login
+  // has no Kingshot player account but is treated as full admin access
+  // everywhere else in /admin/dashboard, so it must satisfy this gate too.
+  const legacyToken = request.cookies.get(ADMIN_COOKIE_NAME);
+  if (await isValidAdminToken(legacyToken && legacyToken.value)) {
+    return { role: 'superadmin', playerId: null };
+  }
+  const session = await readKingshotSession(request);
+  return session?.role === 'superadmin' ? session : null;
+}
+
 export async function POST(request) {
-  const actor = await readKingshotSession(request);
-  if (actor?.role !== 'superadmin') {
+  const actor = await requireSuperadmin(request);
+  if (!actor) {
     return json({ error: 'Superadmin access required.' }, { status: 403 });
   }
 
