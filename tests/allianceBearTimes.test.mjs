@@ -5,44 +5,50 @@ import { mintAdminToken } from '../lib/adminAuth.js';
 import { ALLIANCE_EVENT_TYPES, validateAllianceEvents, currentAllianceEvents } from '../lib/allianceEvents.mjs';
 import { validateBearTimes, huntsFromAlliances, nextHunt } from '../lib/bearHuntSchedule.js';
 
-const state = { rows: [{ tag: 'RED', name: 'RED', active: true, bear_times_utc: ['11:05', '19:00', '23:20'], leader_player_id: 'private-test-field', updated_at: '2026-09-03' }], paths: [], writes: 0 };
+const state = {
+  tables: {
+    alliances: [{ tag: 'RED', name: 'RED', active: true, sort_order: 0, bear_times_utc: ['11:05', '19:00', '23:20'], leader_player_id: 'private-test-field', updated_at: '2026-09-03' }],
+  },
+  paths: [],
+  failRead: false,
+};
 globalThis.__bearScheduleTest = state;
 registerHooks({
   resolve(specifier, context, next) {
-    if (specifier.endsWith('/lib/adminSupabase') || specifier === './adminSupabase') return { url: 'test:bear-database', shortCircuit: true };
+    if (/\/(lib\/)?mongo(\.js)?$/.test(specifier)) return { url: 'test:bear-mongo', shortCircuit: true };
     if (specifier === 'next/cache') return { url: 'test:bear-cache', shortCircuit: true };
     if (specifier === 'next/server') return next('next/server.js', context);
-    if (/\/(adminAuth|memberAuth|bearHuntSchedule|publicBearSchedule|publicAllianceEvents|revalidateAlliancePages|ics)$/.test(specifier)) return next(`${specifier}.js`, context);
+    if (/\/(adminAuth|memberAuth|bearHuntSchedule|publicBearSchedule|publicAllianceEvents|revalidateAlliancePages|mongoCollections|ics)$/.test(specifier)) return next(`${specifier}.js`, context);
     return next(specifier, context);
   },
   load(url, context, next) {
-    if (url === 'test:bear-database') return { format: 'module', shortCircuit: true, source: 'export const createAdminSupabaseClient = () => globalThis.__bearScheduleTest.client;' };
+    if (url === 'test:bear-mongo') {
+      const helperUrl = new URL('./helpers/fakeMongo.mjs', import.meta.url).href;
+      return {
+        format: 'module',
+        shortCircuit: true,
+        source: `
+          import { createFakeMongo } from ${JSON.stringify(helperUrl)};
+          const base = createFakeMongo(globalThis.__bearScheduleTest.tables, { alliances: ['tag'] });
+          export async function getCollection(name) {
+            const coll = await base.getCollection(name);
+            if (name === 'alliances') {
+              const originalFind = coll.find.bind(coll);
+              coll.find = (...args) => {
+                if (globalThis.__bearScheduleTest.failRead) throw new Error('Database unavailable');
+                return originalFind(...args);
+              };
+            }
+            return coll;
+          }
+          export const ensureIndexes = base.ensureIndexes;
+        `,
+      };
+    }
     if (url === 'test:bear-cache') return { format: 'module', shortCircuit: true, source: 'export const revalidatePath = path => globalThis.__bearScheduleTest.paths.push(path);' };
     return next(url, context);
   },
 });
-state.client = { from() {
-  const query = {
-    filters: [], fields: '*', changes: null, removing: false,
-    select(fields) { this.fields = fields; return this; },
-    eq(key, value) { this.filters.push([key, value]); return this; },
-    order() { return this; },
-    update(changes) { this.changes = changes; return this; },
-    insert(changes) { state.rows.push(changes); state.writes++; return this; },
-    delete() { this.removing = true; return this; },
-    execute(single = false) {
-      if (state.failRead && !this.changes && !this.removing) return { data: null, error: new Error('Database unavailable') };
-      const selected = state.rows.filter(row => this.filters.every(([key, value]) => row[key] === value));
-      if (this.changes) { selected.forEach(row => Object.assign(row, this.changes)); state.writes++; }
-      if (this.removing) { state.rows = state.rows.filter(row => !selected.includes(row)); state.writes++; }
-      const result = selected.map(row => this.fields === '*' ? { ...row } : Object.fromEntries(this.fields.split(',').map(field => [field.trim(), row[field.trim()]])));
-      return { data: single ? result[0] : result, error: null };
-    },
-    async single() { return this.execute(true); },
-    then(resolve, reject) { return Promise.resolve(this.execute()).then(resolve, reject); },
-  };
-  return query;
-} };
 const { PUT, DELETE } = await import('../app/api/admin-alliances/[tag]/route.js');
 const { POST } = await import('../app/api/admin-alliances/route.js');
 const { GET: publicGet } = await import('../app/api/bear-schedule/route.js');
@@ -53,6 +59,7 @@ process.env.ADMIN_PASSWORD = 'bear-test-only';
 const token = await mintAdminToken();
 const request = (body, admin = true) => ({ cookies: { get: () => admin ? { value: token } : undefined }, json: async () => body });
 const params = { params: Promise.resolve({ tag: 'RED' }) };
+const snapshot = () => JSON.parse(JSON.stringify(state.tables.alliances));
 
 test('times validate, deduplicate by rejection, and sort without mutating input', () => {
   const input = ['23:20', '00:00', '12:45'];
@@ -62,14 +69,16 @@ test('times validate, deduplicate by rejection, and sort without mutating input'
   assert.deepEqual(validateBearTimes([]).times, []);
 });
 test('admin authentication gates all alliance writes', async () => {
+  const before = snapshot();
   assert.equal((await PUT(request({}, false), params)).status, 401);
   assert.equal((await POST(request({}, false))).status, 401);
   assert.equal((await DELETE(request({}, false), params)).status, 401);
-  assert.equal(state.writes, 0);
+  assert.deepEqual(snapshot(), before);
 });
 test('invalid times do not modify stored data', async () => {
+  const before = snapshot();
   assert.equal((await PUT(request({ bear_times_utc: ['25:00'] }), params)).status, 400);
-  assert.equal(state.writes, 0);
+  assert.deepEqual(snapshot(), before);
 });
 test('save flows through public schedule, clock helpers, and calendar with no old times', async () => {
   const result = await PUT(request({ bear_times_utc: ['22:15', '03:40'] }), params);
@@ -88,7 +97,7 @@ test('save flows through public schedule, clock helpers, and calendar with no ol
 });
 test('partial alliance edits preserve saved times', async () => {
   await PUT(request({ language: 'English' }), params);
-  assert.deepEqual(state.rows[0].bear_times_utc, ['03:40', '22:15']);
+  assert.deepEqual(state.tables.alliances.find(a => a.tag === 'RED').bear_times_utc, ['03:40', '22:15']);
 });
 test('hidden alliances vanish from public data and downloads', async () => {
   await PUT(request({ active: false }), params);
@@ -143,11 +152,11 @@ test('all seven event types accept valid UTC dates; malformed and duplicate entr
   assert.equal(validateAllianceEvents([valid, { ...valid, date: '2030-04-21' }]).events.length, 2);
 });
 test('invalid or unauthorized event writes leave saved data unchanged', async () => {
-  const before = state.writes;
+  const before = snapshot();
   assert.equal((await PUT(request({ scheduled_events: eventDates }, false), newParams)).status, 401);
   assert.equal((await PUT(request({ scheduled_events: [{ ...eventDates[0], date: '2030-02-30' }] }), newParams)).status, 400);
   assert.equal((await POST(request({ tag: 'BAD', name: 'Bad', scheduled_events: [{ type: 'unknown' }] }))).status, 400);
-  assert.equal(state.writes, before);
+  assert.deepEqual(snapshot(), before);
 });
 test('saving all event types makes dates and alliance labels public without private fields', async () => {
   assert.equal((await PUT(request({ scheduled_events: eventDates }), newParams)).status, 200);
@@ -169,7 +178,7 @@ test('editing event dates replaces old values and partial edits preserve schedul
   const { events } = await (await allianceEventsGet()).json();
   assert.equal(events.length, 1);
   assert.equal(events[0].starts_at, '2030-05-01T23:59:00.000Z');
-  assert.deepEqual(state.rows.find(row => row.tag === 'NEW').bear_times_utc, ['14:10']);
+  assert.deepEqual(state.tables.alliances.find(row => row.tag === 'NEW').bear_times_utc, ['14:10']);
 });
 test('hidden and removed alliance schedules disappear; clearing is persisted', async () => {
   await PUT(request({ active: false }), newParams);
