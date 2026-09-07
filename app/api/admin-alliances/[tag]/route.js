@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { revalidateAlliancePages } from '../../../../lib/revalidateAlliancePages';
 import { validateBearTimes } from '../../../../lib/bearHuntSchedule';
 import { isAdminRequest } from '../../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../../lib/adminSupabase';
+import { getCollection } from '../../../../lib/mongo';
+import { COLLECTIONS } from '../../../../lib/mongoCollections';
 
 const STATUSES = ['open', 'selective', 'closed'];
 
@@ -46,14 +47,25 @@ export async function PUT(request, { params: paramsPromise }) {
     update.name = name;
   }
   if (body.blurb !== undefined) update.blurb = String(body.blurb);
-  if (body.leader_player_id !== undefined) update.leader_player_id = body.leader_player_id ? String(body.leader_player_id) : null;
-  if (body.timezone_focus !== undefined) update.timezone_focus = body.timezone_focus ? String(body.timezone_focus) : null;
-  if (body.language !== undefined) update.language = body.language ? String(body.language) : null;
+  if (body.leader_player_id !== undefined) {
+    update.leader_player_id = body.leader_player_id ? String(body.leader_player_id) : null;
+  }
+  if (body.timezone_focus !== undefined) {
+    update.timezone_focus = body.timezone_focus ? String(body.timezone_focus) : null;
+  }
+  if (body.language !== undefined) {
+    update.language = body.language ? String(body.language) : null;
+  }
   if (body.roster_size !== undefined) {
-    update.roster_size = body.roster_size !== '' && Number.isFinite(Number(body.roster_size)) ? Number(body.roster_size) : null;
+    update.roster_size =
+      body.roster_size !== '' && Number.isFinite(Number(body.roster_size))
+        ? Number(body.roster_size)
+        : null;
   }
   if (body.active !== undefined) update.active = Boolean(body.active);
-  if (body.sort_order !== undefined) update.sort_order = Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0;
+  if (body.sort_order !== undefined) {
+    update.sort_order = Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0;
+  }
   if (body.recruiting_status !== undefined) {
     if (!STATUSES.includes(body.recruiting_status)) {
       return NextResponse.json({ error: 'Unsupported recruiting status.' }, { status: 400 });
@@ -62,19 +74,22 @@ export async function PUT(request, { params: paramsPromise }) {
   }
   update.updated_at = new Date().toISOString();
 
-  const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from('alliances')
-    .update(update)
-    .eq('tag', tag)
-    .select('*')
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  revalidateAlliancePages(tag);
-
-  return NextResponse.json({ alliance: data });
+  try {
+    const coll = await getCollection(COLLECTIONS.ALLIANCES);
+    const result = await coll.findOneAndUpdate(
+      { tag: String(tag).toUpperCase() },
+      { $set: update },
+      { returnDocument: 'after', projection: { _id: 0 } }
+    );
+    const data = result?.value || result;
+    if (!data || !data.tag) {
+      return NextResponse.json({ error: 'Alliance not found.' }, { status: 404 });
+    }
+    revalidateAlliancePages(tag);
+    return NextResponse.json({ alliance: data });
+  } catch (error) {
+    return NextResponse.json({ error: error.message || 'Update failed.' }, { status: 500 });
+  }
 }
 
 export async function DELETE(request, { params: paramsPromise }) {
@@ -85,11 +100,15 @@ export async function DELETE(request, { params: paramsPromise }) {
   const tag = params?.tag;
   if (!tag) return NextResponse.json({ error: 'Missing alliance tag.' }, { status: 400 });
 
-  const supabase = createAdminSupabaseClient();
-  const { error } = await supabase.from('alliances').delete().eq('tag', tag);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  revalidateAlliancePages(tag);
-
-  return NextResponse.json({ ok: true });
+  try {
+    const coll = await getCollection(COLLECTIONS.ALLIANCES);
+    const result = await coll.deleteOne({ tag: String(tag).toUpperCase() });
+    if (!result.deletedCount) {
+      return NextResponse.json({ error: 'Alliance not found.' }, { status: 404 });
+    }
+    revalidateAlliancePages(tag);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json({ error: error.message || 'Delete failed.' }, { status: 500 });
+  }
 }

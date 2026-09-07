@@ -271,8 +271,18 @@ export default function LanguageProvider({ children }) {
         }
       }
     } else {
-      setChooserOpen(true);
-      setHasChosenLanguage(false);
+      // Admin tools should not block on the public language gate.
+      const onAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+      if (onAdmin) {
+        setLanguage('English');
+        setInputLanguage('English');
+        languageRef.current = 'English';
+        setHasChosenLanguage(true);
+        setChooserOpen(false);
+      } else {
+        setChooserOpen(true);
+        setHasChosenLanguage(false);
+      }
     }
   }, [startBrowserTranslator]);
 
@@ -600,7 +610,7 @@ export default function LanguageProvider({ children }) {
     <LanguageContext.Provider value={contextValue}>
       {children}
 
-      {chooserOpen && (
+      {chooserOpen && !(pathname || '').startsWith('/admin') && (
         <div className="k710-language-overlay" data-k710-no-translate role="dialog" aria-modal="true" aria-labelledby="k710-language-title">
           <div className="k710-language-panel">
             <div className="k710-language-crest" aria-hidden="true">710</div>
