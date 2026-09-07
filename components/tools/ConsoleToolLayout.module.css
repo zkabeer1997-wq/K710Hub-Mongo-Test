@@ -1,0 +1,65 @@
+/* Reusable Console tool shell: collapsible sidebar + content column.
+   Built for Hero Gear Planner but intended for any future tool rebuild -
+   keep this file free of anything Hero-Gear-specific. */
+
+.shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: clamp(76px, 9vh, 108px) var(--space-5) var(--space-11);
+  color: var(--color-ink);
+}
+
+.shell.collapsed {
+  grid-template-columns: 56px minmax(0, 1fr);
+}
+
+.sidebarCol {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.sidebarToggle {
+  align-self: flex-end;
+  background: transparent;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+
+.sidebarToggle:hover {
+  color: var(--color-accent-strong);
+  border-color: var(--color-accent);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .shell,
+  .shell.collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 70px;
+  }
+
+  .sidebarCol {
+    position: static;
+  }
+}
