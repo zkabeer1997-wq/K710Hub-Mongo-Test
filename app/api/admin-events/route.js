@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { randomUUID } from 'node:crypto';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
-
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { validateEventSchedule } from '../../../lib/eventRecurrence.mjs';
 
 const KINDS = ['kvk', 'championship', 'swordland', 'custom'];
@@ -19,14 +20,17 @@ export async function GET(request) {
   const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
-  const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .order('starts_at', { ascending: true });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ events: data || [] });
+  try {
+    const coll = await getCollection(COLLECTIONS.EVENTS);
+    const data = await coll.find({}).sort({ starts_at: 1 }).toArray();
+    const events = (data || []).map(({ _id, ...rest }) => ({
+      ...rest,
+      id: rest.id || String(_id),
+    }));
+    return NextResponse.json({ events });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
@@ -46,7 +50,10 @@ export async function POST(request) {
   const startsAt = body.starts_at;
 
   if (!SLUG_RE.test(slug)) {
-    return NextResponse.json({ error: 'Slug must be lowercase letters, numbers, and hyphens only.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Slug must be lowercase letters, numbers, and hyphens only.' },
+      { status: 400 }
+    );
   }
   if (!title) {
     return NextResponse.json({ error: 'Title is required.' }, { status: 400 });
@@ -61,10 +68,10 @@ export async function POST(request) {
   const { schedule, error: scheduleError } = validateEventSchedule(body);
   if (scheduleError) return NextResponse.json({ error: scheduleError }, { status: 400 });
 
-  const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from('events')
-    .insert({
+  try {
+    const coll = await getCollection(COLLECTIONS.EVENTS);
+    const doc = {
+      id: randomUUID(),
       slug,
       title,
       kind,
@@ -72,14 +79,15 @@ export async function POST(request) {
       body_md: String(body.body_md || ''),
       ...schedule,
       published: Boolean(body.published),
-    })
-    .select('*')
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  revalidatePath('/events');
-  revalidatePath(`/events/${slug}`);
-
-  return NextResponse.json({ event: data });
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+    await coll.insertOne(doc);
+    const { _id, ...event } = doc;
+    revalidatePath('/events');
+    revalidatePath(`/events/${slug}`);
+    return NextResponse.json({ event });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

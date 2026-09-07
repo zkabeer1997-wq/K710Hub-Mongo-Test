@@ -191,7 +191,7 @@ export default function GiftCodeRewards({ className = '' }) {
                       disabled={busy === h.id}
                       onClick={() => confirm(h.id, 'skipped')}
                     >
-                      Did not work
+                      Didn't work
                     </button>
                   </div>
                 </div>

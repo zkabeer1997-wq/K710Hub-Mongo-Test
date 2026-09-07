@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { filterRowsUpdatedOnOrAfter } from '../../../../lib/adminTimeWindow.mjs';
 import AdminShell from '../../../../components/admin/AdminShell';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Field, Input, Select, Table } from '../../../../components/ui';
@@ -8,7 +9,6 @@ import TableFilters from '../../../../components/admin/TableFilters';
 import { searchRow, compareValues, numericValue } from '../../../../lib/adminTable.mjs';
 import { TIME_SLOTS } from '../../../../lib/nobleAdvisor.mjs';
 import { schedule, OPEN_SPOT } from '../prepScheduler.mjs';
-import { filterRowsUpdatedOnOrAfter } from '../../../../lib/adminTimeWindow.mjs';
 
 const ALL_COLUMNS = [
   { key: 'in_game_name', label: 'In-game name' },
@@ -29,16 +29,13 @@ const ALL_COLUMNS = [
   { key: 'avail_day2', label: 'Day 2 Times (Research)' },
   { key: 'avail_day4', label: 'Day 4 Times (Troop Training)' },
   { key: 'avail_day5', label: 'Day 5 Times (Overflow)' },
-  { key: 'updated_at', label: 'Updated' },
+  { key: 'created_at', label: 'Submitted' },
 ];
 
 const SEARCH_KEYS = ['in_game_name', 'member_id'];
 
 function cellValue(row, key) {
-  if (key === 'updated_at') {
-    const value = row.updated_at || row.created_at;
-    return value ? new Date(value).toLocaleString() : '';
-  }
+  if (key === 'created_at') return row.created_at ? new Date(row.created_at).toLocaleString() : '';
   const v = row[key];
   if (Array.isArray(v)) return v.join(', ');
   return v == null ? '' : String(v);
@@ -120,15 +117,15 @@ function buildXlsx(sheets) {
 
 export default function AdminPrepMinistersPage({ noble = false }) {
   const api = noble ? '/api/admin-noble-advisor' : '/api/admin-prep-backpack';
-  const COLUMNS = noble ? ALL_COLUMNS.filter(col => ['in_game_name','member_id','want_troop_training','is_transfer','promoting_t11','troop_speedup_days','avail_day4','updated_at'].includes(col.key)) : ALL_COLUMNS;
+  const COLUMNS = noble ? ALL_COLUMNS.filter(col => ['in_game_name','member_id','want_troop_training','is_transfer','promoting_t11','troop_speedup_days','avail_day4','created_at'].includes(col.key)) : ALL_COLUMNS;
   const [transferFilter,setTransferFilter] = useState('');
   const [promotionFilter,setPromotionFilter] = useState('');
   const [slotFilter,setSlotFilter] = useState('');
   const [minSpeedups,setMinSpeedups] = useState('');
-  const [sortKey,setSortKey] = useState('updated_at');
-  const [sortDir,setSortDir] = useState('desc');
-  const [scheduleCutoff, setScheduleCutoff] = useState('');
+  const [sortKey,setSortKey] = useState('in_game_name');
+  const [sortDir,setSortDir] = useState('asc');
   const [rows, setRows] = useState([]);
+  const [scheduleCutoff, setScheduleCutoff] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
@@ -174,6 +171,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
     () => filterRowsUpdatedOnOrAfter(rows, scheduleCutoff),
     [rows, scheduleCutoff],
   );
+
   function makeSchedule() { const data = schedule(scheduleRows.map(row=>({...row,...Object.fromEntries(ARRAY_KEYS.map(key=>[key,Array.isArray(row[key])?row[key]:String(row[key] || '').split(',').map(v=>v.trim()).filter(Boolean)]))}))); return noble ? {...data,days:data.days.filter(day=>day.day===4)} : data; }
   function handleGenerate() { setResult(makeSchedule()); }
 
@@ -203,7 +201,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
     }
   }
   function updateCell(rowId, key, value) {
-    setRows(prev=>prev.map(row=>row.id===rowId?{...row,[key]:value,updated_at:new Date().toISOString()}:row));
+    setRows(prev=>prev.map(row=>row.id===rowId?{...row,[key]:value}:row));
     setResult(null);
     const timerKey = rowId + ':' + key;
     const version = (saveVersions.current[timerKey] || 0) + 1;
@@ -237,7 +235,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
             <div><span>Total submissions</span><strong>{rows.length}</strong></div>
             <div><span>Showing</span><strong>{visibleRows.length}</strong></div>
           </div>
-          <TableFilters query={query} onQuery={setQuery} shown={visibleRows.length} total={rows.length} placeholder="Name, player ID, or notes" onReset={()=>{setQuery('');setConsFilter('');setResFilter('');setTtFilter('');setTransferFilter('');setPromotionFilter('');setSlotFilter('');setMinSpeedups('');setSortKey('updated_at');setSortDir('desc');}} filters={[
+          <TableFilters query={query} onQuery={setQuery} shown={visibleRows.length} total={rows.length} placeholder="Name, player ID, or notes" onReset={()=>{setQuery('');setConsFilter('');setResFilter('');setTtFilter('');setTransferFilter('');setPromotionFilter('');setSlotFilter('');setMinSpeedups('');setSortKey('in_game_name');setSortDir('asc');}} filters={[
             ...(!noble ? [{key:'construction',label:'Construction',value:consFilter,onChange:setConsFilter,options:['Yes','No']},{key:'research',label:'Research',value:resFilter,onChange:setResFilter,options:['Yes','No']}] : []),
             {key:'training',label:'Troop Training',value:ttFilter,onChange:setTtFilter,options:['Yes','No']},
             {key:'transfer',label:'Transfer',value:transferFilter,onChange:setTransferFilter,options:['Yes','No']},
@@ -275,7 +273,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
               <thead><tr>{COLUMNS.map((col) => (<th key={col.key} aria-sort={sortKey===col.key ? (sortDir==='asc'?'ascending':'descending') : 'none'}><button type="button" className="admin-sort-btn" onClick={()=>{setSortKey(col.key);setSortDir(sortKey===col.key && sortDir==='asc'?'desc':'asc');}}>{col.label}{sortKey===col.key ? (sortDir==='asc'?' ↑':' ↓') : ''}</button></th>))}</tr></thead>
               <tbody>
                 {visibleRows.map((row) => (
-                  <tr key={row.id}>{COLUMNS.map((col) => (<td key={col.key}>{col.key === 'updated_at' ? cellValue(row, col.key) : (<input className="admin-cell-input" value={cellValue(row, col.key)} onChange={(e) => updateCell(row.id, col.key, e.target.value)} />)}</td>))}</tr>
+                  <tr key={row.id}>{COLUMNS.map((col) => (<td key={col.key}>{col.key === 'created_at' ? cellValue(row, col.key) : (<input className="admin-cell-input" value={cellValue(row, col.key)} onChange={(e) => updateCell(row.id, col.key, e.target.value)} />)}</td>))}</tr>
                 ))}
               </tbody>
             </Table>

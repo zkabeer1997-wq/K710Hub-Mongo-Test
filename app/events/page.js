@@ -1,11 +1,12 @@
-import { createAdminSupabaseClient } from '../../lib/adminSupabase';
+import { getCollection } from '../../lib/mongo';
+import { COLLECTIONS } from '../../lib/mongoCollections';
 import { Card, EmptyState, Button } from '../../components/ui';
 import { loadPublicBearScheduleOrNull } from '../../lib/publicBearSchedule';
 import { loadPublicAllianceEventsOrNull } from '../../lib/publicAllianceEvents';
 import AllianceEventSchedule from './AllianceEventSchedule';
 import BearHuntSchedule from './BearHuntSchedule';
 import EventCountdownCards from './EventCountdownCards';
-import { RECURRENCE_FIELDS, upcomingEventSeries } from '../../lib/eventRecurrence.mjs';
+import { upcomingEventSeries } from '../../lib/eventRecurrence.mjs';
 
 export const metadata = {
   title: 'Events',
@@ -16,14 +17,25 @@ export const metadata = {
 export const revalidate = 300;
 
 async function loadUpcomingEvents() {
-  const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from('events')
-    .select(`slug, title, kind, description, body_md, starts_at, ends_at, ${RECURRENCE_FIELDS}`)
-    .eq('published', true)
-    .order('starts_at', { ascending: true });
-  if (error) throw error;
-  return upcomingEventSeries(data || []).map(entry => entry.event);
+  const coll = await getCollection(COLLECTIONS.EVENTS);
+  const data = await coll
+    .find({ published: true })
+    .project({
+      slug: 1,
+      title: 1,
+      kind: 1,
+      description: 1,
+      body_md: 1,
+      starts_at: 1,
+      ends_at: 1,
+      recurrence_frequency: 1,
+      recurrence_interval: 1,
+      recurrence_until: 1,
+      _id: 0,
+    })
+    .sort({ starts_at: 1 })
+    .toArray();
+  return upcomingEventSeries(data || []).map((entry) => entry.event);
 }
 
 export default async function EventsPage() {

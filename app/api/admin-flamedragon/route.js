@@ -1,42 +1,70 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
-const ADMIN_COLUMNS = 'member_id,name,current_alliance,infantry_tier,infantry_tg,cavalry_tier,cavalry_tg,archer_tier,archer_tg,heroes,charms,governor_gear,pet_power,masters_power,mystic_trial_score,availability,voice_chat,auto_help,updated_at';
-const POWER_COLUMNS = 'member_id,name,governor_gear,charms,hero_gear,pet_power,masters_power,mystic_trial_score,infantry_tier,infantry_tg,cavalry_tier,cavalry_tg,archer_tier,archer_tg,heroes,updated_at';
-
-function isMissingTableError(error) {
-  return error && (
-    error.code === '42P01' || String(error.message || '').toLowerCase().includes('flamedragon_forms')
-  );
-}
+const PROJECT = {
+  member_id: 1,
+  name: 1,
+  current_alliance: 1,
+  infantry_tier: 1,
+  infantry_tg: 1,
+  cavalry_tier: 1,
+  cavalry_tg: 1,
+  archer_tier: 1,
+  archer_tg: 1,
+  heroes: 1,
+  charms: 1,
+  governor_gear: 1,
+  pet_power: 1,
+  masters_power: 1,
+  mystic_trial_score: 1,
+  availability: 1,
+  voice_chat: 1,
+  auto_help: 1,
+  updated_at: 1,
+  _id: 0,
+};
 
 export async function GET(request) {
   if (!(await isAdminRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
-    const supabase = createAdminSupabaseClient();
-    const [formResult, profileResult] = await Promise.all([
-      supabase.from('flamedragon_forms').select(ADMIN_COLUMNS).order('updated_at', { ascending: false }),
-      supabase.from('power_profiles').select(POWER_COLUMNS),
+    const formsColl = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
+    const profilesColl = await getCollection(COLLECTIONS.POWER_PROFILES);
+    const [data, profiles] = await Promise.all([
+      formsColl.find({}).project(PROJECT).sort({ updated_at: -1 }).toArray(),
+      profilesColl
+        .find({})
+        .project({
+          member_id: 1,
+          name: 1,
+          governor_gear: 1,
+          charms: 1,
+          hero_gear: 1,
+          pet_power: 1,
+          masters_power: 1,
+          mystic_trial_score: 1,
+          infantry_tier: 1,
+          infantry_tg: 1,
+          cavalry_tier: 1,
+          cavalry_tg: 1,
+          archer_tier: 1,
+          archer_tg: 1,
+          heroes: 1,
+          updated_at: 1,
+          _id: 0,
+        })
+        .toArray(),
     ]);
-    const { data, error } = formResult;
-    if (error) {
-      if (isMissingTableError(error)) {
-        return NextResponse.json({ rows: [], configured: false });
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    if (profileResult.error) {
-      return NextResponse.json({ error: profileResult.error.message }, { status: 500 });
-    }
     return NextResponse.json({
-      rows: mergePowerProfilesIntoRows(data || [], profileResult.data || []),
+      rows: mergePowerProfilesIntoRows(data || [], profiles || []),
       configured: true,
     });
   } catch (error) {
+    console.error('admin-flamedragon GET failed', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -46,18 +74,12 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const url = new URL(request.url);
-  const scope = url.searchParams.get('scope');
-  if (scope !== 'test') {
+  if (url.searchParams.get('scope') !== 'test') {
     return NextResponse.json({ error: 'Unsupported delete scope' }, { status: 400 });
   }
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data: candidates, error: selectError } = await supabase
-      .from('flamedragon_forms')
-      .select('member_id,name');
-    if (selectError) {
-      return NextResponse.json({ error: selectError.message }, { status: 500 });
-    }
+    const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
+    const candidates = await coll.find({}).project({ member_id: 1, name: 1, _id: 0 }).toArray();
     const deletedMemberIds = (candidates || [])
       .filter((row) => {
         const memberId = String(row.member_id || '');
@@ -68,13 +90,7 @@ export async function DELETE(request) {
     if (deletedMemberIds.length === 0) {
       return NextResponse.json({ deletedMemberIds: [] });
     }
-    const { error: deleteError } = await supabase
-      .from('flamedragon_forms')
-      .delete()
-      .in('member_id', deletedMemberIds);
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
-    }
+    await coll.deleteMany({ member_id: { $in: deletedMemberIds } });
     return NextResponse.json({ deletedMemberIds });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -88,15 +104,16 @@ export async function POST(request) {
   let payload;
   try {
     payload = await request.json();
-  } catch (parseError) {
+  } catch {
     return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
-  const name = String(payload && payload.name ? payload.name : '').trim();
-  const memberId = String(payload && payload.member_id ? payload.member_id : '').trim();
+  const name = String(payload?.name || '').trim();
+  const memberId = String(payload?.member_id || '').trim();
   if (!name || !memberId) {
     return NextResponse.json({ error: 'Name and Member ID are required.' }, { status: 400 });
   }
-  const pick = (key) => (payload && payload[key] !== undefined && payload[key] !== '' ? payload[key] : null);
+  const pick = (key) =>
+    payload?.[key] !== undefined && payload[key] !== '' ? payload[key] : null;
   const record = {
     name,
     member_id: memberId,
@@ -107,27 +124,18 @@ export async function POST(request) {
     cavalry_tg: pick('cavalry_tg'),
     archer_tier: pick('archer_tier'),
     archer_tg: pick('archer_tg'),
-    heroes: Array.isArray(payload && payload.heroes) ? payload.heroes : [],
+    heroes: Array.isArray(payload?.heroes) ? payload.heroes : [],
     availability: pick('availability'),
     pin_hash: 'admin-' + Math.random().toString(36).slice(2) + Date.now().toString(36),
-    updated_at: new Date().toISOString(),
+    updated_at: new Date(),
   };
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
-      .from('flamedragon_forms')
-      .insert(record)
-      .select(ADMIN_COLUMNS)
-      .single();
-    if (error) {
-      if (isMissingTableError(error)) {
-        return NextResponse.json({ error: 'Flamedragon forms table not found. Apply the flamedragon_forms migration in Supabase.' }, { status: 500 });
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    const [row] = mergePowerProfilesIntoRows([data], []);
+    const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
+    await coll.insertOne(record);
+    const { pin_hash, ...safe } = record;
+    const [row] = mergePowerProfilesIntoRows([safe], []);
     return NextResponse.json({ row });
-  } catch (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

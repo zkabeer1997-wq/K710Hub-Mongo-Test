@@ -7,14 +7,14 @@ import { useEffect, useState } from 'react';
 const NAV_SECTIONS = [
   {
     id: 'dashboard',
-    label: 'Dashboard Panel',
+    label: 'Dashboard',
     items: [
-      { href: '/admin/dashboard/overview', label: 'Dashboard', match: '/admin/dashboard/overview' },
+      { href: '/admin/dashboard/overview', label: 'Overview', match: '/admin/dashboard/overview' },
     ],
   },
   {
     id: 'website',
-    label: 'Website Management',
+    label: 'Website',
     items: [
       { href: '/admin/dashboard/guides', label: 'Guides', match: '/admin/dashboard/guides' },
       { href: '/admin/dashboard/events', label: 'Events', match: '/admin/dashboard/events' },
@@ -26,9 +26,10 @@ const NAV_SECTIONS = [
   },
   {
     id: 'member',
-    label: 'Member and Transfer Management',
+    label: 'Members',
     items: [
-      { href: '/admin/dashboard/member-pins', label: 'Member Profiles', match: '/admin/dashboard/member-pins' },
+      { href: '/admin/dashboard/member-pins', label: 'Member roster', match: '/admin/dashboard/member-pins' },
+      { href: '/admin/dashboard/access', label: 'User Access', match: '/admin/dashboard/access' },
       { href: '/admin/dashboard/gift-codes', label: 'Gift Codes', match: '/admin/dashboard/gift-codes' },
       { href: '/admin/dashboard/interest', label: 'Transfer Requests', badge: 'transfers', match: '/admin/dashboard/interest' },
       { href: '/admin/dashboard/website-requests', label: 'Website Requests', badge: 'website', match: '/admin/dashboard/website-requests' },
@@ -36,7 +37,7 @@ const NAV_SECTIONS = [
   },
   {
     id: 'kvk',
-    label: 'KvK Management',
+    label: 'KvK',
     items: [
       { href: '/admin/dashboard/prep-ministers', label: 'Prep Ministers', match: '/admin/dashboard/prep-ministers' },
       { href: '/admin/dashboard', label: 'KvK Members', match: '/admin/dashboard' },
@@ -44,15 +45,14 @@ const NAV_SECTIONS = [
   },
   {
     id: 'flamedragon',
-    label: 'Flamedragon Management',
+    label: 'Flamedragon',
     items: [
-      { href: '/admin/dashboard/noble-advisor', label: 'Noble Advisor Schedule', match: '/admin/dashboard/noble-advisor' },
+      { href: '/admin/dashboard/noble-advisor', label: 'Noble Advisor', match: '/admin/dashboard/noble-advisor' },
       { href: '/admin/dashboard/flamedragon', label: 'Flamedragon Tyrant', match: '/admin/dashboard/flamedragon' },
     ],
   },
 ];
 
-const MODE_KEY = 'k710-warroom-mode';
 const SIDEBAR_KEY = 'k710-admin-sidebar-collapsed';
 const SECTIONS_KEY = 'k710-admin-nav-sections';
 
@@ -60,89 +60,52 @@ function isNavActive(pathname, match) {
   if (match === '/admin/dashboard') {
     return pathname === '/admin/dashboard';
   }
-  return pathname === match || pathname.startsWith(match + '/');
+  return pathname === match || pathname.startsWith(`${match}/`);
 }
 
-/**
- * THE WAR ROOM
- *
- * The admin shell is the command chamber. It offers two views so the room
- * never gets in the way of the work:
- *
- *   COMMAND — the war table: warm table light, brass counters, atmosphere.
- *   LEDGER  — dense operational mode for reviewing many rows quickly.
- *
- * The choice persists, so a returning admin lands where they actually work.
- * All page content is unchanged in both modes; only the room around it is.
- */
 export default function AdminShell({ title, subtitle, actions, onLogout, counters = [], children }) {
   const pathname = usePathname();
   const [taskCounts, setTaskCounts] = useState({});
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [openSections, setOpenSections] = useState(() =>
+    Object.fromEntries(NAV_SECTIONS.map((section) => [section.id, true])),
+  );
+
   useEffect(() => {
     const controller = new AbortController();
     async function refresh() {
       if (document.visibilityState === 'hidden') return;
-      try { const response = await fetch('/api/admin-task-counts', { cache: 'no-store', signal: controller.signal }); if (response.ok) setTaskCounts(await response.json()); } catch {}
+      try {
+        const response = await fetch('/api/admin-task-counts', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (response.ok) setTaskCounts(await response.json());
+      } catch {
+        /* ignore */
+      }
     }
     refresh();
     const timer = setInterval(refresh, 30000);
     window.addEventListener('focus', refresh);
     window.addEventListener('admin-tasks-changed', refresh);
-    return () => { controller.abort(); clearInterval(timer); window.removeEventListener('focus', refresh); window.removeEventListener('admin-tasks-changed', refresh); };
+    return () => {
+      controller.abort();
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('admin-tasks-changed', refresh);
+    };
   }, [pathname]);
-  const [mode, setMode] = useState('ledger');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [openSections, setOpenSections] = useState(() =>
-    Object.fromEntries(NAV_SECTIONS.map((s) => [s.id, true])),
-  );
 
   useEffect(() => {
     try {
-      const savedMode = localStorage.getItem(MODE_KEY);
-      if (savedMode === 'command' || savedMode === 'ledger') setMode(savedMode);
-
-      const savedSidebar = localStorage.getItem(SIDEBAR_KEY);
-      if (savedSidebar === '1') setSidebarCollapsed(true);
-
+      if (localStorage.getItem(SIDEBAR_KEY) === '1') setSidebarCollapsed(true);
       const savedSections = localStorage.getItem(SECTIONS_KEY);
-      if (savedSections) {
-        const parsed = JSON.parse(savedSections);
-        if (parsed && typeof parsed === 'object') {
-          setOpenSections((prev) => ({ ...prev, ...parsed }));
-        }
-      }
+      if (savedSections) setOpenSections(JSON.parse(savedSections));
     } catch {
-      /* private mode */
+      /* ignore */
     }
   }, []);
-
-  // Auto-open the section that contains the active page
-  useEffect(() => {
-    const activeSection = NAV_SECTIONS.find((section) =>
-      section.items.some((item) => isNavActive(pathname, item.match)),
-    );
-    if (activeSection) {
-      setOpenSections((prev) => {
-        if (prev[activeSection.id]) return prev;
-        const next = { ...prev, [activeSection.id]: true };
-        try {
-          localStorage.setItem(SECTIONS_KEY, JSON.stringify(next));
-        } catch {
-          /* private mode */
-        }
-        return next;
-      });
-    }
-  }, [pathname]);
-
-  function choose(next) {
-    setMode(next);
-    try {
-      localStorage.setItem(MODE_KEY, next);
-    } catch {
-      /* private mode */
-    }
-  }
 
   function toggleSidebar() {
     setSidebarCollapsed((prev) => {
@@ -150,7 +113,7 @@ export default function AdminShell({ title, subtitle, actions, onLogout, counter
       try {
         localStorage.setItem(SIDEBAR_KEY, next ? '1' : '0');
       } catch {
-        /* private mode */
+        /* ignore */
       }
       return next;
     });
@@ -162,22 +125,32 @@ export default function AdminShell({ title, subtitle, actions, onLogout, counter
       try {
         localStorage.setItem(SECTIONS_KEY, JSON.stringify(next));
       } catch {
-        /* private mode */
+        /* ignore */
       }
       return next;
     });
   }
 
-  return (
-    <div className={`admin-shell warroom-${mode}${sidebarCollapsed ? ' admin-sidebar-is-collapsed' : ''}`}>
-      <style>{`.admin-task-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:2px 6px;margin-left:8px;border-radius:999px;background:#c65330;color:white;font-size:11px;font-weight:800}.admin-sidebar-is-collapsed .admin-task-badge{margin-left:2px;min-width:16px;padding:1px 3px;font-size:9px}`}</style>
-      <div className="warroom-atmos" aria-hidden="true" />
+  async function handleLogout() {
+    if (onLogout) {
+      await onLogout();
+      return;
+    }
+    await fetch('/api/admin-logout', { method: 'POST' });
+    window.location.href = '/admin/login';
+  }
 
-      <aside className={`admin-sidebar${sidebarCollapsed ? ' is-collapsed' : ''}`}>
+  return (
+    <div className={`admin-shell${sidebarCollapsed ? ' admin-sidebar-is-collapsed' : ''}`}>
+      <aside className={`admin-sidebar${sidebarCollapsed ? ' is-collapsed' : ''}`} aria-label="Admin navigation">
         <div className="admin-sidebar-top">
           <div className="admin-sidebar-brand">
             <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <path d="M20 3 L35 8 V19 C35 28 29 34 20 37 C11 34 5 28 5 19 V8 Z" stroke="currentColor" strokeWidth="1.6" />
+              <path
+                d="M20 3 L35 8 V19 C35 28 29 34 20 37 C11 34 5 28 5 19 V8 Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
             </svg>
             {!sidebarCollapsed && (
               <div>
@@ -190,53 +163,43 @@ export default function AdminShell({ title, subtitle, actions, onLogout, counter
             type="button"
             className="admin-sidebar-toggle"
             onClick={toggleSidebar}
-            aria-expanded={!sidebarCollapsed}
-            aria-label={sidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
-            title={sidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <span className="admin-sidebar-toggle-arrow" aria-hidden="true">
-              {sidebarCollapsed ? '»' : '«'}
-            </span>
+            <span className="admin-sidebar-toggle-arrow">{sidebarCollapsed ? '»' : '«'}</span>
           </button>
         </div>
 
-        <nav className="admin-sidebar-nav" aria-label="Admin sections">
+        <nav className="admin-sidebar-nav">
           {NAV_SECTIONS.map((section) => {
-            const isOpen = openSections[section.id] !== false;
-            const sectionHasActive = section.items.some((item) => isNavActive(pathname, item.match));
+            const sectionOpen = openSections[section.id] !== false;
+            const hasActive = section.items.some((item) => isNavActive(pathname, item.match));
             return (
               <div
                 key={section.id}
-                className={`admin-nav-section${sectionHasActive ? ' has-active' : ''}${isOpen ? ' is-open' : ''}`}
+                className={`admin-nav-section${hasActive ? ' has-active' : ''}`}
               >
                 <button
                   type="button"
                   className="admin-nav-section-header"
                   onClick={() => toggleSection(section.id)}
-                  aria-expanded={isOpen}
-                  title={section.label}
+                  aria-expanded={sectionOpen}
                 >
                   <span className="admin-nav-section-label">{section.label}</span>
-                  {!sidebarCollapsed && (
-                    <span className="admin-nav-section-chevron" aria-hidden="true">
-                      {isOpen ? '▾' : '▸'}
-                    </span>
-                  )}
+                  <span className="admin-nav-section-chevron">{sectionOpen ? '▾' : '▸'}</span>
                 </button>
-                {(isOpen || sidebarCollapsed) && (
-                  <div className="admin-nav-section-items" role="group" aria-label={section.label}>
+                {sectionOpen && (
+                  <div className="admin-nav-section-items">
                     {section.items.map((item) => {
-                      const isActive = isNavActive(pathname, item.match);
+                      const active = isNavActive(pathname, item.match);
+                      const badge = item.badge ? Number(taskCounts[item.badge] || 0) : 0;
                       return (
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={isActive ? 'active' : ''}
-                          aria-current={isActive ? 'page' : undefined}
-                          title={item.label}
+                          className={active ? 'active' : undefined}
                         >
-                          {sidebarCollapsed ? item.label.charAt(0) : item.label}
-                          {taskCounts[item.badge] > 0 && <span className="admin-task-badge" aria-label={`${taskCounts[item.badge]} unresolved`}>{taskCounts[item.badge]}</span>}
+                          {item.label}
+                          {badge > 0 ? ` (${badge})` : ''}
                         </Link>
                       );
                     })}
@@ -248,61 +211,36 @@ export default function AdminShell({ title, subtitle, actions, onLogout, counter
         </nav>
 
         <div className="admin-sidebar-bottom">
-          {!sidebarCollapsed && (
-            <div className="warroom-modes" role="group" aria-label="Admin view">
-              <button
-                type="button"
-                className="warroom-mode"
-                data-on={mode === 'command'}
-                aria-pressed={mode === 'command'}
-                onClick={() => choose('command')}
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                className="warroom-mode"
-                data-on={mode === 'ledger'}
-                aria-pressed={mode === 'ledger'}
-                onClick={() => choose('ledger')}
-              >
-                Ledger
-              </button>
-            </div>
-          )}
-          <Link href="/" className="admin-sidebar-view-site" title="View Public Site">
-            {sidebarCollapsed ? 'Site' : 'View Public Site'}
+          <Link href="/" className="admin-sidebar-view-site">
+            View site
           </Link>
-          {onLogout && (
-            <button type="button" className="admin-sidebar-logout" onClick={onLogout} title="Log Out">
-              {sidebarCollapsed ? 'Out' : 'Log Out'}
-            </button>
-          )}
+          <button type="button" className="admin-sidebar-logout" onClick={handleLogout}>
+            Log out
+          </button>
         </div>
       </aside>
 
       <div className="admin-content">
-        <div className="warroom-tablelight" aria-hidden="true" />
         <header className="admin-topbar">
           <div>
-            {subtitle && <span className="admin-topbar-kicker">{subtitle}</span>}
+            <span className="admin-topbar-kicker">Kingdom 710 · Admin</span>
             <h1>{title}</h1>
+            {subtitle ? <p className="admin-page-lead">{subtitle}</p> : null}
           </div>
-          {actions && <div className="admin-topbar-actions">{actions}</div>}
-        </header>
-
-        {/* Brass counters read off the same live data the tables use. */}
-        {counters.length > 0 && (
-          <div className="warroom-counters" aria-label="Admin summary">
-            {counters.map((c) => (
-              <div key={c.label} className="warroom-counter">
-                <span className="warroom-counter-val">{c.value}</span>
-                <span className="k-mark warroom-counter-label">{c.label}</span>
+          <div className="admin-topbar-actions">
+            {counters?.length > 0 && (
+              <div className="warroom-counters" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {counters.map((counter) => (
+                  <div key={counter.label} className="warroom-counter" style={{ padding: '6px 10px' }}>
+                    <span className="warroom-counter-label">{counter.label}</span>{' '}
+                    <strong className="warroom-counter-val">{counter.value}</strong>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+            {actions}
           </div>
-        )}
-
+        </header>
         <div className="admin-content-body">{children}</div>
       </div>
     </div>

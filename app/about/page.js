@@ -4,7 +4,8 @@ import { AllianceBearTimes } from '../../components/BearScheduleProvider';
 import EditableSection from '../../components/EditableSection';
 import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
 import { getHomeContent } from '../../lib/homeContent';
-import { createAdminSupabaseClient } from '../../lib/adminSupabase';
+import { getCollection } from '../../lib/mongo';
+import { COLLECTIONS } from '../../lib/mongoCollections';
 import { Button, Card, Tag } from '../../components/ui';
 import {
   OPTIMIZER_RECORD,
@@ -32,13 +33,23 @@ const STATUS_TONE = { open: 'success', selective: 'accent', closed: 'neutral' };
 
 async function loadAlliances() {
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
-      .from('alliances')
-      .select('tag, name, blurb, timezone_focus, recruiting_status, language, roster_size, bear_times_utc')
-      .eq('active', true)
-      .order('sort_order', { ascending: true });
-    if (error) throw error;
+    const coll = await getCollection(COLLECTIONS.ALLIANCES);
+    const data = await coll
+      .find({ active: true })
+      .project({
+        tag: 1,
+        name: 1,
+        blurb: 1,
+        timezone_focus: 1,
+        recruiting_status: 1,
+        language: 1,
+        roster_size: 1,
+        bear_times_utc: 1,
+        sort_order: 1,
+        _id: 0,
+      })
+      .sort({ sort_order: 1 })
+      .toArray();
     return data || [];
   } catch (error) {
     console.error('about alliances load failed', error);
@@ -281,86 +292,6 @@ export default async function AboutPage() {
           <Button href="/chronometer" variant="quiet">Read the full recruitment story →</Button>
         </section>
       </div>
-
-      <style>{`
-        .about-page{padding:0 24px 112px;background:var(--color-bg);color:var(--color-ink);min-height:100vh;overflow:hidden}
-        .about-page-inner{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(64px,9vw,112px)}
-        .about-head{position:relative;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);align-items:center;gap:clamp(36px,7vw,96px);min-height:600px;padding:80px 0 72px}
-        .about-head:before{content:'';position:absolute;inset:0 -50vw;background:radial-gradient(circle at 72% 45%,rgba(217,122,31,.16),transparent 32%),linear-gradient(135deg,#24170b 0%,#3b2410 58%,#7b4018 100%);z-index:0}
-        .about-head:after{content:'K710';position:absolute;left:-8px;bottom:20px;color:rgba(255,246,228,.045);font:800 clamp(96px,18vw,230px)/.75 var(--font-display);letter-spacing:-.03em;z-index:0}
-        .about-head-copy{position:relative;z-index:1;color:#fff6e4}
-        .about-head .k-mark{color:#f3d99a}
-        .about-title{max-width:720px;margin:14px 0 0;font-family:var(--font-display);font-size:clamp(48px,7vw,82px);line-height:.98;letter-spacing:-.035em;text-wrap:balance}
-        .about-lede{margin:24px 0 0;font-size:clamp(16px,2vw,19px);line-height:1.65;color:#e9d9bd;max-width:62ch;text-wrap:pretty}
-        .about-jump{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
-        .about-jump a{display:inline-flex;padding:11px 15px;border:1px solid rgba(243,217,154,.42);border-radius:var(--radius-sm);color:#fff6e4;font-size:13px;font-weight:800;text-decoration:none;transition:background .2s ease,color .2s ease,transform .2s ease}
-        .about-jump a:hover{background:#f3d99a;color:#24170b;transform:translateY(-2px)}
-        .about-standard{position:relative;z-index:1;aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff6e4;background:linear-gradient(160deg,#a3283c,#611620);border:1px solid rgba(243,217,154,.5);clip-path:polygon(0 0,100% 0,100% 84%,50% 100%,0 84%);filter:drop-shadow(0 12px 8px rgba(0,0,0,.28))}
-        .about-standard:before,.about-standard:after{content:'';position:absolute;inset:14px;border:1px solid rgba(243,217,154,.34);clip-path:inherit}
-        .about-standard:after{inset:24px;border-color:rgba(243,217,154,.12)}
-        .about-standard-ring{position:absolute;width:62%;aspect-ratio:1;border:1px solid rgba(243,217,154,.26);border-radius:50%}
-        .about-standard-crown{font-size:28px;color:#f3d99a;line-height:1}
-        .about-standard strong{font:800 clamp(54px,7vw,84px)/1 var(--font-display);letter-spacing:-.03em}
-        .about-standard > span:last-child{max-width:14ch;text-align:center;color:#f3d99a;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-        .about-section{scroll-margin-top:96px}
-        .about-section-heading{margin-bottom:24px;max-width:700px}
-        .about-section-heading.split{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(260px,1.2fr);gap:48px;align-items:end;max-width:none;border-bottom:1px solid var(--color-border);padding-bottom:24px}
-        .about-section-heading p{margin:8px 0 0;color:var(--color-ink-muted);line-height:1.6}
-        .about-section-title{margin:0;font-family:var(--font-display);font-size:clamp(30px,4vw,48px);line-height:1.05;letter-spacing:-.025em;text-wrap:balance}
-        .about-section-lede{margin:0 0 16px;font-size:14px;color:var(--color-ink-muted);line-height:1.5}
-        .about-section-lede a{color:var(--color-accent-strong)}
-        .about-doctrine{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
-        .about-doctrine-card{padding:28px 30px;display:flex;flex-direction:column;gap:10px;border:0;border-radius:0;background:transparent}
-        .about-doctrine-card+.about-doctrine-card{border-left:1px solid var(--color-border)}
-        .about-doctrine-card .k-mark{color:var(--color-accent)}
-        .about-doctrine-card h3{margin:0;font-family:var(--font-display);font-size:16px}
-        .about-doctrine-card p{margin:0;font-size:13.5px;color:var(--color-ink-muted);line-height:1.55}
-        .about-alliances-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-        .about-alliance-link{text-decoration:none;color:inherit;display:block}
-        .about-alliance-card{position:relative;overflow:hidden;padding:24px;display:flex;flex-direction:column;gap:12px;height:100%;min-height:270px;transition:background .2s,transform .2s}
-        .about-alliance-card:after{content:attr(data-band);position:absolute;right:-5px;bottom:-18px;font:800 86px/1 var(--font-display);color:rgba(44,28,12,.04)}
-        .about-alliance-link:hover .about-alliance-card{background:var(--color-surface-alt);transform:translateY(-4px)}
-        .about-alliance-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
-        .about-alliance-name{margin:0;font-family:var(--font-display);font-size:18px}
-        .about-alliance-blurb{margin:0;color:var(--color-ink-muted);font-size:13px;line-height:1.5}
-        .about-alliance-facts{margin:0;display:flex;flex-direction:column;gap:4px}
-        .about-alliance-facts div{display:flex;justify-content:space-between;gap:8px;font-size:12px;border-top:1px solid var(--color-border);padding-top:6px}
-        .about-alliance-facts dt{color:var(--color-ink-muted);margin:0}
-        .about-alliance-facts dd{margin:0;font-weight:700}
-        .about-alliance-more{margin-top:auto;color:var(--color-accent-strong);font-weight:700;font-size:12.5px}
-        .about-record-card{padding:clamp(24px,4vw,40px);display:flex;flex-direction:column;gap:28px;background:#2c1c0c;color:#fff6e4;border:0}
-        .about-record-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:12px}
-        .about-stat-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#c4b493;margin-bottom:6px}
-        .about-record-stats strong{font-size:clamp(26px,4vw,40px);font-family:var(--font-display)}
-        .about-rank{color:var(--color-accent-strong)}
-        .about-stat-split .win{color:#3ecf8e}
-        .about-stat-split .loss{color:#f07178}
-        .about-stat-split .sep{margin:0 2px;color:var(--color-ink-muted)}
-        .about-record-matchups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;font-size:13.5px}
-        .about-record-matchups p{margin:4px 0 0}
-        .about-record-matchups .win{color:#3ecf8e;text-transform:capitalize}
-        .about-record-matchups .loss{color:#f07178;text-transform:capitalize}
-        .about-record-matchups .muted{color:#c4b493}
-        .about-rankings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-        .about-rank-box{padding:20px;display:flex;flex-direction:column;gap:10px}
-        .about-rank-box h3{margin:0;font-family:var(--font-display);font-size:18px}
-        .about-rank-source{margin:0;font-size:12px;color:var(--color-ink-muted)}
-        .about-rank-facts{margin:0;display:flex;flex-direction:column;gap:6px}
-        .about-rank-facts div{display:flex;justify-content:space-between;font-size:13.5px;border-top:1px solid var(--color-border);padding-top:6px}
-        .about-rank-facts dt{margin:0;color:var(--color-ink-muted)}
-        .about-rank-facts dd{margin:0;font-weight:700}
-        .about-atlas-pill{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(56,140,220,.18),rgba(80,120,255,.12));border:1px solid rgba(100,160,255,.35);font-size:13.5px}
-        .about-atlas-pill .about-atlas-top{color:#7ec8ff;font-weight:700}
-        .about-atlas-tier{margin:0;font-size:13px;color:var(--color-accent-strong);font-weight:700}
-        .about-external-link{margin-top:auto;font-size:13px;font-weight:700;color:var(--color-accent-strong);text-decoration:none}
-        .about-external-link:hover{text-decoration:underline}
-        .about-empty{padding:18px;color:var(--color-ink-muted);font-size:14px}
-        .about-empty a{color:var(--color-accent-strong)}
-        .about-links{display:flex;gap:12px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--color-border)}
-        .about-admin-note{margin-top:12px}
-        @media (max-width:760px){.about-head{grid-template-columns:1fr;min-height:auto;padding:64px 0}.about-head:before{right:-24px}.about-standard{width:min(260px,72vw);justify-self:center}.about-section-heading.split{grid-template-columns:1fr;gap:12px}.about-doctrine{grid-template-columns:1fr}.about-doctrine-card+.about-doctrine-card{border-left:0;border-top:1px solid var(--color-border)}}
-        @media (prefers-reduced-motion:reduce){.about-jump a,.about-alliance-card{transition:none}}
-      `}</style>
     </main>
   );
 }

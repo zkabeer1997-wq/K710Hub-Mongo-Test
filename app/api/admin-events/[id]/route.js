@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { ObjectId } from 'mongodb';
 import { isAdminRequest } from '../../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../../lib/adminSupabase';
-
+import { getCollection } from '../../../../lib/mongo';
+import { COLLECTIONS } from '../../../../lib/mongoCollections';
 import { validateEventSchedule } from '../../../../lib/eventRecurrence.mjs';
 
 const KINDS = ['kvk', 'championship', 'swordland', 'custom'];
@@ -13,6 +14,17 @@ async function requireAdmin(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   return null;
+}
+
+function idFilter(id) {
+  if (ObjectId.isValid(id) && String(new ObjectId(id)) === String(id)) {
+    return { $or: [{ id: String(id) }, { _id: new ObjectId(id) }] };
+  }
+  return { id: String(id) };
+}
+
+async function findEvent(coll, id) {
+  return coll.findOne(idFilter(id));
 }
 
 export async function PUT(request, { params: paramsPromise }) {
@@ -30,14 +42,8 @@ export async function PUT(request, { params: paramsPromise }) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  const supabase = createAdminSupabaseClient();
-
-  const { data: existing, error: fetchError } = await supabase
-    .from('events')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
+  const coll = await getCollection(COLLECTIONS.EVENTS);
+  const existing = await findEvent(coll, id);
   if (!existing) return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
 
   const update = {};
@@ -67,20 +73,16 @@ export async function PUT(request, { params: paramsPromise }) {
   if (body.published !== undefined) update.published = Boolean(body.published);
   update.updated_at = new Date().toISOString();
 
-  const { data, error } = await supabase
-    .from('events')
-    .update(update)
-    .eq('id', id)
-    .select('*')
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await coll.updateOne({ _id: existing._id }, { $set: update });
+  const data = await coll.findOne({ _id: existing._id });
+  const { _id, ...rest } = data;
+  const event = { ...rest, id: rest.id || String(_id) };
 
   revalidatePath('/events');
   revalidatePath(`/events/${existing.slug}`);
   if (update.slug && update.slug !== existing.slug) revalidatePath(`/events/${update.slug}`);
 
-  return NextResponse.json({ event: data });
+  return NextResponse.json({ event });
 }
 
 export async function DELETE(request, { params: paramsPromise }) {
@@ -91,11 +93,11 @@ export async function DELETE(request, { params: paramsPromise }) {
   const id = params?.id;
   if (!id) return NextResponse.json({ error: 'Missing event id.' }, { status: 400 });
 
-  const supabase = createAdminSupabaseClient();
-  const { data: existing } = await supabase.from('events').select('slug').eq('id', id).maybeSingle();
+  const coll = await getCollection(COLLECTIONS.EVENTS);
+  const existing = await findEvent(coll, id);
+  if (!existing) return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
 
-  const { error } = await supabase.from('events').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await coll.deleteOne({ _id: existing._id });
 
   revalidatePath('/events');
   if (existing?.slug) revalidatePath(`/events/${existing.slug}`);

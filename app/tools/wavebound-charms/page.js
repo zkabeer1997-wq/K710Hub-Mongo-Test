@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic';
 import { loadToolConfiguration } from '../../../lib/toolSettings';
 import Link from 'next/link';
 import WaveboundCharmOptimizer from '../WaveboundCharmOptimizer';
-import DataAssumptions from '../../../components/tools/DataAssumptions';
 
 export const metadata = {
   title: 'Wavebound Charm Merge Optimizer',
@@ -32,7 +31,6 @@ export default async function WaveboundCharmsPage({ searchParams: searchParamsPr
         </header>
 
         <WaveboundCharmOptimizer configuration={configuration} />
-        <DataAssumptions datasetId="wavebound-treasures" toolVersion="1.0.0" />
       </div>
 
       <style>{`

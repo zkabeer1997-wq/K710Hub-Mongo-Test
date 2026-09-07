@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server';
-import { ADMIN_COOKIE_NAME } from '../../../lib/adminAuth';
+import {
+  readKingshotSession,
+  revokeMemberSession,
+} from '../../../lib/memberAuthKingshot';
+import { clearAllAuthCookies } from '../../../lib/authCookies';
 
-export async function POST() {
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(ADMIN_COOKIE_NAME, '', { path: '/', maxAge: 0 });
-  return response;
+export async function POST(request) {
+  try {
+    const member = await readKingshotSession(request);
+    if (member) await revokeMemberSession(request);
+  } catch {
+    /* best-effort */
   }
+
+  const response = NextResponse.json({ ok: true });
+  response.headers.set('Cache-Control', 'no-store');
+  return clearAllAuthCookies(response);
+}

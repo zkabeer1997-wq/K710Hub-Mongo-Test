@@ -1,9 +1,10 @@
-import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
-import { getAdminMemberGiftSummaries, mergeGiftCodeStatusIntoRows } from '../../../lib/giftCodes.mjs';
 import { randomInt } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { getCollection } from '../../../lib/mongo';
+import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
 const BCRYPT_HASH_RE = /^\$2[aby]\$\d{2}\$/;
 const SIX_DIGIT_PIN_RE = /^\d{6}$/;
@@ -24,29 +25,54 @@ export async function GET(request) {
   }
 
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
-      .from('submissions')
-      .select('name,member_id,pin_hash,updated_at,current_alliance,infantry_tier,infantry_tg,cavalry_tier,cavalry_tg,archer_tier,archer_tg')
-      .order('name', { ascending: true });
+    const submissions = await getCollection(COLLECTIONS.SUBMISSIONS);
+    const profilesColl = await getCollection(COLLECTIONS.POWER_PROFILES);
 
-    if (error) throw error;
+    const [data, profiles] = await Promise.all([
+      submissions
+        .find({})
+        .project({
+          name: 1,
+          member_id: 1,
+          pin_hash: 1,
+          updated_at: 1,
+          current_alliance: 1,
+          infantry_tier: 1,
+          infantry_tg: 1,
+          cavalry_tier: 1,
+          cavalry_tg: 1,
+          archer_tier: 1,
+          archer_tg: 1,
+          _id: 0,
+        })
+        .sort({ name: 1 })
+        .toArray(),
+      profilesColl
+        .find({})
+        .project({
+          member_id: 1,
+          name: 1,
+          governor_gear: 1,
+          charms: 1,
+          pet_power: 1,
+          masters_power: 1,
+          mystic_trial_score: 1,
+          infantry_tier: 1,
+          infantry_tg: 1,
+          cavalry_tier: 1,
+          cavalry_tg: 1,
+          archer_tier: 1,
+          archer_tg: 1,
+          updated_at: 1,
+          _id: 0,
+        })
+        .toArray(),
+    ]);
 
-    const { data: profiles, error: profileError } = await supabase.from('power_profiles').select('member_id,name,governor_gear,charms,pet_power,masters_power,mystic_trial_score,infantry_tier,infantry_tg,cavalry_tier,cavalry_tg,archer_tier,archer_tg,updated_at');
-    if (profileError) throw profileError;
     const merged = mergePowerProfilesIntoRows(data || [], profiles || []);
 
-    let giftSummaries;
-    try {
-      giftSummaries = await getAdminMemberGiftSummaries();
-    } catch (giftError) {
-      console.error('admin-member-pins gift code summary failed', giftError);
-      giftSummaries = new Map();
-    }
-    const withGiftCodes = mergeGiftCodeStatusIntoRows(merged, giftSummaries);
-
     return noStoreJson({
-      rows: withGiftCodes.map(({ pin_hash, power_profile, ...row }) => ({
+      rows: merged.map(({ pin_hash, power_profile, ...row }) => ({
         ...row,
         name: row.name || '',
         member_id: row.member_id || '',
@@ -60,7 +86,7 @@ export async function GET(request) {
   }
 }
 
-// Create a new roster member and initial PIN atomically.
+// Create a new roster member and initial PIN.
 export async function PUT(request) {
   if (!(await isAdminRequest(request))) {
     return noStoreJson({ error: 'Unauthorized' }, { status: 401 });
@@ -88,33 +114,31 @@ export async function PUT(request) {
   }
 
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data: created, error: createError } = await supabase.rpc('admin_create_member_with_pin', {
-      p_name: name,
-      p_member_id: memberId,
-      p_pin: pin,
-    });
-
-    if (createError) throw createError;
-    if (created !== true) {
+    const submissions = await getCollection(COLLECTIONS.SUBMISSIONS);
+    const existing = await submissions.findOne({ member_id: memberId });
+    if (existing) {
       return noStoreJson({ error: 'That Member ID already exists.' }, { status: 409 });
     }
 
-    const { data: row, error: rowError } = await supabase
-      .from('submissions')
-      .select('name,member_id,updated_at')
-      .eq('member_id', memberId)
-      .single();
-
-    if (rowError) throw rowError;
+    const pin_hash = await bcrypt.hash(pin, 10);
+    const now = new Date();
+    await submissions.insertOne({
+      name,
+      member_id: memberId,
+      pin_hash,
+      heroes: [],
+      updated_at: now,
+      event_updated_at: now,
+      created_at: now,
+    });
 
     return noStoreJson({
       ok: true,
       row: {
-        name: row?.name || name,
-        member_id: row?.member_id || memberId,
+        name,
+        member_id: memberId,
         pin_status: 'secured',
-        updated_at: row?.updated_at || null,
+        updated_at: now.toISOString(),
       },
       pin,
       message: 'Member created. The PIN is stored only as a secure hash.',
@@ -125,6 +149,7 @@ export async function PUT(request) {
   }
 }
 
+// Reset PIN for an existing member.
 export async function POST(request) {
   if (!(await isAdminRequest(request))) {
     return noStoreJson({ error: 'Unauthorized' }, { status: 401 });
@@ -142,19 +167,17 @@ export async function POST(request) {
     return noStoreJson({ error: 'Invalid Member ID.' }, { status: 400 });
   }
 
-  // Generate on the server so the replacement PIN is unpredictable and never
-  // supplied by an unauthenticated client. Leading zeroes are allowed.
   const newPin = String(randomInt(0, 1_000_000)).padStart(6, '0');
 
   try {
-    const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase.rpc('admin_reset_member_pin', {
-      p_member_id: memberId,
-      p_new_pin: newPin,
-    });
+    const submissions = await getCollection(COLLECTIONS.SUBMISSIONS);
+    const pin_hash = await bcrypt.hash(newPin, 10);
+    const result = await submissions.updateOne(
+      { member_id: memberId },
+      { $set: { pin_hash, updated_at: new Date() } }
+    );
 
-    if (error) throw error;
-    if (data !== true) {
+    if (result.matchedCount === 0) {
       return noStoreJson({ error: 'Member not found.' }, { status: 404 });
     }
 

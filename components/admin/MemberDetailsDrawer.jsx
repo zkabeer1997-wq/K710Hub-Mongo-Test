@@ -7,7 +7,7 @@ function Detail({ label, value }) {
   return <div className="admin-drawer-field"><span>{label}</span><strong>{value || '—'}</strong></div>;
 }
 
-export default function MemberDetailsDrawer({ member, rallyName, onClose, onDelete, deleting, confirming }) {
+export default function MemberDetailsDrawer({ open, member, rallyName, onClose, onDelete, deleting, confirming }) {
   const drawerRef = useRef(null);
   const closeRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -43,6 +43,8 @@ export default function MemberDetailsDrawer({ member, rallyName, onClose, onDele
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [confirming]);
+
+  if (!open || !member) return null;
 
   return (
     <div className="admin-drawer-overlay" role="presentation" onClick={onClose}>

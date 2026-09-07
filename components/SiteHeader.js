@@ -12,7 +12,6 @@ const NAV_LINKS = [
   { href: '/guides', label: 'Guides' },
   { href: '/events', label: 'Events' },
   { href: '/gallery', label: 'Gallery' },
-  { href: '/tools', label: 'Tools' },
   { href: '/player-record', label: 'Members' },
 ];
 
