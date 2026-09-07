@@ -1,58 +1,52 @@
-import { Panel, Toggle, Tag, Select, Input, Field } from '../../ui';
-import {
-  GEAR_SLOTS,
-  GEAR_TIERS,
-  SLOT_CONFIG,
-  STAT_TYPES,
-  ENHANCEMENT_LEVEL_MAX,
-  MASTERY_LEVEL_MAX,
-  computeCurrentStatPercent,
-} from '../../../lib/data/heroGearPlannerData.mjs';
+import { Panel, Toggle, Tag, Input, Field } from '../../ui';
+import { getGearSlots, getSlotConfig } from '../../../lib/heroGearPlanner/data.js';
+import { computeCurrentStatPercent } from '../../../lib/heroGearPlanner/solver.mjs';
 import styles from './HeroGearPlanner.module.css';
 
-function GearSlot({ troopId, slot, state, onSlotChange }) {
-  const config = SLOT_CONFIG[troopId][slot.id];
-  const stat = STAT_TYPES[config.stat];
-  const currentStat = computeCurrentStatPercent(state);
+const SLOT_LABELS = { helm: 'Helm', gloves: 'Gloves', chest: 'Chest', boots: 'Boots' };
+const STAT_LABELS = { health: 'Health', lethality: 'Lethality' };
+
+function GearSlot({ troopType, slot, state, onSlotChange }) {
+  const config = getSlotConfig(troopType, slot);
+  if (!config) return null;
+  const currentStat = computeCurrentStatPercent(troopType, slot, state);
 
   return (
     <div className={styles.slotCard}>
       <div className={styles.slotHead}>
-        <span className={styles.slotName}>{slot.label}</span>
+        <span className={styles.slotName}>{SLOT_LABELS[slot] || slot}</span>
         <div className={styles.slotBadges}>
-          <Tag tone={config.stat === 'lethality' ? 'danger' : 'success'}>{stat.label}</Tag>
+          <Tag tone={config.statType === 'lethality' ? 'danger' : 'success'}>{STAT_LABELS[config.statType] || config.statType}</Tag>
           <Tag tone="accent">{config.multiplier}x</Tag>
         </div>
       </div>
-
-      <Field label="Tier">
-        <Select value={state.tier} onChange={(e) => onSlotChange(slot.id, 'tier', e.target.value)}>
-          {GEAR_TIERS.map((tier) => (
-            <option key={tier.id} value={tier.id}>{tier.label}</option>
-          ))}
-        </Select>
-      </Field>
 
       <div className={styles.slotControls}>
         <Field label="Enhancement Lv.">
           <Input
             type="number"
             min="0"
-            max={ENHANCEMENT_LEVEL_MAX}
-            value={state.enhancementLevel}
-            onChange={(e) => onSlotChange(slot.id, 'enhancementLevel', e.target.value)}
+            value={state.currentEnhancementLevel}
+            onChange={(e) => onSlotChange(slot, 'currentEnhancementLevel', e.target.value)}
           />
         </Field>
         <Field label="Mastery Lv.">
           <Input
             type="number"
             min="0"
-            max={MASTERY_LEVEL_MAX}
-            value={state.masteryLevel}
-            onChange={(e) => onSlotChange(slot.id, 'masteryLevel', e.target.value)}
+            value={state.currentMasteryLevel}
+            onChange={(e) => onSlotChange(slot, 'currentMasteryLevel', e.target.value)}
           />
         </Field>
       </div>
+      <Field label="Red Imbuement Lv.">
+        <Input
+          type="number"
+          min="0"
+          value={state.currentRedImbuementLevel}
+          onChange={(e) => onSlotChange(slot, 'currentRedImbuementLevel', e.target.value)}
+        />
+      </Field>
 
       <div className={styles.slotStat}>
         <span>Current Stat</span>
@@ -76,12 +70,12 @@ export default function TroopGearCard({ troop, troopState, onToggleIncluded, onS
       }
     >
       <div className={styles.slotGrid} style={{ opacity: troopState.included ? 1 : 0.5 }}>
-        {GEAR_SLOTS.map((slot) => (
+        {getGearSlots().map((slot) => (
           <GearSlot
-            key={slot.id}
-            troopId={troop.id}
+            key={slot}
+            troopType={troop.id}
             slot={slot}
-            state={troopState.slots[slot.id]}
+            state={troopState.slots[slot]}
             onSlotChange={(...args) => troopState.included && onSlotChange(...args)}
           />
         ))}

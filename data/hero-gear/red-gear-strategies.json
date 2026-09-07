@@ -1,0 +1,13 @@
+{
+  "_comment": "Strategy labels/descriptions (UX copy, not game constants). The actual milestone level gating lives on each enhancement-ladder.json step's milestoneFlags.{conservative,progressive} - this file only names the two strategies the UI lets a user pick between.",
+  "strategies": {
+    "conservative": {
+      "label": "Conservative",
+      "description": "Only ascend at levels flagged as milestones (see each chain's milestoneFlags.conservative). Slower, but never spends resources outside a guaranteed unlock window."
+    },
+    "progressive": {
+      "label": "Progressive",
+      "description": "Ascend at any level flagged eligible for incremental progress (see each chain's milestoneFlags.progressive). Faster stat gains, higher resource burn rate."
+    }
+  }
+}

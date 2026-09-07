@@ -3,13 +3,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Tabs, Panel } from '../../ui';
 import { useToolPersistence } from '../../../lib/useToolPersistence';
-import {
-  TROOP_TYPES,
-  BUILD_PROFILES,
-  RED_GEAR_STRATEGIES,
-  createDefaultGearState,
-} from '../../../lib/data/heroGearPlannerData.mjs';
-import { optimizeHeroGearPlan } from '../../../lib/heroGearPlannerCompute.mjs';
+import { getTroopTypes, getGearSlots, getBuildProfiles } from '../../../lib/heroGearPlanner/data.js';
+import { optimizeHeroGearPlan, weightKey } from '../../../lib/heroGearPlanner/solver.mjs';
 import IntroCard from './IntroCard';
 import PresetBar from './PresetBar';
 import InputsCard, { computeTotalXpAvailable } from './InputsCard';
@@ -20,7 +15,10 @@ import FaqAccordion from './FaqAccordion';
 import styles from './HeroGearPlanner.module.css';
 
 const TOOL_KEY = 'hero-gear-planner';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2; // v2: solver-driven schema (per-chain current levels, flat weight keys)
+
+const TROOP_LABELS = { infantry: 'Infantry', cavalry: 'Cavalry', archer: 'Archer' };
+const STAT_TYPES = ['health', 'lethality'];
 
 const DEFAULT_RESOURCES = {
   greenParts: 0,
@@ -32,8 +30,29 @@ const DEFAULT_RESOURCES = {
   mithril: 0,
 };
 
+function troopLabel(troopType) {
+  return TROOP_LABELS[troopType] || troopType;
+}
+
 function defaultCustomWeights() {
-  return Object.fromEntries(TROOP_TYPES.map((t) => [t.id, { lethality: 1 / 6, health: 1 / 6 }]));
+  const weights = {};
+  for (const troopType of getTroopTypes()) {
+    for (const stat of STAT_TYPES) weights[weightKey(troopType, stat)] = 1 / 6;
+  }
+  return weights;
+}
+
+function createEmptySlotState() {
+  return { currentEnhancementLevel: 0, currentMasteryLevel: 0, currentRedImbuementLevel: 0 };
+}
+
+function createDefaultGearState() {
+  return Object.fromEntries(
+    getTroopTypes().map((troopType) => [
+      troopType,
+      { included: true, slots: Object.fromEntries(getGearSlots().map((slot) => [slot, createEmptySlotState()])) },
+    ]),
+  );
 }
 
 function makeId() {
@@ -42,14 +61,19 @@ function makeId() {
     : `build-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function firstBuildProfileId() {
+  const ids = Object.keys(getBuildProfiles()).filter((id) => id !== 'custom' && id !== 'unweighted');
+  return ids[0] || 'unweighted';
+}
+
 function defaultState() {
   return {
     gear: createDefaultGearState(),
     resources: { ...DEFAULT_RESOURCES },
-    buildProfileId: BUILD_PROFILES[0].id,
+    buildProfileId: firstBuildProfileId(),
     customWeights: defaultCustomWeights(),
-    townCenterLevel: '30',
-    redGearStrategyId: RED_GEAR_STRATEGIES[0].id,
+    townCenterLevelCap: null, // null = no filtering, per spec default
+    redGearStrategyId: 'conservative',
     includeXpReforge: true,
     includeNearMissAnalysis: false,
     presets: [],
@@ -66,14 +90,17 @@ export default function HeroGearPlannerApp() {
 
   const restore = useCallback((saved) => {
     setState((prev) => ({ ...prev, ...saved }));
+    if (saved.lastResult) setOptimizeResult(saved.lastResult);
   }, []);
+
+  const persistedInputs = useMemo(() => ({ ...state, lastResult: optimizeResult }), [state, optimizeResult]);
 
   const persistence = useToolPersistence({
     toolKey: TOOL_KEY,
     schemaVersion: SCHEMA_VERSION,
-    inputs: state,
+    inputs: persistedInputs,
     restore,
-    migrate: (inputs) => inputs,
+    migrate: () => null, // v1 (pre-solver) shape isn't compatible - start fresh rather than guess-convert it
     autoDetect: true,
   });
 
@@ -85,28 +112,28 @@ export default function HeroGearPlannerApp() {
     setState((prev) => ({ ...prev, resources: { ...DEFAULT_RESOURCES } }));
   }
 
-  function toggleTroopIncluded(troopId) {
+  function toggleTroopIncluded(troopType) {
     setState((prev) => ({
       ...prev,
       gear: {
         ...prev.gear,
-        [troopId]: { ...prev.gear[troopId], included: !prev.gear[troopId].included },
+        [troopType]: { ...prev.gear[troopType], included: !prev.gear[troopType].included },
       },
     }));
   }
 
-  function updateSlot(troopId, slotId, field, value) {
+  function updateSlot(troopType, slot, field, value) {
     setState((prev) => ({
       ...prev,
       gear: {
         ...prev.gear,
-        [troopId]: {
-          ...prev.gear[troopId],
+        [troopType]: {
+          ...prev.gear[troopType],
           slots: {
-            ...prev.gear[troopId].slots,
-            [slotId]: {
-              ...prev.gear[troopId].slots[slotId],
-              [field]: field === 'tier' ? value : Number(value) || 0,
+            ...prev.gear[troopType].slots,
+            [slot]: {
+              ...prev.gear[troopType].slots[slot],
+              [field]: Number(value) || 0,
             },
           },
         },
@@ -114,13 +141,10 @@ export default function HeroGearPlannerApp() {
     }));
   }
 
-  function updateCustomWeight(troopId, statId, value) {
+  function updateCustomWeight(troopType, statType, value) {
     setState((prev) => ({
       ...prev,
-      customWeights: {
-        ...prev.customWeights,
-        [troopId]: { ...prev.customWeights[troopId], [statId]: Number(value) || 0 },
-      },
+      customWeights: { ...prev.customWeights, [weightKey(troopType, statType)]: Number(value) || 0 },
     }));
   }
 
@@ -130,12 +154,13 @@ export default function HeroGearPlannerApp() {
       resources: state.resources,
       buildProfileId: state.buildProfileId,
       customWeights: state.customWeights,
-      townCenterLevel: state.townCenterLevel,
+      townCenterLevelCap: state.townCenterLevelCap,
       redGearStrategyId: state.redGearStrategyId,
       includeXpReforge: state.includeXpReforge,
       includeNearMissAnalysis: state.includeNearMissAnalysis,
+      lastResult: optimizeResult,
     }),
-    [state],
+    [state, optimizeResult],
   );
 
   function createPreset(name) {
@@ -155,7 +180,10 @@ export default function HeroGearPlannerApp() {
     setState((prev) => {
       const preset = prev.presets.find((p) => p.id === id);
       if (!preset) return prev;
-      return { ...prev, ...preset.data, activePresetId: id, presets: prev.presets };
+      const { lastResult, ...rest } = preset.data;
+      setOptimizeResult(lastResult || null);
+      setPlanApplied(false);
+      return { ...prev, ...rest, activePresetId: id, presets: prev.presets };
     });
   }
 
@@ -180,7 +208,7 @@ export default function HeroGearPlannerApp() {
 
   const resourcesSummary = useMemo(
     () => ({
-      enhancementXp: computeTotalXpAvailable(state.resources),
+      xp: computeTotalXpAvailable(state.resources),
       forgehammers: Number(state.resources.forgehammers) || 0,
       mythicGear: Number(state.resources.mythicGear) || 0,
       mithril: Number(state.resources.mithril) || 0,
@@ -189,7 +217,7 @@ export default function HeroGearPlannerApp() {
   );
 
   const canOptimize = useMemo(() => {
-    const hasIncludedTroop = TROOP_TYPES.some((t) => state.gear[t.id].included);
+    const hasIncludedTroop = getTroopTypes().some((t) => state.gear[t]?.included);
     const hasResources = Object.values(resourcesSummary).some((v) => v > 0);
     return hasIncludedTroop && hasResources;
   }, [state.gear, resourcesSummary]);
@@ -203,6 +231,7 @@ export default function HeroGearPlannerApp() {
         resources: resourcesSummary,
         buildProfileId: state.buildProfileId,
         customWeights: state.customWeights,
+        townCenterLevelCap: state.townCenterLevelCap,
         redGearStrategyId: state.redGearStrategyId,
         includeXpReforge: state.includeXpReforge,
         includeNearMissAnalysis: state.includeNearMissAnalysis,
@@ -218,15 +247,15 @@ export default function HeroGearPlannerApp() {
     if (!optimizeResult) return;
     setState((prev) => {
       const gear = { ...prev.gear };
-      for (const step of optimizeResult.steps) {
-        gear[step.troopId] = {
-          ...gear[step.troopId],
+      for (const slotResult of optimizeResult.slots) {
+        gear[slotResult.troopType] = {
+          ...gear[slotResult.troopType],
           slots: {
-            ...gear[step.troopId].slots,
-            [step.slotId]: {
-              ...gear[step.troopId].slots[step.slotId],
-              enhancementLevel: step.projectedEnhancementLevel,
-              masteryLevel: step.projectedMasteryLevel,
+            ...gear[slotResult.troopType].slots,
+            [slotResult.slot]: {
+              currentEnhancementLevel: slotResult.newEnhancementLevel,
+              currentMasteryLevel: slotResult.newMasteryLevel,
+              currentRedImbuementLevel: slotResult.newRedImbuementLevel,
             },
           },
         };
@@ -242,8 +271,8 @@ export default function HeroGearPlannerApp() {
         <div className={styles.headerText}>
           <h1>Hero Gear Planner</h1>
           <p>
-            Model Enhancement and Mastery investment across Infantry, Cavalry, and Archer hero gear, then let the
-            optimizer rank the upgrades worth your resources first.
+            Model Enhancement, Mastery, and Red Imbuement investment across Infantry, Cavalry, and Archer hero gear,
+            then let the optimizer rank the upgrades worth your resources first.
           </p>
         </div>
         <Tabs
@@ -281,13 +310,13 @@ export default function HeroGearPlannerApp() {
       {activeTab === 'optimize' ? (
         <div className={styles.layout}>
           <div className={styles.troopGrid}>
-            {TROOP_TYPES.map((troop) => (
+            {getTroopTypes().map((troopType) => (
               <TroopGearCard
-                key={troop.id}
-                troop={troop}
-                troopState={state.gear[troop.id]}
-                onToggleIncluded={() => toggleTroopIncluded(troop.id)}
-                onSlotChange={(slotId, field, value) => updateSlot(troop.id, slotId, field, value)}
+                key={troopType}
+                troop={{ id: troopType, label: troopLabel(troopType) }}
+                troopState={state.gear[troopType]}
+                onToggleIncluded={() => toggleTroopIncluded(troopType)}
+                onSlotChange={(slot, field, value) => updateSlot(troopType, slot, field, value)}
               />
             ))}
           </div>
@@ -300,15 +329,16 @@ export default function HeroGearPlannerApp() {
             activePresetId={state.activePresetId}
             onLoadPreset={loadPreset}
             onDeletePreset={deletePreset}
-            townCenterLevel={state.townCenterLevel}
-            onTownCenterChange={(v) => setState((prev) => ({ ...prev, townCenterLevel: v }))}
+            townCenterLevelCap={state.townCenterLevelCap}
+            onTownCenterChange={(v) => setState((prev) => ({ ...prev, townCenterLevelCap: v === '' ? null : Number(v) }))}
             redGearStrategyId={state.redGearStrategyId}
             onRedGearStrategyChange={(id) => setState((prev) => ({ ...prev, redGearStrategyId: id }))}
             includeXpReforge={state.includeXpReforge}
             includeNearMissAnalysis={state.includeNearMissAnalysis}
             onToggleReforge={(v) => setState((prev) => ({ ...prev, includeXpReforge: v }))}
             onToggleNearMiss={(v) => setState((prev) => ({ ...prev, includeNearMissAnalysis: v }))}
-            resourcesSummary={resourcesSummary}
+            resourcesSummary={optimizeResult ? optimizeResult.resourcesConsumed : resourcesSummary}
+            resourcesSummaryLabel={optimizeResult ? "Resources You'll Use (from last plan)" : "Resources You'll Use"}
             onOptimize={runOptimizer}
             optimizing={optimizing}
             canOptimize={canOptimize}

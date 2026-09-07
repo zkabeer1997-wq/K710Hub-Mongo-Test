@@ -1,38 +1,44 @@
 import { Panel, Field, Select, Toggle, Button } from '../../ui';
-import {
-  BUILD_PROFILES,
-  RED_GEAR_STRATEGIES,
-  TOWN_CENTER_LEVEL_OPTIONS,
-  TROOP_TYPES,
-  STAT_TYPES,
-} from '../../../lib/data/heroGearPlannerData.mjs';
+import { getTroopTypes, getBuildProfiles, getRedGearStrategies } from '../../../lib/heroGearPlanner/data.js';
+import { weightKey } from '../../../lib/heroGearPlanner/solver.mjs';
 import styles from './HeroGearPlanner.module.css';
+
+const TROOP_LABELS = { infantry: 'Infantry', cavalry: 'Cavalry', archer: 'Archer' };
+const STAT_TYPES = [
+  { id: 'health', label: 'H' },
+  { id: 'lethality', label: 'L' },
+];
+
+const TOWN_CENTER_LEVEL_OPTIONS = Array.from({ length: 12 }, (_, i) => 30 - i);
 
 function WeightBreakdown({ weights, editable, onChange }) {
   return (
     <div className={styles.weightBreakdown}>
-      {TROOP_TYPES.map((troop) => (
-        <div key={troop.id} className={styles.summaryRow}>
-          <span>{troop.label}</span>
+      {getTroopTypes().map((troopType) => (
+        <div key={troopType} className={styles.summaryRow}>
+          <span>{TROOP_LABELS[troopType] || troopType}</span>
           <span>
-            {Object.values(STAT_TYPES).map((stat) => (
-              <span key={stat.id} style={{ marginLeft: 10 }}>
-                {stat.label[0]}:{' '}
-                {editable ? (
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="1"
-                    value={weights[troop.id][stat.id]}
-                    onChange={(e) => onChange(troop.id, stat.id, e.target.value)}
-                    style={{ width: 52, background: 'transparent', border: '1px solid var(--color-border)', color: 'inherit', borderRadius: 4 }}
-                  />
-                ) : (
-                  weights[troop.id][stat.id].toFixed(2)
-                )}
-              </span>
-            ))}
+            {STAT_TYPES.map((stat) => {
+              const key = weightKey(troopType, stat.id);
+              return (
+                <span key={key} style={{ marginLeft: 10 }}>
+                  {stat.label}:{' '}
+                  {editable ? (
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="1"
+                      value={weights[key] ?? 0}
+                      onChange={(e) => onChange(troopType, stat.id, e.target.value)}
+                      style={{ width: 52, background: 'transparent', border: '1px solid var(--color-border)', color: 'inherit', borderRadius: 4 }}
+                    />
+                  ) : (
+                    (weights[key] ?? 0).toFixed(2)
+                  )}
+                </span>
+              );
+            })}
           </span>
         </div>
       ))}
@@ -49,7 +55,7 @@ export default function OptimizerPanel({
   activePresetId,
   onLoadPreset,
   onDeletePreset,
-  townCenterLevel,
+  townCenterLevelCap,
   onTownCenterChange,
   redGearStrategyId,
   onRedGearStrategyChange,
@@ -58,21 +64,24 @@ export default function OptimizerPanel({
   onToggleReforge,
   onToggleNearMiss,
   resourcesSummary,
+  resourcesSummaryLabel = "Resources You'll Use",
   onOptimize,
   optimizing,
   canOptimize,
 }) {
-  const activeProfile = BUILD_PROFILES.find((p) => p.id === buildProfileId) || BUILD_PROFILES[0];
-  const isCustom = activeProfile.id === 'custom';
-  const activeStrategy = RED_GEAR_STRATEGIES.find((s) => s.id === redGearStrategyId) || RED_GEAR_STRATEGIES[0];
+  const profiles = getBuildProfiles();
+  const activeProfile = profiles[buildProfileId] || profiles.unweighted;
+  const isCustom = buildProfileId === 'custom';
+  const strategies = getRedGearStrategies();
+  const activeStrategy = strategies[redGearStrategyId] || strategies.conservative;
 
   return (
     <div className={styles.rail}>
       <Panel eyebrow="Optimizer" title="Build Profile">
         <Field label="Profile">
           <Select value={buildProfileId} onChange={(e) => onBuildProfileChange(e.target.value)}>
-            {BUILD_PROFILES.map((profile) => (
-              <option key={profile.id} value={profile.id}>{profile.label}</option>
+            {Object.entries(profiles).map(([id, profile]) => (
+              <option key={id} value={id}>{profile.label}</option>
             ))}
           </Select>
         </Field>
@@ -101,17 +110,18 @@ export default function OptimizerPanel({
       </Panel>
 
       <Panel eyebrow="Constraints" title="Progress caps">
-        <Field label="Town Center Level cap">
-          <Select value={townCenterLevel} onChange={(e) => onTownCenterChange(e.target.value)}>
-            {TOWN_CENTER_LEVEL_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.id}>{opt.label}</option>
+        <Field label="Town Center Level cap" hint="Leave blank for no cap">
+          <Select value={townCenterLevelCap ?? ''} onChange={(e) => onTownCenterChange(e.target.value)}>
+            <option value="">No cap</option>
+            {TOWN_CENTER_LEVEL_OPTIONS.map((level) => (
+              <option key={level} value={level}>{`TC ${level}`}</option>
             ))}
           </Select>
         </Field>
         <Field label="Red Gear Strategy">
           <Select value={redGearStrategyId} onChange={(e) => onRedGearStrategyChange(e.target.value)}>
-            {RED_GEAR_STRATEGIES.map((strategy) => (
-              <option key={strategy.id} value={strategy.id}>{strategy.label}</option>
+            {Object.entries(strategies).map(([id, strategy]) => (
+              <option key={id} value={id}>{strategy.label}</option>
             ))}
           </Select>
         </Field>
@@ -133,12 +143,12 @@ export default function OptimizerPanel({
         </div>
       </Panel>
 
-      <Panel eyebrow="Preview" title="Resources You'll Use">
+      <Panel eyebrow="Preview" title={resourcesSummaryLabel}>
         <div className={styles.summaryBox}>
-          <div className={styles.summaryRow}><span>Enhancement XP</span><span>{resourcesSummary.enhancementXp.toLocaleString()}</span></div>
-          <div className={styles.summaryRow}><span>Forgehammers</span><span>{resourcesSummary.forgehammers.toLocaleString()}</span></div>
-          <div className={styles.summaryRow}><span>Mythic Gear</span><span>{resourcesSummary.mythicGear.toLocaleString()}</span></div>
-          <div className={styles.summaryRow}><span>Mithril</span><span>{resourcesSummary.mithril.toLocaleString()}</span></div>
+          <div className={styles.summaryRow}><span>Enhancement XP</span><span>{Math.round(resourcesSummary.xp).toLocaleString()}</span></div>
+          <div className={styles.summaryRow}><span>Forgehammers</span><span>{Math.round(resourcesSummary.forgehammers).toLocaleString()}</span></div>
+          <div className={styles.summaryRow}><span>Mythic Gear</span><span>{Math.round(resourcesSummary.mythicGear).toLocaleString()}</span></div>
+          <div className={styles.summaryRow}><span>Mithril</span><span>{Math.round(resourcesSummary.mithril).toLocaleString()}</span></div>
         </div>
       </Panel>
 

@@ -1,0 +1,16 @@
+{
+  "_comment": "PLACEHOLDER DATA covering only 2 example chains (infantry:helm, cavalry:chest) with 3 example levels each. TODO(owner): add the remaining troopType:slot chains and real level count/costs/bonuses.",
+  "_unitsNote": "cost.mithril is the raw Mithril amount for this step alone (not cumulative). cumulativeStatBonus is the TOTAL Red Imbuement stat bonus (percentage points) accrued once this level is reached. Per the given schema this chain has no requiredTownCenterLevel field, so the Town Center cap filter does not apply to Red Imbuement steps - confirm that's correct before relying on it.",
+  "chains": {
+    "infantry:helm": [
+      { "level": 1, "cost": { "mithril": 800 }, "cumulativeStatBonus": 2.0 },
+      { "level": 2, "cost": { "mithril": 1600 }, "cumulativeStatBonus": 4.2 },
+      { "level": 3, "cost": { "mithril": 2600 }, "cumulativeStatBonus": 6.6 }
+    ],
+    "cavalry:chest": [
+      { "level": 1, "cost": { "mithril": 820 }, "cumulativeStatBonus": 1.9 },
+      { "level": 2, "cost": { "mithril": 1650 }, "cumulativeStatBonus": 4.0 },
+      { "level": 3, "cost": { "mithril": 2650 }, "cumulativeStatBonus": 6.3 }
+    ]
+  }
+}

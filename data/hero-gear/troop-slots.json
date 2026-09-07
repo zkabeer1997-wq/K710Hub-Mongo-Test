@@ -1,0 +1,17 @@
+{
+  "_comment": "PLACEHOLDER DATA. troopType/slot row existence mirrors Kingshot's real gear geometry (3 troop types x 4 slots each), but statType and multiplier are illustrative examples, not verified game values. TODO(owner): replace multiplier with the real per-slot multiplier and confirm statType assignment before shipping.",
+  "rows": [
+    { "troopType": "infantry", "slot": "helm", "statType": "health", "multiplier": 1.2 },
+    { "troopType": "infantry", "slot": "gloves", "statType": "lethality", "multiplier": 0.6 },
+    { "troopType": "infantry", "slot": "chest", "statType": "health", "multiplier": 1.1 },
+    { "troopType": "infantry", "slot": "boots", "statType": "lethality", "multiplier": 0.4 },
+    { "troopType": "cavalry", "slot": "helm", "statType": "lethality", "multiplier": 1.2 },
+    { "troopType": "cavalry", "slot": "gloves", "statType": "health", "multiplier": 0.6 },
+    { "troopType": "cavalry", "slot": "chest", "statType": "lethality", "multiplier": 1.1 },
+    { "troopType": "cavalry", "slot": "boots", "statType": "health", "multiplier": 0.4 },
+    { "troopType": "archer", "slot": "helm", "statType": "lethality", "multiplier": 1.1 },
+    { "troopType": "archer", "slot": "gloves", "statType": "health", "multiplier": 0.6 },
+    { "troopType": "archer", "slot": "chest", "statType": "lethality", "multiplier": 1.2 },
+    { "troopType": "archer", "slot": "boots", "statType": "health", "multiplier": 0.4 }
+  ]
+}

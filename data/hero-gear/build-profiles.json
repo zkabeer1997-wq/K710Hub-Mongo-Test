@@ -1,0 +1,31 @@
+{
+  "_comment": "Weight vectors for the optimizer's objective function. Unlike the ladder files, these are our own product/UX weighting choices (not datamined game constants), so they are real defaults rather than placeholders - adjust freely to taste.",
+  "_unitsNote": "Each profile maps to a weight per (troopType x statType) combination. Weights are relative to each other within a profile, not fixed percentages - the solver normalizes nothing, it just sums weight * statGain. `unweighted` is also used as the baseline for the optimizer's secondary 'unweighted score' comparison metric.",
+  "profiles": {
+    "earlyGameGrowth": {
+      "label": "Early Game Growth",
+      "description": "Favors Health across the board so new accounts can absorb hits while troop count is still low.",
+      "weights": { "infantryHealth": 0.24, "infantryLethality": 0.09, "cavalryHealth": 0.20, "cavalryLethality": 0.11, "archerHealth": 0.20, "archerLethality": 0.16 }
+    },
+    "earlyGameCombat": {
+      "label": "Early Game Combat",
+      "description": "Leans into Lethality for players pushing rally damage or event leaderboards early.",
+      "weights": { "infantryHealth": 0.14, "infantryLethality": 0.18, "cavalryHealth": 0.12, "cavalryLethality": 0.24, "archerHealth": 0.10, "archerLethality": 0.22 }
+    },
+    "futureProofed": {
+      "label": "Future-Proofed (Late Game)",
+      "description": "Balances all three troop types evenly so nothing is under-invested once KvK rotations demand a full army.",
+      "weights": { "infantryHealth": 0.17, "infantryLethality": 0.17, "cavalryHealth": 0.17, "cavalryLethality": 0.16, "archerHealth": 0.16, "archerLethality": 0.17 }
+    },
+    "unweighted": {
+      "label": "Unweighted",
+      "description": "Treats every stat point the same regardless of troop type or Health/Lethality split. Used as the baseline for the optimizer's unweighted-score comparison.",
+      "weights": { "infantryHealth": 0.1667, "infantryLethality": 0.1667, "cavalryHealth": 0.1667, "cavalryLethality": 0.1667, "archerHealth": 0.1666, "archerLethality": 0.1666 }
+    },
+    "custom": {
+      "label": "Custom",
+      "description": "Set your own weight per troop type and stat. Weights are relative to each other, not a fixed percentage.",
+      "weights": { "infantryHealth": 0.1667, "infantryLethality": 0.1667, "cavalryHealth": 0.1667, "cavalryLethality": 0.1667, "archerHealth": 0.1666, "archerLethality": 0.1666 }
+    }
+  }
+}
