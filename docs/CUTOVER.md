@@ -32,6 +32,21 @@ Verify: Vercel project for `k710-hub-mongo-test` and future production domain sh
 
 Run: `MONGODB_URI=... node scripts/seed-public-content.mjs` after migration to fill missing public defaults.
 
+## Image storage (no object storage on this stack)
+
+Supabase Storage isn't part of this stack, so `admin-gallery` and
+`admin-guide-images` store uploaded images as base64 data URLs directly in
+their Mongo documents instead. MongoDB's hard cap is 16 MB per document, and
+base64 inflates a file's size by ~33%, so upload caps are set well below
+that: 4 MB for gallery images (`app/api/admin-gallery/route.js`), 3 MB for
+guide images (`app/api/admin-guide-images/route.js`). Don't raise either cap
+without re-checking the real per-document ceiling.
+
+This works but doesn't scale: every read of a gallery/guide list pulls full
+image bytes along with it, and the collection grows one image at a time
+with no CDN caching. If image volume grows, move to GridFS or an external
+object store (S3/R2/Vercel Blob) instead of raising these caps further.
+
 ## Smoke checklist (prod vs Mongo-Test)
 
 Public:

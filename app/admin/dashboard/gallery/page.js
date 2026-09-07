@@ -91,7 +91,7 @@ export default function AdminGalleryPage() {
         <div className="gallery-admin-preview">{preview ? <img src={preview} alt="New image preview" /> : <span>Image preview</span>}</div>
         <div className="gallery-admin-fields">
           <h2>Add an image</h2>
-          <Field label="Image" hint="JPG, PNG, WebP, or GIF · maximum 10 MB"><Input id="gallery-file" tone="console" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={chooseFile} /></Field>
+          <Field label="Image" hint="JPG, PNG, WebP, or GIF · maximum 4 MB"><Input id="gallery-file" tone="console" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={chooseFile} /></Field>
           <div className="gallery-admin-field-grid">
             <Field label="Title" hint="Optional"><Input tone="console" value={form.title} maxLength={120} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field>
             <Field label="Display order" hint="Lower numbers appear first"><Input tone="console" type="number" min="0" max="100000" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} /></Field>

@@ -2,6 +2,9 @@
   "name": "k710hub-mongo-test",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "node scripts/extract-ui-strings.js && next dev",
     "build": "node scripts/extract-ui-strings.js && next build",
@@ -20,7 +23,6 @@
     "@dnd-kit/utilities": "3.2.2",
     "@react-three/drei": "10.7.8",
     "@react-three/fiber": "9.7.0",
-    "@supabase/supabase-js": "^2.112.4",
     "@vercel/oidc": "3.8.4",
     "bcryptjs": "^2.4.3",
     "heic2any": "^0.0.4",

@@ -5,7 +5,14 @@ import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// Images are stored as base64 data URLs directly in the gallery_images
+// document (no object storage on this Mongo test stack - see the POST
+// handler below). Base64 inflates size by ~33%, and MongoDB's hard cap is
+// 16 MB per document, so this cap has to leave real headroom: 10 MB of
+// binary would already be ~13.3 MB of base64 before the rest of the
+// document's fields, uncomfortably close to failing outright. 4 MB keeps
+// every upload comfortably under the limit.
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 async function requireAdmin(request) {
@@ -73,7 +80,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Use a JPG, PNG, WebP, or GIF image.' }, { status: 415 });
   }
   if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ error: 'Images must be 10 MB or smaller.' }, { status: 413 });
+    return NextResponse.json({ error: 'Images must be 4 MB or smaller.' }, { status: 413 });
   }
   if (!altText || altText.length > 240) {
     return NextResponse.json(

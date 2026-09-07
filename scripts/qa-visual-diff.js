@@ -55,7 +55,10 @@ function sha256Hex(input) {
 }
 
 function mintMemberCookie() {
-  const secret = process.env.MEMBER_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.ADMIN_PASSWORD || '';
+  // Must match lib/memberAuth.js's getSecret() exactly (MEMBER_SESSION_SECRET
+  // only, no fallback) or the real app silently rejects this cookie and the
+  // "member" QA scenario renders logged-out with no error.
+  const secret = process.env.MEMBER_SESSION_SECRET || '';
   if (!secret) return null;
   const nonce = crypto.randomUUID();
   const exp = Date.now() + 12 * 60 * 60 * 1000;
