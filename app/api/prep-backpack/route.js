@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { readMemberSession } from '../../../lib/memberAuth';
 
 export async function POST(request) {
   try {
+    const session = await readMemberSession(request);
+    if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
+
     const data = await request.json();
 
     const str = (v) => String(v == null ? '' : v);
     const arr = (v) => (Array.isArray(v) ? v.map(String) : []);
 
     const payload = {
-      member_id: str(data.member_id),
+      member_id: session.memberId,
       in_game_name: str(data.in_game_name),
       want_construction: str(data.want_construction),
       construction_upgrades: arr(data.construction_upgrades),

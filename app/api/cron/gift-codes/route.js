@@ -16,9 +16,11 @@ function noStoreJson(body, init = {}) {
 export async function GET(request) {
   const authHeader = request.headers.get('authorization') || '';
   const cronSecret = process.env.CRON_SECRET;
-  const isCron =
-    cronSecret &&
-    (authHeader === `Bearer ${cronSecret}` || request.headers.get('x-vercel-cron') === '1');
+  // x-vercel-cron is just a plain request header, not a signed one - any
+  // caller can set it. Require the bearer token to actually match
+  // CRON_SECRET (which Vercel Cron sends as Authorization: Bearer <secret>
+  // when CRON_SECRET is configured on the project).
+  const isCron = Boolean(cronSecret) && authHeader === `Bearer ${cronSecret}`;
 
   const adminBearer = process.env.ADMIN_PASSWORD && authHeader === `Bearer ${process.env.ADMIN_PASSWORD}`;
 
