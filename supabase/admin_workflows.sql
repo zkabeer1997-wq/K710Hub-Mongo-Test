@@ -17,6 +17,11 @@ CREATE TABLE IF NOT EXISTS public.tool_settings (tool_key text PRIMARY KEY, quan
 ALTER TABLE public.tool_settings ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.tool_settings FROM anon, authenticated;
 GRANT ALL ON public.tool_settings TO service_role;
+CREATE TABLE IF NOT EXISTS public.tool_settings_history (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, tool_key text NOT NULL, quantities jsonb NOT NULL, source_note text NOT NULL DEFAULT '', verification_status text NOT NULL DEFAULT 'community-reported' CHECK (verification_status IN ('verified','community-reported','experimental','deprecated')), last_verified date, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS tool_settings_history_tool_created_idx ON public.tool_settings_history (tool_key, created_at DESC);
+ALTER TABLE public.tool_settings_history ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.tool_settings_history FROM anon, authenticated;
+GRANT SELECT, INSERT ON public.tool_settings_history TO service_role;
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('guide-attachments','guide-attachments',false,3145728,ARRAY['image/jpeg','image/png','image/webp','image/gif']) ON CONFLICT (id) DO NOTHING;
 
 ALTER TABLE public.form_gates DROP CONSTRAINT IF EXISTS form_gates_key_check;

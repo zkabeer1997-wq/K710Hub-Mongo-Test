@@ -1,6 +1,5 @@
 import { guidesTable } from '../lib/guideAccess.mjs';
-import { getCollection } from '../lib/mongo';
-import { COLLECTIONS } from '../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../lib/adminSupabase';
 
 const BASE_URL = 'https://k710hub.vercel.app';
 
@@ -15,18 +14,14 @@ const STATIC_ROUTES = [
   { path: '/player-record', priority: 0.5, changeFrequency: 'yearly' },
 ];
 
-function guidesCollectionName() {
-  const table = typeof guidesTable === 'function' ? guidesTable() : 'kingdom_guides';
-  return table === 'guide_content' ? COLLECTIONS.GUIDE_CONTENT : COLLECTIONS.KINGDOM_GUIDES;
-}
-
 async function guideEntries() {
   try {
-    const coll = await getCollection(guidesCollectionName());
-    const data = await coll
-      .find({ is_published: true, access_level: 'public' })
-      .project({ slug: 1, updated_at: 1, _id: 0 })
-      .toArray();
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from(guidesTable())
+      .select('slug, updated_at')
+      .eq('is_published', true).eq('access_level', 'public');
+    if (error) throw error;
     return (data || []).map((g) => ({
       url: `${BASE_URL}/guides/${g.slug}`,
       lastModified: g.updated_at ? new Date(g.updated_at) : undefined,
@@ -40,13 +35,14 @@ async function guideEntries() {
 
 async function allianceEntries() {
   try {
-    const coll = await getCollection(COLLECTIONS.ALLIANCES);
-    const data = await coll
-      .find({ active: true })
-      .project({ tag: 1, updated_at: 1, _id: 0 })
-      .toArray();
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from('alliances')
+      .select('tag, updated_at')
+      .eq('active', true);
+    if (error) throw error;
     return (data || []).map((a) => ({
-      url: `${BASE_URL}/alliances/${String(a.tag).toLowerCase()}`,
+      url: `${BASE_URL}/alliances/${a.tag.toLowerCase()}`,
       lastModified: a.updated_at ? new Date(a.updated_at) : undefined,
       changeFrequency: 'monthly',
       priority: 0.6,

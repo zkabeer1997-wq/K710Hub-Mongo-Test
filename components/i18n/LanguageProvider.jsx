@@ -271,18 +271,8 @@ export default function LanguageProvider({ children }) {
         }
       }
     } else {
-      // Admin tools should not block on the public language gate.
-      const onAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-      if (onAdmin) {
-        setLanguage('English');
-        setInputLanguage('English');
-        languageRef.current = 'English';
-        setHasChosenLanguage(true);
-        setChooserOpen(false);
-      } else {
-        setChooserOpen(true);
-        setHasChosenLanguage(false);
-      }
+      setChooserOpen(true);
+      setHasChosenLanguage(false);
     }
   }, [startBrowserTranslator]);
 
@@ -359,6 +349,8 @@ export default function LanguageProvider({ children }) {
   }, []);
 
   const requestTranslations = useCallback(async (items, targetLanguage) => {
+    // Fast/default path on supported desktop Chrome: translation stays entirely
+    // on-device and does not require Vercel billing or a third-party API.
     const browserCode = resolveBrowserLanguageCode(targetLanguage);
     if (browserCode && typeof window !== 'undefined' && 'Translator' in window) {
       let translator = browserTranslatorRef.current?.language === targetLanguage
@@ -509,7 +501,9 @@ export default function LanguageProvider({ children }) {
       processingRef.current = false;
       if (queuedRef.current && Date.now() >= failureUntilRef.current) {
         queuedRef.current = false;
-        processDocument();
+        window.setTimeout(() => processDocument(), 120);
+      } else {
+        queuedRef.current = false;
       }
     }
   }, [manifest, requestTranslations, restoreTracked]);
@@ -563,6 +557,7 @@ export default function LanguageProvider({ children }) {
       setLanguageError('');
       setDownloadProgress(null);
 
+      // Start Chrome's translator while this click still carries user activation.
       if (!isEnglish(clean)) {
         try {
           startBrowserTranslator(clean);
@@ -584,11 +579,14 @@ export default function LanguageProvider({ children }) {
       } catch {
         // Non-fatal.
       }
+      window.setTimeout(() => scheduleTranslation(), 0);
     },
-    [destroyBrowserTranslator, restoreTracked, startBrowserTranslator],
+    [destroyBrowserTranslator, restoreTracked, scheduleTranslation, startBrowserTranslator],
   );
 
   const openLanguageChooser = useCallback(() => {
+    setInputLanguage(languageRef.current || 'English');
+    setLanguageError('');
     failureUntilRef.current = 0;
     setChooserOpen(true);
   }, []);
@@ -602,7 +600,7 @@ export default function LanguageProvider({ children }) {
     <LanguageContext.Provider value={contextValue}>
       {children}
 
-      {chooserOpen && !(pathname || '').startsWith('/admin') && (
+      {chooserOpen && (
         <div className="k710-language-overlay" data-k710-no-translate role="dialog" aria-modal="true" aria-labelledby="k710-language-title">
           <div className="k710-language-panel">
             <div className="k710-language-crest" aria-hidden="true">710</div>
@@ -650,13 +648,23 @@ export default function LanguageProvider({ children }) {
       {hasChosenLanguage && !chooserOpen && (
         <button
           type="button"
-          className="k710-language-globe"
-          data-k710-no-translate
+          className="k710-language-switcher"
           onClick={openLanguageChooser}
-          aria-label="Change language"
-          title="Change language"
+          data-k710-no-translate
+          aria-label={`Change language. Current language: ${language}`}
+          title={languageError || 'Change language'}
         >
-          🌐
+          <span aria-hidden="true">🌐</span>
+          <span>{language}</span>
+          {translationStatus === 'translating' && (
+            <>
+              <span className="k710-language-spinner" aria-hidden="true" />
+              {Number.isFinite(downloadProgress) && downloadProgress < 100 && (
+                <span className="k710-language-progress">{downloadProgress}%</span>
+              )}
+            </>
+          )}
+          {translationStatus === 'error' && <span aria-hidden="true">!</span>}
         </button>
       )}
     </LanguageContext.Provider>

@@ -61,8 +61,6 @@ export async function proxy(request) {
   }
 
   if (matchesPrefix(pathname, MEMBER_PREFIXES)) {
-    // Kingshot login now issues the same edge-safe signed cookie format
-    // as legacy PIN login, so one read covers both.
     const session = await readMemberSession(request);
     if (!session) {
       const loginUrl = new URL('/player-record', request.url);

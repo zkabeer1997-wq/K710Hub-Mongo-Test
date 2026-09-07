@@ -365,6 +365,14 @@ button[type="submit"]:not(.k-btn):disabled { opacity: 0.5; cursor: not-allowed; 
 
 .auto-assign-summary p:first-child { color: var(--parchment); font-weight: 700; }
 
+.admin-time-cutoff { margin: 0 0 16px; padding: 12px; border: 1px solid var(--border-soft); border-radius: 8px; background: rgba(255,255,255,.025); display: grid; grid-template-columns: minmax(150px, auto) minmax(190px, 1fr) auto; gap: 8px 10px; align-items: center; }
+.admin-time-cutoff label { color: var(--parchment); font-size: 12px; font-weight: 700; }
+.admin-time-cutoff input { min-height: 36px; padding: 7px 9px; border: 1px solid var(--border-soft); border-radius: 6px; background: var(--surface); color: var(--text); color-scheme: dark; }
+.admin-time-cutoff button { min-height: 36px; padding: 7px 10px; border: 1px solid var(--border-soft); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; }
+.admin-time-cutoff p { grid-column: 1 / -1; margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
+.schedule-time-cutoff { max-width: 720px; }
+@media (max-width: 720px) { .admin-time-cutoff { grid-template-columns: 1fr; } .admin-time-cutoff p { grid-column: auto; } }
+
 .rally-dropzone-header span { min-width: 26px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--gold); color: var(--ink); font-size: 12px; font-weight: 700; }
 
 .delete-rally-btn { background: rgba(255, 107, 107, 0.12); color: #ff8f8f; border: 1px solid rgba(255, 107, 107, 0.35); padding: 6px 9px; }

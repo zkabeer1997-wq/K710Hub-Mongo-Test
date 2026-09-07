@@ -19,7 +19,11 @@ create table if not exists public.prep_backpack_submissions (
   avail_day4 text[] not null default '{}',
   avail_day5 text[] not null default '{}',
   notes text default '',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+alter table public.prep_backpack_submissions
+  add column if not exists updated_at timestamptz not null default now();
 
 alter table public.prep_backpack_submissions enable row level security;

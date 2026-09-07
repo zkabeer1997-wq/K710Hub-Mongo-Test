@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { getCollection } from '../../../lib/mongo';
-import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { FORM_GATE_KEYS } from '../../../lib/formGates.mjs';
-import { getFormGates } from '../../../lib/formGates.server.js';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
+import { FORM_GATE_KEYS, getFormGates } from '../../../lib/formGates.mjs';
 
 const ROUTE_BY_KEY = {
   lead: '/power-profile',
@@ -47,29 +45,28 @@ export async function PATCH(request) {
   }
 
   try {
-    const coll = await getCollection(COLLECTIONS.FORM_GATES);
-    const doc = {
-      form_key: formKey,
-      is_open: body.is_open !== false,
-      message: body.message ? String(body.message) : '',
-      updated_at: new Date(),
-    };
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from('form_gates')
+      .upsert({
+        form_key: formKey,
+        is_open: body.is_open !== false,
+        message: body.message ? String(body.message) : '',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'form_key' })
+      .select('form_key, is_open, message')
+      .single();
 
-    await coll.updateOne({ form_key: formKey }, { $set: doc }, { upsert: true });
+    if (error) return NextResponse.json({ error: 'Unable to save form status. Please try again.' }, { status: 500 });
 
     revalidatePath('/forms');
     revalidatePath('/forms/kvk');
     revalidatePath('/forms/flamedragon-tyrant');
     revalidatePath(ROUTE_BY_KEY[formKey]);
 
-    return NextResponse.json({
-      gate: { form_key: doc.form_key, is_open: doc.is_open, message: doc.message },
-    });
+    return NextResponse.json({ gate: data });
   } catch (error) {
     console.error('admin-form-gates PATCH failed', error);
-    return NextResponse.json(
-      { error: 'Unable to confirm form status. Reload the page before trying again.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Unable to confirm form status. Reload the page before trying again.' }, { status: 500 });
   }
 }

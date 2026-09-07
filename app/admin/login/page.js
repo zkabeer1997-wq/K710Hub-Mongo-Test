@@ -1,41 +1,13 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [kingshotAdmin, setKingshotAdmin] = useState(null);
   const router = useRouter();
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/session', { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!active) return;
-        if (
-          data?.state === 'authenticated' &&
-          (data.profile?.role === 'admin' || data.profile?.role === 'superadmin')
-        ) {
-          setKingshotAdmin(data.profile);
-          router.replace('/admin/dashboard/overview');
-          router.refresh();
-          return;
-        }
-        setCheckingSession(false);
-      })
-      .catch(() => {
-        if (active) setCheckingSession(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -53,22 +25,11 @@ export default function AdminLoginPage() {
       } else {
         setError('Incorrect password.');
       }
-    } catch {
+    } catch (err) {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
-  }
-
-  if (checkingSession) {
-    return (
-      <div className="command-hall-page">
-        <div className="command-hall-card">
-          <h1>ADMIN SIGN IN</h1>
-          <p className="sub">Checking session…</p>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -79,13 +40,6 @@ export default function AdminLoginPage() {
         </svg>
         <h1>ADMIN SIGN IN</h1>
         <p className="sub">Kingdom 710 administrators</p>
-
-        {kingshotAdmin && (
-          <p className="sub" style={{ marginBottom: 16 }}>
-            Signed in as {kingshotAdmin.nickname} ({kingshotAdmin.role}). Opening dashboard…
-          </p>
-        )}
-
         <form className="command-hall-form" onSubmit={handleSubmit}>
           <label htmlFor="admin-password" className="admin-drawer-field">
             <span>Admin Password</span>
@@ -113,13 +67,6 @@ export default function AdminLoginPage() {
             {loading ? 'Checking...' : 'Sign in'}
           </button>
         </form>
-
-        <p className="sub" style={{ marginTop: 20 }}>
-          Prefer player login?{' '}
-          <Link href="/login?next=/admin/dashboard/overview&admin=1">
-            Sign in with Kingshot
-          </Link>
-        </p>
       </div>
     </div>
   );

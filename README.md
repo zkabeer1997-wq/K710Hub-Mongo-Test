@@ -1,17 +1,13 @@
-# K710 Hub — MongoDB Test Stack
+# K710 Hub
 
-**This is a full parallel copy of the production K710 Hub, running on MongoDB instead of Supabase.**
+Kingdom 710's Kingshot portal and operations hub — Next.js 16 (App Router) +
+Supabase.
 
-Use this repository and its Vercel deployment to test changes safely before touching the live Supabase + Vercel production stack (`k710hub.vercel.app`).
-
-- **Production (do not break)**: https://github.com/zkabeer1997-wq/KvK-Tracker-710 → k710hub.vercel.app (Supabase)
-- **This test stack**: https://github.com/zkabeer1997-wq/K710Hub-Mongo-Test → (new Vercel project under legendofzenzen710@gmail.com) (MongoDB)
-
-Kingdom 710's Kingshot portal and operations hub — Next.js 16 (App Router) + MongoDB.
-
-Public surface: the Gate, kingdom guides, and the transfer registry.  
-Member surface (Member ID + PIN): player record, war ledger, KvK prep, and the economy optimizers under `/tools`.  
-Admin surface (shared password): roster, rally builder, transfer review, member PINs, and inline content editing.
+Public surface: the Gate, kingdom guides, and the transfer registry.
+Member surface (Member ID + PIN): player record, war ledger, KvK prep, and the
+economy optimizers under `/tools`.
+Admin surface (shared password): roster, rally builder, transfer review, member
+PINs, and inline content editing.
 
 ## Setup
 
@@ -21,24 +17,28 @@ Admin surface (shared password): roster, rally builder, transfer review, member 
 
 ## Environment
 
-**Required for the MongoDB test stack**
+**Required.** The app 500s on most routes without all four.
 
 | Variable | Used by | Notes |
 |---|---|---|
-| `MONGODB_URI` | `lib/mongo.js` | Full connection string including password. Server only. Never expose. |
-| `MONGODB_DB_NAME` | `lib/mongo.js` | Defaults to `k710hub` if unset |
+| `NEXT_PUBLIC_SUPABASE_URL` | every Supabase client | |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `lib/supabaseClient.js` | Ships in the client bundle — treat as public |
+| `SUPABASE_SERVICE_ROLE_KEY` | all server routes | Server only. Never expose |
 | `ADMIN_PASSWORD` | `lib/adminAuth.js` | Admin auth **fails closed** if unset — nobody can log in |
-| `MEMBER_SESSION_SECRET` | `lib/memberAuth.js` | **Set this explicitly.** Used to sign member session tokens |
 
-**Legacy / transitional (still present while migration is in progress)**
+**Optional.**
 
-| Variable | Notes |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Will be removed once every route uses MongoDB |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Will be removed |
-| `SUPABASE_SERVICE_ROLE_KEY` | Will be removed |
+| Variable | Used by | Notes |
+|---|---|---|
+| `MEMBER_SESSION_SECRET` | `lib/memberAuth.js` | Set this. See the warning below |
+| `K710_LIBRETRANSLATE_URLS` | `/api/translate-ui` | Comma-separated mirrors, overrides the defaults |
+| `QA_BASE`, `QA_CHROMIUM` | `scripts/qa-routes.js` | Local QA only |
 
-> **Set `MEMBER_SESSION_SECRET` explicitly.** Do not fall back to any database secret.
+> **Set `MEMBER_SESSION_SECRET` explicitly.** Without it, `lib/memberAuth.js`
+> falls back to `SUPABASE_SERVICE_ROLE_KEY`, then to `ADMIN_PASSWORD`. That
+> couples member sessions to secrets they have no business sharing: rotating
+> the service role key silently signs every member out, and the admin password
+> ends up as signing material for member tokens.
 
 ## Scripts
 
@@ -50,28 +50,39 @@ Admin surface (shared password): roster, rally builder, transfer review, member 
 | `npm test` | Unit tests (`node --test` over `tests/**/*.test.mjs`) |
 | `npm run lint` | `next lint` |
 | `npm run analyze` | Production build with the bundle analyzer |
-| `npm run qa` | Route-level regression suite |
+| `npm run qa` | Route-level regression suite — needs a running build, see below |
 
-## Database (MongoDB)
+`npm run build` regenerates `public/ui-strings.json`, the allowlist
+`/api/translate-ui` will translate. It is committed so a bare `next build`
+resolves the import on a fresh clone, and rewritten on every build so it never
+goes stale.
 
-Collections live in the database named by `MONGODB_DB_NAME` (default `k710hub`).
+### Route QA
 
-See `lib/mongoCollections.js` for the canonical list of collections and the indexes that must exist.
+```
+npm run build && npm start -- -p 3111
+QA_BASE=http://localhost:3111 npm run qa
+```
 
-Auth stays identical to production:
-- Member ID + PIN (bcrypt hash stored on the member document)
-- Signed member session cookie (`k710_member_session`)
-- Shared admin password
+Asserts route status, heading structure, production field counts on every form,
+server-side admin gating, the PIN gate, and horizontal overflow at six widths.
 
-## Migration status
+## Database
 
-- [x] Repo duplicated from production
-- [x] MongoDB client + collection definitions
-- [ ] Data layer rewrite (replace every Supabase call)
-- [ ] Full production data import
-- [ ] New Vercel project under legendofzenzen710@gmail.com
-- [ ] End-to-end verification
+SQL lives in `supabase/` and is applied by hand through the Supabase SQL editor
+— there is no `supabase/migrations/` or CLI setup.
+
+`supabase/core_tables.sql` carries `submissions`, `content_blocks`, the
+`public_submissions` view, and the `verify_page_pin` RPC. It also documents two
+open items: leftover `anon` write grants on the two oldest tables (currently
+inert, because RLS has no permissive policy), and the fact that the full member
+roster is readable with the anon key. Read it before changing either.
+
+The pattern for every table added since: enable RLS, `revoke all` from `anon`
+and `authenticated`, grant only to `service_role`, and reach it exclusively
+through server-side routes.
 
 ## Documentation
 
-- `docs/PERF-BASELINE.md` — bundle and route weights
+- `docs/PERF-BASELINE.md` — bundle and route weights, and what the three.js
+  Gate scene actually costs.

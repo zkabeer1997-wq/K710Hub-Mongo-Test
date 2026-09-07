@@ -3,8 +3,7 @@ import { readMemberSession } from '../../../lib/memberAuth';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { guidesTable } from '../../../lib/guideAccess.mjs';
 import { NextResponse } from 'next/server';
-import { getCollection } from '../../../lib/mongo';
-import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -16,44 +15,23 @@ const NO_STORE_HEADERS = {
   Expires: '0',
 };
 
-function collectionName() {
-  const table = typeof guidesTable === 'function' ? guidesTable() : 'kingdom_guides';
-  return table === 'guide_content' ? COLLECTIONS.GUIDE_CONTENT : COLLECTIONS.KINGDOM_GUIDES;
-}
-
 export async function GET(request) {
   try {
-    const allowed =
-      Boolean(await readMemberSession(request)) || (await isAdminRequest(request));
-    const coll = await getCollection(collectionName());
-    const filter = { is_published: true };
-    if (!allowed) filter.access_level = 'public';
+    const supabase = createAdminSupabaseClient();
+    const allowed = Boolean(await readMemberSession(request)) || await isAdminRequest(request);
+    let query = supabase
+      .from(guidesTable())
+      .select('slug, title, category, description, body, access_level, position, updated_at')
+      .eq('is_published', true)
+      .order('position', { ascending: true })
+      .order('title', { ascending: true });
+    if (!allowed) query = query.eq('access_level', 'public');
+    const { data, error } = await query;
 
-    const data = await coll
-      .find(filter)
-      .project({
-        slug: 1,
-        title: 1,
-        category: 1,
-        description: 1,
-        body: 1,
-        access_level: 1,
-        position: 1,
-        updated_at: 1,
-        _id: 0,
-      })
-      .sort({ position: 1, title: 1 })
-      .toArray();
-
-    return NextResponse.json(
-      { guides: (data || []).map(guideSummary) },
-      { headers: NO_STORE_HEADERS }
-    );
+    if (error) throw error;
+    return NextResponse.json({ guides: (data || []).map(guideSummary) }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error('guides directory GET failed', error);
-    return NextResponse.json(
-      { error: 'Unable to load guides.' },
-      { status: 500, headers: NO_STORE_HEADERS }
-    );
+    return NextResponse.json({ error: 'Unable to load guides.' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

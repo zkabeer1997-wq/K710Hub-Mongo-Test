@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
-import {
-  getMemberGiftStatus,
-  enrollMemberForGiftCodes,
-  confirmMemberRedemption,
-  MEMBER_CONFIRM_RESULTS,
-} from '../../../lib/giftCodes.mjs';
+import { getMemberGiftStatus, enrollMemberForGiftCodes, confirmMemberRedemption, MEMBER_CONFIRM_RESULTS } from '../../../lib/giftCodes.mjs';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
 
 function noStoreJson(body, init = {}) {
   const response = NextResponse.json(body, init);
@@ -44,10 +40,16 @@ export async function PATCH(request) {
     }
 
     const enabled = Boolean(body?.enabled);
+    const client = createAdminSupabaseClient();
+
     if (enabled) {
       await enrollMemberForGiftCodes(memberId, memberId, 710);
+    } else {
+      await client
+        .from('gift_code_enrollments')
+        .update({ enabled: false, updated_at: new Date().toISOString() })
+        .eq('member_id', memberId);
     }
-    // Disable is a no-op on Mongo test stack (no enrollments collection wired).
 
     const status = await getMemberGiftStatus(memberId);
     return noStoreJson({ ok: true, ...status });
@@ -57,6 +59,8 @@ export async function PATCH(request) {
   }
 }
 
+// Member self-reports the outcome of redeeming a code themselves at
+// Century Games' own site - there is no automated submission.
 export async function POST(request) {
   try {
     const session = await readMemberSession(request);

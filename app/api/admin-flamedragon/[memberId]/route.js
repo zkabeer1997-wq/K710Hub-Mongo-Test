@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../../lib/adminAuth';
-import { getCollection } from '../../../../lib/mongo';
-import { COLLECTIONS } from '../../../../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../../../../lib/adminSupabase';
 
 export async function DELETE(request, { params: paramsPromise }) {
   if (!(await isAdminRequest(request))) {
@@ -13,9 +12,16 @@ export async function DELETE(request, { params: paramsPromise }) {
     return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
   }
   try {
-    const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
-    const result = await coll.deleteMany({ member_id: String(memberId) });
-    if (!result.deletedCount) {
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from('flamedragon_forms')
+      .delete()
+      .eq('member_id', memberId)
+      .select('member_id');
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    if (!data || data.length === 0) {
       return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
     }
     return NextResponse.json({ deletedMemberIds: [String(memberId)] });

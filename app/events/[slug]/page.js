@@ -3,8 +3,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getCollection } from '../../../lib/mongo';
-import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
 import { Button, Tag } from '../../../components/ui';
 
 import { RECURRENCE_FIELDS } from '../../../lib/eventRecurrence.mjs';
@@ -17,10 +16,15 @@ const KIND_LABEL = {
   custom: 'Kingdom Event',
 };
 
+// Simpler than guides/[slug]: events have no admin-preview-unpublished
+// requirement, so this page never needs cookies() or searchParams at all -
+// avoiding that whole class of DYNAMIC_SERVER_USAGE conflict from the
+// start rather than fixing it after the fact.
 export async function generateStaticParams() {
   try {
-    const coll = await getCollection(COLLECTIONS.EVENTS);
-    const data = await coll.find({ published: true }).project({ slug: 1, _id: 0 }).toArray();
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase.from('events').select('slug').eq('published', true);
+    if (error) throw error;
     return (data || []).map((e) => ({ slug: e.slug }));
   } catch (error) {
     console.error('events generateStaticParams failed', error);
@@ -29,18 +33,15 @@ export async function generateStaticParams() {
 }
 
 async function loadEvent(slug) {
-  const coll = await getCollection(COLLECTIONS.EVENTS);
-  return coll.findOne(
-    { slug, published: true },
-    {
-      projection: {
-        slug: 1, title: 1, kind: 1, description: 1, body_md: 1,
-        starts_at: 1, ends_at: 1, published: 1,
-        recurrence_frequency: 1, recurrence_interval: 1, recurrence_until: 1,
-        _id: 0,
-      },
-    }
-  );
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select(`slug, title, kind, description, body_md, starts_at, ends_at, published, ${RECURRENCE_FIELDS}`)
+    .eq('slug', slug)
+    .eq('published', true)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
 }
 
 export async function generateMetadata({ params }) {
@@ -65,6 +66,9 @@ export default async function EventPage({ params }) {
     event = await loadEvent(slug);
   } catch (error) {
     console.error('event page load failed', error);
+    // Same reasoning as the alliance detail page: a Supabase hiccup here
+    // is a different situation from a genuinely missing event, and
+    // shouldn't be silently relabeled as a 404 via notFound().
     return (
       <main className="theme-realm event-page" style={{ minHeight: '100vh', padding: '56px 24px', background: 'var(--color-bg)', color: 'var(--color-ink)' }}>
         <div className="event-page-inner" style={{ maxWidth: 700, margin: '0 auto' }}>

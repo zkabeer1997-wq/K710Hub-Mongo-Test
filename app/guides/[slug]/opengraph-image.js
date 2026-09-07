@@ -1,6 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getCollection } from '../../../lib/mongo';
-import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
 
 export const alt = 'Kingdom 710 Guide';
 export const size = { width: 1200, height: 630 };
@@ -8,11 +7,12 @@ export const contentType = 'image/png';
 
 async function loadTitleAndCategory(slug) {
   try {
-    const coll = await getCollection(COLLECTIONS.KINGDOM_GUIDES);
-    const data = await coll.findOne(
-      { slug },
-      { projection: { title: 1, category: 1, is_published: 1, _id: 0 } }
-    );
+    const supabase = createAdminSupabaseClient();
+    const { data } = await supabase
+      .from('kingdom_guides')
+      .select('title, category, is_published')
+      .eq('slug', slug)
+      .maybeSingle();
     if (!data || !data.is_published) return null;
     return data;
   } catch {
@@ -20,6 +20,9 @@ async function loadTitleAndCategory(slug) {
   }
 }
 
+// Typographic only - no fabricated art or imagery, consistent with the
+// portal plan's rule against copying any visual asset. Same dark/gold
+// palette as the console surface's existing look.
 export default async function Image({ params }) {
   const { slug } = await params;
   const guide = await loadTitleAndCategory(slug);

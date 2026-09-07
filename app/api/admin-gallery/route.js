@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { randomUUID } from 'node:crypto';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { getCollection } from '../../../lib/mongo';
-import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -19,33 +17,18 @@ export async function GET(request) {
   const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
-  try {
-    const coll = await getCollection(COLLECTIONS.GALLERY_IMAGES);
-    const data = await coll
-      .find({})
-      .project({
-        id: 1,
-        image_url: 1,
-        storage_path: 1,
-        title: 1,
-        caption: 1,
-        alt_text: 1,
-        position: 1,
-        is_published: 1,
-        created_at: 1,
-        updated_at: 1,
-        _id: 0,
-      })
-      .sort({ position: 1, created_at: -1 })
-      .toArray();
-    return NextResponse.json(
-      { images: data || [] },
-      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
-    );
-  } catch (error) {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from('gallery_images')
+    .select('id, image_url, storage_path, title, caption, alt_text, position, is_published, created_at, updated_at')
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: false });
+
+  if (error) {
     console.error('admin gallery GET failed', error);
     return NextResponse.json({ error: 'Unable to load gallery images.' }, { status: 500 });
   }
+  return NextResponse.json({ images: data || [] }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
 }
 
 export async function POST(request) {
@@ -76,51 +59,43 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Images must be 10 MB or smaller.' }, { status: 413 });
   }
   if (!altText || altText.length > 240) {
-    return NextResponse.json(
-      { error: 'Image description is required and must be 240 characters or fewer.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Image description is required and must be 240 characters or fewer.' }, { status: 400 });
   }
   if (title.length > 120 || caption.length > 500) {
     return NextResponse.json({ error: 'Title or caption is too long.' }, { status: 400 });
   }
   if (!Number.isInteger(position) || position < 0 || position > 100000) {
-    return NextResponse.json(
-      { error: 'Position must be a whole number between 0 and 100000.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Position must be a whole number between 0 and 100000.' }, { status: 400 });
   }
 
-  // Mongo test stack: store as data URL (no Supabase Storage).
-  // Existing production images already have public image_url values.
+  const extension = file.name?.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const storagePath = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
+  const supabase = createAdminSupabaseClient();
   const buffer = Buffer.from(await file.arrayBuffer());
-  const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`;
-  const storagePath = `mongo/${new Date().toISOString().slice(0, 10)}/${randomUUID()}`;
+  const { error: uploadError } = await supabase.storage
+    .from('kingdom-gallery')
+    .upload(storagePath, buffer, { contentType: file.type, cacheControl: '31536000', upsert: false });
 
-  try {
-    const coll = await getCollection(COLLECTIONS.GALLERY_IMAGES);
-    const doc = {
-      id: randomUUID(),
-      storage_path: storagePath,
-      image_url: dataUrl,
-      title,
-      caption,
-      alt_text: altText,
-      position,
-      is_published: isPublished,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-    await coll.insertOne(doc);
-    const { _id, ...image } = doc;
-    revalidatePath('/');
-    revalidatePath('/gallery');
-    return NextResponse.json({ image }, { status: 201 });
-  } catch (error) {
-    console.error('gallery record insert failed', error);
-    return NextResponse.json(
-      { error: 'The image could not be added to the gallery.' },
-      { status: 500 }
-    );
+  if (uploadError) {
+    console.error('gallery storage upload failed', uploadError);
+    return NextResponse.json({ error: 'The image could not be uploaded.' }, { status: 500 });
   }
+
+  const { data: urlData } = supabase.storage.from('kingdom-gallery').getPublicUrl(storagePath);
+  const { data, error } = await supabase
+    .from('gallery_images')
+    .insert({ storage_path: storagePath, image_url: urlData.publicUrl, title, caption, alt_text: altText, position, is_published: isPublished })
+    .select('id, image_url, storage_path, title, caption, alt_text, position, is_published, created_at, updated_at')
+    .single();
+
+  if (error) {
+    await supabase.storage.from('kingdom-gallery').remove([storagePath]);
+    console.error('gallery record insert failed', error);
+    return NextResponse.json({ error: 'The image uploaded but could not be added to the gallery.' }, { status: 500 });
+  }
+
+  revalidatePath('/');
+  revalidatePath('/gallery');
+  return NextResponse.json({ image: data }, { status: 201 });
 }
+

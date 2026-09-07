@@ -14,7 +14,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' https://*.supabase.co",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -40,8 +40,10 @@ const nextConfig = {
     ];
   },
   images: {
-    // Gallery may still reference historical Supabase CDN URLs from production
-    // data import; keep remotePatterns so those images continue to render.
+    // Gallery images are stored in Supabase Storage and served from
+    // `https://<project-ref>.supabase.co/storage/v1/object/public/...`.
+    // Matches any Supabase project rather than hardcoding one ref, since
+    // production and staging projects use different refs.
     remotePatterns: [
       {
         protocol: 'https',

@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { randomUUID } from 'node:crypto';
 import { isAdminRequest } from '../../../lib/adminAuth';
-import { getCollection } from '../../../lib/mongo';
-import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
 
 export async function POST(request) {
   if (!(await isAdminRequest(request))) {
@@ -14,19 +12,16 @@ export async function POST(request) {
     if (!page || !type) {
       return NextResponse.json({ error: 'Missing page or type' }, { status: 400 });
     }
-    const coll = await getCollection(COLLECTIONS.CONTENT_BLOCKS);
-    const doc = {
-      id: randomUUID(),
-      page,
-      type,
-      content: content || {},
-      position: position || 0,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-    await coll.insertOne(doc);
-    const { _id, ...block } = doc;
-    return NextResponse.json({ block });
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+    .from('content_blocks')
+    .insert({ page, type, content: content || {}, position: position || 0 })
+    .select()
+    .single();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ block: data });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

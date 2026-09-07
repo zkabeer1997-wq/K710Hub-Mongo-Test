@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
-import { getCollection } from '../../../lib/mongo';
-import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { createAdminSupabaseClient } from '../../../lib/adminSupabase';
 
 export async function GET(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
 
   try {
-    const coll = await getCollection(COLLECTIONS.POWER_PROFILES);
-    const data = await coll.findOne(
-      { member_id: session.memberId },
-      { projection: { member_id: 1, charms: 1, updated_at: 1, _id: 0 } }
-    );
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from('power_profiles')
+      .select('member_id,charms,updated_at')
+      .eq('member_id', session.memberId)
+      .maybeSingle();
+
+    if (error) throw error;
     return NextResponse.json({ profile: data || null });
   } catch (error) {
     console.error('member-charm-profile GET failed', error);

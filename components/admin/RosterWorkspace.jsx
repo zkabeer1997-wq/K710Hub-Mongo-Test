@@ -438,6 +438,7 @@ export default function RosterWorkspace({
     return names;
   }, [rallies]);
 
+  // A Rally Lead cannot also be assigned as a joiner - here or on any other rally.
   const leadMemberIds = useMemo(() => getRallyLeadMemberIds(rallies), [rallies]);
 
   const assignedCount = rallyByMemberId.size;
@@ -482,13 +483,34 @@ export default function RosterWorkspace({
       />
       <p className="admin-page-lead">{pageLead}</p>
       <div className="dashboard-stats" aria-label="Dashboard summary">
-        <div><span>Total members</span><strong>{rows.length}</strong></div>
-        <div><span>Available</span><strong>{availableCount}</strong></div>
-        <div><span>Assigned</span><strong>{assignedCount}</strong></div>
-        <div className="unassigned-stat"><span>Unassigned</span><strong>{Math.max(rows.length - assignedCount, 0)}</strong></div>
-        <div><span>Player Profiles</span><strong>{powerProfileCount}</strong></div>
-        <div><span>Rallies</span><strong>{rallyCount}</strong></div>
-        <div><span>Latest update</span><strong>{lastUpdated ? new Date(lastUpdated).toLocaleDateString() : '-'}</strong></div>
+        <div>
+          <span>Total members</span>
+          <strong>{rows.length}</strong>
+        </div>
+        <div>
+          <span>Available</span>
+          <strong>{availableCount}</strong>
+        </div>
+        <div>
+          <span>Assigned</span>
+          <strong>{assignedCount}</strong>
+        </div>
+        <div className="unassigned-stat">
+          <span>Unassigned</span>
+          <strong>{Math.max(rows.length - assignedCount, 0)}</strong>
+        </div>
+        <div>
+          <span>Player Profiles</span>
+          <strong>{powerProfileCount}</strong>
+        </div>
+        <div>
+          <span>Rallies</span>
+          <strong>{rallyCount}</strong>
+        </div>
+        <div>
+          <span>Latest update</span>
+          <strong>{lastUpdated ? new Date(lastUpdated).toLocaleDateString() : '-'}</strong>
+        </div>
       </div>
       <TableFilters query={search} onQuery={setSearch} placeholder="Name, player ID, hero, or equipment" shown={filteredSorted.length} total={rows.length} onReset={()=>{setSearch('');setAllianceFilter('');setAvailabilityFilter('');setHeroFilter('');setTierFilter('');setSortKey('updated_at');setSortDir('desc');}} filters={[
         {key:'alliance',label:'Alliance',value:allianceFilter,onChange:setAllianceFilter,options:[...new Set(rows.map(r=>r.current_alliance).filter(Boolean))].sort()},
@@ -498,151 +520,452 @@ export default function RosterWorkspace({
       ]}/>
       {actionStatus && <div className="status">{actionStatus}</div>}
       {actionError && <div className="status error">{actionError}</div>}
-      {loading && <TableSkeleton columns={COLUMNS.length} rows={8} />}
+      {loading && <TableSkeleton columns={COLUMNS.length} rows={7} />}
       {error && <div className="status error">{error}</div>}
       {!loading && !error && (
-        <div className="admin-workspace">
-          <div className="admin-table-wrap">
-            <Table className="admin-table">
+        <div className="admin-workspace kvk-members-workspace">
+          <section className="roster-panel" aria-label="Member roster">
+            <div className="panel-heading">
+              <div>
+                <span>Roster</span>
+                <h2>Members</h2>
+              </div>
+              <p>{filteredSorted.length} shown</p>
+            </div>
+            <div className="roster-toolbar">
+              <Button variant="quiet" onClick={handleExportXlsx}>
+                Export to Excel
+              </Button>
+              <Button onClick={() => setShowAddMember(true)}>
+                + Add Member
+              </Button>
+            </div>
+            {showAddMember && (
+              <div className="admin-drawer-overlay" role="presentation" onClick={() => setShowAddMember(false)}>
+                <div className="admin-drawer" role="dialog" aria-modal="true" aria-labelledby="add-member-title" onClick={(e) => e.stopPropagation()}>
+                  <div className="admin-drawer-header">
+                    <h2 id="add-member-title">Add roster member</h2>
+                    <button type="button" className="admin-drawer-close" onClick={() => setShowAddMember(false)} aria-label="Close">&times;</button>
+                  </div>
+                  <form className="add-member-form" onSubmit={handleAddMember}>
+                    {addMemberError && <div className="status error">{addMemberError}</div>}
+                    {addMemberStatus && <div className="status">{addMemberStatus}</div>}
+
+                    <section className="admin-drawer-section">
+                      <h3>Identity</h3>
+                      <div className="add-member-grid">
+                        <Input tone="console" type="text" placeholder="Name" value={newMember.name} onChange={(e) => setNewMember({ ...newMember, name: e.target.value })} />
+                        <Input tone="console" type="text" placeholder="Member ID" value={newMember.member_id} onChange={(e) => setNewMember({ ...newMember, member_id: e.target.value })} />
+                      </div>
+                    </section>
+
+                    <section className="admin-drawer-section">
+                      <h3>Troop Levels</h3>
+                      <div className="unit-card-grid">
+                        {[
+                          ['infantry', 'Infantry Level', 'infantry_tier', 'infantry_tg'],
+                          ['cavalry', 'Cavalry Level', 'cavalry_tier', 'cavalry_tg'],
+                          ['archer', 'Archer Level', 'archer_tier', 'archer_tg'],
+                        ].map(([key, label, tierKey, tgKey]) => (
+                          <div key={key} className={`unit-card ${key}`}>
+                            <h4>{label}</h4>
+                            <div className="row">
+                              <label>Tier
+                                <select value={newMember[tierKey]} onChange={(e) => setNewMember({ ...newMember, [tierKey]: e.target.value })}>
+                                  <option value="">Tier</option>
+                                  {TROOP_TIERS.map((tier) => <option key={tier} value={tier}>{tier}</option>)}
+                                </select>
+                              </label>
+                              <label>TG
+                                <select value={newMember[tgKey]} onChange={(e) => setNewMember({ ...newMember, [tgKey]: e.target.value })}>
+                                  <option value="">TG</option>
+                                  {TROOP_TGS.map((tg) => <option key={tg} value={tg}>{tg}</option>)}
+                                </select>
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="admin-drawer-section">
+                      <h3>Heroes</h3>
+                      <div className="hero-chip-grid">
+                        {HEROES.map((hero) => (
+                          <label key={hero} className={newMember.heroes.includes(hero) ? 'hero-chip selected' : 'hero-chip'}>
+                            <input type="checkbox" checked={newMember.heroes.includes(hero)} onChange={() => toggleNewMemberHero(hero)} />
+                            <span>{hero}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="admin-drawer-section">
+                      <h3>Availability</h3>
+                      <div className="availability-grid">
+                        {KVK_AVAILABILITY_OPTIONS.map((option) => (
+                          <label key={option} className={newMember.availability === option ? 'availability-choice selected' : 'availability-choice'}>
+                            <input
+                              type="radio"
+                              name="new-member-availability"
+                              checked={newMember.availability === option}
+                              onChange={() => setNewMember({ ...newMember, availability: option })}
+                            />
+                            <span>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="admin-drawer-section">
+                      <h3>Alliance</h3>
+                      <label className="ledger-select">
+                        <span>Alliance</span>
+                        <select value={newMember.current_alliance} onChange={(e) => setNewMember({ ...newMember, current_alliance: e.target.value })}>
+                          <option value="">Select alliance</option>
+                          {KVK_ALLIANCES.map((alliance) => <option key={alliance} value={alliance}>{alliance}</option>)}
+                        </select>
+                      </label>
+                    </section>
+
+                    <Button type="submit" disabled={addingMember}>
+                      {addingMember ? 'Adding...' : 'Add member'}
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            )}
+            <Table className="kvk-members-table">
               <thead>
                 <tr>
-                  <th aria-label="Drag" />
                   {COLUMNS.map((col) => (
-                    <th key={col.key}>
+                    <th key={col.key} aria-sort={sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                       <button type="button" className="admin-sort-btn" onClick={() => handleSort(col.key)}>
-                        {col.label}{sortKey === col.key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        {col.label}
+                        {sortKey === col.key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                       </button>
                     </th>
                   ))}
-                  <th>Rally</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredSorted.map((row) => (
-                  <tr key={row.member_id}>
+                {filteredSorted.map((row) => {
+                  const isRallyLead = leadMemberIds.has(String(row.member_id));
+                  return (
+                  <tr
+                    key={row.member_id}
+                    className={'admin-row-clickable' + (draggingMemberId === String(row.member_id) ? ' row-dragging' : '')}
+                    onClick={() => setSelectedMemberId(String(row.member_id))}
+                  >
                     <td>
-                      <span
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, row.member_id)}
-                        onDragEnd={handleDragEnd}
-                        style={{ cursor: 'grab' }}
-                        aria-label="Drag to rally"
-                      >⠿</span>
+                      <div className="member-name-cell">
+                        <span className="member-name-row">
+                          <span
+                            className={isRallyLead ? 'rally-drag-handle is-disabled' : 'rally-drag-handle'}
+                            onClick={(event) => event.stopPropagation()}
+                            draggable={!isRallyLead}
+                            onDragStart={(event) => (isRallyLead ? event.preventDefault() : handleDragStart(event, row.member_id))}
+                            onDragEnd={handleDragEnd}
+                            role="button"
+                            tabIndex={-1}
+                            aria-label={isRallyLead ? `${row.name} is a Rally Lead and can't be dragged as a joiner` : `Drag ${row.name} to a rally`}
+                            title={isRallyLead ? "Rally Leads can't be assigned as joiners" : 'Drag to assign to a rally'}
+                          >
+                            &#8942;&#8942;
+                          </span>
+                          <button type="button" className="member-details-trigger" aria-haspopup="dialog" onClick={(event) => { event.stopPropagation(); setSelectedMemberId(String(row.member_id)); }}>{row.name}</button>
+                        </span>
+                        {rallyByMemberId.has(String(row.member_id)) && (
+                          <span className="rally-badge">{rallyByMemberId.get(String(row.member_id))}</span>
+                        )}
+                        {isRallyLead && (
+                          <span className="rally-badge rally-lead-badge">Lead - {rallyLeadNameByMemberId.get(String(row.member_id))}</span>
+                        )}
+                      </div>
+                      {isRallyLead ? (
+                        <p className="rally-assign-locked" title="Rally Leads can't be assigned as joiners">Rally Lead - not a joiner</p>
+                      ) : (
+                        <select
+                          className="rally-assign-select"
+                          aria-label={`Assign ${row.name} to a rally`}
+                          value={rallyIdByMemberId.get(String(row.member_id)) || ''}
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={(event) => { event.stopPropagation(); handleAssignFromDropdown(row.member_id, event.target.value); }}
+                        >
+                          <option value="">Unassigned</option>
+                          {rallies.map((rally) => (
+                            <option key={rally.id} value={rally.id}>{rally.name}</option>
+                          ))}
+                        </select>
+                      )}
                     </td>
                     <td>
-                      <button type="button" className="admin-sort-btn" onClick={() => setSelectedMemberId(row.member_id)}>
-                        {row.name || '—'}
-                      </button>
-                      <div className="admin-row-message">{row.member_id}</div>
-                    </td>
-                    <td>{getTroopLevelSummary(row)}</td>
-                    <td>{(row.heroes || []).join(', ') || '—'}</td>
-                    <td>{row.current_alliance || '—'}</td>
-                    <td>{row.availability || '—'}</td>
-                    <td>{row.updated_at ? new Date(row.updated_at).toLocaleString() : '—'}</td>
-                    <td>
-                      <select
-                        value={rallyIdByMemberId.get(String(row.member_id)) || ''}
-                        onChange={(e) => handleAssignFromDropdown(row.member_id, e.target.value)}
-                      >
-                        <option value="">Unassigned</option>
-                        {rallies.map((r) => (
-                          <option key={r.id} value={r.id}>{r.name}</option>
+                      <div className="member-troop-stack">
+                        {[['infantry', 'Infantry'], ['cavalry', 'Cavalry'], ['archer', 'Archer']].map(([key, label]) => (
+                          <div key={key}><span>{label}</span><strong>{formatUnitLevel(row[`${key}_tier`], row[`${key}_tg`])}</strong></div>
                         ))}
-                      </select>
+                      </div>
                     </td>
                     <td>
-                      <Button variant="quiet" onClick={() => deleteMember(row)} disabled={deletingIds.includes(String(row.member_id))}>
-                        Remove
-                      </Button>
+                      <div className="heroes-cell">
+                        <strong>{(row.heroes || []).length}</strong>
+                        <span>{(row.heroes || []).slice(0, 3).join(', ') || '-'}</span>
+                      </div>
                     </td>
+                    <td><span className="unit-pill">{row.current_alliance || '-'}</span></td>
+                    <td>
+                      <span className={`availability-pill ${availabilityTone(row.availability)}`}>
+                        {row.availability || '-'}
+                      </span>
+                    </td>
+                    <td className="updated-cell">{row.updated_at ? new Date(row.updated_at).toLocaleString() : ''}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </Table>
-          </div>
-          <section className="rally-board" aria-label="Rally planner">
-            <div className="rally-board-header">
-              <h2>Rally planner</h2>
-              <button type="button" className="dash-btn" onClick={handleCreateRally}>
-                Create Rally {rallies.length + 1}
-              </button>
-            </div>
-            <div className="admin-time-cutoff">
-              <label htmlFor="rally-assignment-cutoff">Use member updates from</label>
-              <input
-                id="rally-assignment-cutoff"
-                type="datetime-local"
-                value={assignmentCutoff}
-                onChange={(event) => setAssignmentCutoff(event.target.value)}
-              />
-              {assignmentCutoff ? (
-                <>
-                  <button type="button" onClick={() => setAssignmentCutoff('')}>Use all updates</button>
-                  <p>
-                    Auto assign will consider {filterRowsUpdatedOnOrAfter(rows, assignmentCutoff).length} of {rows.length} members.
-                    Older records remain in the table.
-                  </p>
-                </>
-              ) : (
-                <p>Auto assign will consider all members.</p>
-              )}
-            </div>
-            <div className="rally-list">
-              {rallies.length === 0 && (
-                <div className="rally-empty-state">Create Rally 1 to start assigning members.</div>
-              )}
-              {rallies.map((rally) => (
-                <div
-                  key={rally.id}
-                  className="rally-card"
-                  onDragOver={(e) => { e.preventDefault(); setDragOverRallyId(rally.id); }}
-                  onDragLeave={() => setDragOverRallyId(null)}
-                  onDrop={(e) => handleDropOnRally(e, rally.id)}
-                >
-                  <div className="rally-card-head">
-                    <input
-                      value={rally.name || ''}
-                      onChange={(e) => handleRenameRally(rally.id, e.target.value)}
-                      aria-label="Rally name"
-                    />
-                    <button type="button" onClick={() => toggleRallyCollapsed(rally.id)}>
-                      {collapsedRallyIds.includes(rally.id) ? 'Expand' : 'Collapse'}
-                    </button>
-                    <button type="button" onClick={() => handleAutoAssign(rally.id)}>Auto assign</button>
-                    <button type="button" onClick={() => handleDeleteRally(rally)}>Delete</button>
-                  </div>
-                  {!collapsedRallyIds.includes(rally.id) && (
-                    <div className="rally-card-body">
-                      <p>{(rally.memberIds || []).length} members</p>
-                      {autoAssignSummaries[rally.id] && (
-                        <p className="admin-row-message">{autoAssignSummaries[rally.id]}</p>
-                      )}
-                      <ul>
-                        {(rally.memberIds || []).map((id) => {
-                          const m = membersById.get(String(id));
-                          return (
-                            <li key={id}>
-                              {m?.name || id}
-                              <button type="button" onClick={() => handleRemoveFromRally(id)}>Remove</button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            {filteredSorted.length === 0 && <p>No results found.</p>}
           </section>
         </div>
       )}
-      <MemberDetailsDrawer
-        open={Boolean(selectedMemberId)}
-        member={rows.find((r) => String(r.member_id) === String(selectedMemberId)) || null}
-        onClose={() => setSelectedMemberId(null)}
-      />
+      {!loading && !error && (
+        <section className="rally-board" aria-label="Rally planner">
+          <div className="rally-board-header">
+            <div>
+              <span>Planner</span>
+              <h2>Rallies</h2>
+              <p>{assignedCount} members assigned</p>
+            </div>
+            <button type="button" onClick={handleCreateRally} className="create-rally-btn">
+              Create Rally {rallies.length + 1}
+            </button>
+          </div>
+          <div className="admin-time-cutoff">
+            <label htmlFor="rally-assignment-cutoff">Use member updates from</label>
+            <input
+              id="rally-assignment-cutoff"
+              type="datetime-local"
+              value={assignmentCutoff}
+              onChange={(event) => setAssignmentCutoff(event.target.value)}
+            />
+            {assignmentCutoff ? (
+              <>
+                <button type="button" onClick={() => setAssignmentCutoff('')}>Use all updates</button>
+                <p>
+                  Auto assign will consider {filterRowsUpdatedOnOrAfter(rows, assignmentCutoff).length} of {rows.length} members.
+                  Older records remain in the table.
+                </p>
+              </>
+            ) : (
+              <p>Auto assign will consider all members.</p>
+            )}
+          </div>
+          <div className="rally-list">
+              {rallies.length === 0 && (
+                <div className="rally-empty-state">Create Rally 1 to start assigning members.</div>
+              )}
+              {rallies.map((rally) => {
+                const isCollapsed = collapsedRallyIds.includes(rally.id);
+                const leadHeroTotal = getLeadHeroTotal(rally);
+                const summary = autoAssignSummaries[rally.id];
+                return (
+                  <section
+                    key={rally.id}
+                    className={
+                      'rally-dropzone'
+                      + (draggingMemberId ? ' drag-active' : '')
+                      + (dragOverRallyId === rally.id ? ' drag-over' : '')
+                    }
+                    onDragOver={(event) => event.preventDefault()}
+                    onDragEnter={() => setDragOverRallyId(rally.id)}
+                    onDragLeave={() => setDragOverRallyId((current) => (current === rally.id ? null : current))}
+                    onDrop={(event) => handleDropOnRally(event, rally.id)}
+                  >
+                    <div className="rally-dropzone-header">
+                      <div className="rally-title-row">
+                        <button
+                          type="button"
+                          className="rally-collapse-btn"
+                          onClick={() => toggleRallyCollapsed(rally.id)}
+                          aria-expanded={!isCollapsed}
+                          aria-label={isCollapsed ? `Expand ${rally.name}` : `Collapse ${rally.name}`}
+                        >
+                          {isCollapsed ? '+' : '−'}
+                        </button>
+                        <input className="rally-name-input" type="text" value={rally.name} onChange={(event) => handleRenameRally(rally.id, event.target.value)} aria-label="Rally name" />
+                        <span>{rally.memberIds.length}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="delete-rally-btn"
+                        onClick={() => handleDeleteRally(rally)}
+                        aria-label={`Delete ${rally.name}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    {!isCollapsed && (
+                      <>
+                        <div className="rally-controls">
+                          <label className="rally-control-label">
+                            <span>Rally Lead</span>
+                            <select
+                              value={rally.leadMemberId || ''}
+                              onChange={(event) => handleRallyLeadChange(rally.id, event.target.value)}
+                            >
+                              <option value="">Select lead</option>
+                              {rows.map((row) => (
+                                <option key={row.member_id} value={row.member_id}>
+                                  {row.name} ({row.member_id})
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <div className="troop-weight-grid" aria-label={`${rally.name} troop criteria`}>
+                            {[
+                              ['infantry', 'Infantry %'],
+                              ['cavalry', 'Cavalry %'],
+                              ['archer', 'Archer %'],
+                            ].map(([key, label]) => (
+                              <label key={key} className="rally-control-label">
+                                <span>{label}</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={(rally.troopWeights && rally.troopWeights[key]) || 0}
+                                  onChange={(event) => handleTroopWeightChange(rally.id, key, event.target.value)}
+                                />
+                              </label>
+                            ))}
+                          </div>
+                          <div className="lead-heroes-block">
+                            <div className="lead-heroes-header">
+                              <span>Lead Heroes</span>
+                              <span>{leadHeroTotal}/{MAX_LEAD_HEROES}</span>
+                            </div>
+                            <p className="lead-heroes-hint">Click a hero to add a slot; click its badge to remove one. Up to {MAX_LEAD_HEROES} total, any mix.</p>
+                            <div className="lead-heroes-grid">
+                              {HEROES.map((hero) => {
+                                const count = (rally.leadHeroes || {})[hero] || 0;
+                                const disabled = count === 0 && leadHeroTotal >= MAX_LEAD_HEROES;
+                                return (
+                                  <button
+                                    key={hero}
+                                    type="button"
+                                    className={count > 0 ? 'lead-hero-btn selected' : 'lead-hero-btn'}
+                                    onClick={() => handleIncrementLeadHero(rally.id, hero)}
+                                    disabled={disabled}
+                                  >
+                                    {hero}
+                                    {count > 0 && (
+                                      <span
+                                        className="lead-hero-count"
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={`Remove one ${hero} slot`}
+                                        onClick={(event) => { event.stopPropagation(); handleDecrementLeadHero(rally.id, hero); }}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            handleDecrementLeadHero(rally.id, hero);
+                                          }
+                                        }}
+                                      >
+                                        {count}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="auto-assign-btn"
+                            onClick={() => handleAutoAssign(rally.id)}
+                          >
+                            Auto assign 8
+                          </button>
+                          {summary && (
+                            <div className="auto-assign-summary" role="status">
+                              <p>
+                                Added {summary.addedCount} ({summary.fullCount} full battle
+                                {summary.firstHalfCount > 0 || summary.secondHalfCount > 0
+                                  ? `, ${summary.firstHalfCount} first half, ${summary.secondHalfCount} second half`
+                                  : ''}
+                                ) - {summary.totalMembers} total.
+                              </p>
+                              {summary.leadHeroLines.map((line) => (
+                                <p key={line}>{line}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {rally.memberIds.length === 0 ? (
+                          <p className="rally-drop-hint">Drop members here</p>
+                        ) : (
+                          <div className="rally-member-list">
+                            {rally.memberIds.map((memberId) => {
+                              const member = membersById.get(String(memberId));
+                              if (!member) return null;
+                              const assignedHero = (rally.leadHeroAssignments || {})[String(memberId)];
+                              const matchingLeadHeroes = getMatchingLeadHeroes(member, rally);
+                              const troopLevels = getTroopLevelSummary(member);
+                              return (
+                                <div key={memberId} className="rally-member">
+                                  <div className="rally-member-details">
+                                    <strong>{member.name}</strong>
+                                    <span className="rally-member-id">{member.member_id}</span>
+                                    <span className={`availability-pill rally-member-availability ${availabilityTone(member.availability)}`}>
+                                      {member.availability || 'Availability unknown'}
+                                    </span>
+                                    {troopLevels.length > 0 && (
+                                      <div className="rally-member-troops">
+                                        {troopLevels.map((troopLevel) => (
+                                          <span key={troopLevel}>{troopLevel}</span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <div className="rally-member-heroes">
+                                      <span>{assignedHero ? 'Assigned:' : 'Use:'}</span>
+                                      <strong>
+                                        {assignedHero
+                                          || (matchingLeadHeroes.length > 0 ? matchingLeadHeroes.join(', ') : 'No selected lead hero match')}
+                                      </strong>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveFromRally(memberId)}
+                                    aria-label={`Remove ${member.name} from ${rally.name}`}
+                                  >
+                                    x
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </section>
+                );
+              })}
+          </div>
+        </section>
+      )}
+      {selectedMemberId && membersById.has(selectedMemberId) && (
+        <MemberDetailsDrawer
+          member={membersById.get(selectedMemberId)}
+          rallyName={rallyByMemberId.get(selectedMemberId)}
+          onClose={() => setSelectedMemberId(null)}
+          onDelete={deleteMember}
+          deleting={deletingIds.includes(selectedMemberId)}
+          confirming={Boolean(confirmState)}
+        />
+      )}
     </AdminShell>
   );
 }

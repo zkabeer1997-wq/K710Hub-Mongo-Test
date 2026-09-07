@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server';
+import { createAdminSupabaseClient } from '../../../../lib/adminSupabase';
 import { isAdminRequest } from '../../../../lib/adminAuth';
 import { readMemberSession } from '../../../../lib/memberAuth';
-
-/**
- * Guide image proxy previously read from Supabase Storage.
- * On Mongo, images should use absolute public URLs in guide body content.
- */
-export async function GET(request) {
+import { guidesTable, canReadGuide } from '../../../../lib/guideAccess.mjs';
+export const dynamic = 'force-dynamic';
+export async function GET(request, { params }) {
+  const { file } = await params;
+  if (!/^[a-f0-9-]{36}\.(jpg|png|webp|gif)$/.test(file)) return new NextResponse(null, { status: 404 });
+  const db = createAdminSupabaseClient();
   const admin = await isAdminRequest(request);
   const member = Boolean(await readMemberSession(request));
-  if (!admin && !member) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!admin) {
+    const { data, error } = await db.from(guidesTable()).select('is_published,access_level').like('body', `%/api/guide-images/${file}%`).eq('is_published', true);
+    if (error || !data?.some(guide => canReadGuide(guide, { member }))) return new NextResponse(null, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
-  return NextResponse.json(
-    {
-      error: 'Guide image storage proxy is not available on the Mongo stack. Use absolute image URLs.',
-      code: 'STORAGE_UNAVAILABLE',
-    },
-    { status: 501 }
-  );
+  const { data, error } = await db.storage.from('guide-attachments').download(file);
+  if (error || !data) return new NextResponse(null, { status: 404 });
+  return new NextResponse(await data.arrayBuffer(), { headers: { 'Content-Type': data.type, 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' } });
 }

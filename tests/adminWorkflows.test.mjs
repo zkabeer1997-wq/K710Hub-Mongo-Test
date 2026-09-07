@@ -27,16 +27,17 @@ registerHooks({
   return next(u,c);
  }
 });
-state.client={from(table){const q={filters:[],fields:'*',options:{},changes:null,upsertValue:null,
+ state.client={from(table){const q={filters:[],fields:'*',options:{},changes:null,insertValue:null,upsertValue:null,
  select(fields,options={}){this.fields=fields;this.options=options;return this;},
  eq(k,v){this.filters.push(r=>r[k]===v);return this;},
  like(k,v){this.filters.push(r=>String(r[k]).includes(v.slice(1,-1)));return this;},
  or(value){const statuses=value.includes('pending')?['pending','waitlist']:['new'];this.filters.push(r=>r.status==null||statuses.includes(r.status));return this;},
- order(){return this;},update(v){this.changes=v;return this;},
+ order(){return this;},update(v){this.changes=v;return this;},insert(v){this.insertValue=v;return this;},
  upsert(v,{onConflict}){this.upsertValue=v;this.conflict=onConflict;return this;},
  execute(single=false){
   if(state.fail)return {data:null,error:{message:'fixture unavailable'}};
   const rows=state.tables[table] ||= [];
+  if(this.insertValue){rows.push({id:`${table}-${rows.length+1}`,created_at:new Date().toISOString(),...this.insertValue});state.writes.push({table,value:this.insertValue});}
   if(this.upsertValue){const old=rows.find(r=>r[this.conflict]===this.upsertValue[this.conflict]);if(old)Object.assign(old,this.upsertValue);else rows.push({id:'booking-1',...this.upsertValue});state.writes.push({table,value:this.upsertValue});}
   const filtered=rows.filter(r=>(!this.upsertValue || r[this.conflict]===this.upsertValue[this.conflict]) && this.filters.every(f=>f(r)));
   if(this.changes){filtered.forEach(r=>Object.assign(r,this.changes));state.writes.push({table,value:this.changes});}
@@ -119,6 +120,11 @@ test('tool settings preserve fixed rules, validate bounds and apply to optimizer
  for(const [tool,q] of [['adventure-stall',{algorithm:'changed'}],['wavebound-charms',{'majestic.g':1}],['charm-pack-optimizer',{'pack.0.g':40}],['pet-pack-optimizer',{'custom.food':-1}]])assert.ok(validateToolQuantities(tool,q).error);
  const tool='adventure-stall',quantities={...defaultQuantities(tool),'pack.20.shells':100};
  assert.equal((await settings.PUT(req({tool,quantities},'admin'))).status,200);
+ assert.equal(state.tables.tool_settings_history.length,1);
+ assert.equal(state.tables.tool_settings_history[0].verification_status,'community-reported');
+ assert.equal((await settings.PUT(req({tool,quantities,verificationStatus:'verified'},'admin'))).status,400);
+ assert.equal((await settings.PUT(req({tool,quantities,verificationStatus:'verified',sourceNote:'In-game screenshot',lastVerified:'2026-09-05'},'admin'))).status,200);
+ assert.equal(state.tables.tool_settings_history.at(-1).verification_status,'verified');
  const saved=(await (await settings.GET(req({},'admin'))).json()).tools.find(t=>t.key===tool);
  const config=toolConfiguration(tool,saved.quantities),normal=toolConfiguration(tool);
  assert.equal(optimizeShellPacks(100,1,config.packs).costCents,99);

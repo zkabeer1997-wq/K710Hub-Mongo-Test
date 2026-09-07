@@ -1,5 +1,5 @@
 import { checkIsAdmin } from '../../../lib/contentBlocks';
-import { getFormGate } from '../../../lib/formGates.server.js';
+import { getFormGate } from '../../../lib/formGates.mjs';
 import FormClosedNotice from '../../../components/FormClosedNotice';
 import WebsiteRequestForm from './WebsiteRequestForm';
 
