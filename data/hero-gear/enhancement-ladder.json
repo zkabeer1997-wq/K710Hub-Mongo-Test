@@ -1,0 +1,18 @@
+{
+  "_comment": "PLACEHOLDER DATA covering only 2 example chains (infantry:helm, cavalry:chest) with 4 example levels each, to demonstrate the shape without inventing the full 12-chain x 20-level table. TODO(owner): add the remaining troopType:slot chains (one key per row in troop-slots.json) and the real level count/costs/bonuses/TC gates/milestone flags for each. Steps within a chain MUST stay in ascending `level` order - the solver treats a chain as a strictly ordered prefix sequence and does not re-sort.",
+  "_unitsNote": "cost.xp is the raw Enhancement XP for THIS STEP ALONE (not cumulative) - the XP to go from level N-1 to level N. cumulativeStatBonus, by contrast, IS cumulative: the TOTAL stat bonus (percentage points) this slot has accrued from Enhancement alone once this level is reached, including every earlier level's contribution. requiredTownCenterLevel gates eligibility (see Town Center cap filter). milestoneFlags mark whether this level is a legal stopping point under each Red Gear Strategy (see solver.mjs) - real milestone levels (e.g. Kingshot's 120/160/200 expedition gates) are unconfirmed and not represented by these placeholder level numbers.",
+  "chains": {
+    "infantry:helm": [
+      { "level": 1, "cost": { "xp": 500 }, "cumulativeStatBonus": 1.0, "requiredTownCenterLevel": 20, "milestoneFlags": { "conservative": true, "progressive": true } },
+      { "level": 2, "cost": { "xp": 1200 }, "cumulativeStatBonus": 2.1, "requiredTownCenterLevel": 22, "milestoneFlags": { "conservative": false, "progressive": true } },
+      { "level": 3, "cost": { "xp": 2000 }, "cumulativeStatBonus": 3.4, "requiredTownCenterLevel": 24, "milestoneFlags": { "conservative": true, "progressive": true } },
+      { "level": 4, "cost": { "xp": 3200 }, "cumulativeStatBonus": 4.8, "requiredTownCenterLevel": 26, "milestoneFlags": { "conservative": false, "progressive": true } }
+    ],
+    "cavalry:chest": [
+      { "level": 1, "cost": { "xp": 550 }, "cumulativeStatBonus": 0.9, "requiredTownCenterLevel": 20, "milestoneFlags": { "conservative": true, "progressive": true } },
+      { "level": 2, "cost": { "xp": 1300 }, "cumulativeStatBonus": 1.9, "requiredTownCenterLevel": 22, "milestoneFlags": { "conservative": false, "progressive": true } },
+      { "level": 3, "cost": { "xp": 2100 }, "cumulativeStatBonus": 3.1, "requiredTownCenterLevel": 24, "milestoneFlags": { "conservative": true, "progressive": true } },
+      { "level": 4, "cost": { "xp": 3400 }, "cumulativeStatBonus": 4.4, "requiredTownCenterLevel": 26, "milestoneFlags": { "conservative": false, "progressive": true } }
+    ]
+  }
+}

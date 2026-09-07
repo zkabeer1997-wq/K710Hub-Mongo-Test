@@ -1,0 +1,18 @@
+{
+  "_comment": "PLACEHOLDER DATA covering only 2 example chains (infantry:helm, cavalry:chest) with 4 example levels each. TODO(owner): add the remaining troopType:slot chains and real level count/costs/bonuses/TC gates. Steps within a chain MUST stay in ascending `level` order.",
+  "_unitsNote": "cost.forgehammers / cost.mythicGear are raw resource amounts for this step alone (not cumulative). cumulativeStatBonus is the TOTAL Mastery stat bonus (percentage points) accrued once this level is reached. Per the domain brief, Mastery levels 11-20 are expected to switch from spending Forgehammers to spending Mythic Gear/Gold - level 4 below previews that shape early only so the schema is exercised; TODO(owner): move the real breakpoint to level 11 and fill levels 5-20.",
+  "chains": {
+    "infantry:helm": [
+      { "level": 1, "cost": { "forgehammers": 200, "mythicGear": 0 }, "cumulativeStatBonus": 1.5, "requiredTownCenterLevel": 20 },
+      { "level": 2, "cost": { "forgehammers": 260, "mythicGear": 0 }, "cumulativeStatBonus": 3.1, "requiredTownCenterLevel": 22 },
+      { "level": 3, "cost": { "forgehammers": 320, "mythicGear": 0 }, "cumulativeStatBonus": 4.8, "requiredTownCenterLevel": 24 },
+      { "level": 4, "cost": { "forgehammers": 0, "mythicGear": 40 }, "cumulativeStatBonus": 6.6, "requiredTownCenterLevel": 26 }
+    ],
+    "cavalry:chest": [
+      { "level": 1, "cost": { "forgehammers": 210, "mythicGear": 0 }, "cumulativeStatBonus": 1.4, "requiredTownCenterLevel": 20 },
+      { "level": 2, "cost": { "forgehammers": 270, "mythicGear": 0 }, "cumulativeStatBonus": 2.9, "requiredTownCenterLevel": 22 },
+      { "level": 3, "cost": { "forgehammers": 330, "mythicGear": 0 }, "cumulativeStatBonus": 4.5, "requiredTownCenterLevel": 24 },
+      { "level": 4, "cost": { "forgehammers": 0, "mythicGear": 42 }, "cumulativeStatBonus": 6.2, "requiredTownCenterLevel": 26 }
+    ]
+  }
+}

@@ -10,3 +10,7 @@ export { default as Stat } from './Stat';
 export { default as Callout } from './Callout';
 export { default as EmptyState } from './EmptyState';
 export { default as PageHeader } from './PageHeader';
+export { default as Tabs } from './Tabs';
+export { default as Breadcrumb } from './Breadcrumb';
+export { Accordion, AccordionItem } from './Accordion';
+export { default as Toggle } from './Toggle';

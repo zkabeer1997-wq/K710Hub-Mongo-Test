@@ -16,6 +16,7 @@ const TOOLS = {
   ],
   'Hero Gear': [
     { key: 'hero-gear-optimizer', event: 'Account progression', title: 'Hero Gear Optimizer', description: 'Track 12 gear pieces, resources, role, and combat priorities in one upgrade workspace.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
+    { key: 'hero-gear-planner', event: 'Account progression', title: 'Hero Gear Planner', description: 'Model Enhancement and Mastery investment across Infantry, Cavalry, and Archer gear, then optimize the upgrade order against your resources.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
   ],
   Pets: [
     { key: 'pet-progression', event: 'Pet progression', title: 'Pet Progression Planner', description: 'Set pet level and advancement goals, track materials, and send shortfalls into pack planning.', status: 'New', icon: '/images/kingshot/pets/gray-wolf.webp' },

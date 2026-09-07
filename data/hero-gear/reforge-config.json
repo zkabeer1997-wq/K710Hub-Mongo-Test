@@ -1,0 +1,4 @@
+{
+  "_comment": "PLACEHOLDER DATA. Governs the 'Include XP reforge' pre-solve step: recoverableXp = currentLevelCumulativeStatBonus's matching cost.xp (cumulative XP already sunk into the chain up to the user's CURRENT level) times recoveryRate. TODO(owner): confirm the real reforge recovery rate (and whether it's flat or level-dependent) before relying on this number.",
+  "recoveryRate": 0.5
+}
