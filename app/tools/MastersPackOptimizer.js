@@ -1,6 +1,8 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { optimizeMastersPacks, MASTER_PACK_RESOURCES } from "../../lib/mastersPackOptimizer.mjs";
+import { useToolPersistence } from "../../lib/useToolPersistence";
+import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
 import styles from "./MastersPackOptimizer.module.css";
 
 const EMPTY = { supply: 0, emblems: 0, affinity: 0, manuscripts: 0 };
@@ -8,6 +10,18 @@ const DEFAULT_NEED = { supply: 300, emblems: 160, affinity: 160000, manuscripts:
 const COLORS = { supply: "#65a9d8", emblems: "#d9a94e", affinity: "#86a873", manuscripts: "#ef8348" };
 const money = value => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 const number = value => Math.round(value).toLocaleString();
+
+function normalizeResources(value = {}) {
+  return Object.fromEntries(Object.keys(MASTER_PACK_RESOURCES).map(key => [key, Math.max(0, Number(value[key]) || 0)]));
+}
+
+function migrateMastersPackState(inputs) {
+  return {
+    need: normalizeResources(inputs?.need),
+    have: normalizeResources(inputs?.have),
+    maxMonths: Math.min(6, Math.max(1, Number(inputs?.maxMonths) || 3)),
+  };
+}
 
 function EmptyIcon({ type = "idle" }) {
   if (type === "covered") return <svg className={styles.emptyMark} viewBox="0 0 48 48" aria-hidden="true"><path d="m11 25 8 8 18-19" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="2"/></svg>;
@@ -25,6 +39,22 @@ export default function MastersPackOptimizer() {
   const [maxMonths, setMaxMonths] = useState(3);
   const [result, setResult] = useState(null);
   const [calculating, setCalculating] = useState(false);
+  const persistedInputs = useMemo(() => ({ need, have, maxMonths }), [need, have, maxMonths]);
+  const restore = useCallback(saved => {
+    const normalized = migrateMastersPackState(saved);
+    setNeed(normalized.need);
+    setHave(normalized.have);
+    setMaxMonths(normalized.maxMonths);
+    setResult(null);
+  }, []);
+  const persistence = useToolPersistence({
+    toolKey: "masters-pack-optimizer",
+    schemaVersion: 1,
+    inputs: persistedInputs,
+    restore,
+    migrate: migrateMastersPackState,
+    autoDetect: true,
+  });
   const shortfall = useMemo(() => Object.fromEntries(Object.keys(MASTER_PACK_RESOURCES).map(key => [key, Math.max(0, need[key] - have[key])])), [need, have]);
   const update = (setter, key, value) => { setter(current => ({ ...current, [key]: value })); setResult(null); };
   const calculate = () => {
@@ -42,6 +72,7 @@ export default function MastersPackOptimizer() {
 
   return <section className={styles.shell}>
     <div className={styles.inputs}>
+      <div className={styles.persistence}><SaveToRoadmap persistence={persistence} compact/></div>
       <div className={styles.panelHead}><div><h2>Set your material target</h2><p>Enter the total resources required and subtract what is already in your inventory.</p></div><span className={styles.limitTag}>Monthly + weekly limits</span></div>
       <div className={styles.columns}>
         <div className={styles.column}><h3>Materials required</h3>{Object.entries(MASTER_PACK_RESOURCES).map(([key, resource]) => <NumberField key={key} resource={key} label={resource.label} value={need[key]} onChange={value => update(setNeed, key, value)}/>)}</div>

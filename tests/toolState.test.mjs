@@ -18,3 +18,17 @@ test('rejects state belonging to another tool or a newer schema', () => {
   assert.equal(readToolState(envelope, { toolKey: 'pet-pack-optimizer', schemaVersion: 1, migrate: value => value }), null);
   assert.equal(readToolState({ ...envelope, toolKey: 'pet-pack-optimizer', schemaVersion: 2 }, { toolKey: 'pet-pack-optimizer', schemaVersion: 1, migrate: value => value }), null);
 });
+
+test('round-trips Masters pack optimizer inputs for a member session', () => {
+  const inputs = {
+    need: { supply: 300, emblems: 160, affinity: 160000, manuscripts: 10000 },
+    have: { supply: 15, emblems: 8, affinity: 8800, manuscripts: 500 },
+    maxMonths: 3,
+  };
+  const envelope = createToolStateEnvelope('masters-pack-optimizer', 1, inputs);
+  assert.deepEqual(readToolState(envelope, {
+    toolKey: 'masters-pack-optimizer',
+    schemaVersion: 1,
+    migrate: value => value,
+  }), inputs);
+});
