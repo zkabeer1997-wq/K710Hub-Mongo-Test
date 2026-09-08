@@ -7,8 +7,7 @@ const TOOLS = {
     { key: 'account-progression', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
   ],
   Charms: [
-    { key: 'governor-charm-optimizer', event: 'Account progression', title: 'Governor Charm Stat Optimizer', description: 'Rank upgrades across all 18 charms using inventory, troop priorities, and Health/Lethality focus.', status: 'New', icon: '/images/kingshot/charms/infantry.webp' },
-    { key: 'charm-pack-optimizer', event: 'Governor Charms', title: 'Charm Pack Optimizer', description: 'Set all 18 charms individually, calculate every upgrade material, and build the cheapest week-by-week pack plan.', status: 'New', icon: '/images/charm-pack-forge.svg' },
+    { key: 'governor-charm-optimizer', event: 'Progression + packs', title: 'Governor Charm Optimizer', description: 'Rank upgrades across all 18 charms and build the cheapest weekly pack schedule on one page.', status: 'Updated', icon: '/images/kingshot/charms/infantry.webp' },
     { key: 'wavebound-charms', event: 'Wavebound Voyage', title: 'Charms Sailing Optimizer', description: 'Calculate Tidal Treasure merges for a target Charm level, including Exquisite and Majestic outcomes.', status: 'Available', icon: '/images/wavebound-charm-sail.svg' },
   ],
   'Governor Gear': [

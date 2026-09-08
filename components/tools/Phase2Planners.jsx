@@ -2,6 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
+import CharmPackOptimizer from "../../app/tools/CharmPackOptimizer";
 import { CHARM_COSTS } from "../../lib/charmToolData.mjs";
 import { optimizeOfferPacks } from "../../lib/offerPackOptimizer.mjs";
 import {
@@ -198,11 +199,13 @@ function AdvancedSettings({ title = "Advanced settings", children }) {
   );
 }
 
-function PackOfferAdvisor({ title, resources, requirements }) {
-  const emptyOffer = () => ({ name: "", price: 0, limit: 1, ...Object.fromEntries(resources.map(({ key }) => [key, 0])) });
-  const [offers, setOffers] = useState(() => [emptyOffer(), emptyOffer(), emptyOffer()]);
+function PackOfferAdvisor({ title, resources, requirements, offers: savedOffers = [], onOffersChange }) {
+  const offers = useMemo(() => {
+    const emptyOffer = () => ({ name: "", price: 0, limit: 1, ...Object.fromEntries(resources.map(({ key }) => [key, 0])) });
+    return savedOffers.length ? savedOffers : [emptyOffer(), emptyOffer(), emptyOffer()];
+  }, [savedOffers, resources]);
   const plan = useMemo(() => optimizeOfferPacks(offers, requirements), [offers, requirements]);
-  const update = (index, key, value) => setOffers((current) => current.map((offer, offerIndex) => offerIndex === index ? { ...offer, [key]: key === "name" ? value : number(value) } : offer));
+  const update = (index, key, value) => onOffersChange(offers.map((offer, offerIndex) => offerIndex === index ? { ...offer, [key]: key === "name" ? value : number(value) } : offer));
   return <details className={styles.packAdvisor}>
     <summary><span>Pack optimization</span><b>{title}</b></summary>
     <p>Pack contents can vary by account and event. Enter the offers visible in your game; K710Hub will not guess them.</p>
@@ -665,7 +668,7 @@ export function PetProgressionPlanner({ memberId = "" }) {
   );
 }
 
-export function CharmStatPlanner({ memberId = "" }) {
+export function CharmStatPlanner({ memberId = "", packConfiguration }) {
   const [activeTroop, setActiveTroop] = useState("Infantry");
   const [inputs, setInputs] = useState({
     charms: defaultCharms,
@@ -689,11 +692,12 @@ export function CharmStatPlanner({ memberId = "" }) {
     restore,
     autoDetect: true,
   });
+  const charmCosts = packConfiguration?.costs || CHARM_COSTS;
   const ranked = useMemo(
     () =>
       rankCharmUpgrades(
         inputs.charms,
-        CHARM_COSTS,
+        charmCosts,
         { guides: inputs.guides, designs: inputs.designs },
         {
           troops: inputs.troopWeights,
@@ -703,8 +707,15 @@ export function CharmStatPlanner({ memberId = "" }) {
         },
         { minimumBalance: inputs.minimumBalance },
       ),
-    [inputs],
+    [inputs, charmCosts],
   );
+  const charmTargetCost = useMemo(() => inputs.charms.reduce((total, charm) => {
+    for (let level = charm.current + 1; level <= charm.target; level += 1) {
+      total.g += charmCosts[level]?.[0] || 0;
+      total.d += charmCosts[level]?.[1] || 0;
+    }
+    return total;
+  }, { g: 0, d: 0 }), [inputs.charms, charmCosts]);
   const updateCharm = (id, key, value) =>
     setInputs((current) => ({
       ...current,
@@ -721,6 +732,7 @@ export function CharmStatPlanner({ memberId = "" }) {
       ),
     }));
   return (
+    <>
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
@@ -953,15 +965,11 @@ export function CharmStatPlanner({ memberId = "" }) {
             {ranked.next.designs} Designs.
           </p>
         ) : null}
-        <Link
-          className={styles.link}
-          href={`/tools/charm-pack-optimizer${memberId ? `?member_id=${encodeURIComponent(memberId)}` : ""}`}
-        >
-          Optimize the missing materials into the cheapest weekly packs
-        </Link>
         <ExportButton name="charm-upgrade-plan" data={ranked} />
       </aside>
     </div>
+    <div className={styles.connectedPack}><CharmPackOptimizer configuration={packConfiguration} embedded requiredOverride={charmTargetCost} ownedOverride={{ g: inputs.guides, d: inputs.designs }} /></div>
+    </>
   );
 }
 
@@ -1146,6 +1154,8 @@ export function HeroGearPlanner() {
     mythicPieces: 0,
     mithril: 0,
     safeXpReforging: true,
+    packGoal: "next",
+    packOffers: [],
     troopWeights: { Infantry: 3, Cavalry: 2, Archer: 2 },
     statWeights: { Health: 1, Lethality: 1 },
     gearWeights: heroGearProfiles.growth,
@@ -1167,9 +1177,9 @@ export function HeroGearPlanner() {
     [rows, inputs],
   );
   const heroPackNeed = useMemo(() => {
-    const near = plan.nearMisses?.[0];
-    return { xp: near ? Math.max(0, heroXpLevelCost(near.targetLevel + 1) - plan.remaining.xp) : 0, forgehammers: 0, mythicPieces: 0, mithril: 0 };
-  }, [plan]);
+    const candidates = (plan.nearMisses || []).slice(0, inputs.packGoal === "three" ? 3 : 1);
+    return { xp: Math.max(0, candidates.reduce((sum, near) => sum + heroXpLevelCost(near.targetLevel + 1), 0) - plan.remaining.xp), forgehammers: 0, mythicPieces: 0, mithril: 0 };
+  }, [inputs.packGoal, plan]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -1316,7 +1326,8 @@ export function HeroGearPlanner() {
           XP reforging is offered only for non-Red gear at 100% recovery.
           Mastery reforging recovers 50% of Forgehammers.
         </p>
-        <PackOfferAdvisor title="Cover the next Hero Gear upgrade" resources={[{ key: "xp", label: "XP" }, { key: "forgehammers", label: "Forgehammers" }, { key: "mythicPieces", label: "Mythic pieces" }, { key: "mithril", label: "Mithril" }]} requirements={heroPackNeed} />
+        <label className={styles.packScope}>Pack plan scope<select value={inputs.packGoal} onChange={(event) => setInputs((current) => ({ ...current, packGoal: event.target.value }))}><option value="next">Next recommended upgrade</option><option value="three">Next three affordable candidates</option></select></label>
+        <PackOfferAdvisor title={inputs.packGoal === "three" ? "Cover the next three Hero Gear candidates" : "Cover the next Hero Gear upgrade"} resources={[{ key: "xp", label: "XP" }, { key: "forgehammers", label: "Forgehammers" }, { key: "mythicPieces", label: "Mythic pieces" }, { key: "mithril", label: "Mithril" }]} requirements={heroPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
         <ExportButton name="hero-gear-plan" data={plan} />
       </aside>
     </div>
@@ -1353,6 +1364,8 @@ export function GovernorGearPlanner() {
     amplification: 1.25,
     troopWeights: optimizerProfiles.growth,
     statWeights: { Health: 1, Lethality: 1 },
+    packGoal: "next",
+    packOffers: [],
   });
   const saved = useMemo(() => ({ rows, ...inputs }), [rows, inputs]);
   const restore = useCallback((state) => {
@@ -1370,11 +1383,14 @@ export function GovernorGearPlanner() {
     () => calculateGovernorGearPlan(rows, inputs),
     [rows, inputs],
   );
-  const governorPackNeed = useMemo(() => ({
-    satin: Math.max(0, (plan.next?.satin || 0) - (plan.remaining?.satin || 0)),
-    threads: Math.max(0, (plan.next?.threads || 0) - (plan.remaining?.threads || 0)),
-    visions: Math.max(0, (plan.next?.visions || 0) - (plan.remaining?.visions || 0)),
-  }), [plan]);
+  const governorPackNeed = useMemo(() => {
+    const candidates = (plan.nearMisses || []).slice(0, inputs.packGoal === "three" ? 3 : 1);
+    return {
+      satin: Math.max(0, candidates.reduce((sum, item) => sum + item.satin, 0) - (plan.remaining?.satin || 0)),
+      threads: Math.max(0, candidates.reduce((sum, item) => sum + item.threads, 0) - (plan.remaining?.threads || 0)),
+      visions: Math.max(0, candidates.reduce((sum, item) => sum + item.visions, 0) - (plan.remaining?.visions || 0)),
+    };
+  }, [inputs.packGoal, plan]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -1520,7 +1536,8 @@ export function GovernorGearPlanner() {
             </li>
           ))}
         </ol>
-        <PackOfferAdvisor title="Unlock the next Governor Gear upgrade" resources={[{ key: "satin", label: "Satin" }, { key: "threads", label: "Threads" }, { key: "visions", label: "Visions" }]} requirements={governorPackNeed} />
+        <label className={styles.packScope}>Pack plan scope<select value={inputs.packGoal} onChange={(event) => setInputs((current) => ({ ...current, packGoal: event.target.value }))}><option value="next">Next recommended upgrade</option><option value="three">Next three candidates</option></select></label>
+        <PackOfferAdvisor title={inputs.packGoal === "three" ? "Unlock the next three Governor Gear candidates" : "Unlock the next Governor Gear upgrade"} resources={[{ key: "satin", label: "Satin" }, { key: "threads", label: "Threads" }, { key: "visions", label: "Visions" }]} requirements={governorPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
         <ExportButton name="governor-gear-plan" data={plan} />
       </aside>
     </div>

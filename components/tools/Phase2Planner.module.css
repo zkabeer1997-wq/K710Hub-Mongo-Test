@@ -6,6 +6,7 @@
   max-width: 1440px;
   margin: 0 auto;
 }
+.connectedPack { max-width: 1440px; margin: 18px auto 0; }
 .panel,
 .result {
   border: 1px solid var(--edge);
@@ -257,6 +258,8 @@
 .activeBulkActions strong { margin-right: auto; color: var(--parchment-dim); font-size: 10px; }
 .activeBulkActions button { padding: 7px 9px; border: 1px solid var(--edge-strong); border-radius: var(--radius-sm); background: rgba(201,164,78,.08); color: var(--brass-bright); font-size: 9px; font-weight: 800; cursor: pointer; }
 .packAdvisor { margin: 18px 0 12px; border-top: 1px solid var(--edge); }
+.packScope { display: flex; flex-direction: column; gap: 5px; margin-top: 16px; color: var(--brass-bright); font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.packScope select { padding: 8px; border: 1px solid var(--edge-strong); border-radius: var(--radius-sm); background: var(--obsidian-deep); color: var(--parchment); }
 .packAdvisor summary { display: flex; flex-direction: column; gap: 3px; padding: 14px 2px 10px; cursor: pointer; }
 .packAdvisor summary span { color: var(--brass-bright); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .packAdvisor summary b { color: var(--parchment); font-size: 13px; }
