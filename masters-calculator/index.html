@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingshot Masters Calculator</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --accent:#38bdf8; --text:#e2e8f0; --muted:#94a3b8; --good:#4ade80; --warn:#fbbf24; --danger:#f87171; }
+  * { box-sizing:border-box; margin:0; padding:0; font-family:system-ui,sans-serif; }
+  body { background:var(--bg); color:var(--text); padding:1rem; max-width:1100px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin-bottom:1rem; color:var(--accent); }
+  .section { background:var(--card); padding:1.2rem; border-radius:10px; margin-bottom:1rem; }
+  h2 { font-size:1.1rem; margin-bottom:.8rem; color:var(--accent); }
+  label { display:block; font-size:.8rem; color:var(--muted); margin:.4rem 0 .15rem; }
+  input, select { width:100%; padding:.4rem; border-radius:5px; border:1px solid #334155; background:#0f172a; color:var(--text); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.6rem; }
+  .master-card { background:#0f172a; border:1px solid #334155; border-radius:8px; padding:.8rem; }
+  .master-card h3 { font-size:.95rem; margin-bottom:.5rem; }
+  button { margin-top:.8rem; padding:.6rem 1rem; background:var(--accent); color:#0f172a; border:none; border-radius:6px; font-weight:600; cursor:pointer; }
+  .result { margin-top:1rem; padding:1rem; background:#0f172a; border-radius:8px; line-height:1.5; }
+  .good { color:var(--good); } .warn { color:var(--warn); }
+  .note { font-size:.8rem; color:var(--muted); margin-top:1rem; }
+</style>
+</head>
+<body>
+<h1>Kingshot Masters Calculator</h1>
+
+<div class="section">
+  <h2>Materials Inventory</h2>
+  <div class="grid">
+    <div><label>Copper Horns</label><input type="number" id="horn" value="0" min="0"></div>
+    <div><label>Silver Goblets</label><input type="number" id="goblet" value="0" min="0"></div>
+    <div><label>Elite Spices</label><input type="number" id="spice" value="0" min="0"></div>
+    <div><label>Master's Manuscripts</label><input type="number" id="manu" value="0" min="0"></div>
+    <div><label>General Emblems</label><input type="number" id="genEmb" value="0" min="0"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Relationship Planner</h2>
+  <div id="masters"></div>
+  <button onclick="calc()">Calculate Plan</button>
+  <div id="result" class="result" style="display:none"></div>
+</div>
+
+<div class="note">
+  Exact Emblem + Affinity data from kingshot.net / kingshotguide.org.<br>
+  Total Manuscripts to max skills: Valora 21,150 · Pan 21,000 · Roman 81,000 · Cassia 413,500 · Guinevere 156,500 · Wilson 63,000.<br>
+  Full per-skill XP/Manuscript tables → use the original planner on kingshotguide.org.
+</div>
+
+<script>
+const DATA = {
+  valora:    { name:"Valora", emb:[0,5,10,15,20,25,30,35,40,45,50], aff:[1000,340,540,760,1080,1500,2000,2500,3000,3500,3950], manu:21150 },
+  pan:       { name:"Pan", emb:[0,5,10,15,20,25,30,35,40,45,50], aff:[1000,340,540,760,1080,1500,2000,2500,3000,3500,3950], manu:21000 },
+  roman:     { name:"Roman", emb:[0,8,16,24,32,40,48,56,64,72,80], aff:[1000,340,540,760,1080,1500,2000,2500,3000,3500,3950], manu:81000 },
+  cassia:    { name:"Cassia", emb:[0,20,40,80,120,160,200,240,280,320,360], aff:[1000,340,540,760,1080,1500,2000,2500,3000,3500,3950], manu:413500 },
+  guinevere: { name:"Guinevere", emb:[0,12,24,36,48,60,72,84,96,108,120], aff:[1000,340,540,760,1080,1500,2000,2500,3000,3500,3950], manu:156500 },
+  wilson:    { name:"Wilson", emb:[0,6,12,18,24,30,36,42,48,54,60], aff:[1000,340,540,760,1080,1500,2000,2500,3000,3500,3950], manu:63000 }
+};
+
+const container = document.getElementById('masters');
+Object.keys(DATA).forEach(key => {
+  const d = DATA[key];
+  const card = document.createElement('div');
+  card.className = 'master-card';
+  card.innerHTML = `
+    <h3>${d.name}</h3>
+    <div class="grid">
+      <div><label>Current Lv</label><input type="number" class="cur" data-key="${key}" value="0" min="0" max="100"></div>
+      <div><label>Target Lv</label><input type="number" class="tgt" data-key="${key}" value="0" min="0" max="100"></div>
+    </div>`;
+  container.appendChild(card);
+});
+
+function need(key, cur, tgt) {
+  const d = DATA[key];
+  const c = Math.min(10, Math.floor(cur/10));
+  const t = Math.min(10, Math.floor(tgt/10));
+  let emb = 0, aff = 0;
+  for (let i = c+1; i <= t; i++) {
+    emb += d.emb[i] - d.emb[i-1];
+    aff += d.aff[i];
+  }
+  return { emb, aff, manu: d.manu };
+}
+
+function calc() {
+  let totalE = 0, totalA = 0, totalM = 0, html = '';
+  const haveE = +document.getElementById('genEmb').value;
+  const haveM = +document.getElementById('manu').value;
+  const haveA = (+document.getElementById('spice').value)*1000 + (+document.getElementById('goblet').value)*100 + (+document.getElementById('horn').value)*10;
+
+  document.querySelectorAll('.master-card').forEach(card => {
+    const key = card.querySelector('.cur').dataset.key;
+    const cur = +card.querySelector('.cur').value;
+    const tgt = +card.querySelector('.tgt').value;
+    if (tgt <= cur) return;
+    const r = need(key, cur, tgt);
+    totalE += r.emb;
+    totalA += r.aff;
+    totalM += r.manu;
+    html += `<b>${DATA[key].name}</b> ${cur} → ${tgt}: ${r.emb} Emb · ${r.aff} Aff · max ${r.manu} Manu<br>`;
+  });
+
+  const missE = Math.max(0, totalE - haveE);
+  const missA = Math.max(0, totalA - haveA);
+  const missM = Math.max(0, totalM - haveM);
+
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').innerHTML = html +
+    `<hr style="border-color:#334155;margin:.6rem 0">
+    <b>Totals needed:</b> ${totalE} Emblems · ${totalA} Affinity · ${totalM} Manuscripts (full skills)<br>
+    <b>Short:</b> <span class="${missE?'warn':'good'}">${missE} Emb</span> ·
+    <span class="${missA?'warn':'good'}">${missA} Aff</span> ·
+    <span class="${missM?'warn':'good'}">${missM} Manu</span><br>
+    Suggested $5 packs: ~${Math.ceil(missE/16)} Emblem · ~${Math.ceil(missM/1000)} Manuscript`;
+}
+</script>
+</body>
+</html>
