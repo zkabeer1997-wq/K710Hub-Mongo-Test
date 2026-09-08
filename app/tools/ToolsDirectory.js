@@ -12,18 +12,16 @@ const TOOLS = {
     { key: 'wavebound-charms', event: 'Wavebound Voyage', title: 'Charms Sailing Optimizer', description: 'Calculate Tidal Treasure merges for a target Charm level, including Exquisite and Majestic outcomes.', status: 'Available', icon: '/images/wavebound-charm-sail.svg' },
   ],
   'Governor Gear': [
-    { key: 'governor-gear-optimizer', event: 'Account progression', title: 'Governor Gear Optimizer', description: 'Model all six pieces, plan target tiers, and prepare inventory-based upgrade ordering.', status: 'New', icon: '/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp' },
+    { key: 'governor-gear-optimizer', event: 'Inventory optimization', title: 'Governor Gear Optimizer', description: 'Enter all six current pieces and your materials to get the best affordable upgrade order.', status: 'New', icon: '/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp' },
   ],
   'Hero Gear': [
-    { key: 'hero-gear-optimizer', event: 'Account progression', title: 'Hero Gear Optimizer', description: 'Track 12 gear pieces, resources, role, and combat priorities in one upgrade workspace.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
+    { key: 'hero-gear-optimizer', event: 'Inventory optimization', title: 'Hero Gear Optimizer', description: 'Enter your 12-piece setup and inventory to get the highest-value affordable upgrade sequence.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
   ],
   Pets: [
-    { key: 'pet-progression', event: 'Pet progression', title: 'Pet Progression Planner', description: 'Set pet level and advancement goals, track materials, and send shortfalls into pack planning.', status: 'New', icon: '/images/kingshot/pets/gray-wolf.webp' },
-    { key: 'pet-pack-optimizer', event: 'Pet Advancement', title: 'Pet Pack Optimizer', description: 'Enter your material target and inventory, then get the cheapest repeatable week-by-week pack and chest redemption plan.', status: 'New', icon: '/images/pet-pack-compass.svg' },
+    { key: 'pet-pack-optimizer', event: 'Progression + weekly packs', title: 'Pet Calculator & Pack Optimizer', description: 'Plan multiple pets together, calculate their combined materials, and build the cheapest weekly pack and chest-redemption schedule.', status: 'New', icon: '/images/pet-pack-compass.svg' },
   ],
   Masters: [
-    { key: 'masters-planner', event: 'Master progression', title: 'Masters Planner', description: 'Track relationships, talents, skills, partially learned XP, resources, and learning speed.', status: 'New', icon: '/images/kingshot/masters/valora.png' },
-    { key: 'masters-pack-optimizer', event: 'Monthly + weekly packs', title: 'Masters Pack Optimization Tool', description: 'Find the cheapest Acuity reward choices and regular weekly packs for your Adventure Supply, Emblem, Affinity, and Manuscript targets.', status: 'New', icon: '/images/kingshot/masters/roman.png' },
+    { key: 'masters-pack-optimizer', event: 'Progression + monthly packs', title: 'Masters Calculator & Pack Optimizer', description: 'Plan multiple Masters together, total their Affinity, Emblems, and Manuscripts, then build the cheapest monthly and weekly pack schedule.', status: 'New', icon: '/images/kingshot/masters/roman.png' },
   ],
   'Special Event Shops': [
     { key: 'flamedragon-shop', event: 'Flamedragon Tyrant', title: 'Dragon’s Caravan Optimizer', description: 'Build a reward cart, prioritize the best-value shop items, and calculate the cheapest Dragon Essence pack combination.', status: 'New', icon: '/images/flamedragon-caravan.svg' },

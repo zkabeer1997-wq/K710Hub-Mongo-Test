@@ -8,7 +8,7 @@ export default async function Page({ searchParams }) {
   return (
     <ToolPage
       title="Hero Gear Optimizer"
-      description="Model all 12 troop gear pieces and prepare an upgrade plan for rally-leading, joining, PvP, or PvE."
+      description="Enter your inventory and current 12-piece setup to get the most efficient affordable Hero Gear upgrade order."
       memberId={memberId}
     >
       <HeroGearPlanner />

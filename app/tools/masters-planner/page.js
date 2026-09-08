@@ -1,17 +1,6 @@
-import ToolPage from "../../../components/tools/ToolPage";
-import { MastersPlanner } from "../../../components/tools/Phase2Planners";
-export const metadata = { title: "Masters Planner | K710" };
+import { redirect } from "next/navigation";
 export default async function Page({ searchParams }) {
   const params = await searchParams;
-  const memberId =
-    typeof params?.member_id === "string" ? params.member_id : "";
-  return (
-    <ToolPage
-      title="Masters Planner"
-      description="Track Master relationships, talents, skills, learning progress, and progression inventory."
-      memberId={memberId}
-    >
-      <MastersPlanner />
-    </ToolPage>
-  );
+  const memberId = typeof params?.member_id === "string" ? `?member_id=${encodeURIComponent(params.member_id)}` : "";
+  redirect(`/tools/masters-pack-optimizer${memberId}`);
 }

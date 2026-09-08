@@ -1,8 +1,9 @@
 "use client";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { optimizeMastersPacks, MASTER_PACK_RESOURCES } from "../../lib/mastersPackOptimizer.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
 import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
+import { calculateMasterLevelMaterials, createMasterSkillInputs, MASTER_LEVEL_DATA } from "../../lib/mastersLevelCalculator.mjs";
 import styles from "./MastersPackOptimizer.module.css";
 
 const EMPTY = { supply: 0, emblems: 0, affinity: 0, manuscripts: 0 };
@@ -10,16 +11,30 @@ const DEFAULT_NEED = { supply: 300, emblems: 160, affinity: 160000, manuscripts:
 const COLORS = { supply: "#65a9d8", emblems: "#d9a94e", affinity: "#86a873", manuscripts: "#ef8348" };
 const money = value => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 const number = value => Math.round(value).toLocaleString();
+const createCalculator = (masterName = "Valora") => ({ id: `${masterName}-${Date.now()}-${Math.random()}`, masterName, currentLevel: 0, targetLevel: 10, skills: createMasterSkillInputs(masterName) });
+const DEFAULT_CALCULATORS = [createCalculator("Valora")];
 
 function normalizeResources(value = {}) {
   return Object.fromEntries(Object.keys(MASTER_PACK_RESOURCES).map(key => [key, Math.max(0, Number(value[key]) || 0)]));
 }
 
 function migrateMastersPackState(inputs) {
+  const legacy = inputs?.calculator ? [inputs.calculator] : [];
+  const savedCalculators = Array.isArray(inputs?.calculators) && inputs.calculators.length ? inputs.calculators : legacy;
   return {
     need: normalizeResources(inputs?.need),
     have: normalizeResources(inputs?.have),
     maxMonths: Math.min(6, Math.max(1, Number(inputs?.maxMonths) || 3)),
+    calculators: (savedCalculators.length ? savedCalculators : DEFAULT_CALCULATORS).map((entry, entryIndex) => {
+      const masterName = MASTER_LEVEL_DATA[entry?.masterName] ? entry.masterName : "Valora";
+      return {
+        id: entry?.id || `${masterName}-${entryIndex}`,
+        masterName,
+        currentLevel: Math.min(100, Math.max(0, Number(entry?.currentLevel) || 0)),
+        targetLevel: Math.min(100, Math.max(0, Number(entry?.targetLevel) || 10)),
+        skills: createMasterSkillInputs(masterName).map((skill, index) => ({ ...skill, ...entry?.skills?.[index] })),
+      };
+    }),
   };
 }
 
@@ -38,24 +53,35 @@ export default function MastersPackOptimizer() {
   const [have, setHave] = useState(EMPTY);
   const [maxMonths, setMaxMonths] = useState(3);
   const [result, setResult] = useState(null);
+  const [calculators, setCalculators] = useState(DEFAULT_CALCULATORS);
   const [calculating, setCalculating] = useState(false);
-  const persistedInputs = useMemo(() => ({ need, have, maxMonths }), [need, have, maxMonths]);
+  const persistedInputs = useMemo(() => ({ need, have, maxMonths, calculators }), [need, have, maxMonths, calculators]);
   const restore = useCallback(saved => {
     const normalized = migrateMastersPackState(saved);
     setNeed(normalized.need);
     setHave(normalized.have);
     setMaxMonths(normalized.maxMonths);
+    setCalculators(normalized.calculators);
     setResult(null);
   }, []);
   const persistence = useToolPersistence({
     toolKey: "masters-pack-optimizer",
-    schemaVersion: 1,
+    schemaVersion: 3,
     inputs: persistedInputs,
     restore,
     migrate: migrateMastersPackState,
     autoDetect: true,
   });
   const shortfall = useMemo(() => Object.fromEntries(Object.keys(MASTER_PACK_RESOURCES).map(key => [key, Math.max(0, need[key] - have[key])])), [need, have]);
+  const calculatedRows = useMemo(() => calculators.map(calculateMasterLevelMaterials), [calculators]);
+  const calculatedMaterials = useMemo(() => calculatedRows.reduce((total, row) => ({ affinity: total.affinity + row.affinity, emblems: total.emblems + row.emblems, manuscripts: total.manuscripts + row.manuscripts }), { affinity: 0, emblems: 0, manuscripts: 0 }), [calculatedRows]);
+  useEffect(() => { setNeed(current => ({ ...current, affinity: calculatedMaterials.affinity, emblems: calculatedMaterials.emblems, manuscripts: calculatedMaterials.manuscripts })); setResult(null); }, [calculatedMaterials]);
+  const updateCalculator = (id, updater) => { setCalculators(current => current.map(entry => entry.id === id ? updater(entry) : entry)); setResult(null); };
+  const addMaster = () => {
+    const used = new Set(calculators.map(entry => entry.masterName));
+    const next = Object.keys(MASTER_LEVEL_DATA).find(name => !used.has(name));
+    if (next) setCalculators(current => [...current, createCalculator(next)]);
+  };
   const update = (setter, key, value) => { setter(current => ({ ...current, [key]: value })); setResult(null); };
   const calculate = () => {
     setCalculating(true);
@@ -73,6 +99,21 @@ export default function MastersPackOptimizer() {
   return <section className={styles.shell}>
     <div className={styles.inputs}>
       <div className={styles.persistence}><SaveToRoadmap persistence={persistence} compact/></div>
+      <section className={styles.levelCalculator}>
+        <div className={styles.panelHead}><div><span className={styles.eyebrow}>Start here</span><h2>Choose every Master you are upgrading</h2><p>Add multiple Masters, set each relationship and skill target, then optimize the combined shortfall below.</p></div><span className={styles.limitTag}>Exact game costs</span></div>
+        <div className={styles.masterList}>{calculators.map((calculator, calculatorIndex) => <article className={styles.masterCard} key={calculator.id}>
+          <header><strong>Master {calculatorIndex + 1}</strong>{calculators.length > 1 && <button type="button" onClick={() => setCalculators(current => current.filter(entry => entry.id !== calculator.id))}>Remove</button>}</header>
+          <div className={styles.calculatorGrid}>
+            <label className={styles.field}><span className={styles.fieldLabel}>Master</span><select aria-label={`Master ${calculatorIndex + 1}`} value={calculator.masterName} onChange={event => { const masterName = event.target.value; updateCalculator(calculator.id, current => ({ ...current, masterName, skills: createMasterSkillInputs(masterName) })); }}>{Object.keys(MASTER_LEVEL_DATA).map(name => <option key={name} disabled={calculators.some(entry => entry.id !== calculator.id && entry.masterName === name)}>{name}</option>)}</select></label>
+            <NumberField resource="affinity" label="Current relationship" value={calculator.currentLevel} onChange={value => updateCalculator(calculator.id, current => ({ ...current, currentLevel: Math.min(100, value), targetLevel: Math.max(Math.min(100, value), current.targetLevel) }))}/>
+            <NumberField resource="affinity" label="Target relationship" value={calculator.targetLevel} onChange={value => updateCalculator(calculator.id, current => ({ ...current, targetLevel: Math.min(100, Math.max(current.currentLevel, value)) }))}/>
+          </div>
+          <details className={styles.skillDetails}><summary>Optional skill upgrades</summary><div className={styles.skillPlanner}>{calculator.skills.map((skill, index) => { const max = MASTER_LEVEL_DATA[calculator.masterName].skills[index].costs.length - 1; return <div className={styles.skillRow} key={skill.name}><b>{skill.name}</b><label>Current<select value={skill.current} onChange={event => updateCalculator(calculator.id, current => ({ ...current, skills: current.skills.map((item, itemIndex) => itemIndex === index ? { ...item, current: Number(event.target.value), target: Math.max(Number(event.target.value), item.target) } : item) }))}>{Array.from({ length: max + 1 }, (_, level) => <option key={level}>{level}</option>)}</select></label><span aria-hidden="true">→</span><label>Target<select value={skill.target} onChange={event => updateCalculator(calculator.id, current => ({ ...current, skills: current.skills.map((item, itemIndex) => itemIndex === index ? { ...item, target: Number(event.target.value) } : item) }))}>{Array.from({ length: max - skill.current + 1 }, (_, offset) => skill.current + offset).map(level => <option key={level}>{level}</option>)}</select></label></div>; })}</div></details>
+          <div className={styles.masterSubtotal}><span>{number(calculatedRows[calculatorIndex].affinity)} Affinity</span><span>{number(calculatedRows[calculatorIndex].emblems)} Emblems</span><span>{number(calculatedRows[calculatorIndex].manuscripts)} Manuscripts</span></div>
+        </article>)}</div>
+        <button className={styles.addMaster} type="button" onClick={addMaster} disabled={calculators.length >= Object.keys(MASTER_LEVEL_DATA).length}>+ Add another Master</button>
+        <div className={styles.calculatorResult}><span><small>Affinity</small><b>{number(calculatedMaterials.affinity)}</b></span><span><small>Emblems</small><b>{number(calculatedMaterials.emblems)}</b></span><span><small>Manuscripts</small><b>{number(calculatedMaterials.manuscripts)}</b></span><p>Combined amounts automatically feed the pack optimizer below.</p></div>
+      </section>
       <div className={styles.panelHead}><div><h2>Set your material target</h2><p>Enter the total resources required and subtract what is already in your inventory.</p></div><span className={styles.limitTag}>Monthly + weekly limits</span></div>
       <div className={styles.columns}>
         <div className={styles.column}><h3>Materials required</h3>{Object.entries(MASTER_PACK_RESOURCES).map(([key, resource]) => <NumberField key={key} resource={key} label={resource.label} value={need[key]} onChange={value => update(setNeed, key, value)}/>)}</div>

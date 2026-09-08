@@ -828,8 +828,11 @@ export function CharmStatPlanner({ memberId = "" }) {
         <div className={styles.section}>
           <SectionHeading
             title="Charm levels"
-            description="Work through one troop type at a time. Every charm raises Health and Lethality together."
+            description="Use the bulk controls for fast setup, then adjust any individual charm."
           />
+          <div className={styles.bulkActions}>
+            {["Infantry", "Cavalry", "Archer"].map((troop) => <div key={troop}><strong>{troop}</strong><button type="button" onClick={() => setInputs(current => ({ ...current, charms: current.charms.map(charm => charm.type === troop ? { ...charm, current: Math.min(22, charm.current + 1), target: Math.max(charm.target, Math.min(22, charm.current + 1)) } : charm) }))}>Raise current +1</button><button type="button" onClick={() => setInputs(current => ({ ...current, charms: current.charms.map(charm => charm.type === troop ? { ...charm, target: Math.min(22, charm.current + 1) } : charm) }))}>Target next level</button></div>)}
+          </div>
           <div className={styles.groupGrid}>
             {["Infantry", "Cavalry", "Archer"].map((troop) => (
               <section className={styles.equipmentGroup} key={troop}>
@@ -1123,7 +1126,7 @@ export function HeroGearPlanner() {
   const saved = useMemo(() => ({ rows, ...inputs }), [rows, inputs]);
   const restore = useCallback((state) => {
     if (Array.isArray(state.rows)) setRows(state.rows);
-    setInputs((c) => ({ ...c, ...state, rows: undefined }));
+    setInputs((c) => ({ ...c, ...state, mode: "inventory", rows: undefined }));
   }, []);
   const persistence = useToolPersistence({
     toolKey: "hero-gear",
@@ -1143,9 +1146,9 @@ export function HeroGearPlanner() {
         <PlannerGuide
           toolKey="hero-gear"
           steps={[
-            "Choose a profile that matches your goal, or edit the six weights for a custom build.",
-            "Enter the rarity, Enhancement level, and Mastery level shown on each of your 12 pieces.",
-            "Add the resources in your bag, then follow the recommended upgrades on the right.",
+            "Enter the Hero Gear resources you are willing to spend.",
+            "Enter the rarity, Enhancement level, and Mastery level shown on each piece.",
+            "Choose a profile and follow the exact affordable upgrade order on the right.",
           ]}
           note="Safe XP reforging may move XP out of non-Red gear at no loss. It never reforges Red gear, and Mastery reforging is not automatically recommended."
           terms={[["Enhancement XP", "XP used to raise a Hero Gear piece's enhancement level."], ["Mastery", "A separate Hero Gear progression track using Forgehammers and Mythic pieces."], ["Protect", "Excludes a piece from every recommendation and reforge."]]}
@@ -1162,6 +1165,16 @@ export function HeroGearPlanner() {
             },
           ]}
         />
+        <div className={styles.section}>
+          <SectionHeading
+            title="Available resources"
+            description="Enter only resources you are willing to spend. The optimizer never recommends an unaffordable step."
+          />
+          <div className={styles.grid}>
+            {[["xp", "Enhancement XP"], ["forgehammers", "Forgehammers"], ["mythicPieces", "Mythic pieces"], ["mithril", "Mithril"]].map(([key, label]) => <Field key={key} label={label} value={inputs[key]} onChange={(v) => setInputs((c) => ({ ...c, [key]: v }))} />)}
+          </div>
+          <label className={styles.note}><input type="checkbox" checked={inputs.safeXpReforging} onChange={(e) => setInputs((c) => ({ ...c, safeXpReforging: e.target.checked }))} /> Include safe XP reforging. Destructive mastery reforging is never recommended.</label>
+        </div>
         <div className={styles.section}>
           <SectionHeading
             title="Build profile"
@@ -1211,38 +1224,6 @@ export function HeroGearPlanner() {
             ))}
           </div>
         </AdvancedSettings>
-        <div className={styles.section}>
-          <SectionHeading
-            title="Available resources"
-            description="Enter only resources you are willing to spend in this optimization."
-          />
-          <div className={styles.grid}>
-            {[
-              ["xp", "Enhancement XP"],
-              ["forgehammers", "Forgehammers"],
-              ["mythicPieces", "Mythic pieces"],
-              ["mithril", "Mithril"],
-            ].map(([key, label]) => (
-              <Field
-                key={key}
-                label={label}
-                value={inputs[key]}
-                onChange={(v) => setInputs((c) => ({ ...c, [key]: v }))}
-              />
-            ))}
-          </div>
-          <label className={styles.note}>
-            <input
-              type="checkbox"
-              checked={inputs.safeXpReforging}
-              onChange={(e) =>
-                setInputs((c) => ({ ...c, safeXpReforging: e.target.checked }))
-              }
-            />{" "}
-            Include safe XP reforging. Destructive mastery reforging is never
-            recommended.
-          </label>
-        </div>
       </section>
       <aside className={styles.result}>
         <NextAction
@@ -1331,7 +1312,7 @@ export function GovernorGearPlanner() {
     }),
   );
   const [inputs, setInputs] = useState({
-    mode: "targets",
+    mode: "inventory",
     satin: 0,
     threads: 0,
     visions: 0,
@@ -1344,7 +1325,7 @@ export function GovernorGearPlanner() {
   const saved = useMemo(() => ({ rows, ...inputs }), [rows, inputs]);
   const restore = useCallback((state) => {
     if (Array.isArray(state.rows)) setRows(state.rows);
-    setInputs((c) => ({ ...c, ...state, rows: undefined }));
+    setInputs((c) => ({ ...c, ...state, mode: "inventory", rows: undefined }));
   }, []);
   const persistence = useToolPersistence({
     toolKey: "governor-gear",
@@ -1364,9 +1345,9 @@ export function GovernorGearPlanner() {
         <PlannerGuide
           toolKey="governor-gear"
           steps={[
-            "Choose Target cost planner to price specific tiers, or Best use of materials to optimize your inventory.",
-            "Set the current tier for all six pieces. In target mode, also choose the tier you want each piece to reach.",
-            "Enter your materials and follow the ordered plan on the right.",
+            "Enter the Satin, Gilded Threads, and Artisan’s Visions you can spend.",
+            "Set the current tier for all six pieces and protect anything you do not want changed.",
+            "Choose a combat or event goal and follow the affordable upgrade order on the right.",
           ]}
           note="Matching three-piece tiers unlock Defense set bonuses; matching all six unlocks Attack bonuses."
           terms={[["Satin", "Governor Gear upgrade material."], ["Gilded Thread", "Governor Gear upgrade material."], ["Protect", "Keeps a piece out of the upgrade order."]]}
@@ -1376,7 +1357,7 @@ export function GovernorGearPlanner() {
           items={[
             {
               label: "Mode",
-              value: inputs.mode === "targets" ? "Target planner" : "Best use",
+              value: "Best use",
             },
             { label: "Satin", value: fmt(inputs.satin) },
             { label: "Threads", value: fmt(inputs.threads) },
@@ -1385,25 +1366,10 @@ export function GovernorGearPlanner() {
         />
         <div className={styles.section}>
           <SectionHeading
-            title="Mode and inventory"
-            description="Choose a planning method, then enter the materials available to this plan."
+            title="Available inventory"
+            description="The optimizer ranks the best use of the materials available to this plan."
           />
           <div className={styles.grid}>
-            <Field
-              label="Planning mode"
-              value={inputs.mode}
-              onChange={() => {}}
-            >
-              <select
-                value={inputs.mode}
-                onChange={(e) =>
-                  setInputs((c) => ({ ...c, mode: e.target.value }))
-                }
-              >
-                <option value="targets">Target cost planner</option>
-                <option value="inventory">Best use of materials</option>
-              </select>
-            </Field>
             <Field
               label="Satin"
               value={inputs.satin}
@@ -1439,7 +1405,7 @@ export function GovernorGearPlanner() {
         <EquipmentRows
           rows={rows}
           setRows={setRows}
-          showTarget={inputs.mode === "targets"}
+          showTarget={false}
         />
         <AdvancedSettings title="Advanced priority controls">
           <div className={styles.grid}>
@@ -1476,8 +1442,8 @@ export function GovernorGearPlanner() {
       </section>
       <aside className={styles.result}>
         <NextAction
-          title={plan.steps[0] ? `${plan.steps[0].piece} → ${plan.steps[0].tier}` : "Choose targets or add Governor Gear materials"}
-          reason={plan.steps[0] ? "This is the first unlocked upgrade in the selected target or inventory plan." : "No affordable unlocked upgrade is currently available."}
+          title={plan.steps[0] ? `${plan.steps[0].piece} → ${plan.steps[0].tier}` : "Add Governor Gear materials"}
+          reason={plan.steps[0] ? "This is the highest-priority affordable upgrade for your selected goal." : "No affordable unlocked upgrade is currently available."}
           before={plan.steps[0] ? rows.find((row) => row.label === plan.steps[0].piece)?.tier || "None" : "Current tiers"}
           after={plan.steps[0]?.tier || "No change"}
           resources={plan.steps[0] ? `${fmt(plan.steps[0].satin)} Satin · ${fmt(plan.steps[0].threads)} Threads · ${fmt(plan.steps[0].visions)} Visions` : "None"}
@@ -1505,9 +1471,7 @@ export function GovernorGearPlanner() {
         </p>
         {!plan.steps.length ? (
           <p className={styles.status}>
-            {inputs.mode === "targets"
-              ? "Choose a target tier above at least one current tier to calculate its cost."
-              : "Add Satin, Gilded Threads, or Artisan’s Visions to generate the best affordable upgrade order."}
+            Add Satin, Gilded Threads, or Artisan’s Visions to generate the best affordable upgrade order.
           </p>
         ) : null}
         <ol className={styles.list}>

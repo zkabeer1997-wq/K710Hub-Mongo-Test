@@ -8,7 +8,7 @@ export default async function Page({ searchParams }) {
   return (
     <ToolPage
       title="Governor Charm Stat Optimizer"
-      description="Rank upgrades across all 18 charms using your inventory and editable troop and stat priorities."
+      description="Set charm levels quickly with bulk controls, then rank affordable upgrades across all 18 charms using your inventory."
       memberId={memberId}
     >
       <CharmStatPlanner memberId={memberId} />

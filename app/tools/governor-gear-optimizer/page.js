@@ -8,7 +8,7 @@ export default async function Page({ searchParams }) {
   return (
     <ToolPage
       title="Governor Gear Optimizer"
-      description="Plan target tiers or rank the best use of Satin, Gilded Threads, and Artisan’s Visions."
+      description="Enter your inventory and current six-piece setup to get the best affordable Governor Gear upgrade order."
       memberId={memberId}
     >
       <GovernorGearPlanner />
