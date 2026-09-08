@@ -3,11 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { CHARM_COSTS } from "../../lib/charmToolData.mjs";
+import { optimizeOfferPacks } from "../../lib/offerPackOptimizer.mjs";
 import {
   calculateGovernorGearPlan,
   calculateHeroGearPlan,
   calculateMasterPlan,
   calculatePetProgression,
+  heroXpLevelCost,
   planTtgProduction,
   rankCharmUpgrades,
 } from "../../lib/progressionPhase2.mjs";
@@ -22,7 +24,6 @@ import {
   DataLabel,
   FirstUseGuide,
   NextAction,
-  PlannerProgress,
   SaveToRoadmap,
 } from "./PlannerExperience";
 import styles from "./Phase2Planner.module.css";
@@ -151,7 +152,6 @@ function Field({
 function PlannerGuide({ steps, note, toolKey = "planner", terms = [], onDemo }) {
   return (
     <>
-      <PlannerProgress current={4} />
       <FirstUseGuide
         toolKey={toolKey}
         title="Build a recommendation in three steps"
@@ -196,6 +196,27 @@ function AdvancedSettings({ title = "Advanced settings", children }) {
       <div className={styles.advancedBody}>{children}</div>
     </details>
   );
+}
+
+function PackOfferAdvisor({ title, resources, requirements }) {
+  const emptyOffer = () => ({ name: "", price: 0, limit: 1, ...Object.fromEntries(resources.map(({ key }) => [key, 0])) });
+  const [offers, setOffers] = useState(() => [emptyOffer(), emptyOffer(), emptyOffer()]);
+  const plan = useMemo(() => optimizeOfferPacks(offers, requirements), [offers, requirements]);
+  const update = (index, key, value) => setOffers((current) => current.map((offer, offerIndex) => offerIndex === index ? { ...offer, [key]: key === "name" ? value : number(value) } : offer));
+  return <details className={styles.packAdvisor}>
+    <summary><span>Pack optimization</span><b>{title}</b></summary>
+    <p>Pack contents can vary by account and event. Enter the offers visible in your game; K710Hub will not guess them.</p>
+    <div className={styles.packNeed}>{resources.map(({ key, label }) => <span key={key}>{label}<b>{fmt(requirements[key])}</b></span>)}</div>
+    <div className={styles.offerTable}>
+      {offers.map((offer, index) => <div className={styles.offerRow} key={index}>
+        <input aria-label={`Offer ${index + 1} name`} placeholder={`Offer ${index + 1}`} value={offer.name} onChange={(event) => update(index, "name", event.target.value)} />
+        <input aria-label={`Offer ${index + 1} price`} type="number" min="0" step=".01" placeholder="Price" value={offer.price || ""} onChange={(event) => update(index, "price", event.target.value)} />
+        {resources.map(({ key, label }) => <input key={key} aria-label={`Offer ${index + 1} ${label}`} type="number" min="0" placeholder={label} value={offer[key] || ""} onChange={(event) => update(index, key, event.target.value)} />)}
+        <input aria-label={`Offer ${index + 1} purchase limit`} type="number" min="0" max="20" placeholder="Limit" value={offer.limit} onChange={(event) => update(index, "limit", event.target.value)} />
+      </div>)}
+    </div>
+    {offers.some((offer) => offer.price > 0) ? plan ? <div className={styles.packAnswer}><strong>Cheapest entered combination: ${plan.cost.toFixed(2)}</strong>{plan.picks.map((pick) => <span key={pick.name}>{pick.quantity} × {pick.name || "Unnamed offer"}</span>)}</div> : <p className={styles.status}>The entered offers cannot cover this material gap within their limits.</p> : null}
+  </details>;
 }
 
 export function TtgProductionPlanner({
@@ -645,6 +666,7 @@ export function PetProgressionPlanner({ memberId = "" }) {
 }
 
 export function CharmStatPlanner({ memberId = "" }) {
+  const [activeTroop, setActiveTroop] = useState("Infantry");
   const [inputs, setInputs] = useState({
     charms: defaultCharms,
     guides: 0,
@@ -830,11 +852,12 @@ export function CharmStatPlanner({ memberId = "" }) {
             title="Charm levels"
             description="Use the bulk controls for fast setup, then adjust any individual charm."
           />
-          <div className={styles.bulkActions}>
-            {["Infantry", "Cavalry", "Archer"].map((troop) => <div key={troop}><strong>{troop}</strong><button type="button" onClick={() => setInputs(current => ({ ...current, charms: current.charms.map(charm => charm.type === troop ? { ...charm, current: Math.min(22, charm.current + 1), target: Math.max(charm.target, Math.min(22, charm.current + 1)) } : charm) }))}>Raise current +1</button><button type="button" onClick={() => setInputs(current => ({ ...current, charms: current.charms.map(charm => charm.type === troop ? { ...charm, target: Math.min(22, charm.current + 1) } : charm) }))}>Target next level</button></div>)}
+          <div className={styles.troopTabs} role="tablist" aria-label="Charm troop type">
+            {["Infantry", "Cavalry", "Archer"].map((troop) => <button key={troop} type="button" role="tab" aria-selected={activeTroop === troop} onClick={() => setActiveTroop(troop)}>{troop}<span>{inputs.charms.filter((charm) => charm.type === troop && charm.target > charm.current).length} planned</span></button>)}
           </div>
+          <div className={styles.activeBulkActions}><strong>{activeTroop} shortcuts</strong><button type="button" onClick={() => setInputs(current => ({ ...current, charms: current.charms.map(charm => charm.type === activeTroop ? { ...charm, current: Math.min(22, charm.current + 1), target: Math.max(charm.target, Math.min(22, charm.current + 1)) } : charm) }))}>Raise all current +1</button><button type="button" onClick={() => setInputs(current => ({ ...current, charms: current.charms.map(charm => charm.type === activeTroop ? { ...charm, target: Math.min(22, charm.current + 1) } : charm) }))}>Target each next level</button></div>
           <div className={styles.groupGrid}>
-            {["Infantry", "Cavalry", "Archer"].map((troop) => (
+            {[activeTroop].map((troop) => (
               <section className={styles.equipmentGroup} key={troop}>
                 <h3>
                   <Image
@@ -934,7 +957,7 @@ export function CharmStatPlanner({ memberId = "" }) {
           className={styles.link}
           href={`/tools/charm-pack-optimizer${memberId ? `?member_id=${encodeURIComponent(memberId)}` : ""}`}
         >
-          Build required pack schedule
+          Optimize the missing materials into the cheapest weekly packs
         </Link>
         <ExportButton name="charm-upgrade-plan" data={ranked} />
       </aside>
@@ -943,6 +966,7 @@ export function CharmStatPlanner({ memberId = "" }) {
 }
 
 function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
+  const [activeGroup, setActiveGroup] = useState("Infantry");
   const groups = hero
     ? ["Infantry", "Cavalry", "Archer"].map((troop) => ({
         name: troop,
@@ -966,8 +990,11 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
             : "Enter all six pieces; target tiers appear only in target-planning mode."
         }
       />
+      {hero ? <div className={styles.troopTabs} role="tablist" aria-label="Hero Gear troop type">
+        {groups.map((group) => <button key={group.name} type="button" role="tab" aria-selected={activeGroup === group.name} onClick={() => setActiveGroup(group.name)}>{group.name}<span>{group.rows.filter(({ row }) => !row.locked).length} active</span></button>)}
+      </div> : null}
       <div className={hero ? styles.groupGrid : styles.singleGroup}>
-        {groups.map((group) => (
+        {groups.filter((group) => !hero || group.name === activeGroup).map((group) => (
           <section className={styles.equipmentGroup} key={group.name}>
             <h3>{group.name}</h3>
             {group.rows.map(({ row, index }) => (
@@ -1139,6 +1166,10 @@ export function HeroGearPlanner() {
     () => calculateHeroGearPlan(rows, inputs),
     [rows, inputs],
   );
+  const heroPackNeed = useMemo(() => {
+    const near = plan.nearMisses?.[0];
+    return { xp: near ? Math.max(0, heroXpLevelCost(near.targetLevel + 1) - plan.remaining.xp) : 0, forgehammers: 0, mythicPieces: 0, mithril: 0 };
+  }, [plan]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -1285,6 +1316,7 @@ export function HeroGearPlanner() {
           XP reforging is offered only for non-Red gear at 100% recovery.
           Mastery reforging recovers 50% of Forgehammers.
         </p>
+        <PackOfferAdvisor title="Cover the next Hero Gear upgrade" resources={[{ key: "xp", label: "XP" }, { key: "forgehammers", label: "Forgehammers" }, { key: "mythicPieces", label: "Mythic pieces" }, { key: "mithril", label: "Mithril" }]} requirements={heroPackNeed} />
         <ExportButton name="hero-gear-plan" data={plan} />
       </aside>
     </div>
@@ -1338,6 +1370,11 @@ export function GovernorGearPlanner() {
     () => calculateGovernorGearPlan(rows, inputs),
     [rows, inputs],
   );
+  const governorPackNeed = useMemo(() => ({
+    satin: Math.max(0, (plan.next?.satin || 0) - (plan.remaining?.satin || 0)),
+    threads: Math.max(0, (plan.next?.threads || 0) - (plan.remaining?.threads || 0)),
+    visions: Math.max(0, (plan.next?.visions || 0) - (plan.remaining?.visions || 0)),
+  }), [plan]);
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -1483,6 +1520,7 @@ export function GovernorGearPlanner() {
             </li>
           ))}
         </ol>
+        <PackOfferAdvisor title="Unlock the next Governor Gear upgrade" resources={[{ key: "satin", label: "Satin" }, { key: "threads", label: "Threads" }, { key: "visions", label: "Visions" }]} requirements={governorPackNeed} />
         <ExportButton name="governor-gear-plan" data={plan} />
       </aside>
     </div>
