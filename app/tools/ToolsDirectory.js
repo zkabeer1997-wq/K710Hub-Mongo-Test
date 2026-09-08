@@ -23,6 +23,7 @@ const TOOLS = {
   ],
   Masters: [
     { key: 'masters-planner', event: 'Master progression', title: 'Masters Planner', description: 'Track relationships, talents, skills, partially learned XP, resources, and learning speed.', status: 'New', icon: '/images/kingshot/masters/valora.png' },
+    { key: 'masters-pack-optimizer', event: 'Monthly + weekly packs', title: 'Masters Pack Optimization Tool', description: 'Find the cheapest Acuity reward choices and regular weekly packs for your Adventure Supply, Emblem, Affinity, and Manuscript targets.', status: 'New', icon: '/images/kingshot/masters/roman.png' },
   ],
   'Special Event Shops': [
     { key: 'flamedragon-shop', event: 'Flamedragon Tyrant', title: 'Dragon’s Caravan Optimizer', description: 'Build a reward cart, prioritize the best-value shop items, and calculate the cheapest Dragon Essence pack combination.', status: 'New', icon: '/images/flamedragon-caravan.svg' },
