@@ -121,6 +121,31 @@ test("Governor event mode uses per-upgrade KvK Preparation points", () => {
   assert.equal(result.totals.eventPoints, 40500);
 });
 
+test("Hero event mode scores only Forgehammer and Mithril spending", () => {
+  const mastery = calculateHeroGearPlan(
+    [{ id: "mastery", label: "Infantry Helmet", troop: "Infantry", tier: "Mythic", enhancement: 0, mastery: 0 }],
+    { optimizationGoal: "events", xp: 0, forgehammers: 10, mythicPieces: 0, mithril: 0, safeXpReforging: false },
+  );
+  assert.equal(mastery.used.forgehammers, 10);
+  assert.equal(mastery.used.mythicPieces, 0);
+  assert.equal(mastery.totals.eventPoints, 40000);
+  assert.equal(mastery.actions[0].eventPoints, 40000);
+
+  const imbuement = calculateHeroGearPlan(
+    [{ id: "red", label: "Infantry Helmet", troop: "Infantry", tier: "Red", enhancement: 119, mastery: 11 }],
+    { optimizationGoal: "events", xp: 0, forgehammers: 0, mythicPieces: 3, mithril: 10, safeXpReforging: false },
+  );
+  assert.equal(imbuement.used.mithril, 10);
+  assert.equal(imbuement.totals.eventPoints, 400000);
+  assert.equal(imbuement.actions[0].eventPointsProvenance, "verified");
+
+  const xpOnly = calculateHeroGearPlan(
+    [{ id: "xp", label: "Infantry Helmet", troop: "Infantry", tier: "Mythic", enhancement: 0, mastery: 0 }],
+    { optimizationGoal: "events", xp: 100, forgehammers: 0, mythicPieces: 50, mithril: 0, safeXpReforging: false },
+  );
+  assert.equal(xpOnly.totals.eventPoints, 0);
+});
+
 test("hero XP allocation matches the published 10,000 XP reference fixture", () => {
   const weights = {
     "Infantry.Health": 1.5,
@@ -244,7 +269,7 @@ test("hero optimizer applies the exact first Red ascension milestone costs", () 
   assert.deepEqual(result.used, {
     xp: 52650,
     mithril: 10,
-    mythicPieces: 6,
+    mythicPieces: 5,
     forgehammers: 110,
   });
   assert.equal(result.candidates[0].targetLevel, 120);
@@ -324,10 +349,10 @@ test("hero optimizer matches the mixed XP and Forgehammer Growth fixture", () =>
     gearWeights: growthHeroWeights,
   });
   assert.deepEqual(result.used, {
-    xp: 19995,
+    xp: 19985,
     mithril: 0,
     mythicPieces: 0,
-    forgehammers: 980,
+    forgehammers: 1000,
   });
   assert.deepEqual(
     Object.fromEntries(
@@ -337,18 +362,18 @@ test("hero optimizer matches the mixed XP and Forgehammer Growth fixture", () =>
       ]),
     ),
     {
-      "Infantry-Helmet": [15, 0],
-      "Infantry-Gloves": [39, 7],
-      "Infantry-Chest": [39, 7],
-      "Infantry-Boots": [15, 0],
-      "Cavalry-Helmet": [8, 0],
-      "Cavalry-Gloves": [3, 0],
-      "Cavalry-Chest": [4, 0],
-      "Cavalry-Boots": [8, 0],
-      "Archer-Helmet": [38, 6],
-      "Archer-Gloves": [15, 0],
-      "Archer-Chest": [15, 0],
-      "Archer-Boots": [37, 6],
+      "Infantry-Helmet": [18, 3],
+      "Infantry-Gloves": [39, 6],
+      "Infantry-Chest": [37, 5],
+      "Infantry-Boots": [18, 3],
+      "Cavalry-Helmet": [9, 2],
+      "Cavalry-Gloves": [3, 1],
+      "Cavalry-Chest": [4, 2],
+      "Cavalry-Boots": [9, 2],
+      "Archer-Helmet": [36, 5],
+      "Archer-Gloves": [18, 3],
+      "Archer-Chest": [18, 3],
+      "Archer-Boots": [36, 5],
     },
   );
 });

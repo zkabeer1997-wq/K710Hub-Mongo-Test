@@ -738,6 +738,8 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
           : item,
       ),
     }));
+  const eventMode = inputs.optimizationGoal === "events";
+  const charmPointsAreEstimated = ranked.upgrades.some((item) => item.eventPointsProvenance !== "verified");
   return (
     <>
     <div className={styles.workspace}>
@@ -790,7 +792,7 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
                 }
               >
                 <option value="stats">Optimize stats</option>
-                <option value="events">Optimize events</option>
+                <option value="events">Optimize KvK Preparation points</option>
               </select>
             </Field>
             <Field
@@ -921,13 +923,13 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
       <aside className={styles.result}>
         <NextAction
           title={ranked.upgrades[0] ? `${ranked.upgrades[0].type} Charm ${ranked.upgrades[0].number} → level ${ranked.upgrades[0].level}` : "Add Guides and Designs"}
-          reason={ranked.upgrades[0] ? "This is the highest weighted Health and Lethality gain that fits your spendable inventory." : "The optimizer needs spendable inventory and at least one unlocked target."}
+          reason={ranked.upgrades[0] ? (eventMode ? "This affordable upgrade has the highest KvK Preparation return under squared scarcity scoring." : "This is the highest weighted Health and Lethality gain that fits your spendable inventory.") : "The optimizer needs spendable inventory and at least one unlocked target."}
           before={ranked.upgrades[0] ? `Level ${ranked.upgrades[0].level - 1}` : "Current charm levels"}
           after={ranked.upgrades[0] ? `Level ${ranked.upgrades[0].level}` : "No affordable upgrade"}
           resources={ranked.upgrades[0] ? `${ranked.upgrades[0].guides} Guides · ${ranked.upgrades[0].designs} Designs` : "None"}
           remaining={`${fmt(ranked.remaining.guides)} Guides · ${fmt(ranked.remaining.designs)} Designs`}
         />
-        <DataLabel type="exact">game dataset + member inventory</DataLabel><DataLabel type="subjective">profile weights</DataLabel>
+        <DataLabel type="exact">level costs + verified KvK levels 1–11</DataLabel>{charmPointsAreEstimated ? <DataLabel type="estimated">KvK levels 12–22</DataLabel> : null}{!eventMode ? <DataLabel type="subjective">profile weights</DataLabel> : null}
         <h2>Recommended upgrade sequence</h2>
         <div className={styles.metrics}>
           <div className={styles.metric}>
@@ -940,13 +942,17 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
               {fmt(ranked.remaining.guides)} / {fmt(ranked.remaining.designs)}
             </b>
           </div>
+          <div className={styles.metric}>
+            <span>{eventMode ? "KvK Preparation points" : "Combined stat gain"}</span>
+            <b>{fmt(eventMode ? ranked.totals.eventPoints : ranked.totals.health + ranked.totals.lethality)}</b>
+          </div>
         </div>
         {ranked.upgrades.length ? (
           <ol className={styles.list}>
             {ranked.upgrades.map((item) => (
               <li key={`${item.id}-${item.level}`}>
                 {item.type} #{item.number} → level {item.level} · {item.guides}{" "}
-                Guides · {item.designs} Designs
+                Guides · {item.designs} Designs{eventMode ? ` · ${fmt(item.eventPoints)} KvK points (${item.eventPointsProvenance})` : ""}
               </li>
             ))}
           </ol>
@@ -956,15 +962,7 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
             sequence.
           </p>
         )}
-        <p className={styles.note}>
-          Every charm upgrade raises both Health and Lethality; recommendations
-          rank combined stat gain per material.
-        </p>
-        <p className={styles.note}>
-          Gain: +{fmt(ranked.totals.health)} Health, +
-          {fmt(ranked.totals.lethality)} Lethality, +{fmt(ranked.totals.power)}{" "}
-          Power · weighted efficiency {fmt(ranked.totals.weightedValue)}.
-        </p>
+        <p className={styles.note}>{eventMode ? `KvK Preparation total: ${fmt(ranked.totals.eventPoints)} points. Points are awarded by completed charm level, not by Guides or Designs spent.` : `Stat gain: +${fmt(ranked.totals.health)} Health and +${fmt(ranked.totals.lethality)} Lethality. Profile weights are priorities, not game rules.`}</p>
         {ranked.next ? (
           <p className={styles.note}>
             Bottleneck: next {ranked.next.type} #{ranked.next.number} level{" "}
@@ -1160,6 +1158,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
     forgehammers: 0,
     mythicPieces: 0,
     mithril: 0,
+    optimizationGoal: "stats",
     safeXpReforging: true,
     packGoal: "next",
     packOffers: [],
@@ -1192,6 +1191,8 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
       mithril: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.mithril || 0), 0) - (plan.remaining?.mithril || 0)),
     };
   }, [inputs.packGoal, plan]);
+  const eventMode = inputs.optimizationGoal === "events";
+  const nextHeroAction = plan.nextAction;
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -1204,7 +1205,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
             "Choose a profile and follow the exact affordable upgrade order on the right.",
           ]}
           note="Safe XP reforging may move XP out of non-Red gear at no loss. It never reforges Red gear, and Mastery reforging is not automatically recommended."
-          terms={[["Enhancement XP", "XP used to raise a Hero Gear piece's enhancement level."], ["Mastery", "A separate Hero Gear progression track using Forgehammers and Mythic pieces."], ["Protect", "Excludes a piece from every recommendation and reforge."]]}
+          terms={[["Enhancement XP", "XP used to raise a Hero Gear piece's enhancement level."], ["Mastery", "A separate Hero Gear progression track using Forgehammers only."], ["Protect", "Excludes a piece from every recommendation and reforge."]]}
           onDemo={() => { setRows((current) => current.map((row, index) => ({ ...row, tier: "Mythic", enhancement: index % 4 === 0 ? 40 : 20, mastery: index % 3, locked: false }))); setInputs((current) => ({ ...current, xp: 180000, forgehammers: 120, mythicPieces: 8, mithril: 4 })); }}
         />
         <InputSummary
@@ -1225,6 +1226,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
           />
           <div className={styles.grid}>
             {[["xp", "Enhancement XP"], ["forgehammers", "Forgehammers"], ["mythicPieces", "Mythic pieces"], ["mithril", "Mithril"]].map(([key, label]) => <Field key={key} label={label} value={inputs[key]} onChange={(v) => setInputs((c) => ({ ...c, [key]: v }))} />)}
+            <Field label="Optimization goal" value={inputs.optimizationGoal} onChange={() => {}}><select value={inputs.optimizationGoal} onChange={(event) => setInputs((current) => ({ ...current, optimizationGoal: event.target.value }))}><option value="stats">Optimize weighted stats</option><option value="events">Optimize KvK Preparation points</option></select></Field>
           </div>
           <label className={styles.note}><input type="checkbox" checked={inputs.safeXpReforging} onChange={(e) => setInputs((c) => ({ ...c, safeXpReforging: e.target.checked }))} /> Include safe XP reforging. Destructive mastery reforging is never recommended.</label>
         </div>
@@ -1280,33 +1282,32 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
       </section>
       <aside className={styles.result}>
         <NextAction
-          title={plan.recommendation ? `${plan.recommendation.label} → +${plan.recommendation.targetLevel}` : "Add spendable Hero Gear resources"}
-          reason={plan.recommendation ? `This unlocked piece gives the strongest ${plan.recommendation.stat} return for your selected build profile.` : "Your current setup is saved; inventory is needed to calculate an affordable next action."}
-          before={plan.recommendation ? `Enhancement ${plan.recommendation.enhancement}` : "Current gear"}
-          after={plan.recommendation ? `Enhancement ${plan.recommendation.targetLevel}` : "No affordable upgrade"}
-          resources={plan.recommendation ? `${fmt(plan.recommendation.xp)} XP · ${fmt(plan.recommendation.mithril)} Mithril` : "None"}
+          title={nextHeroAction ? `${nextHeroAction.label} → ${nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery}` : `+${nextHeroAction.level}`}` : "Add spendable Hero Gear resources"}
+          reason={nextHeroAction ? (eventMode ? "This plan prioritizes eligible Forgehammer and Mithril spending for KvK Preparation points." : `This unlocked piece gives the strongest ${nextHeroAction.stat} return for your selected build profile.`) : "Your current setup is saved; inventory is needed to calculate an affordable next action."}
+          before={nextHeroAction ? (nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery - 1}` : `Enhancement ${nextHeroAction.fromLevel ?? nextHeroAction.level - 1}`) : "Current gear"}
+          after={nextHeroAction ? (nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery}` : `Enhancement ${nextHeroAction.level}`) : "No affordable upgrade"}
+          resources={nextHeroAction ? `${fmt(nextHeroAction.xp || 0)} XP · ${fmt(nextHeroAction.forgehammers || 0)} Forgehammers · ${fmt(nextHeroAction.mythic || 0)} Mythic · ${fmt(nextHeroAction.mithril || 0)} Mithril` : "None"}
           remaining={`${fmt(plan.remaining.xp)} XP · ${fmt(plan.remaining.forgehammers)} Forgehammers`}
         />
-        <DataLabel type="exact">costs and stat curve</DataLabel><DataLabel type="subjective">build profile</DataLabel>
+        <DataLabel type="exact">4,000 / Forgehammer · 40,000 / Mithril</DataLabel>{!eventMode ? <DataLabel type="subjective">build profile</DataLabel> : null}
         <h2>Upgrade plan</h2>
-        {plan.recommendation ? (
+        {nextHeroAction ? (
           <div className={styles.metrics}>
             <div className={styles.metric}>
-              <span>Next balanced upgrade</span>
+              <span>Next recommended upgrade</span>
               <b>
-                {plan.recommendation.label} → +{plan.recommendation.targetLevel}
+                {nextHeroAction.label} → {nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery}` : `+${nextHeroAction.level}`}
               </b>
             </div>
             <div className={styles.metric}>
               <span>Cost</span>
               <b>
-                {fmt(plan.recommendation.xp)} XP · {plan.recommendation.mithril}{" "}
-                Mithril · {plan.recommendation.mythic} Mythic
+                {fmt(nextHeroAction.xp || 0)} XP · {fmt(nextHeroAction.forgehammers || 0)} Forgehammers · {fmt(nextHeroAction.mithril || 0)} Mithril · {fmt(nextHeroAction.mythic || 0)} Mythic
               </b>
             </div>
             <div className={styles.metric}>
               <span>Improves</span>
-              <b>{plan.recommendation.stat}</b>
+              <b>{eventMode ? `${fmt(nextHeroAction.eventPoints || 0)} KvK Preparation points` : nextHeroAction.stat}</b>
             </div>
           </div>
         ) : (
@@ -1322,7 +1323,11 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
           {fmt(plan.remaining.mithril)} Mithril. Bottleneck:{" "}
           {plan.bottleneck || "none"}.
         </p>
+        <p className={styles.note}>{eventMode ? `KvK Preparation scoring: ${fmt(plan.used.forgehammers)} Forgehammers × 4,000 + ${fmt(plan.used.mithril)} Mithril × 40,000 = ${fmt(plan.totals.eventPoints)} points. Enhancement XP and Mythic Gear award 0 points.` : `Projected stat gain across the plan: ${fmt(plan.totals.statGain)}.`}</p>
+        {eventMode && plan.actions.some((item) => item.eventPoints > 0) ? <ol className={styles.list}>{plan.actions.filter((item) => item.eventPoints > 0).map((item, index) => <li key={`${item.id}-kvk-${index}`}>{item.label} → {item.mastery ? `Mastery ${item.mastery}` : `+${item.level}`} · {fmt(item.eventPoints)} KvK Preparation points</li>)}</ol> : null}
         {plan.candidates?.some((item) => item.xp > 0) ? (
+          <>
+          {eventMode ? <p className={styles.note}>Supporting Enhancement steps award 0 KvK points but may be required to reach later eligible milestones.</p> : null}
           <ol className={styles.list}>
             {plan.candidates
               .filter((item) => item.xp > 0)
@@ -1333,6 +1338,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
                 </li>
               ))}
           </ol>
+          </>
         ) : null}
         <p className={styles.note}>
           XP reforging is offered only for non-Red gear at 100% recovery.
@@ -1403,6 +1409,8 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
       visions: Math.max(0, candidates.reduce((sum, item) => sum + item.visions, 0) - (plan.remaining?.visions || 0)),
     };
   }, [inputs.packGoal, plan]);
+  const eventMode = inputs.optimizationGoal === "events";
+  const governorPointsAreEstimated = plan.steps.some((step) => step.eventPointsProvenance !== "verified");
   return (
     <div className={styles.workspace}>
       <section className={styles.panel}>
@@ -1462,7 +1470,7 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
                 }
               >
                 <option value="stats">Optimize stats</option>
-                <option value="events">Optimize events</option>
+                <option value="events">Optimize KvK Preparation points</option>
               </select>
             </Field>
           </div>
@@ -1508,13 +1516,13 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
       <aside className={styles.result}>
         <NextAction
           title={plan.steps[0] ? `${plan.steps[0].piece} → ${plan.steps[0].tier}` : "Add Governor Gear materials"}
-          reason={plan.steps[0] ? "This is the highest-priority affordable upgrade for your selected goal." : "No affordable unlocked upgrade is currently available."}
+          reason={plan.steps[0] ? (eventMode ? "This affordable upgrade has the highest KvK Preparation return under squared scarcity scoring." : "This is the highest-priority affordable stat upgrade, including any set-bonus gain.") : "No affordable unlocked upgrade is currently available."}
           before={plan.steps[0] ? rows.find((row) => row.label === plan.steps[0].piece)?.tier || "None" : "Current tiers"}
           after={plan.steps[0]?.tier || "No change"}
           resources={plan.steps[0] ? `${fmt(plan.steps[0].satin)} Satin · ${fmt(plan.steps[0].threads)} Threads · ${fmt(plan.steps[0].visions)} Visions` : "None"}
           remaining={plan.remaining ? `${fmt(plan.remaining.satin)} Satin · ${fmt(plan.remaining.threads)} Threads` : `${fmt(Math.max(0, inputs.satin - plan.totals.satin))} Satin · ${fmt(Math.max(0, inputs.threads - plan.totals.threads))} Threads`}
         />
-        <DataLabel type="exact">tier costs and stats</DataLabel><DataLabel type="subjective">troop priorities</DataLabel>
+        <DataLabel type="exact">tier costs + verified KvK rows</DataLabel>{governorPointsAreEstimated ? <DataLabel type="estimated">later KvK tiers</DataLabel> : null}{!eventMode ? <DataLabel type="subjective">troop priorities</DataLabel> : null}
         <h2>Governor Gear plan</h2>
         <div className={styles.metrics}>
           {["satin", "threads", "visions"].map((key) => (
@@ -1526,8 +1534,8 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
             </div>
           ))}
           <div className={styles.metric}>
-            <span>Power gain</span>
-            <b>{fmt(plan.totals.powerGain)}</b>
+            <span>{eventMode ? "KvK Preparation points" : "Power gain"}</span>
+            <b>{fmt(eventMode ? plan.totals.eventPoints : plan.totals.powerGain)}</b>
           </div>
         </div>
         <p className={styles.note}>
@@ -1543,12 +1551,12 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
           {plan.steps.slice(0, 6).map((step, index) => (
             <li key={`${step.piece}-${index}`}>
               {step.piece} → {step.tier}: {fmt(step.satin)} Satin ·{" "}
-              {fmt(step.threads)} Threads · {fmt(step.visions)} Visions · +
-              {fmt(step.statGain)}% stat
+              {fmt(step.threads)} Threads · {fmt(step.visions)} Visions ·{" "}
+              {eventMode ? `${fmt(step.eventPoints)} KvK points (${step.eventPointsProvenance})` : `+${fmt(step.statGain + (step.setBonusGain || 0))}% weighted stat/set value`}
             </li>
           ))}
         </ol>
-        {plan.steps.length > 6 ? <details className={styles.moreSteps}><summary>Show {plan.steps.length - 6} later upgrades</summary><ol className={styles.list}>{plan.steps.slice(6).map((step, index) => <li key={`${step.piece}-later-${index}`}>{step.piece} → {step.tier}: {fmt(step.satin)} Satin · {fmt(step.threads)} Threads · {fmt(step.visions)} Visions · +{fmt(step.statGain)}% stat</li>)}</ol></details> : null}
+        {plan.steps.length > 6 ? <details className={styles.moreSteps}><summary>Show {plan.steps.length - 6} later upgrades</summary><ol className={styles.list}>{plan.steps.slice(6).map((step, index) => <li key={`${step.piece}-later-${index}`}>{step.piece} → {step.tier}: {fmt(step.satin)} Satin · {fmt(step.threads)} Threads · {fmt(step.visions)} Visions · {eventMode ? `${fmt(step.eventPoints)} KvK points (${step.eventPointsProvenance})` : `+${fmt(step.statGain + (step.setBonusGain || 0))}% weighted stat/set value`}</li>)}</ol></details> : null}
         <label className={styles.packScope}>Pack plan scope<select value={inputs.packGoal} onChange={(event) => setInputs((current) => ({ ...current, packGoal: event.target.value }))}><option value="next">Next recommended upgrade</option><option value="three">Next three candidates</option></select></label>
         <PackOfferAdvisor title={inputs.packGoal === "three" ? "Unlock the next three Governor Gear candidates" : "Unlock the next Governor Gear upgrade"} resources={[{ key: "satin", label: "Satin" }, { key: "threads", label: "Threads" }, { key: "visions", label: "Visions" }]} requirements={governorPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
         <ExportButton name="governor-gear-plan" data={plan} />
