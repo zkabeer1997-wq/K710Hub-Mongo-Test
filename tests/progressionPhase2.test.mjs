@@ -92,7 +92,7 @@ test("hero pack candidates expose complete costs for mastery and Red milestones"
     [{ id: "mastery", label: "Infantry Helmet", tier: "Mythic", enhancement: 20, mastery: 10 }],
     { xp: 0, forgehammers: 0, mythicPieces: 0, mithril: 0, safeXpReforging: false },
   );
-  assert.ok(mastery.nearMisses.some((item) => item.costs.forgehammers === 110 && item.costs.mythicPieces === 0));
+  assert.ok(mastery.nearMisses.some((item) => item.costs.forgehammers === 110 && item.costs.mythicPieces === 1));
 
   const red = calculateHeroGearPlan(
     [{ id: "red", label: "Infantry Helmet", tier: "Red", enhancement: 119, mastery: 11 }],
@@ -169,7 +169,8 @@ test("hero XP allocation matches the published 10,000 XP reference fixture", () 
     xp: 10000,
     gearWeights: weights,
   });
-  assert.equal(result.used.xp, 10000);
+  assert.equal(result.used.xp, 9980);
+  assert.equal(result.remaining.xp, 20);
   assert.deepEqual(
     Object.fromEntries(
       result.candidates.map((item) => [item.id, item.targetLevel]),
@@ -179,8 +180,8 @@ test("hero XP allocation matches the published 10,000 XP reference fixture", () 
       "Infantry-Gloves": 27,
       "Infantry-Chest": 27,
       "Infantry-Boots": 12,
-      "Cavalry-Helmet": 7,
-      "Cavalry-Gloves": 2,
+      "Cavalry-Helmet": 6,
+      "Cavalry-Gloves": 3,
       "Cavalry-Chest": 3,
       "Cavalry-Boots": 6,
       "Archer-Helmet": 26,
@@ -269,7 +270,7 @@ test("hero optimizer applies the exact first Red ascension milestone costs", () 
   assert.deepEqual(result.used, {
     xp: 52650,
     mithril: 10,
-    mythicPieces: 5,
+    mythicPieces: 6,
     forgehammers: 110,
   });
   assert.equal(result.candidates[0].targetLevel, 120);

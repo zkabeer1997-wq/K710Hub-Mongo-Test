@@ -79,7 +79,22 @@ const defaultCharms = ["Infantry", "Cavalry", "Archer"].flatMap((type) =>
   })),
 );
 const heroPieces = ["Helmet", "Gloves", "Chest", "Boots"];
-const governorPieces = ["Helmet", "Chest", "Ring", "Staff", "Pants", "Boots"];
+const governorPieces = ["Cap", "Watch", "Coat", "Pants", "Belt", "Weapon"];
+const governorTroops = ["Cavalry", "Cavalry", "Infantry", "Infantry", "Archer", "Archer"];
+const createGovernorRows = () => governorPieces.map((label, index) => ({
+  id: label.toLowerCase(),
+  label,
+  troop: governorTroops[index],
+  tier: "",
+  targetTier: "",
+}));
+const normalizeGovernorRows = (rows) => createGovernorRows().map((base, index) => ({
+  ...base,
+  ...(rows?.[index] || {}),
+  id: base.id,
+  label: base.label,
+  troop: base.troop,
+}));
 const heroGearImage = (label) => {
   const [troop, piece] = label.toLowerCase().split(" ");
   return `/images/kingshot/hero-gear/${troop}-${piece === "helmet" ? "helm" : piece}.png`;
@@ -973,7 +988,7 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
         <ExportButton name="charm-upgrade-plan" data={ranked} />
       </aside>
     </div>
-    <div className={styles.connectedPack}><CharmPackOptimizer configuration={packConfiguration} embedded requiredOverride={charmTargetCost} ownedOverride={{ g: inputs.guides, d: inputs.designs }} /></div>
+    <div className={styles.connectedPack}><CharmPackOptimizer configuration={packConfiguration} embedded requiredOverride={charmTargetCost} ownedOverride={{ g: inputs.guides, d: inputs.designs }} strictPurchasePlan={toolKey === "updated-charms"} /></div>
     </>
   );
 }
@@ -1041,7 +1056,13 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
                         setRows((current) =>
                           current.map((item, i) =>
                             i === index
-                              ? { ...item, tier: e.target.value }
+                              ? {
+                                  ...item,
+                                  tier: e.target.value,
+                                  enhancement: e.target.value === "Red"
+                                    ? Math.max(100, Math.min(200, number(item.enhancement)))
+                                    : Math.min(e.target.value === "Epic" ? 80 : 100, number(item.enhancement)),
+                                }
                               : item,
                           ),
                         )
@@ -1081,7 +1102,7 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
                       onChange={(v) =>
                         setRows((current) =>
                           current.map((item, i) =>
-                            i === index ? { ...item, enhancement: v } : item,
+                            i === index ? { ...item, enhancement: Math.max(item.tier === "Red" ? 100 : 0, Math.min(item.tier === "Epic" ? 80 : item.tier === "Red" ? 200 : 100, v)) } : item,
                           ),
                         )
                       }
@@ -1092,7 +1113,7 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
                       onChange={(v) =>
                         setRows((current) =>
                           current.map((item, i) =>
-                            i === index ? { ...item, mastery: v } : item,
+                            i === index ? { ...item, mastery: Math.min(20, v) } : item,
                           ),
                         )
                       }
@@ -1183,14 +1204,14 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
     [rows, inputs],
   );
   const heroPackNeed = useMemo(() => {
-    const candidates = (plan.nearMisses || []).slice(0, inputs.packGoal === "three" ? 3 : 1);
+    const candidates = (plan.nearMisses || []).slice(0, 1);
     return {
       xp: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.xp || 0), 0) - (plan.remaining?.xp || 0)),
       forgehammers: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.forgehammers || 0), 0) - (plan.remaining?.forgehammers || 0)),
       mythicPieces: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.mythicPieces || 0), 0) - (plan.remaining?.mythicPieces || 0)),
       mithril: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.mithril || 0), 0) - (plan.remaining?.mithril || 0)),
     };
-  }, [inputs.packGoal, plan]);
+  }, [plan]);
   const eventMode = inputs.optimizationGoal === "events";
   const nextHeroAction = plan.nextAction;
   return (
@@ -1205,7 +1226,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
             "Choose a profile and follow the exact affordable upgrade order on the right.",
           ]}
           note="Safe XP reforging may move XP out of non-Red gear at no loss. It never reforges Red gear, and Mastery reforging is not automatically recommended."
-          terms={[["Enhancement XP", "XP used to raise a Hero Gear piece's enhancement level."], ["Mastery", "A separate Hero Gear progression track using Forgehammers only."], ["Protect", "Excludes a piece from every recommendation and reforge."]]}
+          terms={[["Enhancement XP", "XP used to raise a Hero Gear piece's enhancement level."], ["Mastery", "A separate track using Forgehammers; levels 11–20 also consume Mythic Gear."], ["Protect", "Excludes a piece from every recommendation and reforge."]]}
           onDemo={() => { setRows((current) => current.map((row, index) => ({ ...row, tier: "Mythic", enhancement: index % 4 === 0 ? 40 : 20, mastery: index % 3, locked: false }))); setInputs((current) => ({ ...current, xp: 180000, forgehammers: 120, mythicPieces: 8, mithril: 4 })); }}
         />
         <InputSummary
@@ -1342,10 +1363,9 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
         ) : null}
         <p className={styles.note}>
           XP reforging is offered only for non-Red gear at 100% recovery.
-          Mastery reforging recovers 50% of Forgehammers.
+          Mastery reforging recovers 50% of Forgehammers and returns no Mythic Gear.
         </p>
-        <label className={styles.packScope}>Pack plan scope<select value={inputs.packGoal} onChange={(event) => setInputs((current) => ({ ...current, packGoal: event.target.value }))}><option value="next">Next recommended upgrade</option><option value="three">Next three affordable candidates</option></select></label>
-        <PackOfferAdvisor title={inputs.packGoal === "three" ? "Cover the next three Hero Gear candidates" : "Cover the next Hero Gear upgrade"} resources={[{ key: "xp", label: "XP" }, { key: "forgehammers", label: "Forgehammers" }, { key: "mythicPieces", label: "Mythic pieces" }, { key: "mithril", label: "Mithril" }]} requirements={heroPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
+        <PackOfferAdvisor title="Unlock the next blocked Hero Gear upgrade" resources={[{ key: "xp", label: "XP" }, { key: "forgehammers", label: "Forgehammers" }, { key: "mythicPieces", label: "Mythic pieces" }, { key: "mithril", label: "Mithril" }]} requirements={heroPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
         <ExportButton name="hero-gear-plan" data={plan} />
       </aside>
     </div>
@@ -1353,25 +1373,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
 }
 
 export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
-  const [rows, setRows] = useState(() =>
-    governorPieces.map((label, index) => {
-      const troop = [
-        "Cavalry",
-        "Cavalry",
-        "Infantry",
-        "Infantry",
-        "Archer",
-        "Archer",
-      ][index];
-      return {
-        id: label.toLowerCase(),
-        label,
-        troop,
-        tier: "",
-        targetTier: "",
-      };
-    }),
-  );
+  const [rows, setRows] = useState(createGovernorRows);
   const [inputs, setInputs] = useState({
     mode: "inventory",
     satin: 0,
@@ -1387,12 +1389,12 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
   });
   const saved = useMemo(() => ({ rows, ...inputs }), [rows, inputs]);
   const restore = useCallback((state) => {
-    if (Array.isArray(state.rows)) setRows(state.rows);
+    if (Array.isArray(state.rows)) setRows(normalizeGovernorRows(state.rows));
     setInputs((c) => ({ ...c, ...state, mode: "inventory", rows: undefined }));
   }, []);
   const persistence = useToolPersistence({
     toolKey,
-    schemaVersion: 1,
+    schemaVersion: 2,
     inputs: saved,
     restore,
     autoDetect: true,
@@ -1402,13 +1404,13 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
     [rows, inputs],
   );
   const governorPackNeed = useMemo(() => {
-    const candidates = (plan.nearMisses || []).slice(0, inputs.packGoal === "three" ? 3 : 1);
+    const candidates = (plan.nearMisses || []).slice(0, 1);
     return {
       satin: Math.max(0, candidates.reduce((sum, item) => sum + item.satin, 0) - (plan.remaining?.satin || 0)),
       threads: Math.max(0, candidates.reduce((sum, item) => sum + item.threads, 0) - (plan.remaining?.threads || 0)),
       visions: Math.max(0, candidates.reduce((sum, item) => sum + item.visions, 0) - (plan.remaining?.visions || 0)),
     };
-  }, [inputs.packGoal, plan]);
+  }, [plan]);
   const eventMode = inputs.optimizationGoal === "events";
   const governorPointsAreEstimated = plan.steps.some((step) => step.eventPointsProvenance !== "verified");
   return (
@@ -1557,8 +1559,7 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
           ))}
         </ol>
         {plan.steps.length > 6 ? <details className={styles.moreSteps}><summary>Show {plan.steps.length - 6} later upgrades</summary><ol className={styles.list}>{plan.steps.slice(6).map((step, index) => <li key={`${step.piece}-later-${index}`}>{step.piece} → {step.tier}: {fmt(step.satin)} Satin · {fmt(step.threads)} Threads · {fmt(step.visions)} Visions · {eventMode ? `${fmt(step.eventPoints)} KvK points (${step.eventPointsProvenance})` : `+${fmt(step.statGain + (step.setBonusGain || 0))}% weighted stat/set value`}</li>)}</ol></details> : null}
-        <label className={styles.packScope}>Pack plan scope<select value={inputs.packGoal} onChange={(event) => setInputs((current) => ({ ...current, packGoal: event.target.value }))}><option value="next">Next recommended upgrade</option><option value="three">Next three candidates</option></select></label>
-        <PackOfferAdvisor title={inputs.packGoal === "three" ? "Unlock the next three Governor Gear candidates" : "Unlock the next Governor Gear upgrade"} resources={[{ key: "satin", label: "Satin" }, { key: "threads", label: "Threads" }, { key: "visions", label: "Visions" }]} requirements={governorPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
+        <PackOfferAdvisor title="Unlock the next blocked Governor Gear upgrade" resources={[{ key: "satin", label: "Satin" }, { key: "threads", label: "Threads" }, { key: "visions", label: "Visions" }]} requirements={governorPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
         <ExportButton name="governor-gear-plan" data={plan} />
       </aside>
     </div>

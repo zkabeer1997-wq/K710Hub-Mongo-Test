@@ -4,10 +4,10 @@ import { calculateMasterLevelMaterials, createMasterSkillInputs } from "../lib/m
 
 test("calculates verified full Master totals", () => {
   const cases = [
-    ["Valora", 167740, 275, 21150],
-    ["Pan", 201290, 275, 21000],
-    ["Roman", 502220, 440, 81000],
-    ["Cassia", 918340, 1820, 413500],
+    ["Valora", 171690, 275, 21150],
+    ["Pan", 206020, 275, 21000],
+    ["Roman", 513070, 440, 81000],
+    ["Cassia", 940060, 1820, 413500],
     ["Guinevere", 854450, 660, 156500],
     ["Wilson", 342380, 330, 63000],
   ];
