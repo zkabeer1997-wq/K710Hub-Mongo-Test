@@ -16,7 +16,7 @@ function NumberField({ label, value, onChange, accent }) {
   return <label className="ppo-field"><span><i style={{ background: accent }} />{label}</span><input type="number" min="0" step="1" inputMode="numeric" value={value} onChange={event => onChange(Math.max(0, Number(event.target.value) || 0))} /></label>;
 }
 
-export default function PetPackOptimizer({configuration}) {
+export default function PetPackOptimizer({configuration, toolKey = 'pet-pack-optimizer'}) {
   const PET_RESOURCES=configuration?.resources || DEFAULT_RESOURCES;
   const optimizePetPacks=createPetPackOptimizer(configuration);
   const [manualNeed, setManualNeed] = useState(EMPTY);
@@ -39,7 +39,7 @@ export default function PetPackOptimizer({configuration}) {
     setOwnedChests(Math.max(0, Number(saved?.ownedChests) || 0));
     setMaxWeeks(Math.min(26, Math.max(1, Number(saved?.maxWeeks) || 8)));
   }, []);
-  const persistence = useToolPersistence({ toolKey: 'pet-pack-optimizer', schemaVersion: 3, inputs: persistedInputs, restore, autoDetect: true });
+  const persistence = useToolPersistence({ toolKey, schemaVersion: 3, inputs: persistedInputs, restore, autoDetect: true });
   const shortfall = useMemo(() => Object.fromEntries(Object.keys(PET_RESOURCES).map(key => [key, Math.max(0, need[key] - have[key])])), [need, have, PET_RESOURCES]);
   const update = (setter, key, value) => { setter(previous => ({ ...previous, [key]: value })); setResult(null); };
   const calculate = () => {

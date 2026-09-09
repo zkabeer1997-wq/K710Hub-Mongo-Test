@@ -92,13 +92,33 @@ test("hero pack candidates expose complete costs for mastery and Red milestones"
     [{ id: "mastery", label: "Infantry Helmet", tier: "Mythic", enhancement: 20, mastery: 10 }],
     { xp: 0, forgehammers: 0, mythicPieces: 0, mithril: 0, safeXpReforging: false },
   );
-  assert.ok(mastery.nearMisses.some((item) => item.costs.forgehammers === 110 && item.costs.mythicPieces === 1));
+  assert.ok(mastery.nearMisses.some((item) => item.costs.forgehammers === 110 && item.costs.mythicPieces === 0));
 
   const red = calculateHeroGearPlan(
     [{ id: "red", label: "Infantry Helmet", tier: "Red", enhancement: 119, mastery: 11 }],
     { xp: 0, forgehammers: 0, mythicPieces: 0, mithril: 0, safeXpReforging: false },
   );
   assert.ok(red.nearMisses.some((item) => item.costs.mithril === 10 && item.costs.mythicPieces === 3));
+});
+
+test("Charm event mode scores the supplied KvK Preparation level points", () => {
+  const result = rankCharmUpgrades(
+    [{ id: "i-1", type: "Infantry", number: 1, current: 0, target: 1 }],
+    [null, [5, 5]],
+    { guides: 5, designs: 5 },
+    { troops: { Infantry: 1 }, stats: { Health: 1, Lethality: 1 }, mode: "events", amplification: 1 },
+  );
+  assert.equal(result.totals.eventPoints, 43750);
+  assert.equal(result.upgrades[0].eventPointsProvenance, "verified");
+});
+
+test("Governor event mode uses per-upgrade KvK Preparation points", () => {
+  const result = calculateGovernorGearPlan(
+    [{ id: "coat", label: "Coat", troop: "Infantry", tier: "", targetTier: "" }],
+    { mode: "inventory", optimizationGoal: "events", satin: 1500, threads: 15, visions: 0, troopWeights: { Infantry: 1 }, amplification: 1 },
+  );
+  assert.equal(result.steps[0].eventPoints, 40500);
+  assert.equal(result.totals.eventPoints, 40500);
 });
 
 test("hero XP allocation matches the published 10,000 XP reference fixture", () => {

@@ -50,7 +50,7 @@ function NumberField({ resource, label, value, onChange }) {
   return <label className={styles.field}><span className={styles.fieldLabel}><i className={styles.swatch} style={{ background: COLORS[resource] }}/>{label}</span><input type="number" min="0" step="1" inputMode="numeric" value={value} onChange={event => onChange(Math.max(0, Number(event.target.value) || 0))}/></label>;
 }
 
-export default function MastersPackOptimizer() {
+export default function MastersPackOptimizer({ toolKey = "masters-pack-optimizer" }) {
   const [manualNeed, setManualNeed] = useState(EMPTY);
   const [overrideRequirements, setOverrideRequirements] = useState(false);
   const [optionalSupply, setOptionalSupply] = useState(0);
@@ -71,7 +71,7 @@ export default function MastersPackOptimizer() {
     setResult(null);
   }, []);
   const persistence = useToolPersistence({
-    toolKey: "masters-pack-optimizer",
+    toolKey,
     schemaVersion: 4,
     inputs: persistedInputs,
     restore,

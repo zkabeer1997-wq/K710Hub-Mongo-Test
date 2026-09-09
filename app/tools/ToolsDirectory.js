@@ -1,8 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-const CATEGORIES = ['Account Progression', 'Charms', 'Governor Gear', 'Hero Gear', 'Pets', 'Masters', 'Special Event Shops', 'Construction Costs', 'Research Costs'];
+const CATEGORIES = ['UPDATED TOOLS', 'Account Progression', 'Charms', 'Governor Gear', 'Hero Gear', 'Pets', 'Masters', 'Special Event Shops', 'Construction Costs', 'Research Costs'];
 const TOOLS = {
+  'UPDATED TOOLS': [
+    { key: 'updated-hero-gear', event: 'Stats + KvK Preparation', title: 'Updated Hero Gear Optimizer', description: 'Optimize Enhancement, Mastery, Red ascension, imbuement, reforging, and the exact four-resource shortfall.', status: 'Updated', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
+    { key: 'updated-governor-gear', event: 'Stats + KvK Preparation', title: 'Updated Governor Gear Optimizer', description: 'Rank all six pieces with squared scarcity, troop priorities, set bonuses, and sourced KvK upgrade points.', status: 'Updated', icon: '/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp' },
+    { key: 'updated-charms', event: 'Stats + KvK Preparation', title: 'Updated Charms Optimizer', description: 'Optimize all 18 charms with exact level costs, shared inventory, target planning, and connected weekly packs.', status: 'Updated', icon: '/images/kingshot/charms/infantry.webp' },
+    { key: 'updated-masters', event: 'Progression + monthly packs', title: 'Updated Masters Optimizer', description: 'Combine multiple relationship and skill targets, partial Affinity progress, inventory, and purchase scheduling.', status: 'Updated', icon: '/images/kingshot/masters/roman.png' },
+    { key: 'updated-pets', event: 'Progression + weekly packs', title: 'Updated Pets Optimizer', description: 'Plan every pet from the complete dataset and turn the combined shortfall into a weekly pack schedule.', status: 'Updated', icon: '/images/pet-pack-compass.svg' },
+  ],
   'Account Progression': [
     { key: 'account-progression', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
   ],
@@ -37,6 +44,9 @@ const STATUS_TONE = {
 
 function CategoryGlyph({ category }) {
   const common = { viewBox: '0 0 48 48', 'aria-hidden': true, className: 'tools-menu-glyph' };
+  if (category === 'UPDATED TOOLS') {
+    return <svg {...common}><path d="M24 5 29 16l12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1Z" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" /></svg>;
+  }
   if (category === 'Charms') {
     return <svg {...common}><path d="M24 6 L38 16 L33 34 L15 34 L10 16 Z" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" /></svg>;
   }

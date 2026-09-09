@@ -98,21 +98,28 @@ const petImages = {
 };
 
 function ExportButton({ name, data }) {
-  const download = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
+  const download = (format) => {
+    const rows = data?.actions || data?.steps || data?.upgrades || data?.candidates || [];
+    const keys = [...new Set(rows.flatMap((row) => Object.keys(row).filter((key) => typeof row[key] !== "object")))];
+    const escapeCsv = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const body = format === "csv"
+      ? [keys.map(escapeCsv).join(","), ...rows.map((row) => keys.map((key) => escapeCsv(row[key])).join(","))].join("\n")
+      : JSON.stringify(data, null, 2);
+    const blob = new Blob([body], {
+      type: format === "csv" ? "text/csv;charset=utf-8" : "application/json",
     });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${name}.json`;
+    anchor.download = `${name}.${format}`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
   return (
-    <button className={styles.button} type="button" onClick={download}>
-      Export plan
-    </button>
+    <span className={styles.exportActions}>
+      <button className={styles.button} type="button" onClick={() => download("csv")}>Export CSV</button>
+      <button className={styles.button} type="button" onClick={() => download("json")}>Export JSON</button>
+    </span>
   );
 }
 function SaveState({ persistence }) {
@@ -668,7 +675,7 @@ export function PetProgressionPlanner({ memberId = "" }) {
   );
 }
 
-export function CharmStatPlanner({ memberId = "", packConfiguration }) {
+export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "governor-charm-stats" }) {
   const [activeTroop, setActiveTroop] = useState("Infantry");
   const [inputs, setInputs] = useState({
     charms: defaultCharms,
@@ -686,7 +693,7 @@ export function CharmStatPlanner({ memberId = "", packConfiguration }) {
     [],
   );
   const persistence = useToolPersistence({
-    toolKey: "governor-charm-stats",
+    toolKey,
     schemaVersion: 1,
     inputs,
     restore,
@@ -1129,7 +1136,7 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
   );
 }
 
-export function HeroGearPlanner() {
+export function HeroGearPlanner({ toolKey = "hero-gear" }) {
   const [rows, setRows] = useState(() =>
     ["Infantry", "Cavalry", "Archer"].flatMap((troop) =>
       heroPieces.map((slot) => ({
@@ -1166,7 +1173,7 @@ export function HeroGearPlanner() {
     setInputs((c) => ({ ...c, ...state, mode: "inventory", rows: undefined }));
   }, []);
   const persistence = useToolPersistence({
-    toolKey: "hero-gear",
+    toolKey,
     schemaVersion: 1,
     inputs: saved,
     restore,
@@ -1339,7 +1346,7 @@ export function HeroGearPlanner() {
   );
 }
 
-export function GovernorGearPlanner() {
+export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
   const [rows, setRows] = useState(() =>
     governorPieces.map((label, index) => {
       const troop = [
@@ -1378,7 +1385,7 @@ export function GovernorGearPlanner() {
     setInputs((c) => ({ ...c, ...state, mode: "inventory", rows: undefined }));
   }, []);
   const persistence = useToolPersistence({
-    toolKey: "governor-gear",
+    toolKey,
     schemaVersion: 1,
     inputs: saved,
     restore,
