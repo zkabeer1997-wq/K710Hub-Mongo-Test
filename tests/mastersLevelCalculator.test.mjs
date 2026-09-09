@@ -28,3 +28,14 @@ test("subtracts current relationship and skill progress", () => {
   assert.equal(result.emblems, 15);
   assert.equal(result.manuscripts, 350);
 });
+
+test("subtracts partial affinity already earned toward the next relationship level", () => {
+  const result = calculateMasterLevelMaterials({
+    masterName: "Valora",
+    currentLevel: 8,
+    currentAffinity: 125,
+    targetLevel: 10,
+  });
+  assert.equal(result.affinity, 495);
+  assert.equal(result.currentAffinity, 125);
+});

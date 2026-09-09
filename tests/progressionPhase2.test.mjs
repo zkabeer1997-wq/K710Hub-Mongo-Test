@@ -87,6 +87,20 @@ test("hero gear never recommends an unaffordable upgrade", () => {
   assert.equal(result.actions.length, 0);
 });
 
+test("hero pack candidates expose complete costs for mastery and Red milestones", () => {
+  const mastery = calculateHeroGearPlan(
+    [{ id: "mastery", label: "Infantry Helmet", tier: "Mythic", enhancement: 20, mastery: 10 }],
+    { xp: 0, forgehammers: 0, mythicPieces: 0, mithril: 0, safeXpReforging: false },
+  );
+  assert.ok(mastery.nearMisses.some((item) => item.costs.forgehammers === 110 && item.costs.mythicPieces === 1));
+
+  const red = calculateHeroGearPlan(
+    [{ id: "red", label: "Infantry Helmet", tier: "Red", enhancement: 119, mastery: 11 }],
+    { xp: 0, forgehammers: 0, mythicPieces: 0, mithril: 0, safeXpReforging: false },
+  );
+  assert.ok(red.nearMisses.some((item) => item.costs.mithril === 10 && item.costs.mythicPieces === 3));
+});
+
 test("hero XP allocation matches the published 10,000 XP reference fixture", () => {
   const weights = {
     "Infantry.Health": 1.5,

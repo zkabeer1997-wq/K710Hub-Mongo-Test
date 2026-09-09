@@ -10,7 +10,6 @@ import {
   calculateHeroGearPlan,
   calculateMasterPlan,
   calculatePetProgression,
-  heroXpLevelCost,
   planTtgProduction,
   rankCharmUpgrades,
 } from "../../lib/progressionPhase2.mjs";
@@ -206,9 +205,10 @@ function PackOfferAdvisor({ title, resources, requirements, offers: savedOffers 
   }, [savedOffers, resources]);
   const plan = useMemo(() => optimizeOfferPacks(offers, requirements), [offers, requirements]);
   const update = (index, key, value) => onOffersChange(offers.map((offer, offerIndex) => offerIndex === index ? { ...offer, [key]: key === "name" ? value : number(value) } : offer));
-  return <details className={styles.packAdvisor}>
-    <summary><span>Pack optimization</span><b>{title}</b></summary>
-    <p>Pack contents can vary by account and event. Enter the offers visible in your game; K710Hub will not guess them.</p>
+  const totalShortfall = resources.reduce((sum, { key }) => sum + (requirements[key] || 0), 0);
+  return <details className={styles.packAdvisor} defaultOpen={totalShortfall > 0}>
+    <summary><span>Pack optimization · connected to this plan</span><b>{title}</b></summary>
+    <p>The material gaps below come directly from the recommended upgrade{resources.length > 1 ? "s" : ""}. Enter the offers visible in your game; pack contents can vary by account and event.</p>
     <div className={styles.packNeed}>{resources.map(({ key, label }) => <span key={key}>{label}<b>{fmt(requirements[key])}</b></span>)}</div>
     <div className={styles.offerTable}>
       {offers.map((offer, index) => <div className={styles.offerRow} key={index}>
@@ -218,7 +218,7 @@ function PackOfferAdvisor({ title, resources, requirements, offers: savedOffers 
         <input aria-label={`Offer ${index + 1} purchase limit`} type="number" min="0" max="20" placeholder="Limit" value={offer.limit} onChange={(event) => update(index, "limit", event.target.value)} />
       </div>)}
     </div>
-    {offers.some((offer) => offer.price > 0) ? plan ? <div className={styles.packAnswer}><strong>Cheapest entered combination: ${plan.cost.toFixed(2)}</strong>{plan.picks.map((pick) => <span key={pick.name}>{pick.quantity} × {pick.name || "Unnamed offer"}</span>)}</div> : <p className={styles.status}>The entered offers cannot cover this material gap within their limits.</p> : null}
+    {!totalShortfall ? <p className={styles.status}>Your current inventory already covers this pack-plan scope.</p> : offers.some((offer) => offer.price > 0) ? plan ? <div className={styles.packAnswer}><strong>Cheapest entered combination: ${plan.cost.toFixed(2)}</strong>{plan.picks.map((pick) => <span key={pick.name}>{pick.quantity} × {pick.name || "Unnamed offer"}</span>)}</div> : <p className={styles.status}>The entered offers cannot cover this material gap within their limits.</p> : <p className={styles.status}>Add the packs shown in your game to compare the cheapest combination.</p>}
   </details>;
 }
 
@@ -1178,7 +1178,12 @@ export function HeroGearPlanner() {
   );
   const heroPackNeed = useMemo(() => {
     const candidates = (plan.nearMisses || []).slice(0, inputs.packGoal === "three" ? 3 : 1);
-    return { xp: Math.max(0, candidates.reduce((sum, near) => sum + heroXpLevelCost(near.targetLevel + 1), 0) - plan.remaining.xp), forgehammers: 0, mythicPieces: 0, mithril: 0 };
+    return {
+      xp: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.xp || 0), 0) - (plan.remaining?.xp || 0)),
+      forgehammers: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.forgehammers || 0), 0) - (plan.remaining?.forgehammers || 0)),
+      mythicPieces: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.mythicPieces || 0), 0) - (plan.remaining?.mythicPieces || 0)),
+      mithril: Math.max(0, candidates.reduce((sum, item) => sum + (item.costs?.mithril || 0), 0) - (plan.remaining?.mithril || 0)),
+    };
   }, [inputs.packGoal, plan]);
   return (
     <div className={styles.workspace}>
@@ -1528,7 +1533,7 @@ export function GovernorGearPlanner() {
           </p>
         ) : null}
         <ol className={styles.list}>
-          {plan.steps.map((step, index) => (
+          {plan.steps.slice(0, 6).map((step, index) => (
             <li key={`${step.piece}-${index}`}>
               {step.piece} → {step.tier}: {fmt(step.satin)} Satin ·{" "}
               {fmt(step.threads)} Threads · {fmt(step.visions)} Visions · +
@@ -1536,6 +1541,7 @@ export function GovernorGearPlanner() {
             </li>
           ))}
         </ol>
+        {plan.steps.length > 6 ? <details className={styles.moreSteps}><summary>Show {plan.steps.length - 6} later upgrades</summary><ol className={styles.list}>{plan.steps.slice(6).map((step, index) => <li key={`${step.piece}-later-${index}`}>{step.piece} → {step.tier}: {fmt(step.satin)} Satin · {fmt(step.threads)} Threads · {fmt(step.visions)} Visions · +{fmt(step.statGain)}% stat</li>)}</ol></details> : null}
         <label className={styles.packScope}>Pack plan scope<select value={inputs.packGoal} onChange={(event) => setInputs((current) => ({ ...current, packGoal: event.target.value }))}><option value="next">Next recommended upgrade</option><option value="three">Next three candidates</option></select></label>
         <PackOfferAdvisor title={inputs.packGoal === "three" ? "Unlock the next three Governor Gear candidates" : "Unlock the next Governor Gear upgrade"} resources={[{ key: "satin", label: "Satin" }, { key: "threads", label: "Threads" }, { key: "visions", label: "Visions" }]} requirements={governorPackNeed} offers={inputs.packOffers} onOffersChange={(packOffers) => setInputs((current) => ({ ...current, packOffers }))} />
         <ExportButton name="governor-gear-plan" data={plan} />

@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { optimizeMastersPacks, MASTER_PACK_RESOURCES } from "../../lib/mastersPackOptimizer.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
 import { SaveToRoadmap } from "../../components/tools/PlannerExperience";
@@ -7,11 +7,10 @@ import { calculateMasterLevelMaterials, createMasterSkillInputs, MASTER_LEVEL_DA
 import styles from "./MastersPackOptimizer.module.css";
 
 const EMPTY = { supply: 0, emblems: 0, affinity: 0, manuscripts: 0 };
-const DEFAULT_NEED = { supply: 300, emblems: 160, affinity: 160000, manuscripts: 10000 };
 const COLORS = { supply: "#65a9d8", emblems: "#d9a94e", affinity: "#86a873", manuscripts: "#ef8348" };
 const money = value => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 const number = value => Math.round(value).toLocaleString();
-const createCalculator = (masterName = "Valora") => ({ id: `${masterName}-${Date.now()}-${Math.random()}`, masterName, currentLevel: 0, targetLevel: 10, skills: createMasterSkillInputs(masterName) });
+const createCalculator = (masterName = "Valora") => ({ id: `${masterName}-${Date.now()}-${Math.random()}`, masterName, currentLevel: 0, currentAffinity: 0, targetLevel: 10, skills: createMasterSkillInputs(masterName) });
 const DEFAULT_CALCULATORS = [createCalculator("Valora")];
 
 function normalizeResources(value = {}) {
@@ -22,7 +21,9 @@ function migrateMastersPackState(inputs) {
   const legacy = inputs?.calculator ? [inputs.calculator] : [];
   const savedCalculators = Array.isArray(inputs?.calculators) && inputs.calculators.length ? inputs.calculators : legacy;
   return {
-    need: normalizeResources(inputs?.need),
+    manualNeed: normalizeResources(inputs?.manualNeed || inputs?.need),
+    overrideRequirements: Boolean(inputs?.overrideRequirements),
+    optionalSupply: Math.max(0, Number(inputs?.optionalSupply) || 0),
     have: normalizeResources(inputs?.have),
     maxMonths: Math.min(6, Math.max(1, Number(inputs?.maxMonths) || 3)),
     calculators: (savedCalculators.length ? savedCalculators : DEFAULT_CALCULATORS).map((entry, entryIndex) => {
@@ -31,6 +32,7 @@ function migrateMastersPackState(inputs) {
         id: entry?.id || `${masterName}-${entryIndex}`,
         masterName,
         currentLevel: Math.min(100, Math.max(0, Number(entry?.currentLevel) || 0)),
+        currentAffinity: Math.max(0, Number(entry?.currentAffinity) || 0),
         targetLevel: Math.min(100, Math.max(0, Number(entry?.targetLevel) || 10)),
         skills: createMasterSkillInputs(masterName).map((skill, index) => ({ ...skill, ...entry?.skills?.[index] })),
       };
@@ -49,16 +51,20 @@ function NumberField({ resource, label, value, onChange }) {
 }
 
 export default function MastersPackOptimizer() {
-  const [need, setNeed] = useState(DEFAULT_NEED);
+  const [manualNeed, setManualNeed] = useState(EMPTY);
+  const [overrideRequirements, setOverrideRequirements] = useState(false);
+  const [optionalSupply, setOptionalSupply] = useState(0);
   const [have, setHave] = useState(EMPTY);
   const [maxMonths, setMaxMonths] = useState(3);
   const [result, setResult] = useState(null);
   const [calculators, setCalculators] = useState(DEFAULT_CALCULATORS);
   const [calculating, setCalculating] = useState(false);
-  const persistedInputs = useMemo(() => ({ need, have, maxMonths, calculators }), [need, have, maxMonths, calculators]);
+  const persistedInputs = useMemo(() => ({ manualNeed, overrideRequirements, optionalSupply, have, maxMonths, calculators }), [manualNeed, overrideRequirements, optionalSupply, have, maxMonths, calculators]);
   const restore = useCallback(saved => {
     const normalized = migrateMastersPackState(saved);
-    setNeed(normalized.need);
+    setManualNeed(normalized.manualNeed);
+    setOverrideRequirements(normalized.overrideRequirements);
+    setOptionalSupply(normalized.optionalSupply);
     setHave(normalized.have);
     setMaxMonths(normalized.maxMonths);
     setCalculators(normalized.calculators);
@@ -66,16 +72,17 @@ export default function MastersPackOptimizer() {
   }, []);
   const persistence = useToolPersistence({
     toolKey: "masters-pack-optimizer",
-    schemaVersion: 3,
+    schemaVersion: 4,
     inputs: persistedInputs,
     restore,
     migrate: migrateMastersPackState,
     autoDetect: true,
   });
-  const shortfall = useMemo(() => Object.fromEntries(Object.keys(MASTER_PACK_RESOURCES).map(key => [key, Math.max(0, need[key] - have[key])])), [need, have]);
   const calculatedRows = useMemo(() => calculators.map(calculateMasterLevelMaterials), [calculators]);
   const calculatedMaterials = useMemo(() => calculatedRows.reduce((total, row) => ({ affinity: total.affinity + row.affinity, emblems: total.emblems + row.emblems, manuscripts: total.manuscripts + row.manuscripts }), { affinity: 0, emblems: 0, manuscripts: 0 }), [calculatedRows]);
-  useEffect(() => { setNeed(current => ({ ...current, affinity: calculatedMaterials.affinity, emblems: calculatedMaterials.emblems, manuscripts: calculatedMaterials.manuscripts })); setResult(null); }, [calculatedMaterials]);
+  const calculatedNeed = useMemo(() => ({ supply: optionalSupply, ...calculatedMaterials }), [calculatedMaterials, optionalSupply]);
+  const need = overrideRequirements ? manualNeed : calculatedNeed;
+  const shortfall = useMemo(() => Object.fromEntries(Object.keys(MASTER_PACK_RESOURCES).map(key => [key, Math.max(0, need[key] - have[key])])), [need, have]);
   const updateCalculator = (id, updater) => { setCalculators(current => current.map(entry => entry.id === id ? updater(entry) : entry)); setResult(null); };
   const addMaster = () => {
     const used = new Set(calculators.map(entry => entry.masterName));
@@ -106,6 +113,7 @@ export default function MastersPackOptimizer() {
           <div className={styles.calculatorGrid}>
             <label className={styles.field}><span className={styles.fieldLabel}>Master</span><select aria-label={`Master ${calculatorIndex + 1}`} value={calculator.masterName} onChange={event => { const masterName = event.target.value; updateCalculator(calculator.id, current => ({ ...current, masterName, skills: createMasterSkillInputs(masterName) })); }}>{Object.keys(MASTER_LEVEL_DATA).map(name => <option key={name} disabled={calculators.some(entry => entry.id !== calculator.id && entry.masterName === name)}>{name}</option>)}</select></label>
             <NumberField resource="affinity" label="Current relationship" value={calculator.currentLevel} onChange={value => updateCalculator(calculator.id, current => ({ ...current, currentLevel: Math.min(100, value), targetLevel: Math.max(Math.min(100, value), current.targetLevel) }))}/>
+            <NumberField resource="affinity" label="Progress into current level" value={calculator.currentAffinity} onChange={value => updateCalculator(calculator.id, current => ({ ...current, currentAffinity: value }))}/>
             <NumberField resource="affinity" label="Target relationship" value={calculator.targetLevel} onChange={value => updateCalculator(calculator.id, current => ({ ...current, targetLevel: Math.min(100, Math.max(current.currentLevel, value)) }))}/>
           </div>
           <details className={styles.skillDetails}><summary>Optional skill upgrades</summary><div className={styles.skillPlanner}>{calculator.skills.map((skill, index) => { const max = MASTER_LEVEL_DATA[calculator.masterName].skills[index].costs.length - 1; return <div className={styles.skillRow} key={skill.name}><b>{skill.name}</b><label>Current<select value={skill.current} onChange={event => updateCalculator(calculator.id, current => ({ ...current, skills: current.skills.map((item, itemIndex) => itemIndex === index ? { ...item, current: Number(event.target.value), target: Math.max(Number(event.target.value), item.target) } : item) }))}>{Array.from({ length: max + 1 }, (_, level) => <option key={level}>{level}</option>)}</select></label><span aria-hidden="true">→</span><label>Target<select value={skill.target} onChange={event => updateCalculator(calculator.id, current => ({ ...current, skills: current.skills.map((item, itemIndex) => itemIndex === index ? { ...item, target: Number(event.target.value) } : item) }))}>{Array.from({ length: max - skill.current + 1 }, (_, offset) => skill.current + offset).map(level => <option key={level}>{level}</option>)}</select></label></div>; })}</div></details>
@@ -114,11 +122,13 @@ export default function MastersPackOptimizer() {
         <button className={styles.addMaster} type="button" onClick={addMaster} disabled={calculators.length >= Object.keys(MASTER_LEVEL_DATA).length}>+ Add another Master</button>
         <div className={styles.calculatorResult}><span><small>Affinity</small><b>{number(calculatedMaterials.affinity)}</b></span><span><small>Emblems</small><b>{number(calculatedMaterials.emblems)}</b></span><span><small>Manuscripts</small><b>{number(calculatedMaterials.manuscripts)}</b></span><p>Combined amounts automatically feed the pack optimizer below.</p></div>
       </section>
-      <div className={styles.panelHead}><div><h2>Set your material target</h2><p>Enter the total resources required and subtract what is already in your inventory.</p></div><span className={styles.limitTag}>Monthly + weekly limits</span></div>
+      <div className={styles.panelHead}><div><h2>Inventory and purchase plan</h2><p>Your combined Master targets are the optimizer requirement. Enter only what you already own.</p></div><span className={styles.limitTag}>Monthly + weekly limits</span></div>
       <div className={styles.columns}>
-        <div className={styles.column}><h3>Materials required</h3>{Object.entries(MASTER_PACK_RESOURCES).map(([key, resource]) => <NumberField key={key} resource={key} label={resource.label} value={need[key]} onChange={value => update(setNeed, key, value)}/>)}</div>
+        <div className={styles.column}><h3>Calculated requirement</h3>{Object.entries(MASTER_PACK_RESOURCES).map(([key, resource]) => <div className={styles.readonlyResource} key={key}><span><i className={styles.swatch} style={{ background: COLORS[key] }}/>{resource.label}</span><b>{number(need[key])}</b></div>)}</div>
         <div className={styles.column}><h3>Current inventory</h3>{Object.entries(MASTER_PACK_RESOURCES).map(([key, resource]) => <NumberField key={key} resource={key} label={resource.label} value={have[key]} onChange={value => update(setHave, key, value)}/>)}</div>
       </div>
+      <NumberField resource="supply" label="Optional Adventure Supply target" value={optionalSupply} onChange={value => { setOptionalSupply(value); setResult(null); }}/>
+      <details className={styles.override}><summary>Advanced: manually override calculated requirements</summary><label><input type="checkbox" checked={overrideRequirements} onChange={event => { setOverrideRequirements(event.target.checked); setResult(null); }}/> Use manual requirements instead</label>{overrideRequirements && <div className={styles.overrideGrid}>{Object.entries(MASTER_PACK_RESOURCES).map(([key, resource]) => <NumberField key={key} resource={key} label={resource.label} value={manualNeed[key]} onChange={value => update(setManualNeed, key, value)}/>)}</div>}</details>
       <div className={styles.settings}>
         <NumberField resource="emblems" label="Maximum months to plan" value={maxMonths} onChange={value => { setMaxMonths(Math.min(6, Math.max(1, value))); setResult(null); }}/>
         <div className={styles.cadence}><b>Planning cadence</b>Four regular-pack weeks per month. Each Acuity tier appears once per month.</div>

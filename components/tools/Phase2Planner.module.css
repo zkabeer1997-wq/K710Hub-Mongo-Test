@@ -273,6 +273,9 @@
 .packAnswer { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding: 10px; border: 1px solid rgba(54,153,117,.28); background: rgba(54,153,117,.08); }
 .packAnswer strong { width: 100%; color: var(--parchment); font-size: 11px; }
 .packAnswer span { color: var(--parchment-dim); font-size: 10px; }
+.moreSteps { margin: 8px 0 14px; border: 1px solid var(--edge); border-radius: var(--radius-sm); background: rgba(255,255,255,.02); }
+.moreSteps summary { padding: 9px 11px; color: var(--brass-bright); font-size: 10px; font-weight: 800; cursor: pointer; }
+.moreSteps .list { margin: 0; padding: 0 28px 10px; }
 .pieceIdentity {
   display: flex;
   align-items: center;

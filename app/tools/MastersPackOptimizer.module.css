@@ -19,3 +19,12 @@
 @media(max-width:580px){.inputs{padding:16px}.panelHead{flex-direction:column}.columns,.settings,.calculatorGrid{grid-template-columns:1fr}.skillHeading{flex-direction:column;gap:2px}.skillRow{grid-template-columns:1fr 70px 12px 70px}.calculatorResult{grid-template-columns:1fr}.calculatorResult button{grid-column:auto}.metrics{grid-template-columns:1fr}.metrics div{border-left:0;border-top:1px solid var(--edge)}.pack{grid-template-columns:74px minmax(0,1fr)}.pack em{grid-column:2}.monthList{padding:12px}}
 @media(prefers-reduced-motion:reduce){.calculate{transition:none}}
 .inputs{padding:20px;position:static}.results,.empty{min-height:360px}
+.calculatorGrid{grid-template-columns:1.2fr repeat(3,1fr)}
+.readonlyResource{display:flex;align-items:center;justify-content:space-between;min-height:38px;padding:8px 10px;border:1px solid var(--edge);border-radius:var(--radius-md);background:rgba(255,255,255,.025)}
+.readonlyResource span{display:flex;align-items:center;gap:7px;color:var(--parchment-dim);font-size:10px}
+.readonlyResource b{color:var(--parchment);font-family:var(--font-mono)}
+.override{margin:14px 0;padding:11px 12px;border:1px solid var(--edge);border-radius:var(--radius-md);background:rgba(255,255,255,.018)}
+.override summary{color:var(--brass-bright);font-size:10px;font-weight:800;cursor:pointer}
+.override>label{display:flex;align-items:center;gap:8px;margin-top:12px;color:var(--parchment-dim);font-size:11px}
+.overrideGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:580px){.overrideGrid{grid-template-columns:1fr}}
