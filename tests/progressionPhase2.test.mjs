@@ -5,6 +5,7 @@ import {
   calculateHeroGearPlan,
   calculateMasterPlan,
   calculatePetProgression,
+  buildPetRows,
   heroXpLevelCost,
   planTtgProduction,
   rankCharmUpgrades,
@@ -67,6 +68,28 @@ test("pet progression charges advancement materials on milestone levels", () => 
   });
   assert.equal(result.totals.manuals, 15);
   assert.equal(result.advancedChestEquivalents, 3);
+});
+
+test("pet food rows match published rarity checkpoints", () => {
+  const checkpoints = [
+    ["Gray Wolf", 3, 160],
+    ["Gray Wolf", 10, 235],
+    ["Gray Wolf", 20, 390],
+    ["Gray Wolf", 50, 1320],
+    ["Bison", 10, 370],
+    ["Bison", 60, 3560],
+    ["Moose", 30, 1650],
+    ["Moose", 70, 7140],
+    ["Lion", 40, 3440],
+    ["Mighty Bison", 100, 23100],
+  ];
+  for (const [pet, level, expected] of checkpoints) {
+    assert.equal(
+      buildPetRows(pet).find((row) => row.toLevel === level)?.food,
+      expected,
+      `${pet} level ${level}`,
+    );
+  }
 });
 
 test("hero gear maps helmet to lethality and exposes reforge recovery", () => {

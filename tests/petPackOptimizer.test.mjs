@@ -20,3 +20,31 @@ test('never schedules a tier more than once in one week', () => {
     assert.equal(new Set(customTiers).size, customTiers.length);
   }
 });
+
+test('does not tell members to redeem Advanced Chests they do not need', () => {
+  const result = optimizePetPacks({
+    need: { food: 0, manual: 1, potion: 0, medal: 0 },
+    have: {},
+    ownedChests: 10,
+    maxWeeks: 1,
+  });
+  assert.equal(result.cost, 0);
+  assert.deepEqual(result.resourcePlan.allocations, { manual: 1, potion: 0, medal: 0 });
+  assert.equal(result.resourcePlan.unusedChests, 9);
+});
+
+test('scheduled pet purchases reconcile to the optimizer cost and limits', () => {
+  const result = optimizePetPacks({
+    need: { food: 150000, manual: 500, potion: 160, medal: 80 },
+    have: {},
+    maxWeeks: 8,
+  });
+  const scheduledCost = result.schedule.flatMap((week) => [...week.custom, ...week.singles])
+    .reduce((sum, pack) => sum + pack.price, 0);
+  assert.ok(Math.abs(scheduledCost - result.cost) < 1e-7);
+  for (const week of result.schedule) {
+    assert.equal(new Set(week.custom.map((pack) => pack.tier)).size, week.custom.length);
+    const singleKeys = week.singles.map((pack) => `${pack.resource}:${pack.tier}`);
+    assert.equal(new Set(singleKeys).size, singleKeys.length);
+  }
+});

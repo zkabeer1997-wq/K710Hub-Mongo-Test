@@ -83,7 +83,7 @@ export default function PetPackOptimizer({configuration}) {
       {result && result.timedOut && <div className="ppo-empty ppo-infeasible"><span>⚠</span><h2>Optimization took too long</h2><p>This target is too large to fully search in time. Try lowering the targets, reducing the maximum weeks to plan, or entering more of your current inventory.</p></div>}
       {hasPlan && <>
         <div className="ppo-result-head"><div><span>Lowest-cost plan</span><strong>{money(result.cost)}</strong></div><dl><div><dt>Timeline</dt><dd>{result.weeks} week{result.weeks === 1 ? '' : 's'}</dd></div><div><dt>Avg. / week</dt><dd>{money(weeklyAverage)}</dd></div><div><dt>Chests bought</dt><dd>{number(result.boughtChests)}</dd></div></dl></div>
-        <div className="ppo-redemption"><div><h3>Advanced Chest redemption</h3><p>{number(ownedChests)} owned + {number(result.boughtChests)} bought</p></div>{['manual','potion','medal'].map(key => <span key={key}><b>{number(result.resourcePlan.allocations[key])}</b> → {resourceNames[key]}</span>)}</div>
+        <div className="ppo-redemption"><div><h3>Advanced Chest redemption</h3><p>{number(ownedChests)} owned + {number(result.boughtChests)} bought · {number(result.resourcePlan.unusedChests)} left unopened</p></div>{['manual','potion','medal'].map(key => <span key={key}><b>{number(result.resourcePlan.allocations[key])}</b> → {resourceNames[key]}</span>)}</div>
         <div className="ppo-week-list">
           {result.schedule.map(week => <article key={week.week}>
             <header><span>Week {week.week}</span><strong>{money([...week.custom, ...week.singles].reduce((sum, item) => sum + item.price, 0))}</strong></header>

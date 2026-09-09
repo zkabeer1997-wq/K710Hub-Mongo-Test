@@ -32,3 +32,23 @@ test("respects one regular pack per resource and tier each week", () => {
     assert.equal(new Set(keys).size, keys.length);
   }
 });
+
+test("scheduled Masters purchases reconcile to cost, delivery, and cadence", () => {
+  const result = optimizeMastersPacks({
+    need: { supply: 1000, emblems: 300, affinity: 200000, manuscripts: 30000 },
+    maxMonths: 2,
+  });
+  const purchases = result.schedule.flatMap(week => [...week.acuity, ...week.regular]);
+  assert.ok(Math.abs(purchases.reduce((sum, pack) => sum + pack.price, 0) - result.cost) < 1e-7);
+  for (const resource of ["supply", "emblems", "affinity", "manuscripts"]) {
+    assert.ok(purchases.filter(pack => pack.resource === resource).reduce((sum, pack) => sum + pack.amount, 0) >= result.shortfall[resource]);
+  }
+  for (const week of result.schedule) {
+    const regularKeys = week.regular.map(pack => `${pack.resource}:${pack.tier}`);
+    assert.equal(new Set(regularKeys).size, regularKeys.length);
+  }
+  for (let month = 1; month <= result.months; month++) {
+    const tiers = result.schedule.filter(week => week.month === month).flatMap(week => week.acuity).map(pack => pack.tier);
+    assert.equal(new Set(tiers).size, tiers.length);
+  }
+});
