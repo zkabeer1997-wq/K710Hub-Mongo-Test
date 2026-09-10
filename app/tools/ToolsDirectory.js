@@ -96,7 +96,7 @@ export default function ToolsDirectory({ memberId, category }) {
         <div className="tools-menu-grid" role="list">
           {CATEGORIES.map((name) => {
             const tools = TOOLS[name];
-            const count=name==='Research Costs'?3:name==='Construction Costs'?2:tools.length;
+            const count=name==='Research Costs'?3:tools.length;
             const href=name==='Research Costs'?'/tools/research-costs':name==='Construction Costs'?'/tools/construction-costs':`/tools${categoryQuery(name)}`;
             return (
               <Link key={name} href={href} className="tools-menu-tile" role="listitem">
