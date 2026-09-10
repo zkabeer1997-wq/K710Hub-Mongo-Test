@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useToolPersistence } from "../../lib/useToolPersistence";
 import { calculateUpdatedConstruction, exportUpdatedConstructionCsv } from "../../lib/updatedConstruction.mjs";
-import { CONSTRUCTION_SOURCE, CONSTRUCTION_TIERS, UPDATED_CONSTRUCTION_BUILDINGS } from "../../lib/updatedConstructionData.mjs";
+import { CONSTRUCTION_SOURCE, CONSTRUCTION_TIERS, TOWN_CENTER_PREREQUISITES, UPDATED_CONSTRUCTION_BUILDINGS } from "../../lib/updatedConstructionData.mjs";
 import { DataLabel, FirstUseGuide, SaveToRoadmap } from "./PlannerExperience";
 import styles from "./UpdatedConstructionPlanner.module.css";
 
@@ -101,7 +101,17 @@ export default function UpdatedConstructionPlanner() {
               </div>;
             })}
           </div>
-          <label className={styles.check}><input type="checkbox" checked={state.settings.includePrerequisites} onChange={(event) => updateGroup("settings", "includePrerequisites", event.target.checked)} />Include known Town Center prerequisites through TG8</label>
+          <label className={styles.check}><input type="checkbox" checked={state.settings.includePrerequisites} onChange={(event) => updateGroup("settings", "includePrerequisites", event.target.checked)} />Include Town Center prerequisites through TG10</label>
+          <details className={styles.prerequisites}>
+            <summary>Town Center prerequisite chain</summary>
+            <div>
+              {CONSTRUCTION_TIERS.map((targetTier) => <p key={targetTier}>
+                <strong>{targetTier}</strong>
+                <span>{TOWN_CENTER_PREREQUISITES[targetTier].map((item) => `${item.name || UPDATED_CONSTRUCTION_BUILDINGS.find((building) => building.id === item.id)?.name} ${item.tier}`).join(" + ")}</span>
+                {TOWN_CENTER_PREREQUISITES[targetTier].some((item) => item.derived) ? <small>Pattern-derived</small> : <small>Workbook-listed</small>}
+              </p>)}
+            </div>
+          </details>
         </section>
 
         <section className={styles.panel}>
@@ -117,13 +127,13 @@ export default function UpdatedConstructionPlanner() {
         <section className={styles.panel}>
           <div className={styles.heading}><span>03</span><div><h2>Refining schedule</h2><p>The first refinement each day costs 50% less; the 100-attempt ladder resets Monday.</p></div></div>
           <div className={styles.fields}>
-            <label>Next weekly attempt<input type="number" min="1" max="100" value={state.refinement.refinementState} onChange={(event) => updateGroup("refinement", "refinementState", Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /></label>
-            <label>Already completed today<input type="number" min="0" value={state.refinement.completedToday} onChange={(event) => updateGroup("refinement", "completedToday", Math.max(0, Number(event.target.value) || 0))} /></label>
-            <label>Maximum refinements per day<input type="number" min="1" max="100" value={state.refinement.refinementsPerDay} onChange={(event) => updateGroup("refinement", "refinementsPerDay", Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /></label>
-            <label>Planning horizon<input type="number" min="1" max="84" value={state.refinement.horizonDays} onChange={(event) => updateGroup("refinement", "horizonDays", Math.min(84, Math.max(1, Number(event.target.value) || 1)))} /></label>
-            <label>Start date<input type="date" value={state.refinement.startDate} onChange={(event) => { const value = event.target.value; updateGroup("refinement", "startDate", value); if (value) updateGroup("refinement", "startWeekday", new Date(`${value}T00:00:00Z`).getUTCDay()); }} /></label>
-            <label>Target date<input type="date" value={state.refinement.targetDate} onChange={(event) => updateGroup("refinement", "targetDate", event.target.value)} /></label>
-            <label>Output model<select value={state.refinement.riskMode} onChange={(event) => updateGroup("refinement", "riskMode", event.target.value)}><option value="guaranteed">Guaranteed minimum</option><option value="conservative">Conservative midpoint</option><option value="expected">Expected value</option></select></label>
+            <label>Next weekly attempt<input type="number" min="1" max="100" value={state.refinement.refinementState} onChange={(event) => updateGroup("refinement", "refinementState", Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /><small>Enter the next attempt number on your current 1–100 weekly ladder. It resets to 1 every Monday.</small></label>
+            <label>Already completed today<input type="number" min="0" value={state.refinement.completedToday} onChange={(event) => updateGroup("refinement", "completedToday", Math.max(0, Number(event.target.value) || 0))} /><small>Attempts already made today. This prevents the planner from applying another first-attempt discount today.</small></label>
+            <label>Maximum refinements per day<input type="number" min="1" max="100" value={state.refinement.refinementsPerDay} onChange={(event) => updateGroup("refinement", "refinementsPerDay", Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /><small>Your daily cap, including attempts already completed today.</small></label>
+            <label>Planning horizon<input type="number" min="1" max="84" value={state.refinement.horizonDays} onChange={(event) => updateGroup("refinement", "horizonDays", Math.min(84, Math.max(1, Number(event.target.value) || 1)))} /><small>How many days to simulate, from 1 to 84.</small></label>
+            <label>Start date<input type="date" value={state.refinement.startDate} onChange={(event) => { const value = event.target.value; updateGroup("refinement", "startDate", value); if (value) updateGroup("refinement", "startWeekday", new Date(`${value}T00:00:00Z`).getUTCDay()); }} /><small>Schedule day 1. Its weekday determines when the next Monday reset occurs.</small></label>
+            <label>Target date<input type="date" value={state.refinement.targetDate} onChange={(event) => updateGroup("refinement", "targetDate", event.target.value)} /><small>Optional deadline used to report whether your TTG target is reachable in time.</small></label>
+            <label>Output model<select value={state.refinement.riskMode} onChange={(event) => updateGroup("refinement", "riskMode", event.target.value)}><option value="guaranteed">Guaranteed minimum</option><option value="conservative">Conservative midpoint</option><option value="expected">Expected value</option></select><small>Guaranteed uses minimum drops; conservative uses the midpoint between minimum and expected; expected uses probability-weighted output.</small></label>
           </div>
         </section>
       </div>
