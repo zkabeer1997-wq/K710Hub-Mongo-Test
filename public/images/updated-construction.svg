@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">Updated Construction Planner</title>
+  <path fill="#101923" stroke="#d5ad68" stroke-width="4" stroke-linejoin="round" d="M15 82V39l33-25 33 25v43H15Z"/>
+  <path fill="#d5ad68" d="M27 47h14v14H27zm28 0h14v14H55z"/>
+  <path fill="#211a12" stroke="#d5ad68" stroke-width="3" d="M39 82V66h18v16"/>
+  <path fill="none" stroke="#f5ecd8" stroke-width="4" stroke-linecap="round" d="M11 39 48 10l37 29"/>
+</svg>

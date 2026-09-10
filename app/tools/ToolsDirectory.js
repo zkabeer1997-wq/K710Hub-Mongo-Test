@@ -9,6 +9,7 @@ const TOOLS = {
     { key: 'updated-charms', event: 'Stats + KvK Preparation', title: 'Updated Charms Optimizer', description: 'Optimize all 18 charms with exact level costs, shared inventory, target planning, and connected weekly packs.', status: 'Updated', icon: '/images/kingshot/charms/infantry.webp' },
     { key: 'updated-masters', event: 'Progression + monthly packs', title: 'Updated Masters Optimizer', description: 'Combine multiple relationship and skill targets, partial Affinity progress, inventory, and purchase scheduling.', status: 'Updated', icon: '/images/kingshot/masters/roman.png' },
     { key: 'updated-pets', event: 'Progression + weekly packs', title: 'Updated Pets Optimizer', description: 'Plan every pet from the complete dataset and turn the combined shortfall into a weekly pack schedule.', status: 'Updated', icon: '/images/pet-pack-compass.svg' },
+    { key: 'updated-construction', event: 'TG1–TG10 + refining', title: 'Updated Construction Planner', description: 'Combine eight building targets, supplied TG and TTG tier totals, inventory shortfalls, and a daily Tempered True Gold schedule.', status: 'Updated', icon: '/images/updated-construction.svg' },
   ],
   'Account Progression': [
     { key: 'account-progression', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
