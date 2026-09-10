@@ -10,6 +10,7 @@ const TOOLS = {
     { key: 'updated-masters', event: 'Progression + monthly packs', title: 'Updated Masters Optimizer', description: 'Combine multiple relationship and skill targets, partial Affinity progress, inventory, and purchase scheduling.', status: 'Updated', icon: '/images/kingshot/masters/roman.png' },
     { key: 'updated-pets', event: 'Progression + weekly packs', title: 'Updated Pets Optimizer', description: 'Plan every pet from the complete dataset and turn the combined shortfall into a weekly pack schedule.', status: 'Updated', icon: '/images/pet-pack-compass.svg' },
     { key: 'updated-construction', event: 'TG1–TG10 + refining', title: 'Updated Construction Planner', description: 'Combine eight building targets, supplied TG and TTG tier totals, inventory shortfalls, and a daily Tempered True Gold schedule.', status: 'Updated', icon: '/images/updated-construction.svg' },
+    { key: 'updated-research', event: 'Academy + War Academy', title: 'Unified Research Planner', description: 'Plan exact Academy, War Academy, and Advanced Research levels with prerequisites, inventory shortfalls, adjusted time, and exports.', status: 'Updated', icon: '/images/updated-research.svg' },
   ],
   'Account Progression': [
     { key: 'account-progression', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
@@ -96,7 +97,7 @@ export default function ToolsDirectory({ memberId, category }) {
         <div className="tools-menu-grid" role="list">
           {CATEGORIES.map((name) => {
             const tools = TOOLS[name];
-            const count=name==='Research Costs'?3:tools.length;
+            const count=tools.length;
             const href=name==='Research Costs'?'/tools/research-costs':name==='Construction Costs'?'/tools/construction-costs':`/tools${categoryQuery(name)}`;
             return (
               <Link key={name} href={href} className="tools-menu-tile" role="listitem">
