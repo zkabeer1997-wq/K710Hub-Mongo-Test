@@ -16,13 +16,16 @@ test("updated construction data reproduces the supplied workbook totals", () => 
   assert.equal(createHash("sha256").update(JSON.stringify(UPDATED_CONSTRUCTION_BUILDINGS)).digest("hex"), "30664e960e85ef591f13f2a750ebb0d45eebbe0579863d689834fe6ece3cfb3a");
 });
 
-test("known Town Center prerequisites are included without guessing TG9 or TG10", () => {
+test("Town Center prerequisites cover the workbook chain and disclosed TG9–TG10 rotation", () => {
   const known = calculateUpdatedConstruction([{ id: "town-center", current: "TG7", target: "TG8" }], {}, { horizonDays: 1 });
   assert.ok(known.steps.some((step) => step.buildingId === "embassy" && step.to === "TG7"));
   assert.ok(known.steps.some((step) => step.buildingId === "stable" && step.to === "TG7"));
   assert.equal(known.warnings.length, 0);
   const unknown = calculateUpdatedConstruction([{ id: "town-center", current: "TG8", target: "TG10" }], {}, { horizonDays: 1 });
   assert.equal(unknown.warnings.length, 2);
+  assert.ok(unknown.steps.some((step) => step.buildingId === "embassy" && step.to === "TG9"));
+  assert.ok(unknown.steps.some((step) => step.buildingId === "barracks" && step.to === "TG8"));
+  assert.ok(unknown.steps.some((step) => step.buildingId === "range" && step.to === "TG9"));
 });
 
 test("construction targets sum only transitions after the current tier", () => {
