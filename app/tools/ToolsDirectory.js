@@ -14,21 +14,12 @@ const TOOLS = {
     { key: 'account-progression', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
   ],
   Charms: [
-    { key: 'governor-charm-optimizer', event: 'Progression + packs', title: 'Governor Charm Optimizer', description: 'Rank upgrades across all 18 charms and build the cheapest weekly pack schedule on one page.', status: 'Updated', icon: '/images/kingshot/charms/infantry.webp' },
     { key: 'wavebound-charms', event: 'Wavebound Voyage', title: 'Charms Sailing Optimizer', description: 'Calculate Tidal Treasure merges for a target Charm level, including Exquisite and Majestic outcomes.', status: 'Available', icon: '/images/wavebound-charm-sail.svg' },
   ],
-  'Governor Gear': [
-    { key: 'governor-gear-optimizer', event: 'Inventory optimization', title: 'Governor Gear Optimizer', description: 'Enter all six current pieces and your materials to get the best affordable upgrade order.', status: 'New', icon: '/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp' },
-  ],
-  'Hero Gear': [
-    { key: 'hero-gear-optimizer', event: 'Inventory optimization', title: 'Hero Gear Optimizer', description: 'Enter your 12-piece setup and inventory to get the highest-value affordable upgrade sequence.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
-  ],
-  Pets: [
-    { key: 'pet-pack-optimizer', event: 'Progression + weekly packs', title: 'Pet Calculator & Pack Optimizer', description: 'Plan multiple pets together, calculate their combined materials, and build the cheapest weekly pack and chest-redemption schedule.', status: 'New', icon: '/images/pet-pack-compass.svg' },
-  ],
-  Masters: [
-    { key: 'masters-pack-optimizer', event: 'Progression + monthly packs', title: 'Masters Calculator & Pack Optimizer', description: 'Plan multiple Masters together, total their Affinity, Emblems, and Manuscripts, then build the cheapest monthly and weekly pack schedule.', status: 'New', icon: '/images/kingshot/masters/roman.png' },
-  ],
+  'Governor Gear': [],
+  'Hero Gear': [],
+  Pets: [],
+  Masters: [],
   'Special Event Shops': [
     { key: 'flamedragon-shop', event: 'Flamedragon Tyrant', title: 'Dragon’s Caravan Optimizer', description: 'Build a reward cart, prioritize the best-value shop items, and calculate the cheapest Dragon Essence pack combination.', status: 'New', icon: '/images/flamedragon-caravan.svg' },
     { key: 'adventure-stall', event: 'Adventure Stall', title: 'Adventure Stall Optimizer', description: 'Choose your event rewards and calculate the lowest-cost daily pack plan after using the Shells already in your inventory.', status: 'New', icon: '/images/adventure-stall.svg' },
