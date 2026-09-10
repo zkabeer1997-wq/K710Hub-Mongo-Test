@@ -1,7 +1,7 @@
 import AccountProgressionPlanner from "../../../components/tools/AccountProgressionPlanner";
 import ToolPage from "../../../components/tools/ToolPage";
 
-export const metadata = { title: "Account Progression Planner | K710" };
+export const metadata = { title: "Account Progression Summary | K710" };
 
 export default async function Page({ searchParams }) {
   const params = await searchParams;
@@ -12,8 +12,8 @@ export default async function Page({ searchParams }) {
     : "";
   return (
     <ToolPage
-      title="Account Progression Planner"
-      description="Turn every saved K710 planner into one transparent, prioritized account roadmap."
+      title="Account Progression Summary"
+      description="See your saved Updated Tool targets, exact KvK points, next actions, and material bottlenecks in one place."
       memberId={memberId}
     >
       <AccountProgressionPlanner memberId={memberId} initialGoal={initialGoal} />
