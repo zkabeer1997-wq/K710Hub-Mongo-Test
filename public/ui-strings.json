@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 38586)
-Total output lines: 5341
+Warning: truncated output (original token count: 38537)
+Total output lines: 5339
 
 [
   "__test_data__",
@@ -1208,7 +1208,6 @@ Total output lines: 5341
   "Common Taming Marks",
   "common.d",
   "commonTamingMarks",
-  "Compare building levels, include prerequisites, and calculate resources and time with your construction bonuses.",
   "Competitive when it matters. Relaxed the rest of the time.",
   "competitive-record",
   "Complete forms in this order so leadership has the information they need at the right time.",
@@ -2192,7 +2191,14 @@ Total output lines: 5341
   "hero brief",
   "Hero gear",
   "Hero Gear",
-  "Hero Gear …8586 tokens truncated…,
+  "Hero Gear Optimizer",
+  "Hero Gear Optimizer | K710",
+  "Hero Gear troop type",
+  "Hero Roster",
+  "Hero Roulette spins",
+  "Her…8537 tokens truncated…ur-resource shortfall.",
+  "Optimize for",
+  "Optimize KvK Preparation points",
   "Optimize merges",
   "Optimize stats",
   "Optimize weighted stats",
@@ -2342,7 +2348,6 @@ Total output lines: 5341
   "Plan standard and True Gold building upgrades, including prerequisites, inventory, and construction bonuses.",
   "Plan start date",
   "Plan target",
-  "Plan Tempered True Gold refining runs alongside your construction queue.",
   "Plan TG1–TG10 upgrades across eight buildings and generate the Tempered True Gold schedule needed to complete them.",
   "Plan the Tidal Treasure merges needed to reach your target Charm level without wasting the material type you need most.",
   "Plan window",
