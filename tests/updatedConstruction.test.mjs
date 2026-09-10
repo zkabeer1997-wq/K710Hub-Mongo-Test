@@ -66,8 +66,9 @@ test("refining protects construction TG and CSV exports the ordered plan", () =>
 test("refining stops after the target and does nothing when TTG is already covered", () => {
   const reached = planTtgProduction({ trueGold: 1000, requiredTempered: 1, horizonDays: 3, refinementsPerDay: 10, riskMode: "guaranteed", stopAtTarget: true });
   assert.equal(reached.schedule[0].runs, 1);
-  assert.equal(reached.schedule[1].runs, 0);
+  assert.equal(reached.schedule.length, 1);
   const covered = planTtgProduction({ trueGold: 1000, temperedTrueGold: 5, requiredTempered: 5, horizonDays: 2, refinementsPerDay: 10, riskMode: "guaranteed", stopAtTarget: true });
-  assert.ok(covered.schedule.every((day) => day.runs === 0));
+  assert.equal(covered.earliestDay, 0);
+  assert.equal(covered.schedule.length, 0);
   assert.equal(covered.finalTrueGold, 1000);
 });
