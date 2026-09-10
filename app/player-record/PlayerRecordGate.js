@@ -204,44 +204,47 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
       <div className={styles.grid} aria-hidden="true" />
       <div className={styles.glow} aria-hidden="true" />
       <div className={styles.shell}>
-        {banner && <div className={styles.banner}>{banner}</div>}
-
-        <section className={styles.intro} aria-labelledby="member-login-title">
-          <div>
-            <span className={styles.eyebrow}>Secure player access · Kingdom 710</span>
-            <h1 id="member-login-title">
-              Welcome back,<br />
-              <em>{view === 'profile' ? `${displayName}.` : 'Governor.'}</em>
-            </h1>
-            <p>
-              {view === 'profile'
-                ? 'Your account is connected. Choose where to go next.'
-                : 'Login to your Account with a code sent directly to your game.'}
-            </p>
-          </div>
-
-          <div className={styles.assurance}>
-            <span className={styles.assuranceMark} aria-hidden="true">◆</span>
+        <div className={styles.rightColumn}>
+          <section className={styles.intro} aria-labelledby="member-login-title">
             <div>
-              <strong>
+              <span className={styles.eyebrow}>Secure player access · Kingdom 710</span>
+              <h1 id="member-login-title">
+                Welcome back,<br />
+                <em>{view === 'profile' ? `${displayName}.` : 'Governor.'}</em>
+              </h1>
+              <p>
                 {view === 'profile'
-                  ? 'Signed in with Kingshot'
-                  : view === 'personalCode'
-                    ? 'Secure fallback verification'
-                    : 'Official in-game verification'}
-              </strong>
-              <span>
-                {view === 'profile'
-                  ? 'Session stays active for 30 days unless you log out.'
-                  : view === 'personalCode'
-                    ? 'Your personal code is stored only as a protected one-way hash.'
-                    : 'Your code is checked by Kingshot and is never stored.'}
-              </span>
+                  ? 'Your account is connected. Choose where to go next.'
+                  : 'Login to your Account with a code sent directly to your game.'}
+              </p>
             </div>
-          </div>
-        </section>
 
-        <section className={styles.card} aria-live="polite" aria-busy={busy}>
+            <div className={styles.assurance}>
+              <span className={styles.assuranceMark} aria-hidden="true">◆</span>
+              <div>
+                <strong>
+                  {view === 'profile'
+                    ? 'Signed in with Kingshot'
+                    : view === 'personalCode'
+                      ? 'Secure fallback verification'
+                      : 'Official in-game verification'}
+                </strong>
+                <span>
+                  {view === 'profile'
+                    ? 'Session stays active for 30 days unless you log out.'
+                    : view === 'personalCode'
+                      ? 'Your personal code is stored only as a protected one-way hash.'
+                      : 'Your code is checked by Kingshot and is never stored.'}
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className={styles.leftColumn}>
+          {banner && <div className={styles.banner}>{banner}</div>}
+
+          <section className={styles.card} aria-live="polite" aria-busy={busy}>
           {view === 'loading' && (
             <div className={styles.loading}>
               <span />
@@ -437,7 +440,8 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               </button>
             </div>
           )}
-        </section>
+          </section>
+        </div>
       </div>
 
       <p className={styles.disclaimer}>

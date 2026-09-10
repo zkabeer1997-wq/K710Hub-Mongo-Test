@@ -26,6 +26,19 @@
     grid-template-columns: 1.1fr 0.9fr;
     align-items: start;
   }
+  .leftColumn {
+    grid-column: 1;
+  }
+  .rightColumn {
+    grid-column: 2;
+  }
+}
+.leftColumn,
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
 }
 .intro h1 {
   margin: 8px 0 12px;
