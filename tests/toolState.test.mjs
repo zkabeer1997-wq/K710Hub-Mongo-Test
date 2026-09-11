@@ -32,3 +32,12 @@ test('round-trips Masters pack optimizer inputs for a member session', () => {
     migrate: value => value,
   }), inputs);
 });
+
+test('preserves an older compatible envelope when a tool has no custom migrator', () => {
+  const inputs = { rows: [{ id: 'cap', tier: 'Purple' }], satin: 50 };
+  const envelope = createToolStateEnvelope('updated-governor-gear', 1, inputs);
+  assert.deepEqual(readToolState(envelope, {
+    toolKey: 'updated-governor-gear',
+    schemaVersion: 2,
+  }), inputs);
+});

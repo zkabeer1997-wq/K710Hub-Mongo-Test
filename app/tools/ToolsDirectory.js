@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-const CATEGORIES = ['UPDATED TOOLS', 'Account Progression', 'Charms', 'Governor Gear', 'Hero Gear', 'Pets', 'Masters', 'Special Event Shops', 'Construction Costs', 'Research Costs'];
+const CATEGORIES = ['UPDATED TOOLS', 'Account Progression', 'Charms', 'Special Event Shops'];
 const TOOLS = {
   'UPDATED TOOLS': [
     { key: 'updated-hero-gear', event: 'Stats + KvK Preparation', title: 'Updated Hero Gear Optimizer', description: 'Optimize Enhancement, Mastery, Red ascension, imbuement, reforging, and the exact four-resource shortfall.', status: 'Updated', icon: '/images/kingshot/hero-gear/infantry-helm.png' },

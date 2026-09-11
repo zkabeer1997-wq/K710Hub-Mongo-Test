@@ -87,6 +87,16 @@ test("hero gear never recommends an unaffordable upgrade", () => {
   assert.equal(result.actions.length, 0);
 });
 
+test("hero actions carry an explicit type instead of inheriting a piece mastery value", () => {
+  const result = calculateHeroGearPlan(
+    [{ id: "helmet", label: "Infantry Helmet", troop: "Infantry", tier: "Mythic", enhancement: 20, mastery: 2 }],
+    { xp: 1000, forgehammers: 0, mythicPieces: 0, mithril: 0, optimizationGoal: "stats" },
+  );
+  assert.equal(result.nextAction.actionType, "enhancement");
+  assert.equal(result.nextAction.xp > 0, true);
+  assert.equal(result.nextAction.forgehammers || 0, 0);
+});
+
 test("hero pack candidates expose complete costs for mastery and Red milestones", () => {
   const mastery = calculateHeroGearPlan(
     [{ id: "mastery", label: "Infantry Helmet", tier: "Mythic", enhancement: 20, mastery: 10 }],

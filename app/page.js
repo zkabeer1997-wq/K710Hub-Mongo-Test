@@ -163,7 +163,7 @@ export default async function HomePage() {
     if (key === 'why-1-body') return 'Check each alliance’s current UTC schedule below to find the times that work for you.';
     const c = content[key] || { id: null, text: '' };
     const rewrite = COPY_REWRITES[key];
-    const initialText = rewrite && rewrite.from.includes(c.text.trim()) ? rewrite.to : c.text;
+    const initialText = rewrite && (!c.text.trim() || rewrite.from.includes(c.text.trim())) ? rewrite.to : c.text;
     return <HomeEditableText id={c.id} fieldKey={key} initialText={initialText} isAdmin={isAdmin} {...props} />;
   };
 

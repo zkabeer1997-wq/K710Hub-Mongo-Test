@@ -7,7 +7,8 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   background:
     radial-gradient(circle at 50% 38%, rgba(226, 105, 42, 0.22), transparent 34%),
     linear-gradient(180deg, rgba(5, 7, 16, 0.96), rgba(8, 10, 20, 0.99));
@@ -43,6 +44,8 @@
 .k710-language-panel {
   position: relative;
   width: min(100%, 560px);
+  max-width: calc(100vw - 48px);
+  box-sizing: border-box;
   padding: clamp(28px, 5vw, 46px);
   border: 1px solid rgba(214, 179, 96, 0.32);
   border-radius: 28px;
@@ -219,6 +222,7 @@
   }
 
   .k710-language-panel {
+    max-width: calc(100vw - 28px);
     padding: 28px 20px 24px;
     border-radius: 24px;
   }

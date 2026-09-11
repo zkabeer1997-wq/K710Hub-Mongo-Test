@@ -54,13 +54,14 @@ export default function UnifiedResearchPlanner({ datasets }) {
     <nav className={styles.tabs} role="tablist" aria-label="Research system">
       {SYSTEMS.map((system) => <button type="button" role="tab" key={system.id} aria-selected={active === system.id} onClick={() => setActive(system.id)}><strong>{system.label}</strong><span>{system.count.technologies} technologies · {system.count.levels} levels</span></button>)}
     </nav>
-    {SYSTEMS.map((system) => {
+    {(() => {
+      const system = SYSTEMS.find((item) => item.id === active) || SYSTEMS[0];
       const Reference = REFERENCES[system.id];
-      return <section key={system.id} hidden={active !== system.id} aria-label={`${system.label} planner`}>
+      return <section key={system.id} aria-label={`${system.label} planner`}>
         <Reference />
         <CostPlanner dataset={datasets[system.id]} toolKey={system.id} />
       </section>;
-    })}
+    })()}
     <footer className={styles.provenance}><strong>{RESEARCH_WORKBOOK.name}</strong><span>Supplied {RESEARCH_WORKBOOK.suppliedAt}. Exact calculations use the repository’s verified per-level fixtures; the workbook provides cross-check totals, gates, priorities, and strategy.</span></footer>
   </div>;
 }

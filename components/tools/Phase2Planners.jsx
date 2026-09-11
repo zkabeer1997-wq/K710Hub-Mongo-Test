@@ -99,6 +99,10 @@ const heroGearImage = (label) => {
   const [troop, piece] = label.toLowerCase().split(" ");
   return `/images/kingshot/hero-gear/${troop}-${piece === "helmet" ? "helm" : piece}.png`;
 };
+const isHeroMasteryAction = (action) => action?.actionType === "mastery";
+const heroActionTarget = (action) => isHeroMasteryAction(action)
+  ? `Mastery ${action.mastery}`
+  : `+${action?.level}`;
 const governorGearImages = [
   "/images/kingshot/governor-gear/cavalry_gear_1_green_t0_s0.webp",
   "/images/kingshot/governor-gear/cavalry_gear_2_green_t0_s0.webp",
@@ -1303,10 +1307,10 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
       </section>
       <aside className={styles.result}>
         <NextAction
-          title={nextHeroAction ? `${nextHeroAction.label} → ${nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery}` : `+${nextHeroAction.level}`}` : "Add spendable Hero Gear resources"}
+          title={nextHeroAction ? `${nextHeroAction.label} → ${heroActionTarget(nextHeroAction)}` : "Add spendable Hero Gear resources"}
           reason={nextHeroAction ? (eventMode ? "This plan prioritizes eligible Forgehammer and Mithril spending for KvK Preparation points." : `This unlocked piece gives the strongest ${nextHeroAction.stat} return for your selected build profile.`) : "Your current setup is saved; inventory is needed to calculate an affordable next action."}
-          before={nextHeroAction ? (nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery - 1}` : `Enhancement ${nextHeroAction.fromLevel ?? nextHeroAction.level - 1}`) : "Current gear"}
-          after={nextHeroAction ? (nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery}` : `Enhancement ${nextHeroAction.level}`) : "No affordable upgrade"}
+          before={nextHeroAction ? (isHeroMasteryAction(nextHeroAction) ? `Mastery ${nextHeroAction.mastery - 1}` : `Enhancement ${nextHeroAction.fromLevel ?? nextHeroAction.level - 1}`) : "Current gear"}
+          after={nextHeroAction ? (isHeroMasteryAction(nextHeroAction) ? `Mastery ${nextHeroAction.mastery}` : `Enhancement ${nextHeroAction.level}`) : "No affordable upgrade"}
           resources={nextHeroAction ? `${fmt(nextHeroAction.xp || 0)} XP · ${fmt(nextHeroAction.forgehammers || 0)} Forgehammers · ${fmt(nextHeroAction.mythic || 0)} Mythic · ${fmt(nextHeroAction.mithril || 0)} Mithril` : "None"}
           remaining={`${fmt(plan.remaining.xp)} XP · ${fmt(plan.remaining.forgehammers)} Forgehammers`}
         />
@@ -1317,7 +1321,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
             <div className={styles.metric}>
               <span>Next recommended upgrade</span>
               <b>
-                {nextHeroAction.label} → {nextHeroAction.mastery ? `Mastery ${nextHeroAction.mastery}` : `+${nextHeroAction.level}`}
+                {nextHeroAction.label} → {heroActionTarget(nextHeroAction)}
               </b>
             </div>
             <div className={styles.metric}>
@@ -1345,7 +1349,7 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
           {plan.bottleneck || "none"}.
         </p>
         <p className={styles.note}>{eventMode ? `KvK Preparation scoring: ${fmt(plan.used.forgehammers)} Forgehammers × 4,000 + ${fmt(plan.used.mithril)} Mithril × 40,000 = ${fmt(plan.totals.eventPoints)} points. Enhancement XP and Mythic Gear award 0 points.` : `Projected stat gain across the plan: ${fmt(plan.totals.statGain)}.`}</p>
-        {eventMode && plan.actions.some((item) => item.eventPoints > 0) ? <ol className={styles.list}>{plan.actions.filter((item) => item.eventPoints > 0).map((item, index) => <li key={`${item.id}-kvk-${index}`}>{item.label} → {item.mastery ? `Mastery ${item.mastery}` : `+${item.level}`} · {fmt(item.eventPoints)} KvK Preparation points</li>)}</ol> : null}
+        {eventMode && plan.actions.some((item) => item.eventPoints > 0) ? <ol className={styles.list}>{plan.actions.filter((item) => item.eventPoints > 0).map((item, index) => <li key={`${item.id}-kvk-${index}`}>{item.label} → {heroActionTarget(item)} · {fmt(item.eventPoints)} KvK Preparation points</li>)}</ol> : null}
         {plan.candidates?.some((item) => item.xp > 0) ? (
           <>
           {eventMode ? <p className={styles.note}>Supporting Enhancement steps award 0 KvK points but may be required to reach later eligible milestones.</p> : null}

@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-function Block({ block, editMode, onEdit, onDelete }) {
+function Block({ block, editMode, onEdit, onDelete, headingLevel = 2 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -64,7 +64,7 @@ return (
 {block.type === 'heading' && !editing && (
   <>
 {block.content.kicker && <span className="public-kicker">{block.content.kicker}</span>}
-<h1>{block.content.text}</h1>
+{headingLevel === 1 ? <h1>{block.content.text}</h1> : <h2>{block.content.text}</h2>}
   </>
 )}
 {block.type === 'text' && !editing && <p>{block.content.text}</p>}
@@ -101,7 +101,7 @@ return (
   );
 }
 
-export default function EditableSection({ page, initialBlocks, isAdmin, as, className }) {
+export default function EditableSection({ page, initialBlocks, isAdmin, as, className, headingLevel = 2 }) {
   const Tag = as || 'section';
 const [blocks, setBlocks] = useState(initialBlocks || []);
   const [editMode, setEditMode] = useState(false);
@@ -163,7 +163,7 @@ return (
 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
   <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
 {blocks.map((block) => (
-  <Block key={block.id} block={block} editMode={editMode} onEdit={handleEdit} onDelete={handleDelete} />
+  <Block key={block.id} block={block} editMode={editMode} onEdit={handleEdit} onDelete={handleDelete} headingLevel={headingLevel} />
   ))}
 </SortableContext>
   </DndContext>

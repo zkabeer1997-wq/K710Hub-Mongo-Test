@@ -29,8 +29,9 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
   return (
     <>
       <div className="guides-toolbar">
-        <Field label="Search guides" className="guides-search">
+        <Field label="Search guides" htmlFor="guide-search" className="guides-search">
           <Input
+            id="guide-search"
             type="search"
             placeholder="Search by title or description…"
             value={search}
