@@ -10,11 +10,18 @@ function LevelSelect({item,value,onChange,label,minimum='0'}){
 export default function CostPlanner({dataset,toolKey,construction=false}){
  const first=dataset.items[0];
  const [selections,setSelections]=useState([{id:first.id,current:construction?'1':'0',target:construction?'2':first.levels[0].level}]);
- const [currentLevels,setCurrentLevels]=useState({}),[inventory,setInventory]=useState({}),[modifiers,setModifiers]=useState({}),[includePrerequisites,setIncludePrerequisites]=useState(true),[mode,setMode]=useState('cost'),[result,setResult]=useState(null),[error,setError]=useState(''),[saveStatus,setSaveStatus]=useState(''),[saving,setSaving]=useState(false),[loading,setLoading]=useState(true),[category,setCategory]=useState(''),[candidate,setCandidate]=useState(''),[baselineSearch,setBaselineSearch]=useState('');
+ const [currentLevels,setCurrentLevels]=useState({}),[inventory,setInventory]=useState({}),[modifiers,setModifiers]=useState({}),[includePrerequisites,setIncludePrerequisites]=useState(true),[mode,setMode]=useState('cost'),[result,setResult]=useState(null),[error,setError]=useState(''),[saveStatus,setSaveStatus]=useState(''),[saving,setSaving]=useState(false),[loading,setLoading]=useState(true),[category,setCategory]=useState(''),[candidate,setCandidate]=useState(''),[baselineSearch,setBaselineSearch]=useState(''),[baselineOpen,setBaselineOpen]=useState(false);
  const resources=construction?['bread','wood','stone','iron','truegold','temperedTruegold']:toolKey==='academy'?['bread','wood','stone','iron','gold']:toolKey==='war-academy'?['truegold_dust','gold','bread','wood','stone','iron']:['truegold_dust','temperedTruegold','gold','bread','wood','stone','iron'];
  const categories=[...new Set(dataset.items.map(i=>i.category))];
  const filtered=useMemo(()=>dataset.items.filter(i=>!category||i.category===category),[dataset,category]);
  const chosen=filtered.find(i=>i.id===candidate);
+ const baselineItems=useMemo(()=>{
+  if(!baselineOpen)return [];
+  const query=baselineSearch.trim().toLowerCase();
+  const selectedIds=new Set(selections.map(item=>item.id));
+  if(!query)return dataset.items.filter(item=>selectedIds.has(item.id));
+  return dataset.items.filter(item=>`${item.name} ${item.category}`.toLowerCase().includes(query)).slice(0,40);
+ },[baselineOpen,baselineSearch,dataset,selections]);
  const stateKey=`costs-${toolKey}`;
  useEffect(()=>{
   const controller=new AbortController();
@@ -43,7 +50,7 @@ export default function CostPlanner({dataset,toolKey,construction=false}){
     {!selections.length&&<p>Add an upgrade to begin.</p>}
     <label className={styles.check}><input type="checkbox" checked={includePrerequisites} onChange={e=>{changed();setIncludePrerequisites(e.target.checked);}}/>Include prerequisite {construction?'buildings':'research'}</label>
     <p className={styles.hint}>Set completed levels below so prerequisites you already own are not counted. Unset items are treated as not started.</p>
-    <details className={styles.details}><summary>Completed {construction?'building':'research'} levels</summary><label>Find a completed item<input type="search" value={baselineSearch} onChange={e=>setBaselineSearch(e.target.value)} placeholder="Search by name"/></label><div className={styles.baseline}>{dataset.items.filter(i=>`${i.name} ${i.category}`.toLowerCase().includes(baselineSearch.toLowerCase())).map(i=><label key={i.id}><span>{i.name}<small>{i.category}</small></span><LevelSelect item={i} value={selections.find(s=>s.id===i.id)?.current||currentLevels[i.id]||'0'} label={`Completed ${i.name} (${i.category}) level`} onChange={v=>{changed();setCurrentLevels(c=>({...c,[i.id]:v}));if(selections.some(s=>s.id===i.id))updateSelection(i.id,'current',v);}}/></label>)}</div></details>
+    <details className={styles.details} open={baselineOpen} onToggle={event=>setBaselineOpen(event.currentTarget.open)}><summary>Completed {construction?'building':'research'} levels</summary>{baselineOpen&&<><label>Find a completed item<input type="search" value={baselineSearch} onChange={e=>setBaselineSearch(e.target.value)} placeholder="Search by name"/></label>{!baselineSearch.trim()&&<p className={styles.hint}>Your selected upgrades appear here. Search to edit any other completed level.</p>}<div className={styles.baseline}>{baselineItems.map(i=><label key={i.id}><span>{i.name}<small>{i.category}</small></span><LevelSelect item={i} value={selections.find(s=>s.id===i.id)?.current||currentLevels[i.id]||'0'} label={`Completed ${i.name} (${i.category}) level`} onChange={v=>{changed();setCurrentLevels(c=>({...c,[i.id]:v}));if(selections.some(s=>s.id===i.id))updateSelection(i.id,'current',v);}}/></label>)}</div>{baselineSearch.trim()&&baselineItems.length===40?<p className={styles.hint}>Showing the first 40 matches. Refine the search to narrow the list.</p>:null}</> }</details>
    </section>
    <div className={styles.settings}>
     <section className={styles.panel}><span className={styles.eyebrow}>02 · Inventory</span><h2>Resources you already have</h2><p className={styles.hint}>{mode==='reach'?'Enter inventory to find the highest affordable level. Use one upgrade target in this mode.':'Optional. These amounts are subtracted from the resources required.'}</p><div className={styles.fields}>{resources.map(k=><label key={k}>{RESOURCE_LABELS[k]}<input type="number" min="0" step="1" value={inventory[k]??''} placeholder="0" onChange={e=>{changed();setInventory(v=>({...v,[k]:e.target.value}));}}/></label>)}</div></section>

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildAccountSummaries, buildProgressionOverview } from "../lib/accountProgressionSummary.mjs";
+import { buildAccountSummaries, buildLegacyMigrationCandidates, buildProgressionOverview } from "../lib/accountProgressionSummary.mjs";
 
 const record = (toolKey, inputs, updatedAt = "2026-09-10T12:00:00.000Z") => ({
   state: { envelopeVersion: 1, toolKey, schemaVersion: 1, inputs },
@@ -69,4 +69,27 @@ test("unknown point systems never enter the exact total", () => {
   const overview = buildProgressionOverview([{ id: "pets", label: "Pets", status: "connected", legacy: false, nextAction: {}, affordable: true, exactKvkPoints: null, scoringStatus: "unavailable", eligibleKvkDays: [3], shortfall: {} }], { objective: "kvk" });
   assert.equal(overview.exactKvkPoints, 0);
   assert.equal(overview.days[2].exactPoints, 0);
+});
+
+test("compatible legacy plans migrate without overwriting an Updated Tool", () => {
+  const legacyInputs = { rows: [{ id: "cap" }], satin: 20, unknownFutureField: "preserved" };
+  const candidates = buildLegacyMigrationCandidates({
+    "governor-gear": record("governor-gear", legacyInputs),
+  });
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].to, "updated-governor-gear");
+  assert.equal(candidates[0].state.schemaVersion, 2);
+  assert.deepEqual(candidates[0].state.inputs, legacyInputs);
+
+  assert.deepEqual(buildLegacyMigrationCandidates({
+    "governor-gear": record("governor-gear", legacyInputs),
+    "updated-governor-gear": record("updated-governor-gear", { satin: 1 }),
+  }), []);
+});
+
+test("incompatible retired single-entity plans are not guessed", () => {
+  assert.deepEqual(buildLegacyMigrationCandidates({
+    masters: record("masters", { master: "Valora" }),
+    "pet-progression": record("pet-progression", { pet: "Gray Wolf" }),
+  }), []);
 });

@@ -28,3 +28,5 @@
 .override>label{display:flex;align-items:center;gap:8px;margin-top:12px;color:var(--parchment-dim);font-size:11px}
 .overrideGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
 @media(max-width:580px){.overrideGrid{grid-template-columns:1fr}}
+.eyebrow,.skillRow label,.calculatorResult small,.masterCard>header button,.skillDetails summary,.masterSubtotal span,.calculatorResult p,.limitTag,.field,.shortfall span,.rule,.metrics dt,.summary p,.summary>span,.packGroup h4,.weekTitle,.readonlyResource span,.override summary{font-size:11px}
+@media(max-width:580px){.masterCard>header button,.skillDetails summary,.addMaster,.override summary{min-height:44px}}

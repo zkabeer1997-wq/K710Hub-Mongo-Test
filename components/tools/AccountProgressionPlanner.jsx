@@ -69,7 +69,18 @@ export default function AccountProgressionPlanner({ memberId = "", initialGoal =
       const response = await fetch("/api/tool-state/summary", { cache: "no-store" });
       if (response.status === 401) throw new Error("Sign in as a member to connect saved Updated Tools.");
       if (!response.ok) throw new Error("Saved tool summaries could not be loaded.");
-      const body = await response.json();
+      let body = await response.json();
+      const preview = buildAccountSummaries({ sources: body.sources || {}, datasets: { academy, warAcademy, advancedResearch } });
+      if (preview.some((item) => item.legacy)) {
+        const migration = await fetch("/api/tool-state/summary", { method: "POST" });
+        if (migration.ok) {
+          const migrated = await migration.json();
+          if (migrated.migrated?.length) {
+            const refreshed = await fetch("/api/tool-state/summary", { cache: "no-store" });
+            if (refreshed.ok) body = await refreshed.json();
+          }
+        }
+      }
       setSources(body.sources || {});
       setLoadState("ready");
       setLoadMessage("Updated Tool summaries connected.");
@@ -86,7 +97,7 @@ export default function AccountProgressionPlanner({ memberId = "", initialGoal =
   return <div className={styles.shell}>
     <section className={styles.hero}><div><span className={styles.eyebrow}>YOUR SAVED PROGRESSION</span><h2>Everything you need next</h2><p>One read-only view of the targets, inventory, shortfalls, and exact KvK points already saved in Updated Tools.</p></div><div className={styles.heroActions}><button type="button" onClick={refresh} disabled={loadState === "loading"}>{loadState === "loading" ? "Refreshing…" : "Refresh summaries"}</button><button type="button" className={styles.secondary} onClick={() => persistence.saveNow()}>Save preferences</button></div></section>
     <div className={`${styles.connection} ${loadState === "error" ? styles.connectionError : ""}`} role="status"><span>{loadState === "error" ? "!" : "✓"}</span><div><strong>{loadMessage}</strong><small>{currentConnected} current · {overview.legacy.length} legacy · {missing} not configured</small></div></div>
-    {overview.legacy.length ? <section className={styles.legacyNotice}><strong>Legacy plans are not included in recommendations.</strong><p>{overview.legacy.map((item) => item.label).join(", ")} still has saved data from a retired tool. Open the Updated Tool and save once to migrate your active plan.</p></section> : null}
+    {overview.legacy.length ? <section className={styles.legacyNotice}><strong>Some retired plans could not be converted safely.</strong><p>{overview.legacy.map((item) => item.label).join(", ")} uses an older structure that needs review in its Updated Tool. Compatible saved plans are converted automatically.</p></section> : null}
     <nav className={styles.tabs} aria-label="Account summary view"><button type="button" aria-pressed={inputs.view === "summary"} onClick={() => setInputs((current) => ({ ...current, view: "summary", objective: "summary" }))}>Account summary</button><button type="button" aria-pressed={inputs.view === "kvk"} onClick={() => setInputs((current) => ({ ...current, view: "kvk", objective: "kvk" }))}>KvK Preparation</button></nav>
     <section className={styles.metrics} aria-label="Account overview"><div><span>Current tools connected</span><strong>{loadState === "loading" ? "—" : currentConnected}<em> / {ACCOUNT_SUMMARY_SYSTEMS.length}</em></strong><small>Legacy states excluded</small></div><div><span>Actions ready now</span><strong>{loadState === "loading" ? "—" : overview.actionable.filter((item) => item.affordable && !item.legacy).length}</strong><small>Covered by saved inventory</small></div><div><span>Exact KvK points prepared</span><strong>{loadState === "loading" ? "—" : number(overview.exactKvkPoints)}</strong><small>Verified source actions only</small></div><div><span>Top material bottlenecks</span><strong>{loadState === "loading" ? "—" : overview.bottlenecks.length}</strong><small>Across current targets</small></div></section>
     {loadState === "loading" ? <div className={styles.empty}><h3>Loading saved plans…</h3><p>Your previous summary remains unchanged until every Updated Tool has been checked.</p></div> : inputs.view === "summary" ? <div className={styles.summaryLayout}><main>

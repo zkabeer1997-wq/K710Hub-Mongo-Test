@@ -6,6 +6,26 @@
   max-width: 1440px;
   margin: 0 auto;
 }
+
+/* Dense planner metadata must remain readable without browser zoom. */
+.eyebrow,
+.inputSummary span,
+.troopTabs button span,
+.activeBulkActions strong,
+.activeBulkActions button,
+.packScope,
+.packAdvisor summary span,
+.packNeed span,
+.offerRow input,
+.packAnswer span,
+.moreSteps summary { font-size: 11px !important; }
+
+@media (max-width: 680px) {
+  .activeBulkActions button,
+  .troopTabs button,
+  .moreSteps summary,
+  .packAdvisor summary { min-height: 44px; }
+}
 .connectedPack { max-width: 1440px; margin: 18px auto 0; }
 .panel,
 .result {

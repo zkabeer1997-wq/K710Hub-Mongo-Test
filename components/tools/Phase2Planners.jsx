@@ -1233,17 +1233,6 @@ export function HeroGearPlanner({ toolKey = "hero-gear" }) {
           terms={[["Enhancement XP", "XP used to raise a Hero Gear piece's enhancement level."], ["Mastery", "A separate track using Forgehammers; levels 11–20 also consume Mythic Gear."], ["Protect", "Excludes a piece from every recommendation and reforge."]]}
           onDemo={() => { setRows((current) => current.map((row, index) => ({ ...row, tier: "Mythic", enhancement: index % 4 === 0 ? 40 : 20, mastery: index % 3, locked: false }))); setInputs((current) => ({ ...current, xp: 180000, forgehammers: 120, mythicPieces: 8, mithril: 4 })); }}
         />
-        <InputSummary
-          items={[
-            { label: "Profile", value: inputs.activity.replaceAll("-", " ") },
-            { label: "XP", value: fmt(inputs.xp) },
-            { label: "Forgehammers", value: fmt(inputs.forgehammers) },
-            {
-              label: "Next action",
-              value: plan.recommendation?.label || "Add resources",
-            },
-          ]}
-        />
         <div className={styles.section}>
           <SectionHeading
             title="Available resources"
@@ -1431,17 +1420,6 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
           note="Matching three-piece tiers unlock Defense set bonuses; matching all six unlocks Attack bonuses."
           terms={[["Satin", "Governor Gear upgrade material."], ["Gilded Thread", "Governor Gear upgrade material."], ["Protect", "Keeps a piece out of the upgrade order."]]}
           onDemo={() => { setRows((current) => current.map((row, index) => ({ ...row, tier: index < 2 ? "Purple" : "Blue 3★", targetTier: "Purple 1★", locked: false }))); setInputs((current) => ({ ...current, satin: 900, threads: 180, visions: 12 })); }}
-        />
-        <InputSummary
-          items={[
-            {
-              label: "Mode",
-              value: "Best use",
-            },
-            { label: "Satin", value: fmt(inputs.satin) },
-            { label: "Threads", value: fmt(inputs.threads) },
-            { label: "Planned", value: `${plan.steps.length} upgrades` },
-          ]}
         />
         <div className={styles.section}>
           <SectionHeading
