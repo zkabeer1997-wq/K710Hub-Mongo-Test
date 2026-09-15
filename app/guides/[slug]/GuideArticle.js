@@ -23,6 +23,14 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
   const [draft, setDraft] = useState(initialGuide?.body || '');
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
+  const [contentTab, setContentTab] = useState('f2p');
+
+  const hasContentTabs = Boolean(guide?.f2p_content || guide?.spender_content);
+  const activeContent = !hasContentTabs
+    ? guide?.body
+    : contentTab === 'spenders'
+      ? (guide?.spender_content || guide?.body)
+      : (guide?.f2p_content || guide?.body);
 
   const query = memberId ? `?member_id=${encodeURIComponent(memberId)}` : '';
   const guidesHref = `/guides${query}`;
@@ -157,9 +165,15 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
           <div className="guide-volume-spine" aria-hidden="true" />
           {!editing ? (
             <div className="guide-body k-narrative">
-              {guide.body ? (
+              {hasContentTabs && (
+                <div className="guide-content-tabs" role="tablist" aria-label="Guide content">
+                  <button type="button" role="tab" aria-selected={contentTab === 'f2p'} className={contentTab === 'f2p' ? 'is-active' : undefined} onClick={() => setContentTab('f2p')}>F2P</button>
+                  <button type="button" role="tab" aria-selected={contentTab === 'spenders'} className={contentTab === 'spenders' ? 'is-active' : undefined} onClick={() => setContentTab('spenders')}>Spenders</button>
+                </div>
+              )}
+              {activeContent ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-                  {guide.body}
+                  {activeContent}
                 </ReactMarkdown>
               ) : (
                 'This guide has not been written yet.'
@@ -243,6 +257,11 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
         .guide-volume:before{content:'';position:absolute;inset:10px;border:1px solid rgba(201,164,78,.11);pointer-events:none}
         .guide-volume-spine{position:absolute;left:0;top:0;bottom:0;width:8px;background:linear-gradient(90deg,#1a120b,#79592b,#2b1d10);border-right:1px solid rgba(201,164,78,.35)}
         .guide-body{position:relative;z-index:1;color:#e6dcc2;font-size:17px;line-height:1.82;letter-spacing:.005em}
+        .guide-content-tabs{display:flex;gap:6px;margin:0 0 22px;border-bottom:1px solid rgba(201,164,78,.22)}
+        .guide-content-tabs button{padding:9px 16px;background:none;border:0;border-bottom:2px solid transparent;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--parchment-dim);cursor:pointer}
+        .guide-content-tabs button.is-active{color:var(--gold-hot);border-bottom-color:var(--gold-hot)}
+        .guide-content-tabs button:hover{color:var(--parchment)}
+        .guide-content-tabs button:focus-visible{outline:2px solid var(--gold-hot);outline-offset:2px}
         .guide-body :global(img){display:block;max-width:100%;height:auto;margin:1.2em auto;border-radius:6px}
         .guide-body :global(p){margin:0 0 1.1em}
         .guide-body :global(h2){margin:1.6em 0 .6em;font-family:var(--font-display);font-size:26px;letter-spacing:.04em;color:var(--parchment)}

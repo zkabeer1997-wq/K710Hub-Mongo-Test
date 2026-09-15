@@ -18,10 +18,18 @@ const EMPTY_FORM = {
   category: 'Kingdom Guide',
   description: '',
   body: '',
+  f2p_content: '',
+  spender_content: '',
   position: '0',
   is_published: false,
   access_level: 'public',
 };
+
+const CONTENT_TABS = [
+  { id: 'body', label: 'Shared' },
+  { id: 'f2p_content', label: 'F2P Content' },
+  { id: 'spender_content', label: 'Spender Content' },
+];
 
 function slugify(value) {
   return value
@@ -51,6 +59,7 @@ export default function AdminGuidesPage() {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(false);
   const [photoDescription, setPhotoDescription] = useState('');
+  const [contentTab, setContentTab] = useState('body');
   const bodyRef = useRef(null);
   const editorRef = useRef(null);
   const categoryNames = guideCategories(guides, categories);
@@ -85,10 +94,11 @@ export default function AdminGuidesPage() {
 
   function openEdit(guide) {
     setEditingSlug(guide.slug);
-    setForm({ ...guide, position: String(guide.position) });
+    setForm({ ...EMPTY_FORM, ...guide, position: String(guide.position) });
     setSlugWasEdited(true);
     setPreview(false);
     setPhotoDescription('');
+    setContentTab('body');
     setShowCreate(true);
     setError('');
     setStatus('');
@@ -109,7 +119,7 @@ export default function AdminGuidesPage() {
       setError('Choose a JPG, PNG, WebP, or GIF photo no larger than 3 MB.');
       return;
     }
-    const position = bodyRef.current?.selectionStart ?? form.body.length;
+    const position = bodyRef.current?.selectionStart ?? form[contentTab].length;
     setUploading(true);
     setError('');
     setStatus('');
@@ -121,7 +131,7 @@ export default function AdminGuidesPage() {
       if (!response.ok) throw new Error(result.error || 'Photo upload failed.');
       const alt = (photoDescription.trim() || file.name.replace(/\.[^.]+$/, '')).replace(/[\[\]\\\r\n]/g, ' ');
       const markdown = `\n\n![${alt}](${result.url})\n\n`;
-      setForm(current => ({ ...current, body: current.body.slice(0, position) + markdown + current.body.slice(position) }));
+      setForm(current => ({ ...current, [contentTab]: current[contentTab].slice(0, position) + markdown + current[contentTab].slice(position) }));
       setPhotoDescription('');
       setStatus('Photo inserted. Save the guide to keep it in the article.');
     } catch (err) { setError(err.message || 'Photo upload failed.'); }
@@ -157,6 +167,7 @@ export default function AdminGuidesPage() {
     setEditingSlug(null);
     setPreview(false);
     setPhotoDescription('');
+    setContentTab('body');
     setSlugWasEdited(false);
     setShowCreate(true);
     setError('');
@@ -304,16 +315,34 @@ export default function AdminGuidesPage() {
               <Input id="guide-photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadPhoto} />
             </Field>
           </div>
+          <div className="admin-subtabs" role="tablist" aria-label="Guide content">
+            {CONTENT_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={contentTab === tab.id}
+                className={`admin-subtab${contentTab === tab.id ? ' is-active' : ''}`}
+                onClick={() => setContentTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {(contentTab === 'f2p_content' || contentTab === 'spender_content') && (
+            <p className="hint">Optional. Shown as its own tab on the public guide page when either this or the other archetype tab has content; readers see a shared/default view (the Shared tab) when both are empty.</p>
+          )}
+
           <Button variant="quiet" onClick={() => setPreview(current => !current)}>{preview ? 'Back to text' : 'Preview guide'}</Button>
           {preview ? (
             <section className="admin-guide-preview" aria-label="Guide preview">
               <h2>{form.title || 'Untitled guide'}</h2>
               <p>{form.description}</p>
-              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{form.body || 'No guide text yet.'}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{form[contentTab] || 'No guide text yet.'}</ReactMarkdown>
             </section>
           ) : (
             <Field label="Guide text" htmlFor="guide-body" hint="Markdown supported. Photos insert at the cursor; delete their image line to remove them.">
-              <Textarea id="guide-body" ref={bodyRef} tone="console" rows={16} maxLength={120000} value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} />
+              <Textarea id="guide-body" ref={bodyRef} tone="console" rows={16} maxLength={120000} value={form[contentTab]} onChange={(event) => setForm((current) => ({ ...current, [contentTab]: event.target.value }))} />
             </Field>
           )}
           </fieldset>

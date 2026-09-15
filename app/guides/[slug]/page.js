@@ -26,6 +26,8 @@ async function loadGuideBySlug(slug) {
         category: 1,
         description: 1,
         body: 1,
+        f2p_content: 1,
+        spender_content: 1,
         position: 1,
         is_published: 1,
         access_level: 1,

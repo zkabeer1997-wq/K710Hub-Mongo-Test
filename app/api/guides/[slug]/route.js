@@ -18,7 +18,8 @@ function collectionName() {
 }
 
 const GUIDE_PROJECT = {
-  slug: 1, title: 1, category: 1, description: 1, body: 1, position: 1,
+  slug: 1, title: 1, category: 1, description: 1, body: 1,
+  f2p_content: 1, spender_content: 1, position: 1,
   is_published: 1, access_level: 1, updated_at: 1, _id: 0,
 };
 
