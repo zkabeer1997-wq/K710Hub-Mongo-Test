@@ -45,13 +45,6 @@ export default function AdminAllianceEventsPage() {
       <div role="tabpanel">
         {tab === 'events' ? <EventsPanel /> : <AlliancesPanel />}
       </div>
-
-      <style>{`
-        .admin-subtabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--edge)}
-        .admin-subtab{padding:10px 16px;background:none;border:0;border-bottom:2px solid transparent;font-weight:700;font-size:.85rem;letter-spacing:.02em;color:var(--color-text-muted,inherit);cursor:pointer}
-        .admin-subtab.is-active{color:var(--gold-bright,inherit);border-bottom-color:var(--gold-bright,currentColor)}
-        .admin-subtab:focus-visible{outline:2px solid var(--gold-bright,currentColor);outline-offset:2px}
-      `}</style>
     </AdminShell>
   );
 }

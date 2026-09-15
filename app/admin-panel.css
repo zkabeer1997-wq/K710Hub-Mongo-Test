@@ -49,6 +49,18 @@
 .admin-topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .admin-content-body { padding: 8px 30px 40px; min-width: 0; }
 
+/* Secondary tab bars (intake periods, status, Alliance Events sub-tabs) */
+.admin-subtabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.admin-subtab { padding: 9px 14px; background: none; border: 0; border-bottom: 2px solid transparent; font-weight: 700; font-size: 12.5px; letter-spacing: 0.02em; color: var(--text-muted); cursor: pointer; }
+.admin-subtab.is-active { color: var(--gold-bright); border-bottom-color: var(--gold-bright); }
+.admin-subtab:hover { color: var(--gold-bright); }
+.admin-subtab:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.admin-subtab-add { margin-left: auto; color: var(--gold); }
+
+.intake-period-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,0.02); }
+.intake-period-activate { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+.intake-period-form-actions { display: flex; gap: 8px; }
+
 /* Tables / filters used across admin pages */
 .admin-filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
 .admin-filter-field { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }

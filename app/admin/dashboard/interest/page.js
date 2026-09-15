@@ -66,6 +66,21 @@ const STATUS_LABELS = {
   waitlist: 'Waitlisted',
 };
 
+const STATUS_TABS = [
+  { id: '', label: 'All' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'accepted', label: 'Accepted' },
+  { id: 'waitlist', label: 'Waitlisted' },
+  { id: 'reject', label: 'Rejected' },
+];
+
+function matchesStatusTab(row, tab) {
+  if (!tab) return true;
+  const status = row.status || 'pending';
+  if (tab === 'accepted') return status === 'special' || status === 'normal';
+  return status === tab;
+}
+
 function cellValue(row, key) {
   if (key === 'status') return STATUS_LABELS[row.status] || 'Pending';
   if (key === 't11_units') return (row.t11_units || []).join(', ');
@@ -90,6 +105,7 @@ export default function AdminInterestPage() {
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [intakeFilter, setIntakeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [migrateFilter, setMigrateFilter] = useState('');
   const [serverFilter, setServerFilter] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
@@ -98,6 +114,13 @@ export default function AdminInterestPage() {
   const [rowMessage, setRowMessage] = useState({});
   const [credentials, setCredentials] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [periods, setPeriods] = useState([]);
+  const [periodsLoading, setPeriodsLoading] = useState(true);
+  const [showAddPeriod, setShowAddPeriod] = useState(false);
+  const [newPeriodLabel, setNewPeriodLabel] = useState('');
+  const [newPeriodActivate, setNewPeriodActivate] = useState(true);
+  const [savingPeriod, setSavingPeriod] = useState(false);
+  const [periodError, setPeriodError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -114,6 +137,64 @@ export default function AdminInterestPage() {
     }
     load();
   }, []);
+
+  async function loadPeriods() {
+    setPeriodsLoading(true);
+    try {
+      const response = await fetch('/api/admin-intake-periods', { cache: 'no-store' });
+      const result = await response.json();
+      if (response.ok) setPeriods(result.periods || []);
+    } finally {
+      setPeriodsLoading(false);
+    }
+  }
+
+  useEffect(() => { loadPeriods(); }, []);
+
+  async function createPeriod(event) {
+    event.preventDefault();
+    const label = newPeriodLabel.trim();
+    if (!label) {
+      setPeriodError('Label is required.');
+      return;
+    }
+    setSavingPeriod(true);
+    setPeriodError('');
+    try {
+      const response = await fetch('/api/admin-intake-periods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label, activate: newPeriodActivate }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to create intake period.');
+      await loadPeriods();
+      if (newPeriodActivate) setIntakeFilter(label);
+      setShowAddPeriod(false);
+      setNewPeriodLabel('');
+      setNewPeriodActivate(true);
+    } catch (err) {
+      setPeriodError(err.message || 'Unable to create intake period.');
+    } finally {
+      setSavingPeriod(false);
+    }
+  }
+
+  async function activatePeriod(period) {
+    setPeriodError('');
+    try {
+      const response = await fetch(`/api/admin-intake-periods/${period.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: true }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to activate intake period.');
+      await loadPeriods();
+    } catch (err) {
+      setPeriodError(err.message || 'Unable to activate intake period.');
+    }
+  }
 
   async function handleLogout() {
     await fetch('/api/admin-logout', { method: 'POST' });
@@ -140,9 +221,9 @@ export default function AdminInterestPage() {
       if (result.account) {
         setCredentials({
           name: result.account.name,
-          member_id: result.account.member_id,
-          password: result.account.password,
-          reused: result.account.recordExisted || result.account.profileExisted,
+          member_id: result.account.player_id,
+          message: result.account.message,
+          reused: result.account.userExisted || result.account.recordExisted || result.account.profileExisted,
         });
         setRowMessage((prev) => ({ ...prev, [row.id]: 'Accepted. Player record and profile ready.' }));
       } else {
@@ -155,10 +236,6 @@ export default function AdminInterestPage() {
     }
   }
 
-  const intakeOptions = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.intake_period).filter(Boolean))).sort(),
-    [rows]
-  );
   const migrateOptions = useMemo(
     () => Array.from(new Set(rows.map((r) => r.migrate_alliance).filter(Boolean))).sort(),
     [rows]
@@ -177,6 +254,7 @@ export default function AdminInterestPage() {
     const matcher = buildMatcher(query);
     let out = rows.filter((row) => {
       if (intakeFilter && row.intake_period !== intakeFilter) return false;
+      if (!matchesStatusTab(row, statusFilter)) return false;
       if (migrateFilter && row.migrate_alliance !== migrateFilter) return false;
       if (serverFilter && row.current_server !== serverFilter) return false;
       if (matcher) {
@@ -203,7 +281,7 @@ export default function AdminInterestPage() {
       return 0;
     });
     return out;
-  }, [rows, query, intakeFilter, migrateFilter, serverFilter, sortKey, sortDir]);
+  }, [rows, query, intakeFilter, statusFilter, migrateFilter, serverFilter, sortKey, sortDir]);
 
   function toggleSort(key) {
     if (sortKey === key) {
@@ -389,21 +467,74 @@ export default function AdminInterestPage() {
   return (
     <AdminShell title="Transfer Requests" subtitle="Review transfer applications" onLogout={handleLogout}>
           <p className="admin-page-lead">Review 710 transfer onboarding requests submitted through the public interest form.</p>
+
+          <div className="admin-subtabs" role="tablist" aria-label="Intake periods">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={intakeFilter === ''}
+              className={`admin-subtab${intakeFilter === '' ? ' is-active' : ''}`}
+              onClick={() => setIntakeFilter('')}
+            >
+              All
+            </button>
+            {periods.map((period) => (
+              <button
+                key={period.id}
+                type="button"
+                role="tab"
+                aria-selected={intakeFilter === period.label}
+                className={`admin-subtab${intakeFilter === period.label ? ' is-active' : ''}`}
+                onClick={() => setIntakeFilter(period.label)}
+              >
+                {period.label}{period.is_active ? ' •' : ''}
+              </button>
+            ))}
+            {!periodsLoading && (
+              <button type="button" className="admin-subtab admin-subtab-add" onClick={() => setShowAddPeriod((v) => !v)}>
+                + Add Intake Period
+              </button>
+            )}
+          </div>
+
+          {showAddPeriod && (
+            <form onSubmit={createPeriod} className="intake-period-form">
+              {periodError && <p className="guide-message error" role="alert">{periodError}</p>}
+              <Field label="New intake period label" hint="e.g. November 2026">
+                <Input tone="console" value={newPeriodLabel} onChange={(e) => setNewPeriodLabel(e.target.value)} placeholder="November 2026" autoFocus />
+              </Field>
+              <label className="intake-period-activate">
+                <input type="checkbox" checked={newPeriodActivate} onChange={(e) => setNewPeriodActivate(e.target.checked)} />
+                Make this the active intake period
+              </label>
+              <div className="intake-period-form-actions">
+                <Button type="submit" disabled={savingPeriod}>{savingPeriod ? 'Saving…' : 'Add period'}</Button>
+                <Button variant="quiet" onClick={() => { setShowAddPeriod(false); setPeriodError(''); }} disabled={savingPeriod}>Cancel</Button>
+              </div>
+            </form>
+          )}
+
+          <div className="admin-subtabs" role="tablist" aria-label="Status">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.id || 'all'}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === tab.id}
+                className={`admin-subtab${statusFilter === tab.id ? ' is-active' : ''}`}
+                onClick={() => setStatusFilter(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {credentials && (
             <div className="credentials-modal-overlay" role="presentation" onClick={() => setCredentials(null)}>
               <div className="credentials-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-                <h2>{credentials.reused ? 'Account already existed' : 'Account created'}</h2>
-                <p>{credentials.name} &middot; ID {credentials.member_id}. Share this password with the player &mdash; they enter it as their PIN to edit their player record and power profile.</p>
-                <div className="credentials-modal-row">
-                  <code>{credentials.password}</code>
-                  <button
-                    type="button"
-                    className="credentials-modal-copy"
-                    onClick={() => navigator.clipboard && navigator.clipboard.writeText(credentials.password)}
-                  >
-                    Copy
-                  </button>
-                </div>
+                <h2>{credentials.reused ? 'Member account already existed' : 'Member account ready'}</h2>
+                <p>{credentials.name} &middot; Player ID {credentials.member_id}.</p>
+                <p>{credentials.message || 'They should log in with their Player ID and in-game verification code.'}</p>
                 <button type="button" onClick={() => setCredentials(null)} className="credentials-modal-close">Dismiss</button>
               </div>
             </div>
@@ -421,12 +552,6 @@ export default function AdminInterestPage() {
           <div className="admin-filter-bar">
             <Field label="Search (Name, server, player ID, alliance) — use % as wildcard">
               <Input tone="console" className="narrow" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. Legend%" />
-            </Field>
-            <Field label="Intake period">
-              <Select tone="console" value={intakeFilter} onChange={(e) => setIntakeFilter(e.target.value)}>
-                <option value="">All</option>
-                {intakeOptions.map((opt) => (<option key={opt} value={opt}>{opt}</option>))}
-              </Select>
             </Field>
             <Field label="Migrating to">
               <Select tone="console" value={migrateFilter} onChange={(e) => setMigrateFilter(e.target.value)}>

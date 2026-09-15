@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { getActiveIntakePeriod } from '../../../lib/transferIntakePeriods.server';
 import {
   INTEREST_UPLOAD_LIMITS,
   isAcceptedInterestImage,
@@ -75,8 +76,17 @@ export async function POST(request) {
       return NextResponse.json({ error: processedFileError }, { status: 413 });
     }
 
+    const activePeriod = await getActiveIntakePeriod();
+    if (!activePeriod) {
+      return NextResponse.json(
+        { error: 'Transfer intake is currently closed. Check back soon.' },
+        { status: 409 }
+      );
+    }
+
     const fields = {
-      intake_period: String(formData.get('intake_period') || ''),
+      intake_period: activePeriod.label,
+      intake_period_id: activePeriod.id,
       in_game_name: String(formData.get('in_game_name') || ''),
       player_id: String(formData.get('player_id') || ''),
       discord_username: String(formData.get('discord_username') || ''),
@@ -104,7 +114,6 @@ export async function POST(request) {
       'discord_username',
       'current_server',
       'current_alliance',
-      'intake_period',
       'migrate_alliance',
       'highest_troop_level',
       'current_tg',

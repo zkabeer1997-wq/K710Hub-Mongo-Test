@@ -13,16 +13,6 @@ const MIGRATE_OPTIONS = [
 const TROOP_LEVEL_OPTIONS = ['TG8', 'TG7', 'TG6', 'TG5', 'Below TG5'];
 const T11_OPTIONS = ['Infantry', 'Cavalry', 'Archer', 'No T11'];
 const YES_NO = ['Yes', 'No'];
-const INTAKE_PERIOD_OPTIONS = (() => {
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const out = [];
-const now = new Date();
-for (let i = 0; i < 12; i += 1) {
-const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-out.push(`${months[d.getMonth()]} ${d.getFullYear()}`);
-}
-return out;
-})();
 const SPENDING_OPTIONS = [
 'P2W Whale (spending like a KS shareholder)',
 'P2W Dolphin (between $1000-$2000 monthly)',
@@ -42,7 +32,7 @@ const SPENDING_OPTIONS = [
 // funnel without dropping the vetting data behind it.
 const ACTS = [
   { id: 'identity', num: 'I', label: 'Who Approaches', required: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
-  { id: 'intake', num: 'II', label: 'The Crossing', required: ['intakePeriod', 'migrateAlliance'] },
+  { id: 'intake', num: 'II', label: 'The Crossing', required: ['migrateAlliance'] },
   { id: 'troops', num: 'III', label: 'Strength of Arms', required: ['highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower'], requiresT11: true },
   { id: 'commitment', num: 'IV', label: 'The Oath', required: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'] },
   { id: 'battle-report', num: 'V', label: 'Proof', requiresScreenshot: true },
@@ -62,7 +52,6 @@ inGameName: '',
 playerId: '',
 discordUsername: '',
 currentServer: '',
-intakePeriod: '',
 currentAlliance: '',
 migrateAlliance: '',
 migrateAllianceOther: '',
@@ -97,12 +86,24 @@ const [sealed, setSealed] = useState(false);
 const [reducedMotion, setReducedMotion] = useState(false);
 const [step, setStep] = useState(0);
 const [confirmedInfo, setConfirmedInfo] = useState({});
+const [activePeriod, setActivePeriod] = useState(null);
+const [activePeriodLoaded, setActivePeriodLoaded] = useState(false);
 const renderedAt = useRef(Date.now());
 const screenshotInput = useRef(null);
 
 useEffect(() => {
   if (typeof window === 'undefined') return;
   setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}, []);
+
+useEffect(() => {
+  let cancelled = false;
+  fetch('/api/intake-periods/active')
+    .then((r) => r.json())
+    .then((data) => { if (!cancelled) setActivePeriod(data.label || null); })
+    .catch(() => { if (!cancelled) setActivePeriod(null); })
+    .finally(() => { if (!cancelled) setActivePeriodLoaded(true); });
+  return () => { cancelled = true; };
 }, []);
 
 useEffect(() => {
@@ -130,7 +131,6 @@ const FIELD_LABELS = {
   discordUsername: 'Discord username',
   currentServer: 'Your current server',
   currentAlliance: 'Your current alliance',
-  intakePeriod: 'Intake period',
   migrateAlliance: 'Which alliance are you looking to migrate to',
   highestTroopLevel: 'Current highest troop level',
   currentTg: 'Current amount of TG',
@@ -237,7 +237,6 @@ body.append('player_id', form.playerId);
 body.append('discord_username', form.discordUsername);
 body.append('current_server', form.currentServer);
 body.append('current_alliance', form.currentAlliance);
-body.append('intake_period', form.intakePeriod);
 body.append(
 'migrate_alliance',
 form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance
@@ -282,7 +281,7 @@ return;
 }
 setIsError(false);
 setStatus('');
-setConfirmedInfo({ intakePeriod: form.intakePeriod, discordUsername: form.discordUsername, reference: result.reference || null });
+setConfirmedInfo({ intakePeriod: activePeriod, discordUsername: form.discordUsername, reference: result.reference || null });
 setForm(initialForm);
 setScreenshots([]);
 if (screenshotInput.current) screenshotInput.current.value = '';
@@ -367,15 +366,14 @@ return (
 <div className="petition-act-body">
 <Chapter id="intake-fields" title="Intake window">
 <div className="troop-section public-section">
-<div className="section-title-row"><span>Intake</span><h3>Which intake period are you applying for?</h3></div>
-<div className="radio-group">
-{INTAKE_PERIOD_OPTIONS.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="intakePeriod" checked={form.intakePeriod === option} onChange={() => updateField('intakePeriod', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
+<div className="section-title-row"><span>Intake</span><h3>Intake window</h3></div>
+{!activePeriodLoaded && <p>Checking the current intake window…</p>}
+{activePeriodLoaded && activePeriod && (
+<p>You&apos;re applying for the <strong>{activePeriod}</strong> intake window. Leadership sets this window; it isn&apos;t something you choose.</p>
+)}
+{activePeriodLoaded && !activePeriod && (
+<p className="status error" role="alert">Transfer intake is currently closed. Check back soon.</p>
+)}
 </div>
 </Chapter>
 
@@ -594,7 +592,7 @@ return (
       <button type="button" className="k-btn k-btn-quiet" onClick={goBack}>Back</button>
     )}
     {isFinalStep ? (
-      <button type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages}>{processingImages ? 'Preparing images…' : loading ? 'Submitting...' : 'Submit Petition'}</button>
+      <button type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages || (activePeriodLoaded && !activePeriod)}>{processingImages ? 'Preparing images…' : loading ? 'Submitting...' : 'Submit Petition'}</button>
     ) : (
       <button type="button" className="k-btn" onClick={goNext}>Continue</button>
     )}
