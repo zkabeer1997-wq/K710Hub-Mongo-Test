@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
 import StatusBadge from '../../../../components/admin/StatusBadge';
+import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Field, Input, Select, Table } from '../../../../components/ui';
 import { useEscapeToClose } from '../../../../lib/useEscapeToClose';
@@ -566,6 +567,13 @@ export default function AdminInterestPage() {
               </Select>
             </Field>
             <Button variant="quiet" onClick={exportExcel}>Export to Excel</Button>
+            <ExportToGoogleDrive
+              title={`K710 Transfer Requests — ${new Date().toISOString().slice(0, 10)}`}
+              getSheets={() => [{
+                name: 'Interest Submissions',
+                aoa: [EXPORT_COLUMNS.map((c) => c.label), ...visibleRows.map((row) => EXPORT_COLUMNS.map((c) => cellValue(row, c.key)))],
+              }]}
+            />
           </div>
           {loading && <TableSkeleton columns={COMPACT_COLUMNS.length + 1} rows={7} />}
           {error && <div className="status error">{error}</div>}

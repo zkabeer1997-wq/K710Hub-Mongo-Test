@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { filterRowsUpdatedOnOrAfter } from '../../../../lib/adminTimeWindow.mjs';
 import AdminShell from '../../../../components/admin/AdminShell';
+import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Field, Input, Select, Table } from '../../../../components/ui';
 import TableFilters from '../../../../components/admin/TableFilters';
@@ -263,6 +264,16 @@ export default function AdminPrepMinistersPage({ noble = false }) {
           <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:18,alignItems:'center'}}>
             <Button variant="quiet" onClick={handleGenerate} disabled={loading || Boolean(error) || saveStatus==='saving' || saveStatus==='error'}>Generate full schedule</Button>
             <Button variant="quiet" onClick={exportExcel} disabled={loading || Boolean(error) || saveStatus==='saving' || saveStatus==='error'}>Export schedule to Excel</Button>
+            <ExportToGoogleDrive
+              title={`${noble ? 'K710 Noble Advisor Schedule' : 'K710 Prep Week Schedules'} — ${new Date().toISOString().slice(0, 10)}`}
+              getSheets={() => {
+                const data = result || makeSchedule();
+                return data.days.map((d) => ({
+                  name: 'Day ' + d.day,
+                  aoa: [['Day ' + d.day, d.position], ['Start Time', 'Member'], ...d.rows.map((r) => [r.time, r.member])],
+                }));
+              }}
+            />
             <span>Uses the update time frame above, regardless of table filters.</span>
             {saveStatus && <span role="status">{saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : 'Save failed — correct the edited value before generating.'}</span>}
           </div>

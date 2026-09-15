@@ -9,7 +9,8 @@ import ConfirmDialog from './ConfirmDialog';
 import TableSkeleton from './TableSkeleton';
 import { Button, Field, Input, Table } from '../ui';
 import MemberDetailsDrawer from './MemberDetailsDrawer';
-import { buildKvkMembersWorkbook, formatUnitLevel } from '../../lib/kvkMembersExport.mjs';
+import { buildKvkMembersWorkbook, formatUnitLevel, kvkMemberExportRows, KVK_MEMBER_HEADERS } from '../../lib/kvkMembersExport.mjs';
+import ExportToGoogleDrive from './ExportToGoogleDrive';
 import { useEscapeToClose } from '../../lib/useEscapeToClose';
 import { filterRowsUpdatedOnOrAfter } from '../../lib/adminTimeWindow.mjs';
 import {
@@ -540,15 +541,24 @@ export default function RosterWorkspace({
         { label: 'Unassigned', value: Math.max(seasonFilteredRows.length - assignedCount, 0) },
         { label: 'Rallies', value: rallyCount },
       ]}
-      actions={allowClearTestData ? (
-        <Button
-          variant="quiet"
-          onClick={clearTestData}
-          disabled={deletingIds.includes('__test_data__')}
-        >
-          {deletingIds.includes('__test_data__') ? 'Clearing...' : 'Clear test data'}
-        </Button>
-      ) : null}
+      actions={(
+        <>
+          <Button variant="quiet" onClick={handleExportXlsx}>Export to Excel</Button>
+          <ExportToGoogleDrive
+            title={`${title} — ${new Date().toISOString().slice(0, 10)}`}
+            getSheets={() => [{ name: workbookSheetName, aoa: [KVK_MEMBER_HEADERS, ...kvkMemberExportRows(filteredSorted)] }]}
+          />
+          {allowClearTestData && (
+            <Button
+              variant="quiet"
+              onClick={clearTestData}
+              disabled={deletingIds.includes('__test_data__')}
+            >
+              {deletingIds.includes('__test_data__') ? 'Clearing...' : 'Clear test data'}
+            </Button>
+          )}
+        </>
+      )}
     >
       <ConfirmDialog
         open={Boolean(confirmState)}
