@@ -60,7 +60,7 @@ async function main() {
   report.content_blocks_count = await blocks.countDocuments({});
 
   console.log(JSON.stringify(report, null, 2));
-  if (events === 0) console.warn('WARN: events collection is empty — create via /admin/dashboard/events');
+  if (events === 0) console.warn('WARN: events collection is empty — create via /admin/dashboard/alliance-events');
   if (!guides) console.warn('WARN: guides empty — create via /admin/dashboard/guides');
   await client.close();
 }

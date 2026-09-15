@@ -15,8 +15,8 @@ const ROUTES = [
   '/events', '/events/castle-battle', '/events/flamedragon-tyrant-battle', '/interest', '/player-record',
   '/forms', '/player-record/form', '/power-profile', '/flamedragon', '/prep-phase-backpack', '/tools',
   '/tools/adventure-stall', '/tools/charm-pack-optimizer', '/tools/flamedragon-shop', '/tools/pet-pack-optimizer', '/tools/wavebound-charms',
-  '/admin', '/admin/login', '/admin/dashboard', '/admin/dashboard/guides', '/admin/dashboard/events',
-  '/admin/dashboard/alliances', '/admin/dashboard/form-gates', '/admin/dashboard/member-pins', '/admin/dashboard/interest',
+  '/admin', '/admin/login', '/admin/dashboard', '/admin/dashboard/guides', '/admin/dashboard/alliance-events',
+  '/admin/dashboard/form-gates', '/admin/dashboard/member-pins', '/admin/dashboard/interest',
   '/admin/dashboard/prep-ministers', '/admin/dashboard/flamedragon',
   '/design-lab/homepage', '/design-lab/homepage-fusion'
 ];

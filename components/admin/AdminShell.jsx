@@ -10,8 +10,7 @@ const NAV_SECTIONS = [
     label: 'Website',
     items: [
       { href: '/admin/dashboard/guides', label: 'Guides', match: '/admin/dashboard/guides' },
-      { href: '/admin/dashboard/events', label: 'Events', match: '/admin/dashboard/events' },
-      { href: '/admin/dashboard/alliances', label: 'Alliances', match: '/admin/dashboard/alliances' },
+      { href: '/admin/dashboard/alliance-events', label: 'Alliance Events', match: '/admin/dashboard/alliance-events' },
       { href: '/admin/dashboard/gallery', label: 'Gallery', match: '/admin/dashboard/gallery' },
       { href: '/admin/dashboard/tool-editing', label: 'Pack Editing', match: '/admin/dashboard/tool-editing' },
       { href: '/admin/dashboard/form-gates', label: 'Form Gates', match: '/admin/dashboard/form-gates' },

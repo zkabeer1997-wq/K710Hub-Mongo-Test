@@ -1,16 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import AdminShell from '../../../../components/admin/AdminShell';
-import AllianceEventEditor from '../../../../components/admin/AllianceEventEditor';
-import { validateAllianceEvents } from '../../../../lib/allianceEvents.mjs';
-import ConfirmDialog from '../../../../components/admin/ConfirmDialog';
-import TableSkeleton from '../../../../components/admin/TableSkeleton';
-import { Button, Field, Input, Select, Textarea, Table } from '../../../../components/ui';
+import AllianceEventEditor from './AllianceEventEditor';
+import { validateAllianceEvents } from '../../lib/allianceEvents.mjs';
+import ConfirmDialog from './ConfirmDialog';
+import TableSkeleton from './TableSkeleton';
+import { Button, Field, Input, Select, Textarea, Table } from '../ui';
 
-import { validateBearTimes } from '../../../../lib/bearHuntSchedule';
-import { notifyBearScheduleChanged } from '../../../../components/BearScheduleProvider';
+import { validateBearTimes } from '../../lib/bearHuntSchedule';
+import { notifyBearScheduleChanged } from '../BearScheduleProvider';
 
 const STATUSES = ['open', 'selective', 'closed'];
 const EMPTY_FORM = {
@@ -18,7 +16,7 @@ const EMPTY_FORM = {
   recruiting_status: 'open', language: '', roster_size: '', active: true, sort_order: 0, bear_times_utc: [], scheduled_events: [],
 };
 
-export default function AdminAlliancesPage() {
+export default function AlliancesPanel() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,7 +25,6 @@ export default function AdminAlliancesPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmRow, setConfirmRow] = useState(null);
-  const router = useRouter();
 
   async function load() {
     setLoading(true);
@@ -45,12 +42,6 @@ export default function AdminAlliancesPage() {
   }
 
   useEffect(() => { load(); }, []);
-
-  async function handleLogout() {
-    await fetch('/api/admin-logout', { method: 'POST' });
-    router.push('/admin/login');
-    router.refresh();
-  }
 
   function openCreate() {
     setError(''); setStatus(''); setEditingTag('new'); setForm(EMPTY_FORM);
@@ -114,7 +105,8 @@ export default function AdminAlliancesPage() {
   }
 
   return (
-    <AdminShell title="Alliances" subtitle="Manage alliance details, Bear Hunt times, and event dates shown on the website." onLogout={handleLogout}>
+    <div>
+      <p className="admin-page-lead">Manage alliance details, Bear Hunt times, and event dates shown on the website.</p>
       {error && <p className="guide-message error" role="alert">{error}</p>}
       {status && <p className="guide-message success" role="status">{status}</p>}
 
@@ -212,6 +204,6 @@ export default function AdminAlliancesPage() {
         onConfirm={confirmDelete}
         onCancel={() => setConfirmRow(null)}
       />
-    </AdminShell>
+    </div>
   );
 }

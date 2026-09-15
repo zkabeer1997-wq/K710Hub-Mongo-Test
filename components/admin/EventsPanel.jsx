@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import AdminShell from '../../../../components/admin/AdminShell';
-import ConfirmDialog from '../../../../components/admin/ConfirmDialog';
-import TableSkeleton from '../../../../components/admin/TableSkeleton';
-import { Button, Field, Input, Select, Textarea, Table } from '../../../../components/ui';
+import ConfirmDialog from './ConfirmDialog';
+import TableSkeleton from './TableSkeleton';
+import { Button, Field, Input, Select, Textarea, Table } from '../ui';
 
-import { nextEventOccurrence, recurrenceLabel, validateEventSchedule } from '../../../../lib/eventRecurrence.mjs';
+import { nextEventOccurrence, recurrenceLabel, validateEventSchedule } from '../../lib/eventRecurrence.mjs';
 
 const KINDS = ['kvk', 'championship', 'swordland', 'custom'];
 const EMPTY_FORM = {
@@ -23,7 +21,7 @@ function toLocalInputValue(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export default function AdminEventsPage() {
+export default function EventsPanel() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,7 +30,6 @@ export default function AdminEventsPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmRow, setConfirmRow] = useState(null);
-  const router = useRouter();
   const [repeatChoice, setRepeatChoice] = useState('none:1');
   const scheduleInput = {
     ...form,
@@ -76,12 +73,6 @@ export default function AdminEventsPage() {
   }
 
   useEffect(() => { load(); }, []);
-
-  async function handleLogout() {
-    await fetch('/api/admin-logout', { method: 'POST' });
-    router.push('/admin/login');
-    router.refresh();
-  }
 
   function openCreate() {
     setError('');
@@ -164,11 +155,10 @@ export default function AdminEventsPage() {
   }
 
   return (
-    <AdminShell
-      title="Events"
-      subtitle="Schedule one-time or recurring kingdom events. Edit Bear Hunt times and alliance event dates in the Alliances tab."
-      onLogout={handleLogout}
-    >
+    <div>
+      <p className="admin-page-lead">
+        Schedule one-time or recurring kingdom events. Edit Bear Hunt times and alliance event dates in the Alliances tab.
+      </p>
       {error && <p className="guide-message error" role="alert">{error}</p>}
       {status && <p className="guide-message success" role="status">{status}</p>}
 
@@ -287,6 +277,6 @@ export default function AdminEventsPage() {
         onConfirm={confirmDelete}
         onCancel={() => setConfirmRow(null)}
       />
-    </AdminShell>
+    </div>
   );
 }
