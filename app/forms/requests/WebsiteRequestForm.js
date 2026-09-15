@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { KVK_ALLIANCES } from '../../../lib/playerCombatOptions.mjs';
+import { useFormFieldMeta } from '../../../lib/useFormFieldMeta';
 
 const SECTIONS = ['Tools and Calculators', 'Forms', 'Events', 'Guides', 'General'];
 const MAX_MESSAGE_LENGTH = 2000;
@@ -18,6 +19,7 @@ export default function WebsiteRequestForm() {
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const { intro, fields } = useFormFieldMeta('requests');
 
   useEffect(() => {
     let cancelled = false;
@@ -94,9 +96,9 @@ export default function WebsiteRequestForm() {
   return (
     <div className="public-shell single-form">
       <section className="public-intro">
-        <span className="public-kicker">Website Requests</span>
-        <h1>Improve K710Hub</h1>
-        <p>Suggest an improvement - tell the admin team what you would like to see added, fixed, or improved.</p>
+        <span className="public-kicker">{intro.kicker}</span>
+        <h1>{intro.heading}</h1>
+        <p>{intro.description}</p>
         <div className="public-intro-stats" aria-label="Submission checklist">
           <div>
             <strong>1</strong>
@@ -121,36 +123,51 @@ export default function WebsiteRequestForm() {
           <label>Your name<input value={name} readOnly placeholder="Loading..." /></label>
           <label>Member ID<input value={memberId} readOnly placeholder="Loading..." /></label>
         </section>
-        <section className="troop-section public-section">
-          <div className="section-title-row"><span>Alliance</span><h3>Current Alliance</h3><p>Select the alliance you are currently in.</p></div>
-          <label>Current Alliance
-            <select value={currentAlliance} onChange={(e) => setCurrentAlliance(e.target.value)}>
-              <option value="">Select alliance</option>
-              {KVK_ALLIANCES.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </label>
-        </section>
-        <section className="troop-section public-section">
-          <div className="section-title-row"><span>Category</span><h3>Which part of the site?</h3><p>Select the section your suggestion is about.</p></div>
-          <label>Section
-            <select value={section} onChange={(e) => setSection(e.target.value)}>
-              <option value="">Select a section</option>
-              {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </label>
-        </section>
-        <section className="troop-section public-section">
-          <div className="section-title-row"><span>Suggestion</span><h3>Describe the improvement</h3><p>Be as specific as you can - what&apos;s the problem, and what would you like instead?</p></div>
-          <label>Your suggestion
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              maxLength={MAX_MESSAGE_LENGTH}
-              rows={6}
-              placeholder="Describe the improvement you'd like to see..."
-            />
-          </label>
-        </section>
+        {fields.map((field) => {
+          if (field.key === 'current_alliance') {
+            return (
+              <section className="troop-section public-section" key={field.key}>
+                <div className="section-title-row"><span>Alliance</span><h3>Current Alliance</h3><p>{field.help_text}</p></div>
+                <label>{field.label}
+                  <select value={currentAlliance} onChange={(e) => setCurrentAlliance(e.target.value)}>
+                    <option value="">{field.placeholder}</option>
+                    {KVK_ALLIANCES.map((a) => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </label>
+              </section>
+            );
+          }
+          if (field.key === 'section') {
+            return (
+              <section className="troop-section public-section" key={field.key}>
+                <div className="section-title-row"><span>Category</span><h3>Which part of the site?</h3><p>{field.help_text}</p></div>
+                <label>{field.label}
+                  <select value={section} onChange={(e) => setSection(e.target.value)}>
+                    <option value="">{field.placeholder}</option>
+                    {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </label>
+              </section>
+            );
+          }
+          if (field.key === 'message') {
+            return (
+              <section className="troop-section public-section" key={field.key}>
+                <div className="section-title-row"><span>Suggestion</span><h3>Describe the improvement</h3><p>{field.help_text}</p></div>
+                <label>{field.label}
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    maxLength={MAX_MESSAGE_LENGTH}
+                    rows={6}
+                    placeholder={field.placeholder}
+                  />
+                </label>
+              </section>
+            );
+          }
+          return null;
+        })}
         {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
         <button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'Send request'}</button>
       </form>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import SealedPetition from '../../components/kingdom/world/SealedPetition';
 import { processInterestImages } from './processInterestImages';
+import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 
 const MIGRATE_OPTIONS = [
 '710 (Bear 0200UTC and 1300UTC)',
@@ -88,6 +89,9 @@ const [step, setStep] = useState(0);
 const [confirmedInfo, setConfirmedInfo] = useState({});
 const [activePeriod, setActivePeriod] = useState(null);
 const [activePeriodLoaded, setActivePeriodLoaded] = useState(false);
+const { fields: editableFields } = useFormFieldMeta('interest');
+const editableLabel = (key, fallback) => editableFields.find((f) => f.key === key)?.label || fallback;
+const editablePlaceholder = (key, fallback) => editableFields.find((f) => f.key === key)?.placeholder || fallback;
 const renderedAt = useRef(Date.now());
 const screenshotInput = useRef(null);
 
@@ -158,14 +162,14 @@ function validateStep(index) {
   for (const key of act.required || []) {
     if (!String(form[key] || '').trim()) {
       setIsError(true);
-      setStatus(`Please fill in: ${FIELD_LABELS[key]}.`);
+      setStatus(`Please fill in: ${editableLabel(key, FIELD_LABELS[key])}.`);
       return false;
     }
   }
   for (const key of NUMERIC_FIELDS) {
     if (key in form && form[key] && !isNumericValue(form[key])) {
       setIsError(true);
-      setStatus(`${FIELD_LABELS[key]} should be numbers only.`);
+      setStatus(`${editableLabel(key, FIELD_LABELS[key])} should be numbers only.`);
       return false;
     }
   }
@@ -345,11 +349,11 @@ return (
 <div className="petition-act-body">
 <Chapter id="identity-fields" title="Identity">
 <div className="identity-grid">
-<label>In-game name<input value={form.inGameName} onChange={(e) => updateField('inGameName', e.target.value)} /></label>
-<label>Player ID<input value={form.playerId} onChange={(e) => updateField('playerId', e.target.value)} /></label>
-<label>Discord username<input value={form.discordUsername} onChange={(e) => updateField('discordUsername', e.target.value)} /></label>
-<label>Your current server (prior to transfer)<input value={form.currentServer} onChange={(e) => updateField('currentServer', e.target.value)} /></label>
-<label>Your current alliance (prior to transfer)<input value={form.currentAlliance} onChange={(e) => updateField('currentAlliance', e.target.value)} /></label>
+<label>{editableLabel('inGameName', 'In-game name')}<input value={form.inGameName} onChange={(e) => updateField('inGameName', e.target.value)} /></label>
+<label>{editableLabel('playerId', 'Player ID')}<input value={form.playerId} onChange={(e) => updateField('playerId', e.target.value)} /></label>
+<label>{editableLabel('discordUsername', 'Discord username')}<input value={form.discordUsername} onChange={(e) => updateField('discordUsername', e.target.value)} /></label>
+<label>{editableLabel('currentServer', 'Your current server (prior to transfer)')}<input value={form.currentServer} onChange={(e) => updateField('currentServer', e.target.value)} /></label>
+<label>{editableLabel('currentAlliance', 'Your current alliance (prior to transfer)')}<input value={form.currentAlliance} onChange={(e) => updateField('currentAlliance', e.target.value)} /></label>
 </div>
 </Chapter>
 </div>
@@ -419,7 +423,7 @@ return (
 </div>
 
 <div className="identity-grid">
-<label>Current amount of TG<input inputMode="numeric" value={form.currentTg} onChange={(e) => updateField('currentTg', e.target.value)} placeholder="We need to understand how far you can push your TG level" /></label>
+<label>{editableLabel('currentTg', 'Current amount of TG')}<input inputMode="numeric" value={form.currentTg} onChange={(e) => updateField('currentTg', e.target.value)} placeholder={editablePlaceholder('currentTg', 'We need to understand how far you can push your TG level')} /></label>
 </div>
 
 <div className="troop-section public-section">
@@ -437,8 +441,8 @@ return (
 
 <Chapter id="power-fields" title="Power">
 <div className="identity-grid">
-<label>Current Mystic Trial TOTAL STAGES<input inputMode="numeric" value={form.mysticTrialStages} onChange={(e) => updateField('mysticTrialStages', e.target.value)} /></label>
-<label>Total Power<input inputMode="numeric" value={form.totalPower} onChange={(e) => updateField('totalPower', e.target.value)} /></label>
+<label>{editableLabel('mysticTrialStages', 'Current Mystic Trial TOTAL STAGES')}<input inputMode="numeric" value={form.mysticTrialStages} onChange={(e) => updateField('mysticTrialStages', e.target.value)} /></label>
+<label>{editableLabel('totalPower', 'Total Power')}<input inputMode="numeric" value={form.totalPower} onChange={(e) => updateField('totalPower', e.target.value)} /></label>
 </div>
 
 <div className="troop-section public-section">
@@ -454,8 +458,8 @@ return (
 </div>
 
 <div className="identity-grid">
-<label>Number of passes required for you to transfer to 710<input inputMode="numeric" value={form.passesRequired} onChange={(e) => updateField('passesRequired', e.target.value)} /></label>
-<label>Your current number of transfer passes<input inputMode="numeric" value={form.currentPasses} onChange={(e) => updateField('currentPasses', e.target.value)} /></label>
+<label>{editableLabel('passesRequired', 'Number of passes required for you to transfer to 710')}<input inputMode="numeric" value={form.passesRequired} onChange={(e) => updateField('passesRequired', e.target.value)} /></label>
+<label>{editableLabel('currentPasses', 'Your current number of transfer passes')}<input inputMode="numeric" value={form.currentPasses} onChange={(e) => updateField('currentPasses', e.target.value)} /></label>
 </div>
 </Chapter>
 </div>

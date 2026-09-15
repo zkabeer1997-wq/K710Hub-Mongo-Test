@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { KVK_ALLIANCES, KVK_AVAILABILITY_OPTIONS } from '../../lib/playerCombatOptions.mjs';
+import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 
 const AVAILABILITY_OPTIONS = KVK_AVAILABILITY_OPTIONS;
 const ALLIANCES = KVK_ALLIANCES;
 
 export default function PlayerRecordForm({ initialMemberId = '' }) {
+  const { intro } = useFormFieldMeta('joiner');
   const [name, setName] = useState('');
   const [memberId, setMemberId] = useState(initialMemberId);
   const [availability, setAvailability] = useState('');
@@ -82,9 +84,9 @@ export default function PlayerRecordForm({ initialMemberId = '' }) {
   return (
     <div className="public-shell single-form">
       <section className="public-intro">
-        <span className="public-kicker">KvK Availability</span>
-        <h1>Battle availability</h1>
-        <p>Tell planners which half of the battle window you can cover. You are signed in with Kingshot — no PIN is required.</p>
+        <span className="public-kicker">{intro.kicker}</span>
+        <h1>{intro.heading}</h1>
+        <p>{intro.description}</p>
       </section>
       <form className="public-form-card" onSubmit={handleSubmit}>
         <div className="form-section-header">

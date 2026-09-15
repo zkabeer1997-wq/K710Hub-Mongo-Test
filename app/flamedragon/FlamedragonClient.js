@@ -24,8 +24,10 @@ import {
   serializeCharmSelections,
   serializeGovernorGearSelections,
 } from '../../lib/flamedragonForm.mjs';
+import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 
 function FlamedragonForm({ initialMemberId = '', intro }) {
+  const { intro: fieldMetaIntro } = useFormFieldMeta('dragon');
   const [form, setForm] = useState({
     name: '',
     member_id: initialMemberId,
@@ -169,8 +171,8 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
         {intro}
         <form className="public-form-card" onSubmit={handleSubmit}>
           <div className="form-section-header">
-            <span>Flamedragon Tyrant</span>
-            <h1>Availability, Levels, and Heroes</h1>
+            <span>{fieldMetaIntro.kicker}</span>
+            <h1>{fieldMetaIntro.heading}</h1>
           </div>
 
           <section className="identity-grid">

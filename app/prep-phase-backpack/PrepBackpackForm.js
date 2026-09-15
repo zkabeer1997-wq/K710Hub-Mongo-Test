@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import NobleAdvisorFields, { SlotPicker } from '../../components/NobleAdvisorFields';
+import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 const CONSTRUCTION_UPGRADES = ['TG5', 'TG6', 'TG7', 'TG8'];
 const T11_TROOPS = ['T11 Infantry', 'T11 Cavalry', 'T11 Archers'];
 
@@ -24,6 +25,7 @@ const initialForm = {
 };
 
 export default function PrepBackpackForm({ initialMemberId = '' }) {
+  const { intro } = useFormFieldMeta('prep');
   const [form, setForm] = useState(initialForm);
   const [availDay1, setAvailDay1] = useState([]);
   const [availDay2, setAvailDay2] = useState([]);
@@ -109,8 +111,8 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
   return (
     <form className="public-form-card minister-hall-form" onSubmit={handleSubmit}>
       <div className="form-section-header prep-header-block">
-        <span>Minister&rsquo;s Hall</span>
-        <h1>Backpack Amounts &amp; Minister Position Bookings</h1>
+        <span>{intro.kicker}</span>
+        <h1>{intro.heading}</h1>
         <p>Booking as Member ID: <strong>{initialMemberId || '(unknown)'}</strong></p>
       </div>
 

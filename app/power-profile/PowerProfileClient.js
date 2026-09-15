@@ -21,8 +21,10 @@ parseGovernorGearSelections,
 serializeCharmSelections,
 serializeGovernorGearSelections,
 } from '../../lib/powerProfiles.mjs';
+import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 
 function PowerProfileForm({ initialMemberId = '', intro }) {
+const { intro: formIntro } = useFormFieldMeta('lead');
 const [form, setForm] = useState({
 name: '',
 member_id: initialMemberId,
@@ -168,9 +170,9 @@ return (
 <div className="armory-rack-r" aria-hidden="true" />
 <div className="armory-inner">
 <header className="armory-head">
-<span className="k-mark">Kingdom 710 member profile</span>
-<h1 className="k-display armory-title k-engraved">Gear Tracking</h1>
-<p className="k-narrative armory-lede">Keep your troop levels, heroes, Governor Gear, charms, and power information up to date.</p>
+<span className="k-mark">{formIntro.kicker}</span>
+<h1 className="k-display armory-title k-engraved">{formIntro.heading}</h1>
+<p className="k-narrative armory-lede">{formIntro.description}</p>
 </header>
 {intro}
 <GiftCodeRewards />
