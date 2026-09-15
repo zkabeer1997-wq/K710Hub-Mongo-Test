@@ -9,7 +9,7 @@ const FORMS = [
   {
     key: 'lead',
     group: 'Always first',
-    title: 'Player Profile',
+    title: 'Gear Tracking',
     description:
       'Update your Governor Gear, Charms, Pets, Masters, and Mystic Trial so leadership has accurate power data.',
     href: (id) => `/power-profile?member_id=${id}`,
@@ -117,7 +117,7 @@ function FormOrderGuide({ open, onClose }) {
 
         <ol className="forms-guide-steps">
           <li>
-            <strong>1. Player Profile</strong>
+            <strong>1. Gear Tracking</strong>
             <span>
               Update your Governor Gear, Charms, Pets, Masters, and Mystic Trial first. This keeps your
               power record current for every event.

@@ -14,7 +14,7 @@ export default function ToolEditingPage(){
  async function save(){const {quantities,error}=validateToolQuantities(selected,values);if(error){setStatus(error);return;}setSaving(true);try{const r=await fetch('/api/admin-tool-settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:selected,quantities})});const d=await r.json();if(!r.ok)throw Error(d.error);setTools(prev=>prev.map(t=>t.key===selected?{...t,quantities:d.quantities}:t));setDirty(false);setStatus('Saved. Members will use these quantities when they open or reload the tool.');}catch(e){setStatus(e.message);}finally{setSaving(false);}}
  const fields=tool?.fields.filter(f=>`${f.group} ${f.label}`.toLowerCase().includes(query.toLowerCase())) || [];
  const groups=[...new Set(fields.map(f=>f.group))];
- return <AdminShell onLogout={logout} title="Tool Editing" subtitle="Update item quantities used by the calculators">
+ return <AdminShell onLogout={logout} title="Pack Editing" subtitle="Update item quantities used by the pack calculators">
   <p>Pack prices, merge chances, purchase rules, and calculation methods stay fixed. Changes apply to the selected tool.</p>
   <div className="tool-edit-toolbar"><label>Tool<select value={selected} disabled={saving || dirty} onChange={e=>choose(e.target.value)}>{tools.map(t=><option key={t.key} value={t.key}>{t.label}</option>)}</select></label><label>Find an item<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Item, pack, or charm level"/></label></div>
   {status&&<p role="status">{status}</p>}

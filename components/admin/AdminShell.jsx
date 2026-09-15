@@ -6,13 +6,6 @@ import { useEffect, useState } from 'react';
 
 const NAV_SECTIONS = [
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    items: [
-      { href: '/admin/dashboard/overview', label: 'Overview', match: '/admin/dashboard/overview' },
-    ],
-  },
-  {
     id: 'website',
     label: 'Website',
     items: [
@@ -20,7 +13,7 @@ const NAV_SECTIONS = [
       { href: '/admin/dashboard/events', label: 'Events', match: '/admin/dashboard/events' },
       { href: '/admin/dashboard/alliances', label: 'Alliances', match: '/admin/dashboard/alliances' },
       { href: '/admin/dashboard/gallery', label: 'Gallery', match: '/admin/dashboard/gallery' },
-      { href: '/admin/dashboard/tool-editing', label: 'Tool Editing', match: '/admin/dashboard/tool-editing' },
+      { href: '/admin/dashboard/tool-editing', label: 'Pack Editing', match: '/admin/dashboard/tool-editing' },
       { href: '/admin/dashboard/form-gates', label: 'Form Gates', match: '/admin/dashboard/form-gates' },
     ],
   },
@@ -28,7 +21,7 @@ const NAV_SECTIONS = [
     id: 'member',
     label: 'Members',
     items: [
-      { href: '/admin/dashboard/member-pins', label: 'Member roster', match: '/admin/dashboard/member-pins' },
+      { href: '/admin/dashboard/member-pins', label: 'PIN Management', match: '/admin/dashboard/member-pins' },
       { href: '/admin/dashboard/access', label: 'User Access', match: '/admin/dashboard/access' },
       { href: '/admin/dashboard/gift-codes', label: 'Gift Codes', match: '/admin/dashboard/gift-codes' },
       { href: '/admin/dashboard/interest', label: 'Transfer Requests', badge: 'transfers', match: '/admin/dashboard/interest' },
@@ -40,7 +33,7 @@ const NAV_SECTIONS = [
     label: 'KvK',
     items: [
       { href: '/admin/dashboard/prep-ministers', label: 'Prep Ministers', match: '/admin/dashboard/prep-ministers' },
-      { href: '/admin/dashboard', label: 'KvK Members', match: '/admin/dashboard' },
+      { href: '/admin/dashboard', label: 'KvK Participants', match: '/admin/dashboard' },
     ],
   },
   {
@@ -48,7 +41,7 @@ const NAV_SECTIONS = [
     label: 'Flamedragon',
     items: [
       { href: '/admin/dashboard/noble-advisor', label: 'Noble Advisor', match: '/admin/dashboard/noble-advisor' },
-      { href: '/admin/dashboard/flamedragon', label: 'Flamedragon Tyrant', match: '/admin/dashboard/flamedragon' },
+      { href: '/admin/dashboard/flamedragon', label: 'Tyrant Participants', match: '/admin/dashboard/flamedragon' },
     ],
   },
 ];

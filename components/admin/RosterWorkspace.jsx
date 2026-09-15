@@ -76,7 +76,7 @@ function availabilityTone(availability) {
 
 /**
  * Shared roster + rally planner workspace for the admin panel.
- * Powers both the KvK Members tab and the Flamedragon Tyrant tab -
+ * Powers both the KvK Participants tab and the Tyrant Participants tab -
  * each passes its own member/rally API endpoints and storage key so
  * the two rosters and rally boards stay fully independent.
  */
@@ -486,7 +486,7 @@ export default function RosterWorkspace({
         <div><span>Available</span><strong>{availableCount}</strong></div>
         <div><span>Assigned</span><strong>{assignedCount}</strong></div>
         <div className="unassigned-stat"><span>Unassigned</span><strong>{Math.max(rows.length - assignedCount, 0)}</strong></div>
-        <div><span>Player Profiles</span><strong>{powerProfileCount}</strong></div>
+        <div><span>Gear Tracking</span><strong>{powerProfileCount}</strong></div>
         <div><span>Rallies</span><strong>{rallyCount}</strong></div>
         <div><span>Latest update</span><strong>{lastUpdated ? new Date(lastUpdated).toLocaleDateString() : '-'}</strong></div>
       </div>

@@ -115,7 +115,7 @@ const ROUTES = [
   { path: '/tools/pet-pack-optimizer', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
 
   // theme-console — AdminShell, already unified structurally
-  { path: '/admin/dashboard/overview', theme: 'theme-console', auth: 'admin' },
+  { path: '/admin/dashboard/interest', theme: 'theme-console', auth: 'admin' },
   { path: '/admin/dashboard/form-gates', theme: 'theme-console', auth: 'admin' },
 ];
 

@@ -9,7 +9,7 @@ const DESTINATIONS = [
   { href: '/chronometer', label: 'Bear Hunt Schedule', note: 'Alliance times and transfers' },
   { href: '/interest', label: 'Transfer Form', note: 'Apply to join K710' },
   { href: '/player-record', label: 'Member Sign In', note: 'Member pages and forms' },
-  { href: '/power-profile', label: 'Player Profile', note: 'Gear, heroes, troops, and power' },
+  { href: '/power-profile', label: 'Gear Tracking', note: 'Gear, heroes, troops, and power' },
   { href: '/admin', label: 'Admin', note: 'Administrators only', restricted: true },
 ];
 

@@ -431,7 +431,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                 <Link href="/guides"><span>Kingdom guides</span><b>→</b></Link>
                 <Link href="/events"><span>Events & schedules</span><b>→</b></Link>
                 {isAdminRole(profile.role) && (
-                  <Link href="/admin/dashboard/overview"><span>Admin dashboard</span><b>→</b></Link>
+                  <Link href="/admin/dashboard/interest"><span>Admin dashboard</span><b>→</b></Link>
                 )}
               </nav>
 

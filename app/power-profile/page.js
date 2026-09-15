@@ -5,7 +5,7 @@ import FormClosedNotice from '../../components/FormClosedNotice';
 import PowerProfileClient from './PowerProfileClient';
 
 export const metadata = {
-  title: 'K710 Player Profile',
+  title: 'K710 Gear Tracking',
 };
 
 export default async function PowerProfilePage() {

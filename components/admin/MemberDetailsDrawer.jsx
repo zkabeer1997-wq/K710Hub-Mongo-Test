@@ -75,7 +75,7 @@ export default function MemberDetailsDrawer({ open, member, rallyName, onClose, 
           <p className="member-detail-text">{(member.heroes || []).join(', ') || 'No heroes on file.'}</p>
         </section>
         <section className="admin-drawer-section">
-          <h3>Player Profile</h3>
+          <h3>Gear Tracking</h3>
           {member.power_profile ? (
             <div className="member-detail-list">
               {[
@@ -85,7 +85,7 @@ export default function MemberDetailsDrawer({ open, member, rallyName, onClose, 
               <Detail label="Profile updated" value={member.player_profile_updated_at && new Date(member.player_profile_updated_at).toLocaleString()} />
               <Detail label="Availability updated" value={member.event_updated_at && new Date(member.event_updated_at).toLocaleString()} />
             </div>
-          ) : <p className="member-detail-text">No Player Profile on file.</p>}
+          ) : <p className="member-detail-text">No Gear Tracking on file.</p>}
         </section>
         <div className="admin-drawer-actions">
           <button type="button" className="delete-entry-btn" onClick={() => onDelete(member)} disabled={deleting}>{deleting ? 'Removing…' : 'Remove member'}</button>

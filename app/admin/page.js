@@ -8,7 +8,7 @@ export default async function AdminIndexPage() {
 
   const adminCookie = cookieStore.get(ADMIN_COOKIE_NAME);
   if (await isValidAdminToken(adminCookie && adminCookie.value)) {
-    redirect('/admin/dashboard/overview');
+    redirect('/admin/dashboard/interest');
   }
 
   try {
@@ -18,7 +18,7 @@ export default async function AdminIndexPage() {
     };
     const session = await readKingshotSession(fakeRequest);
     if (session?.role === 'admin' || session?.role === 'superadmin') {
-      redirect('/admin/dashboard/overview');
+      redirect('/admin/dashboard/interest');
     }
   } catch {
     /* fall through to password login */

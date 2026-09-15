@@ -14,7 +14,7 @@ const destinations = [
     key: 'forms',
     kicker: 'Member information',
     title: 'Forms',
-    description: 'Player Profile, KvK Availability, KvK Prep, and Flamedragon Tyrant.',
+    description: 'Gear Tracking, KvK Availability, KvK Prep, and Flamedragon Tyrant.',
     href: (id) => `/forms?member_id=${id}`,
   },
   {

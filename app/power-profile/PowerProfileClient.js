@@ -154,11 +154,11 @@ const result = await response.json();
 setLoading(false);
 if (!response.ok) {
 setIsError(true);
-setStatus(result.error || 'Could not save Player Profile.');
+setStatus(result.error || 'Could not save Gear Tracking.');
 return;
 }
 setOnFile(result.profile);
-setStatus(result.status === 'created' ? 'Player Profile created.' : 'Player Profile updated.');
+setStatus(result.status === 'created' ? 'Gear Tracking created.' : 'Gear Tracking updated.');
 }
 
 return (
@@ -169,7 +169,7 @@ return (
 <div className="armory-inner">
 <header className="armory-head">
 <span className="k-mark">Kingdom 710 member profile</span>
-<h1 className="k-display armory-title k-engraved">Player Profile</h1>
+<h1 className="k-display armory-title k-engraved">Gear Tracking</h1>
 <p className="k-narrative armory-lede">Keep your troop levels, heroes, Governor Gear, charms, and power information up to date.</p>
 </header>
 {intro}
@@ -285,7 +285,7 @@ Player profile on file - Governor Gear: {onFile.governor_gear || '-'} / Charms: 
 </div>
 
 {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
-<button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Player Profile'}</button>
+<button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Gear Tracking'}</button>
 </form>
 </div>
 </main>

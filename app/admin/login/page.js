@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
           (data.profile?.role === 'admin' || data.profile?.role === 'superadmin')
         ) {
           setKingshotAdmin(data.profile);
-          router.replace('/admin/dashboard/overview');
+          router.replace('/admin/dashboard/interest');
           router.refresh();
           return;
         }
@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ password }),
       });
       if (res.ok) {
-        router.push('/admin/dashboard/overview');
+        router.push('/admin/dashboard/interest');
         router.refresh();
       } else {
         setError('Incorrect password.');
@@ -116,7 +116,7 @@ export default function AdminLoginPage() {
 
         <p className="sub" style={{ marginTop: 20 }}>
           Prefer player login?{' '}
-          <Link href="/login?next=/admin/dashboard/overview&admin=1">
+          <Link href="/login?next=/admin/dashboard/interest&admin=1">
             Sign in with Kingshot
           </Link>
         </p>

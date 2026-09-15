@@ -52,7 +52,7 @@ export async function POST(request) {
   }
   if (profile.member_id !== session.memberId) {
     return NextResponse.json(
-      { error: 'Sign in with this Member ID to update its Player Profile.' },
+      { error: 'Sign in with this Member ID to update its Gear Tracking.' },
       { status: 403 }
     );
   }

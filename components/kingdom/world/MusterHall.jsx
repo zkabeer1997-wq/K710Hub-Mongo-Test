@@ -278,7 +278,7 @@ const VARIANTS = {
         key: 'lead',
         art: CommandTable,
         kicker: 'Account details',
-        title: 'Player Profile',
+        title: 'Gear Tracking',
         line: 'Record your gear, troops, and heroes.',
         href: (id) => `/power-profile?member_id=${id}`,
       },
