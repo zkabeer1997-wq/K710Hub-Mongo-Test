@@ -488,9 +488,12 @@ export default function RosterWorkspace({
     return result.sort((a,b)=>compareValues(a[sortKey],b[sortKey])*(sortDir==='asc'?1:-1));
   }, [seasonFilteredRows,search,sortKey,sortDir,allianceFilter,availabilityFilter,heroFilter,tierFilter]);
 
+  // Scoped to the season filter above (not the full roster) so the Rally
+  // Planner only shows and can select members from the season currently
+  // in view - switching to a past season or "All seasons" widens it back.
   const membersById = useMemo(() => {
-    return new Map(rows.map((row) => [String(row.member_id), row]));
-  }, [rows]);
+    return new Map(seasonFilteredRows.map((row) => [String(row.member_id), row]));
+  }, [seasonFilteredRows]);
 
   const rallyByMemberId = useMemo(() => {
     const assignments = new Map();
@@ -518,7 +521,11 @@ export default function RosterWorkspace({
 
   const leadMemberIds = useMemo(() => getRallyLeadMemberIds(rallies), [rallies]);
 
-  const assignedCount = rallyByMemberId.size;
+  // Count only assignments that are also in the current season filter, so
+  // this and "Unassigned" below stay consistent with what the table and
+  // rally cards actually show - a past-season assignment doesn't count
+  // against this season's numbers.
+  const assignedCount = [...rallyByMemberId.keys()].filter((id) => membersById.has(id)).length;
   const availableCount = seasonFilteredRows.filter((row) => (
     !String(row.availability || '').toLowerCase().includes('not available')
   )).length;
@@ -746,12 +753,12 @@ export default function RosterWorkspace({
                   </div>
                   {!collapsedRallyIds.includes(rally.id) && (
                     <div className="rally-card-body">
-                      <p>{(rally.memberIds || []).length} members</p>
+                      <p>{(rally.memberIds || []).filter((id) => membersById.has(String(id))).length} members{cycleType && seasonFilter !== 'all' ? ' this season' : ''}</p>
                       {autoAssignSummaries[rally.id] && (
                         <p className="admin-row-message">{autoAssignSummaries[rally.id]}</p>
                       )}
                       <ul>
-                        {(rally.memberIds || []).map((id) => {
+                        {(rally.memberIds || []).filter((id) => membersById.has(String(id))).map((id) => {
                           const m = membersById.get(String(id));
                           return (
                             <li key={id}>
