@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TableFilters from './TableFilters';
 import { searchRow, compareValues } from '../../lib/adminTable.mjs';
 import AdminShell from './AdminShell';
 import ConfirmDialog from './ConfirmDialog';
 import TableSkeleton from './TableSkeleton';
-import { Button, Input, Table } from '../ui';
+import { Button, Field, Input, Table } from '../ui';
 import MemberDetailsDrawer from './MemberDetailsDrawer';
 import { buildKvkMembersWorkbook, formatUnitLevel } from '../../lib/kvkMembersExport.mjs';
 import { useEscapeToClose } from '../../lib/useEscapeToClose';
@@ -90,6 +90,7 @@ export default function RosterWorkspace({
   exportFileNamePrefix,
   workbookSheetName,
   allowClearTestData = false,
+  cycleType = null,
 }) {
   const [rows, setRows] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState(null);
@@ -118,7 +119,83 @@ export default function RosterWorkspace({
   const [dragOverRallyId, setDragOverRallyId] = useState(null);
   const [collapsedRallyIds, setCollapsedRallyIds] = useState([]);
   const [autoAssignSummaries, setAutoAssignSummaries] = useState({});
+  const [cycles, setCycles] = useState([]);
+  const [seasonFilter, setSeasonFilter] = useState('current');
+  const [showAllSeasons, setShowAllSeasons] = useState(false);
+  const [showAddSeason, setShowAddSeason] = useState(false);
+  const [newSeasonLabel, setNewSeasonLabel] = useState('');
+  const [seasonSaving, setSeasonSaving] = useState(false);
+  const [seasonError, setSeasonError] = useState('');
   const router = useRouter();
+
+  const loadCycles = useCallback(async () => {
+    if (!cycleType) return;
+    try {
+      const response = await fetch(`/api/admin-event-cycles?type=${cycleType}`, { cache: 'no-store' });
+      const result = await response.json();
+      if (response.ok) setCycles(result.cycles || []);
+    } catch {
+      /* ignore - season filter just stays unavailable */
+    }
+  }, [cycleType]);
+
+  useEffect(() => { loadCycles(); }, [loadCycles]);
+
+  const currentCycle = cycles.find((c) => c.is_current) || null;
+  const visibleCycles = showAllSeasons ? cycles : cycles.filter((c) => !c.archived);
+
+  async function createSeason(event) {
+    event.preventDefault();
+    const label = newSeasonLabel.trim();
+    if (!label) {
+      setSeasonError('Season label is required.');
+      return;
+    }
+    setSeasonSaving(true);
+    setSeasonError('');
+    try {
+      const response = await fetch('/api/admin-event-cycles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: cycleType, label, activate: true }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to create season.');
+      await loadCycles();
+      setSeasonFilter('current');
+      setShowAddSeason(false);
+      setNewSeasonLabel('');
+    } catch (err) {
+      setSeasonError(err.message || 'Unable to create season.');
+    } finally {
+      setSeasonSaving(false);
+    }
+  }
+
+  async function archiveSeason(cycle) {
+    setSeasonError('');
+    try {
+      const response = await fetch(`/api/admin-event-cycles/${cycle.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: true }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to archive season.');
+      await loadCycles();
+      if (seasonFilter === cycle.id) setSeasonFilter('current');
+    } catch (err) {
+      setSeasonError(err.message || 'Unable to archive season.');
+    }
+  }
+
+  const seasonFilteredRows = useMemo(() => {
+    if (!cycleType || !cycles.length) return rows;
+    if (seasonFilter === 'all') return rows;
+    const targetId = seasonFilter === 'current' ? currentCycle?.id : seasonFilter;
+    if (!targetId) return rows;
+    return rows.filter((row) => row.event_cycle_id === targetId);
+  }, [rows, cycleType, cycles, seasonFilter, currentCycle]);
 
   useEscapeToClose(showAddMember, () => setShowAddMember(false));
 
@@ -319,7 +396,7 @@ export default function RosterWorkspace({
   }
 
   function handleAutoAssign(rallyId) {
-    const eligibleRows = filterRowsUpdatedOnOrAfter(rows, assignmentCutoff);
+    const eligibleRows = filterRowsUpdatedOnOrAfter(seasonFilteredRows, assignmentCutoff);
     const result = autoAssignRallyMembers(rallies, rallyId, eligibleRows);
     if (!result.summary) return;
     setRallies(result.rallies);
@@ -402,13 +479,13 @@ export default function RosterWorkspace({
   }
 
   const filteredSorted = useMemo(() => {
-    const result = rows.filter(row =>
+    const result = seasonFilteredRows.filter(row =>
       (!allianceFilter || row.current_alliance===allianceFilter) && (!availabilityFilter || row.availability===availabilityFilter) &&
       (!heroFilter || row.heroes?.includes(heroFilter)) && (!tierFilter || [row.infantry_tier,row.cavalry_tier,row.archer_tier].includes(tierFilter)) &&
       searchRow(row,search,['name','member_id','heroes','current_alliance','availability','governor_gear','charms','infantry_tier','cavalry_tier','archer_tier'])
     );
     return result.sort((a,b)=>compareValues(a[sortKey],b[sortKey])*(sortDir==='asc'?1:-1));
-  }, [rows,search,sortKey,sortDir,allianceFilter,availabilityFilter,heroFilter,tierFilter]);
+  }, [seasonFilteredRows,search,sortKey,sortDir,allianceFilter,availabilityFilter,heroFilter,tierFilter]);
 
   const membersById = useMemo(() => {
     return new Map(rows.map((row) => [String(row.member_id), row]));
@@ -441,12 +518,12 @@ export default function RosterWorkspace({
   const leadMemberIds = useMemo(() => getRallyLeadMemberIds(rallies), [rallies]);
 
   const assignedCount = rallyByMemberId.size;
-  const availableCount = rows.filter((row) => (
+  const availableCount = seasonFilteredRows.filter((row) => (
     !String(row.availability || '').toLowerCase().includes('not available')
   )).length;
-  const powerProfileCount = rows.filter((row) => row.power_profile).length;
+  const powerProfileCount = seasonFilteredRows.filter((row) => row.power_profile).length;
   const rallyCount = rallies.length;
-  const lastUpdated = rows.reduce((latest, row) => {
+  const lastUpdated = seasonFilteredRows.reduce((latest, row) => {
     const timestamp = row.updated_at ? Date.parse(row.updated_at) : 0;
     return timestamp > latest ? timestamp : latest;
   }, 0);
@@ -457,10 +534,10 @@ export default function RosterWorkspace({
       subtitle={subtitle}
       onLogout={handleLogout}
       counters={[
-        { label: 'Members', value: rows.length },
+        { label: 'Members', value: seasonFilteredRows.length },
         { label: 'Available', value: availableCount },
         { label: 'Assigned', value: assignedCount },
-        { label: 'Unassigned', value: Math.max(rows.length - assignedCount, 0) },
+        { label: 'Unassigned', value: Math.max(seasonFilteredRows.length - assignedCount, 0) },
         { label: 'Rallies', value: rallyCount },
       ]}
       actions={allowClearTestData ? (
@@ -481,18 +558,62 @@ export default function RosterWorkspace({
         onCancel={() => setConfirmState(null)}
       />
       <p className="admin-page-lead">{pageLead}</p>
+
+      {cycleType && cycles.length > 0 && (
+        <>
+          <div className="admin-subtabs" role="tablist" aria-label="Season">
+            <button type="button" role="tab" aria-selected={seasonFilter === 'current'} className={`admin-subtab${seasonFilter === 'current' ? ' is-active' : ''}`} onClick={() => setSeasonFilter('current')}>
+              Current season{currentCycle ? ` (${currentCycle.label})` : ''}
+            </button>
+            <button type="button" role="tab" aria-selected={seasonFilter === 'all'} className={`admin-subtab${seasonFilter === 'all' ? ' is-active' : ''}`} onClick={() => setSeasonFilter('all')}>
+              All seasons
+            </button>
+            {visibleCycles.filter((c) => !c.is_current).map((cycle) => (
+              <button key={cycle.id} type="button" role="tab" aria-selected={seasonFilter === cycle.id} className={`admin-subtab${seasonFilter === cycle.id ? ' is-active' : ''}`} onClick={() => setSeasonFilter(cycle.id)}>
+                {cycle.label}{cycle.archived ? ' (archived)' : ''}
+              </button>
+            ))}
+            <button type="button" className="admin-subtab admin-subtab-add" onClick={() => setShowAddSeason((v) => !v)}>+ New season</button>
+          </div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12, fontSize: 12 }}>
+            <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input type="checkbox" checked={showAllSeasons} onChange={(e) => setShowAllSeasons(e.target.checked)} />
+              Show archived seasons
+            </label>
+            {seasonFilter !== 'current' && seasonFilter !== 'all' && (
+              <Button variant="quiet" onClick={() => archiveSeason(cycles.find((c) => c.id === seasonFilter))}>
+                Archive this season
+              </Button>
+            )}
+          </div>
+          {showAddSeason && (
+            <form onSubmit={createSeason} className="intake-period-form">
+              {seasonError && <p className="guide-message error" role="alert">{seasonError}</p>}
+              <Field label="New season label" hint="e.g. KvK Season 12">
+                <Input tone="console" value={newSeasonLabel} onChange={(e) => setNewSeasonLabel(e.target.value)} placeholder="KvK Season 12" autoFocus />
+              </Field>
+              <p className="hint">This becomes the active season. New submissions get tagged with it; older members stay visible under their own season or All seasons.</p>
+              <div className="intake-period-form-actions">
+                <Button type="submit" disabled={seasonSaving}>{seasonSaving ? 'Saving…' : 'Start season'}</Button>
+                <Button variant="quiet" onClick={() => { setShowAddSeason(false); setSeasonError(''); }} disabled={seasonSaving}>Cancel</Button>
+              </div>
+            </form>
+          )}
+        </>
+      )}
+
       <div className="dashboard-stats" aria-label="Dashboard summary">
-        <div><span>Total members</span><strong>{rows.length}</strong></div>
+        <div><span>Total members</span><strong>{seasonFilteredRows.length}</strong></div>
         <div><span>Available</span><strong>{availableCount}</strong></div>
         <div><span>Assigned</span><strong>{assignedCount}</strong></div>
-        <div className="unassigned-stat"><span>Unassigned</span><strong>{Math.max(rows.length - assignedCount, 0)}</strong></div>
+        <div className="unassigned-stat"><span>Unassigned</span><strong>{Math.max(seasonFilteredRows.length - assignedCount, 0)}</strong></div>
         <div><span>Gear Tracking</span><strong>{powerProfileCount}</strong></div>
         <div><span>Rallies</span><strong>{rallyCount}</strong></div>
         <div><span>Latest update</span><strong>{lastUpdated ? new Date(lastUpdated).toLocaleDateString() : '-'}</strong></div>
       </div>
-      <TableFilters query={search} onQuery={setSearch} placeholder="Name, player ID, hero, or equipment" shown={filteredSorted.length} total={rows.length} onReset={()=>{setSearch('');setAllianceFilter('');setAvailabilityFilter('');setHeroFilter('');setTierFilter('');setSortKey('updated_at');setSortDir('desc');}} filters={[
-        {key:'alliance',label:'Alliance',value:allianceFilter,onChange:setAllianceFilter,options:[...new Set(rows.map(r=>r.current_alliance).filter(Boolean))].sort()},
-        {key:'availability',label:'Availability',value:availabilityFilter,onChange:setAvailabilityFilter,options:[...new Set(rows.map(r=>r.availability).filter(Boolean))].sort()},
+      <TableFilters query={search} onQuery={setSearch} placeholder="Name, player ID, hero, or equipment" shown={filteredSorted.length} total={seasonFilteredRows.length} onReset={()=>{setSearch('');setAllianceFilter('');setAvailabilityFilter('');setHeroFilter('');setTierFilter('');setSortKey('updated_at');setSortDir('desc');}} filters={[
+        {key:'alliance',label:'Alliance',value:allianceFilter,onChange:setAllianceFilter,options:[...new Set(seasonFilteredRows.map(r=>r.current_alliance).filter(Boolean))].sort()},
+        {key:'availability',label:'Availability',value:availabilityFilter,onChange:setAvailabilityFilter,options:[...new Set(seasonFilteredRows.map(r=>r.availability).filter(Boolean))].sort()},
         {key:'hero',label:'Hero',value:heroFilter,onChange:setHeroFilter,options:HEROES},
         {key:'tier',label:'Any troop tier',value:tierFilter,onChange:setTierFilter,options:TROOP_TIERS},
       ]}/>
@@ -581,7 +702,7 @@ export default function RosterWorkspace({
                 <>
                   <button type="button" onClick={() => setAssignmentCutoff('')}>Use all updates</button>
                   <p>
-                    Auto assign will consider {filterRowsUpdatedOnOrAfter(rows, assignmentCutoff).length} of {rows.length} members.
+                    Auto assign will consider {filterRowsUpdatedOnOrAfter(seasonFilteredRows, assignmentCutoff).length} of {seasonFilteredRows.length} members{cycleType && seasonFilter !== 'all' ? ' in this season' : ''}.
                     Older records remain in the table.
                   </p>
                 </>

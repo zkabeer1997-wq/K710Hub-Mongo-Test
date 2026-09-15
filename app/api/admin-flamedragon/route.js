@@ -24,6 +24,8 @@ const PROJECT = {
   voice_chat: 1,
   auto_help: 1,
   updated_at: 1,
+  event_cycle_id: 1,
+  event_cycle_label: 1,
   _id: 0,
 };
 

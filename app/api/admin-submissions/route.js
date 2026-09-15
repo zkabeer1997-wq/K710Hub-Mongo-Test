@@ -18,6 +18,8 @@ const ADMIN_PROJECTION = {
   availability: 1,
   current_alliance: 1,
   updated_at: 1,
+  event_cycle_id: 1,
+  event_cycle_label: 1,
 };
 
 const POWER_PROJECTION = {

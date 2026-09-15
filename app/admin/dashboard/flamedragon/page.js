@@ -11,6 +11,7 @@ export default function AdminFlamedragonPage() {
       rallyStorageKey="flamedragon-admin-rallies-v1"
       exportFileNamePrefix="k710-tyrant-participants"
       workbookSheetName="Tyrant Participants"
+      cycleType="flamedragon"
     />
   );
 }

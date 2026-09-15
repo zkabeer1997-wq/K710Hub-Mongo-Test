@@ -4,6 +4,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { readKingshotSession } from '../../../lib/memberAuthKingshot';
+import { getCurrentEventCycle } from '../../../lib/eventCycles.server';
 
 const ALLIANCES = ['710', 'RED', 'SKY'];
 const AVAILABILITY = [
@@ -112,6 +113,7 @@ export async function POST(request) {
       }
     }
     const now = new Date();
+    const cycle = await getCurrentEventCycle('kvk').catch(() => null);
     await coll.updateOne(
       { member_id: memberId },
       {
@@ -121,6 +123,7 @@ export async function POST(request) {
           availability,
           updated_at: now,
           event_updated_at: now,
+          ...(cycle ? { event_cycle_id: cycle.id, event_cycle_label: cycle.label } : {}),
         },
       }
     );

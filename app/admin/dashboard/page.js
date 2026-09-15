@@ -11,6 +11,7 @@ export default function AdminDashboardPage() {
       exportFileNamePrefix="k710-kvk-participants"
       workbookSheetName="KvK Participants"
       allowClearTestData
+      cycleType="kvk"
     />
   );
 }

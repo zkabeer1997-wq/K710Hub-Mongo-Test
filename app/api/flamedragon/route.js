@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { publicFlamedragonRecord, sanitizeFlamedragonInput } from '../../../lib/flamedragonForm.mjs';
+import { getCurrentEventCycle } from '../../../lib/eventCycles.server';
 
 const PUBLIC_PROJECT = {
   member_id: 1,
@@ -89,6 +90,11 @@ export async function POST(request) {
       pin_hash: nextHash,
       updated_at: new Date(),
     };
+    const cycle = await getCurrentEventCycle('flamedragon').catch(() => null);
+    if (cycle) {
+      payload.event_cycle_id = cycle.id;
+      payload.event_cycle_label = cycle.label;
+    }
     await coll.updateOne({ member_id: record.member_id }, { $set: payload }, { upsert: true });
     const data = await coll.findOne({ member_id: record.member_id }, { projection: PUBLIC_PROJECT });
     return NextResponse.json({
