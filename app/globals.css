@@ -327,11 +327,40 @@ button[type="submit"]:not(.k-btn):disabled { opacity: 0.5; cursor: not-allowed; 
    stacking, so the fill state of every rally is visible at a glance. */
 .rally-list { display: flex; flex-direction: row; align-items: flex-start; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
 
-.rally-empty-state, .rally-dropzone { border: 1px solid var(--border-soft); border-radius: 10px; background: rgba(255, 255, 255, 0.02); }
+.rally-empty-state, .rally-dropzone, .rally-card { border: 1px solid var(--border-soft); border-radius: 10px; background: rgba(255, 255, 255, 0.02); }
 
 .rally-empty-state { padding: 16px; color: var(--text-muted); font-size: 13px; flex: 0 0 auto; }
 
 .rally-dropzone { min-height: 118px; padding: 12px; border-top: 3px solid var(--gold); transition: border-color 0.15s ease, background 0.15s ease; flex: 0 0 340px; width: 340px; }
+
+/* One rally lane in the Kanban row - name/actions header, then the
+   assigned-member list. Was previously unstyled (bare divs/buttons), so
+   this matches the .rally-dropzone treatment it was clearly meant to. */
+.rally-card { flex: 0 0 300px; width: 300px; padding: 12px; border-top: 3px solid var(--line); transition: border-color 0.15s ease, background 0.15s ease; display: flex; flex-direction: column; gap: 10px; }
+
+.rally-card.is-drag-over { border-top-color: var(--gold); background: rgba(217, 169, 78, 0.06); }
+
+.rally-card-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.rally-card-head input { flex: 1 1 100px; min-width: 0; border: 1px solid var(--border-soft); background: rgba(10, 13, 20, 0.8); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 13px; font-weight: 700; }
+
+.rally-card-head button { border: 1px solid var(--border-soft); background: transparent; color: var(--text-muted); border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
+.rally-card-head button:hover { border-color: var(--gold); color: var(--gold-bright); }
+
+.rally-card-body p { color: var(--text-muted); font-size: 12px; margin: 0; }
+
+.rally-card-body ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.rally-card-body li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px solid var(--border-soft); border-radius: 6px; background: rgba(255, 255, 255, 0.02); font-size: 12.5px; color: var(--text); }
+
+.rally-card-body li button { border: 0; background: transparent; color: var(--text-dim); font-size: 11px; cursor: pointer; padding: 2px 4px; }
+
+.rally-card-body li button:hover { color: #ff8f8f; }
+
+@media (max-width: 720px) {
+  .rally-card, .rally-dropzone { flex-basis: 260px; width: 260px; }
+}
 
 .rally-dropzone:hover { border-color: var(--ember); background: rgba(255, 255, 255, 0.03); }
 

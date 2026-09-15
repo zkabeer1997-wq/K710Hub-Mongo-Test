@@ -727,7 +727,7 @@ export default function RosterWorkspace({
               {rallies.map((rally) => (
                 <div
                   key={rally.id}
-                  className="rally-card"
+                  className={`rally-card${dragOverRallyId === rally.id ? ' is-drag-over' : ''}`}
                   onDragOver={(e) => { e.preventDefault(); setDragOverRallyId(rally.id); }}
                   onDragLeave={() => setDragOverRallyId(null)}
                   onDrop={(e) => handleDropOnRally(e, rally.id)}
