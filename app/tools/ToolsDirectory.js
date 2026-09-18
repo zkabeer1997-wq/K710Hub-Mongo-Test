@@ -18,7 +18,9 @@ const TOOLS = {
   Charms: [
     { key: 'wavebound-charms', event: 'Wavebound Voyage', title: 'Charms Sailing Optimizer', description: 'Calculate Tidal Treasure merges for a target Charm level, including Exquisite and Majestic outcomes.', status: 'Available', icon: '/images/wavebound-charm-sail.svg' },
   ],
-  'Governor Gear': [],
+  'Governor Gear': [
+    { key: 'governor-gear-sailing-tool', event: "Governor's Expedition", title: 'Governor Gear Sailing Tool', description: 'Calculate Governor Gear chest merges for a target tier, including Exquisite and Majestic outcomes.', status: 'Available', icon: '/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp' },
+  ],
   'Hero Gear': [],
   Pets: [],
   Masters: [],
