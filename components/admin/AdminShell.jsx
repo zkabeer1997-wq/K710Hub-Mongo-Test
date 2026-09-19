@@ -13,6 +13,7 @@ const NAV_SECTIONS = [
       { href: '/admin/dashboard/alliance-events', label: 'Alliance Events', match: '/admin/dashboard/alliance-events' },
       { href: '/admin/dashboard/gallery', label: 'Gallery', match: '/admin/dashboard/gallery' },
       { href: '/admin/dashboard/tool-editing', label: 'Pack Editing', match: '/admin/dashboard/tool-editing' },
+      { href: '/admin/dashboard/tool-database', label: 'Tool Database', match: '/admin/dashboard/tool-database' },
       { href: '/admin/dashboard/form-gates', label: 'Form Gates', match: '/admin/dashboard/form-gates' },
     ],
   },
