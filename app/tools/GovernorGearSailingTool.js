@@ -120,7 +120,7 @@ export default function GovernorGearSailingTool({configuration=DEFAULT_CONFIG}){
       for(let pm=0;pm<=maxPremiumMerges;pm++){
         const remainingCommon=common-(cm*3);
         const remainingPremium=premiumAvailable-(pm*3);
-        const fixedSatin=ownedSatin+(remainingPremium*r['premium.g'])+(exquisite*r['exquisite.g'])+(majestic*r['majestic.g'])+(pm*r['exquisite.g']);
+        const fixedSatin=ownedSatin+(remainingCommon*r['common.g'])+(remainingPremium*r['premium.g'])+(exquisite*r['exquisite.g'])+(majestic*r['majestic.g'])+(pm*r['exquisite.g']);
         const fixedThreads=ownedThreads+(remainingCommon*r['common.d'])+(remainingPremium*r['premium.d'])+(exquisite*r['exquisite.d'])+(majestic*r['majestic.d'])+(pm*r['exquisite.d']);
         const needMajestic=Math.max(0,Math.ceil((costs.satin-fixedSatin)/(r['majestic.g']-r['exquisite.g'])),Math.ceil((costs.threads-fixedThreads)/(r['majestic.d']-r['exquisite.d'])));
         const success=probabilityAtLeast(pm,needMajestic);
@@ -196,7 +196,7 @@ export default function GovernorGearSailingTool({configuration=DEFAULT_CONFIG}){
               <div><span>Success chance</span><strong>{(result.success*100).toFixed(result.success===1?0:1)}%</strong></div>
               <div><span>Expected Satin</span><strong>{fmt(result.expectedSatin)}</strong></div>
               <div><span>Expected Gilded Threads</span><strong>{fmt(result.expectedThreads)}</strong></div>
-              <div><span>Expected Gear Fragments</span><strong>{fmt(result.expectedFragments)}</strong></div>
+              <div><span>Expected Artisan&apos;s Visions</span><strong>{fmt(result.expectedFragments)}</strong></div>
             </div>
             <p className="wo-note">A Premium merge needs 3 Premium chests. Each merged result is 75% Exquisite and 25% Majestic. The calculator models Majestic outcomes with a binomial probability and treats 100% confidence as requiring the target even if every high-tier result is Exquisite.</p>
           </>}
