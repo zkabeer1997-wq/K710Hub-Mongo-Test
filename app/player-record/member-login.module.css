@@ -337,3 +337,84 @@
   font-weight: 800;
   letter-spacing: 0.08em;
 }
+
+/* Getting-started checklist band — compact Console treatment: dense list,
+   restrained ornament, non-color-only complete/incomplete state. */
+.checklist {
+  margin: 4px 0 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #3a3630);
+  background: color-mix(in srgb, var(--color-surface, #1a1814) 92%, transparent);
+}
+.checklistTitle {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted, #8a8578);
+}
+.checklistList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.checklistItem {
+  display: block;
+}
+.checklistDone,
+.checklistAction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.checklistDone {
+  color: var(--color-ink-muted, #8a8578);
+}
+.checklistDone b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent, #d9a94e) 22%, transparent);
+  color: var(--color-accent-strong, #d9a94e);
+  font-size: 11px;
+  font-weight: 800;
+}
+.checklistAction {
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid var(--color-border, #3a3630);
+  background: #12110f;
+}
+.checklistAction:hover {
+  border-color: var(--color-accent, #d9a94e);
+}
+.checklistAction:focus-visible {
+  outline: 2px solid var(--color-accent-strong, #d9a94e);
+  outline-offset: 2px;
+}
+.checklistBox {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 4px;
+  border: 1.5px solid var(--color-border-strong, #4a453d);
+}
+.checklistAction i {
+  margin-left: auto;
+  font-style: normal;
+  opacity: 0.7;
+}
+

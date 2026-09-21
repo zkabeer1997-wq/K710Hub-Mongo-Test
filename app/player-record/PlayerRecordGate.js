@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './member-login.module.css';
+import { getChecklistState } from '../../lib/gettingStarted.mjs';
 
 function isSafeNext(next) {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//');
@@ -33,6 +34,49 @@ async function api(path, options = {}) {
   return data;
 }
 
+const CHECKLIST_HREFS = {
+  'gear-profile': (memberId) =>
+    memberId ? `/power-profile?member_id=${encodeURIComponent(memberId)}` : '/power-profile',
+  'kvk-form': (memberId) =>
+    memberId ? `/forms/kvk?member_id=${encodeURIComponent(memberId)}` : '/forms/kvk',
+  'bear-hunt': () => '/events',
+};
+
+function GettingStartedChecklist({ items, memberId }) {
+  return (
+    <section className={styles.checklist} aria-labelledby="getting-started-title">
+      <h2 id="getting-started-title" className={styles.checklistTitle}>
+        Getting started
+      </h2>
+      <ul className={styles.checklistList}>
+        {items.map((item) => {
+          const href = (CHECKLIST_HREFS[item.key] || (() => '/player-record'))(memberId);
+          return (
+            <li key={item.key} className={styles.checklistItem} data-complete={item.complete || undefined}>
+              {item.complete ? (
+                <span className={styles.checklistDone} aria-label={`${item.label}: completed`}>
+                  <b aria-hidden="true">✓</b>
+                  {item.label}
+                </span>
+              ) : (
+                <Link
+                  href={href}
+                  className={styles.checklistAction}
+                  aria-label={`${item.label}: not completed yet, open this page`}
+                >
+                  <b aria-hidden="true" className={styles.checklistBox} />
+                  {item.label}
+                  <i aria-hidden="true">→</i>
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function Avatar({ profile, large = false }) {
   const initial = (profile?.nickname || 'K').trim().charAt(0).toUpperCase();
   return (
@@ -57,6 +101,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   const [deniedKingdom, setDeniedKingdom] = useState(null);
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
+  const [checklistData, setChecklistData] = useState({ powerProfile: null, kvkAvailability: null });
 
   useEffect(() => {
     let active = true;
@@ -82,6 +127,31 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
       });
     return () => { active = false; };
   }, [router, safeNext]);
+
+  // Getting-started checklist signals: reuse the same lightweight, already
+  // existing endpoints the Power Profile and KvK forms use, rather than
+  // adding a new query. Defensive by design — if the DB/API is unreachable
+  // both stay null and every item simply renders as an open action link.
+  useEffect(() => {
+    if (view !== 'profile' || !profile) return undefined;
+    let active = true;
+    const memberId = profile.playerId || profile.memberId || '';
+    Promise.allSettled([
+      memberId ? api(`/api/power-profile?member_id=${encodeURIComponent(memberId)}`) : Promise.resolve(null),
+      api('/api/kvk-availability'),
+    ])
+      .then(([powerResult, kvkResult]) => {
+        if (!active) return;
+        setChecklistData({
+          powerProfile: powerResult.status === 'fulfilled' ? powerResult.value?.profile || null : null,
+          kvkAvailability: kvkResult.status === 'fulfilled' ? kvkResult.value?.row || null : null,
+        });
+      })
+      .catch(() => {
+        if (active) setChecklistData({ powerProfile: null, kvkAvailability: null });
+      });
+    return () => { active = false; };
+  }, [view, profile]);
 
   function clearStatus() {
     setStatus('');
@@ -198,6 +268,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   const step = view === 'player' ? '01' : '02';
   const displayName = (profile?.nickname || '').trim() || 'Governor';
   const memberId = profile?.playerId || '';
+  const checklistItems = useMemo(() => getChecklistState(checklistData), [checklistData]);
 
   return (
     <main className={styles.page}>
@@ -407,6 +478,8 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                   Your member account does not have administrator access.
                 </div>
               )}
+
+              <GettingStartedChecklist items={checklistItems} memberId={memberId} />
 
               <div className={styles.stats} aria-label="Player statistics">
                 <div><span>Power</span><strong>{formatNumber(profile.power)}</strong></div>
