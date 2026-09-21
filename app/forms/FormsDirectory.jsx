@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { completionLabel, isCompleted } from '../../lib/formCompletion.mjs';
 
 // Persists only the collapsed/expanded preference now. The recommended order
 // lives inline on the page (not behind a popup), so returning members who
@@ -155,7 +156,7 @@ function FormOrderStepper({ collapsed, onToggle }) {
   );
 }
 
-export default function FormsDirectory({ memberId = '', closedKeys = [] }) {
+export default function FormsDirectory({ memberId = '', closedKeys = [], completions = {} }) {
   const encoded = encodeURIComponent(memberId || '');
   // Expanded by default so the recommended order is visible on arrival; a
   // stored preference collapses it for members who have seen it before.
@@ -191,6 +192,8 @@ export default function FormsDirectory({ memberId = '', closedKeys = [] }) {
       <div className="forms-menu-grid" role="list">
         {FORMS.map((form) => {
           const isClosed = !form.ungated && closedKeys.includes(form.key);
+          const label = completionLabel(completions[form.key]);
+          const done = isCompleted(completions[form.key]);
           return (
             <Link
               key={form.key}
@@ -208,6 +211,14 @@ export default function FormsDirectory({ memberId = '', closedKeys = [] }) {
               <strong className="k-display forms-menu-title">{form.title}</strong>
               <span className="forms-menu-desc">
                 {isClosed ? 'This form is closed for now.' : form.description}
+              </span>
+              <span
+                className="forms-menu-status"
+                data-done={done || undefined}
+                aria-label={done ? `Status: ${label}` : 'Status: not yet submitted'}
+              >
+                <b aria-hidden="true">{done ? '✓' : '○'}</b>
+                {label}
               </span>
               <span className="forms-menu-cta">
                 {isClosed ? 'Unavailable' : 'Open form'} <b aria-hidden="true">→</b>
@@ -277,6 +288,13 @@ export default function FormsDirectory({ memberId = '', closedKeys = [] }) {
         .forms-menu-group{color:var(--brass);font-size:10px;letter-spacing:.08em}
         .forms-menu-title{font-size:clamp(16px,2vw,19px);letter-spacing:.04em;color:var(--parchment);line-height:1.25}
         .forms-menu-desc{color:var(--parchment-dim);font-size:13px;line-height:1.55;flex:1}
+        .forms-menu-status{
+          display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;
+          font-weight:700;letter-spacing:.04em;color:var(--parchment-dim);
+        }
+        .forms-menu-status b{font-size:11px;font-weight:700;color:var(--parchment-dim)}
+        .forms-menu-status[data-done="true"]{color:var(--gold-hot)}
+        .forms-menu-status[data-done="true"] b{color:var(--gold-hot)}
         .forms-menu-cta{
           margin-top:auto;padding-top:10px;font-family:var(--font-mono);font-size:11px;font-weight:700;
           letter-spacing:.06em;text-transform:uppercase;color:var(--gold-hot);display:inline-flex;align-items:center;gap:6px;

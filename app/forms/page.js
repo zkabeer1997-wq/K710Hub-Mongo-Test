@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import FormsDirectory from './FormsDirectory';
 import { getFormGates } from '../../lib/formGates.server.js';
+import { getMemberFormCompletions } from '../../lib/formCompletionQueries.server.js';
 
 export const metadata = {
   title: 'K710 Forms',
@@ -9,7 +10,10 @@ export const metadata = {
 export default async function FormsPage({ searchParams: searchParamsPromise }) {
   const searchParams = await searchParamsPromise;
   const memberId = typeof searchParams?.member_id === 'string' ? searchParams.member_id : '';
-  const gates = await getFormGates();
+  const [gates, completions] = await Promise.all([
+    getFormGates(),
+    getMemberFormCompletions(memberId),
+  ]);
   const closedKeys = Object.values(gates)
     .filter((gate) => gate.is_open === false)
     .map((gate) => gate.form_key);
@@ -32,7 +36,7 @@ export default async function FormsPage({ searchParams: searchParamsPromise }) {
           </p>
         </header>
 
-        <FormsDirectory memberId={memberId} closedKeys={closedKeys} />
+        <FormsDirectory memberId={memberId} closedKeys={closedKeys} completions={completions} />
 
         <Link href={backHref} className="tools-back">
           ← Return to member page
