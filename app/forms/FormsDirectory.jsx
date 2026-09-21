@@ -3,7 +3,28 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-const GUIDE_STORAGE_KEY = 'k710-forms-order-guide-dismissed';
+// Persists only the collapsed/expanded preference now. The recommended order
+// lives inline on the page (not behind a popup), so returning members who
+// already know the order can tuck it away without ever meeting a modal.
+const ORDER_COLLAPSED_KEY = 'k710-forms-order-collapsed';
+
+const ORDER_STEPS = [
+  {
+    title: 'Gear Tracking',
+    detail:
+      'Update your Governor Gear, Charms, Pets, Masters, and Mystic Trial first. This keeps your power record current for every event.',
+  },
+  {
+    title: 'KvK Prep Phase Backpack & KvK Availability',
+    detail:
+      'If a Kingdom vs Kingdom event is upcoming, fill out the KvK Prep Phase Backpack form and the KvK Availability form next.',
+  },
+  {
+    title: 'Flamedragon Tyrant & Noble Advisor Schedule',
+    detail:
+      'If Flamedragon Tyrant is upcoming, complete the Flamedragon Tyrant form and the Noble Advisor Schedule form.',
+  },
+];
 
 const FORMS = [
   {
@@ -93,94 +114,79 @@ function FormGlyph({ formKey }) {
   );
 }
 
-function FormOrderGuide({ open, onClose }) {
-  if (!open) return null;
-
+function FormOrderStepper({ collapsed, onToggle }) {
   return (
-    <div className="forms-guide-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="forms-guide-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="forms-guide-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="forms-guide-head">
+    <section className="forms-order" aria-labelledby="forms-order-title">
+      <div className="forms-order-head">
+        <div className="forms-order-heading">
           <span className="k-mark">Member instructions</span>
-          <h2 id="forms-guide-title" className="k-display">
+          <h2 id="forms-order-title" className="k-display">
             Suggested form order
           </h2>
-          <p className="k-narrative">
+          <p className="k-narrative forms-order-lede">
             Complete forms in this order so leadership has the information they need at the right time.
           </p>
-        </header>
-
-        <ol className="forms-guide-steps">
-          <li>
-            <strong>1. Gear Tracking</strong>
-            <span>
-              Update your Governor Gear, Charms, Pets, Masters, and Mystic Trial first. This keeps your
-              power record current for every event.
-            </span>
-          </li>
-          <li>
-            <strong>2. KvK Prep Phase Backpack &amp; KvK Availability</strong>
-            <span>
-              If a Kingdom vs Kingdom event is upcoming, fill out the KvK Prep Phase Backpack form and the
-              KvK Availability form next.
-            </span>
-          </li>
-          <li>
-            <strong>3. Flamedragon Tyrant &amp; Noble Advisor Schedule</strong>
-            <span>
-              If Flamedragon Tyrant is upcoming, complete the Flamedragon Tyrant form and the Noble Advisor
-              Schedule form.
-            </span>
-          </li>
-        </ol>
-
-        <button type="button" className="forms-guide-close" onClick={onClose}>
-          Got it — show the forms
+        </div>
+        <button
+          type="button"
+          className="forms-order-toggle"
+          aria-expanded={!collapsed}
+          aria-controls="forms-order-steps"
+          onClick={onToggle}
+        >
+          {collapsed ? 'Show the order' : 'Hide'}
         </button>
       </div>
-    </div>
+
+      <ol className="forms-order-steps" id="forms-order-steps" hidden={collapsed}>
+        {ORDER_STEPS.map((step, index) => (
+          <li key={step.title}>
+            <span className="forms-order-num" aria-hidden="true">
+              {index + 1}
+            </span>
+            <span className="forms-order-body">
+              <strong>{step.title}</strong>
+              <span>{step.detail}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
 export default function FormsDirectory({ memberId = '', closedKeys = [] }) {
   const encoded = encodeURIComponent(memberId || '');
-  const [guideOpen, setGuideOpen] = useState(false);
+  // Expanded by default so the recommended order is visible on arrival; a
+  // stored preference collapses it for members who have seen it before.
+  const [orderCollapsed, setOrderCollapsed] = useState(false);
 
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
-      if (!window.localStorage.getItem(GUIDE_STORAGE_KEY)) {
-        setGuideOpen(true);
+      if (window.localStorage.getItem(ORDER_COLLAPSED_KEY) === '1') {
+        setOrderCollapsed(true);
       }
     } catch {
-      setGuideOpen(true);
+      /* private mode: leave the guide expanded */
     }
   }, []);
 
-  function dismissGuide() {
-    setGuideOpen(false);
-    try {
-      window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
-    } catch {
-      /* private mode */
-    }
+  function toggleOrder() {
+    setOrderCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(ORDER_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
   }
 
   return (
     <section className="forms-catalog">
-      <div className="forms-toolbar">
-        <p className="forms-toolbar-copy k-narrative">
-          Choose a form below. Prefer to review the recommended order again?
-        </p>
-        <button type="button" className="forms-guide-reopen" onClick={() => setGuideOpen(true)}>
-          Form order guide
-        </button>
-      </div>
+      <FormOrderStepper collapsed={orderCollapsed} onToggle={toggleOrder} />
 
       <div className="forms-menu-grid" role="list">
         {FORMS.map((form) => {
@@ -211,21 +217,41 @@ export default function FormsDirectory({ memberId = '', closedKeys = [] }) {
         })}
       </div>
 
-      <FormOrderGuide open={guideOpen} onClose={dismissGuide} />
-
       <style>{`
         .forms-catalog{color:var(--parchment)}
-        .forms-toolbar{
-          display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;
-          margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid rgba(201,164,78,.16);
+
+        .forms-order{
+          margin-bottom:26px;padding:20px 22px;border:1px solid rgba(201,164,78,.2);border-radius:12px;
+          background:linear-gradient(180deg,rgba(20,17,10,.55),rgba(9,10,18,.6));
         }
-        .forms-toolbar-copy{margin:0;max-width:52ch;color:var(--parchment-dim);font-size:14px;line-height:1.5}
-        .forms-guide-reopen{
-          border:1px solid rgba(201,164,78,.35);background:rgba(201,164,78,.08);color:var(--gold-hot);
+        .forms-order-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px}
+        .forms-order-heading{min-width:0}
+        .forms-order-heading h2{margin:8px 0 8px;font-size:clamp(1.2rem,2.6vw,1.5rem);color:#f6eedc}
+        .forms-order-lede{margin:0;max-width:60ch;color:var(--parchment-dim);font-size:14px;line-height:1.55}
+        .forms-order-toggle{
+          flex:none;border:1px solid rgba(201,164,78,.35);background:rgba(201,164,78,.08);color:var(--gold-hot);
           font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-          padding:10px 14px;border-radius:8px;cursor:pointer;
+          padding:9px 14px;border-radius:8px;cursor:pointer;transition:border-color .16s ease,background .16s ease;
         }
-        .forms-guide-reopen:hover{border-color:rgba(201,164,78,.7);background:rgba(201,164,78,.14)}
+        .forms-order-toggle:hover{border-color:rgba(201,164,78,.7);background:rgba(201,164,78,.14)}
+        .forms-order-toggle:focus-visible{outline:2px solid var(--gold-hot);outline-offset:2px}
+        .forms-order-steps{
+          list-style:none;margin:18px 0 0;padding:0;
+          display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+        }
+        .forms-order-steps[hidden]{display:none}
+        .forms-order-steps li{
+          display:grid;grid-template-columns:auto 1fr;align-items:start;gap:12px;
+          padding:14px 14px;border-radius:10px;border:1px solid rgba(201,164,78,.16);background:rgba(255,255,255,.03);
+        }
+        .forms-order-num{
+          display:grid;place-items:center;width:28px;height:28px;border-radius:999px;
+          background:rgba(201,164,78,.14);border:1px solid rgba(201,164,78,.4);color:var(--gold-hot);
+          font-family:var(--font-mono);font-size:13px;font-weight:700;
+        }
+        .forms-order-body{display:grid;gap:5px;min-width:0}
+        .forms-order-body strong{color:#f3e7c8;font-size:.95rem;line-height:1.3}
+        .forms-order-body span{color:var(--parchment-dim);font-size:.86rem;line-height:1.5}
 
         .forms-menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
         .forms-menu-tile{
@@ -258,36 +284,16 @@ export default function FormsDirectory({ memberId = '', closedKeys = [] }) {
         .forms-menu-cta b{font-family:var(--font-body);font-weight:400;font-size:14px;transition:transform .18s var(--ease-cine,ease)}
         .forms-menu-tile:hover .forms-menu-cta b{transform:translateX(3px)}
 
-        .forms-guide-backdrop{
-          position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px;
-          background:rgba(5,7,12,.72);backdrop-filter:blur(6px);
+        @media(max-width:860px){
+          .forms-order-steps{grid-template-columns:1fr}
         }
-        .forms-guide-panel{
-          width:min(560px,100%);border-radius:16px;border:1px solid rgba(201,164,78,.28);
-          background:linear-gradient(165deg,rgba(27,36,46,.98),rgba(12,15,22,.99));
-          box-shadow:0 30px 80px rgba(0,0,0,.45);padding:28px 26px 24px;color:var(--parchment);
-        }
-        .forms-guide-head{margin-bottom:18px}
-        .forms-guide-head h2{margin:8px 0 10px;font-size:clamp(1.35rem,3vw,1.7rem);color:#f6eedc}
-        .forms-guide-head p{margin:0;color:var(--parchment-dim);line-height:1.55}
-        .forms-guide-steps{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:14px}
-        .forms-guide-steps li{
-          display:grid;gap:6px;padding:14px 14px;border-radius:12px;
-          border:1px solid rgba(201,164,78,.16);background:rgba(255,255,255,.03);
-        }
-        .forms-guide-steps strong{color:#f3e7c8;font-size:.95rem}
-        .forms-guide-steps span{color:var(--parchment-dim);font-size:.9rem;line-height:1.5}
-        .forms-guide-close{
-          width:100%;min-height:46px;border:0;border-radius:10px;cursor:pointer;
-          background:linear-gradient(135deg,#d4b56d,#a8873f);color:#1a1408;
-          font-weight:700;letter-spacing:.04em;
-        }
-        .forms-guide-close:hover{filter:brightness(1.05)}
-
         @media(max-width:700px){
           .forms-menu-grid{grid-template-columns:1fr}
-          .forms-toolbar{align-items:stretch}
-          .forms-guide-reopen{width:100%}
+          .forms-order-head{align-items:stretch}
+          .forms-order-toggle{width:100%}
+        }
+        @media(prefers-reduced-motion:reduce){
+          .forms-menu-tile,.forms-menu-cta b,.forms-order-toggle{transition:none}
         }
       `}</style>
     </section>
