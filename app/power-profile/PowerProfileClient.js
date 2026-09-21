@@ -336,10 +336,20 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
                     className="hero-chip-portrait"
                     src={`/heroes/${heroSlug(hero)}.webp`}
                     alt=""
-                    loading="lazy"
-                    onLoad={(event) => {
-                      event.currentTarget.classList.add('loaded');
-                      event.currentTarget.closest('.hero-chip')?.classList.add('has-portrait');
+                    ref={(el) => {
+                      if (!el) return;
+                      const markLoaded = () => {
+                        el.classList.add('loaded');
+                        el.closest('.hero-chip')?.classList.add('has-portrait');
+                      };
+                      // If the image resolved from cache before this ref attached,
+                      // the native `load` event already fired and a React onLoad
+                      // handler would miss it - check `.complete` first.
+                      if (el.complete && el.naturalWidth > 0) {
+                        markLoaded();
+                      } else {
+                        el.addEventListener('load', markLoaded, { once: true });
+                      }
                     }}
                     onError={(event) => {
                       event.currentTarget.style.display = 'none';
