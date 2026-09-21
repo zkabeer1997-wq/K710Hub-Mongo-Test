@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import PublicBearAlliances from '../components/PublicBearAlliances';
 import { loadPublicBearScheduleOrNull, bearAllianceNotes } from '../lib/publicBearSchedule';
 import Link from 'next/link';
@@ -7,6 +8,7 @@ import HomeForgeIntro from '../components/kingdom/world/HomeForgeIntro';
 import RealmShieldLoader from '../components/kingdom/world/RealmShieldLoader';
 import GalleryCarousel from '../components/gallery/GalleryCarousel';
 import { getGalleryImages } from '../lib/gallery';
+import { readMemberSession } from '../lib/memberAuth';
 
 export const metadata = {
   title: { absolute: 'Kingdom 710 · Kingshot' },
@@ -31,6 +33,13 @@ const COMMAND = [
   { n: '02', href: '/guides', title: 'Guides', sub: 'Kingdom guides and game information' },
   { n: '03', href: '/tools', title: 'Tools', sub: 'Upgrade and event calculators' },
   { n: '04', href: '/power-profile', title: 'Power Profile', sub: 'Update your gear, charms, heroes, and troops' },
+];
+
+const MEMBER_QUICK_LINKS = [
+  { href: '/power-profile', label: 'Power Profile' },
+  { href: '/forms', label: 'Forms' },
+  { href: '/events', label: 'Events' },
+  { href: '/tools', label: 'Tools' },
 ];
 
 // Replace only the older promotional copy. If an admin writes something new,
@@ -156,6 +165,14 @@ export default async function HomePage() {
   const content = await getHomeContent();
   const bearAlliances = await loadPublicBearScheduleOrNull();
   const isAdmin = await checkIsAdmin();
+  let isMember = false;
+  try {
+    const cookieStore = await cookies();
+    const memberSession = await readMemberSession({ cookies: { get: (name) => cookieStore.get(name) } });
+    isMember = !!memberSession;
+  } catch {
+    isMember = false;
+  }
   let galleryImages = [];
   try { galleryImages = await getGalleryImages({ limit: 10 }); } catch (error) { console.error('homepage gallery load failed', error); }
   const field = (key, props = {}) => {
@@ -179,17 +196,45 @@ export default async function HomePage() {
         <div className="home-v2-forge-beam" />
 
         <div className="home-v2-copy">
-          <span className="k-mark">{field('hero-kicker')}</span>
-          <h1>{field('hero-title', { as: 'span' })}</h1>
-          <p>{field('hero-sub', { as: 'span', multiline: true })}</p>
-          <div className="home-v2-actions">
-            <Link href="/interest" className="home-v2-primary">Apply for a transfer</Link>
-            <Link href="/tools" className="home-v2-secondary">View member tools →</Link>
-          </div>
+          {isMember ? (
+            <>
+              <span className="k-mark">Kingdom 710</span>
+              <h1>Welcome back.</h1>
+              <p>Jump straight to the tools you use most.</p>
+              <div className="home-v2-actions home-v2-actions-member">
+                {MEMBER_QUICK_LINKS.map((link) => (
+                  <Link key={link.href} href={link.href} className="home-v2-secondary">{link.label}</Link>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="k-mark">{field('hero-kicker')}</span>
+              <h1>{field('hero-title', { as: 'span' })}</h1>
+              <p>{field('hero-sub', { as: 'span', multiline: true })}</p>
+              <div className="home-v2-actions">
+                <Link href="/interest" className="home-v2-primary">Apply to Join</Link>
+                <Link href="/tools" className="home-v2-secondary">View member tools →</Link>
+              </div>
+            </>
+          )}
         </div>
 
         <RealmShieldLoader />
 
+      </section>
+
+      <section className="home-v2-story">
+        <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
+        <div className="home-v2-story-copy">
+          <span className="k-mark">{field('why-head-kicker')}</span>
+          <h2>{field('why-head-title')}</h2>
+          <p>{field('why-head-sub', { multiline: true })}</p>
+          <div className="home-v2-doctrine">
+            {DOCTRINE.map((d) => <div key={d.n}><b>{d.n}</b><span><strong>{field(d.titleKey)}</strong><small>{field(d.bodyKey, { multiline: true })}</small></span></div>)}
+          </div>
+          <Link href="/about" className="home-v2-story-link">Read about Kingdom 710 →</Link>
+        </div>
       </section>
 
       <section className="home-v2-strip">
@@ -208,19 +253,6 @@ export default async function HomePage() {
           {COMMAND.map((item) => (
             <Link key={item.href} href={item.href}><b>{item.n}</b><span><strong>{item.title}</strong><small>{item.sub}</small></span><i>↗</i></Link>
           ))}
-        </div>
-      </section>
-
-      <section className="home-v2-story">
-        <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
-        <div className="home-v2-story-copy">
-          <span className="k-mark">{field('why-head-kicker')}</span>
-          <h2>{field('why-head-title')}</h2>
-          <p>{field('why-head-sub', { multiline: true })}</p>
-          <div className="home-v2-doctrine">
-            {DOCTRINE.map((d) => <div key={d.n}><b>{d.n}</b><span><strong>{field(d.titleKey)}</strong><small>{field(d.bodyKey, { multiline: true })}</small></span></div>)}
-          </div>
-          <Link href="/about" className="home-v2-story-link">Read about Kingdom 710 →</Link>
         </div>
       </section>
 
