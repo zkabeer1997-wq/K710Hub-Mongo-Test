@@ -47,9 +47,14 @@ export default function BearHuntSchedule({ initialAlliances = null }) {
           })}
         </tbody>
       </table>
-      <a href="/api/events/bear-hunt.ics" className="events-ics-link" download>
-        📅 Download Bear Hunt schedule (.ics)
-      </a>
+      <div className="events-ics">
+        <a href="/api/events/bear-hunt.ics" className="events-ics-link" download>
+          📅 Add Bear Hunt times to my calendar
+        </a>
+        <p className="events-ics-hint">
+          Saves a calendar file you can open in Google Calendar, Apple Calendar, or Outlook.
+        </p>
+      </div>
     </div>
   );
 }

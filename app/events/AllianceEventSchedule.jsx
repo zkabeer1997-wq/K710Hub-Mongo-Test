@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { BEAR_SCHEDULE_CHANGED } from '../../components/BearScheduleProvider';
 import { currentAllianceEvents } from '../../lib/allianceEvents.mjs';
+import EmptyState from '../../components/ui/EmptyState';
 
 export default function AllianceEventSchedule({ initialEvents, initialNow }) {
   const [events, setEvents] = useState(initialEvents);
@@ -61,7 +62,11 @@ export default function AllianceEventSchedule({ initialEvents, initialNow }) {
             {tags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
         </label>}
-        {visible.length === 0 ? <p>No alliance events scheduled for today or upcoming dates.</p> : <div className="alliance-schedule-grid">
+        {visible.length === 0 ? <EmptyState
+          icon="🛡️"
+          title="No alliance events scheduled"
+          description="Swordland, Tri-Alliance, and Vikings Vengeance events show up here once an alliance posts one. Check back soon."
+        /> : <div className="alliance-schedule-grid">
           {visible.map(event => {
             const start = new Date(event.starts_at);
             const seconds = Math.max(0, Math.floor((start.getTime() - now) / 1000));

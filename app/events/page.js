@@ -121,8 +121,10 @@ export default async function EventsPage() {
         .events-section-hunts{margin-top:-112px;position:relative;z-index:2;padding:30px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg)}
         .events-hunts .ui-table{border:0}.events-hunts .ui-table th,.events-hunts .ui-table td{white-space:nowrap}
         .events-hunts-utc{color:var(--color-ink-muted);font-size:12px}
-        .events-ics-link{display:inline-block;margin-top:14px;color:var(--color-accent-strong);font-weight:700;font-size:13px;text-decoration:none}
+        .events-ics{margin-top:16px}
+        .events-ics-link{display:inline-block;color:var(--color-accent-strong);font-weight:700;font-size:14px;text-decoration:none}
         .events-ics-link:hover{text-decoration:underline}
+        .events-ics-hint{margin:4px 0 0;color:var(--color-ink-muted);font-size:12px;line-height:1.5}
         .events-error{padding:20px;color:var(--color-ink-muted)}
         .events-footer{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-top:28px;border-top:1px solid var(--color-border)}.events-footer p{margin:0;font:700 20px/1.2 var(--font-display)}
         @media(max-width:720px){.events-hero{grid-template-columns:1fr;min-height:auto;padding:64px 0 120px}.events-time-dial{display:none}.events-section-heading{grid-template-columns:1fr;gap:12px}.events-section-hunts{margin-top:-128px;padding:20px 16px}.events-footer{align-items:flex-start;flex-direction:column}}
