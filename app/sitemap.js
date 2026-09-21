@@ -11,6 +11,7 @@ const STATIC_ROUTES = [
   { path: '/guides', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/events', priority: 0.8, changeFrequency: 'daily' },
   { path: '/gallery', priority: 0.8, changeFrequency: 'weekly' },
+  { path: '/glossary', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/interest', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/player-record', priority: 0.5, changeFrequency: 'yearly' },
 ];

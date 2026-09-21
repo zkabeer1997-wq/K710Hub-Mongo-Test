@@ -13,7 +13,7 @@ function wantsChrome(pathname) {
 }
 
 function routeTone(pathname) {
-  if (pathname === '/' || pathname.startsWith('/about') || pathname.startsWith('/timeline') || pathname.startsWith('/events') || pathname.startsWith('/gallery') || pathname.startsWith('/guides') || pathname.startsWith('/alliances') || pathname.startsWith('/chronometer') || pathname.startsWith('/interest')) return 'realm';
+  if (pathname === '/' || pathname.startsWith('/about') || pathname.startsWith('/timeline') || pathname.startsWith('/events') || pathname.startsWith('/gallery') || pathname.startsWith('/guides') || pathname.startsWith('/alliances') || pathname.startsWith('/chronometer') || pathname.startsWith('/interest') || pathname.startsWith('/glossary')) return 'realm';
   if (pathname.startsWith('/admin')) return 'admin';
   return 'console';
 }
