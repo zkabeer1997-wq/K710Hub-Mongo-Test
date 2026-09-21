@@ -1493,6 +1493,10 @@
 .armory .war-ledger-form.wizard-form { gap: 0; }
 .wizard-step { outline: none; }
 .wizard-step h2 { outline: none; }
+/* .ledger-block sets display:flex, an author rule that otherwise beats the
+   browser's own [hidden]{display:none} UA rule - without this override
+   every step would render stacked at once instead of one at a time. */
+.wizard-step[hidden] { display: none; }
 .wizard-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; }
 .wizard-nav button { width: auto; }
 .wizard-back, .wizard-next {
