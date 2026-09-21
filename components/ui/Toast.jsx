@@ -7,7 +7,7 @@
 // (the shell it mounts into is .theme-console) - reads --color-* / legacy
 // tokens from app/tokens.css rather than introducing a new palette.
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 const ToastContext = createContext(null);
@@ -57,7 +57,12 @@ export function ToastProvider({ children }) {
 }
 
 function ToastViewport({ toasts, onDismiss }) {
-  if (typeof document === 'undefined') return null;
+  // Render nothing until after mount so the server pass and the client's first
+  // (hydration) render match exactly — the portal only exists client-side, and
+  // creating it during hydration triggered a tree mismatch warning.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || typeof document === 'undefined') return null;
 
   const politeToasts = toasts.filter((t) => t.type !== 'error');
   const assertiveToasts = toasts.filter((t) => t.type === 'error');
