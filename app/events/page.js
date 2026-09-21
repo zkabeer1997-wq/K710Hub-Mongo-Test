@@ -116,7 +116,7 @@ export default async function EventsPage() {
         .events-section{display:flex;flex-direction:column;gap:24px}
         .events-section-heading{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(280px,1.15fr);gap:48px;align-items:end;border-bottom:1px solid var(--color-border);padding-bottom:22px}
         .events-section-heading p{margin:0;color:var(--color-ink-muted);font-size:14px;line-height:1.6;max-width:60ch}
-        .events-section-mark{display:block;margin-bottom:8px;color:var(--color-accent-strong);font-size:12px;font-weight:800}
+        .events-section-mark{display:block;margin-bottom:8px;color:color-mix(in srgb, var(--color-accent-strong) 50%, var(--color-ink));font-size:12px;font-weight:800}
         .events-section-title{margin:0;font-family:var(--font-display);font-size:clamp(30px,4vw,46px);line-height:1.05;letter-spacing:-.025em;color:var(--color-ink)}
         .events-section-hunts{margin-top:-112px;position:relative;z-index:2;padding:30px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg)}
         .events-hunts .ui-table{border:0}.events-hunts .ui-table th,.events-hunts .ui-table td{white-space:nowrap}

@@ -361,9 +361,10 @@ export default async function AboutPage() {
         .about-rank-facts dt{margin:0;color:var(--color-ink-muted)}
         .about-rank-facts dd{margin:0;font-weight:700}
         .about-atlas-pill{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(56,140,220,.18),rgba(80,120,255,.12));border:1px solid rgba(100,160,255,.35);font-size:13.5px}
-        .about-atlas-pill .about-atlas-top{color:#7ec8ff;font-weight:700}
-        .about-atlas-tier{margin:0;font-size:13px;color:var(--color-accent-strong);font-weight:700}
+        .about-atlas-pill .about-atlas-top{color:#1a5c96;font-weight:700}
+        .about-atlas-tier{margin:0;font-size:13px;color:color-mix(in srgb, var(--color-accent-strong) 50%, var(--color-ink));font-weight:700}
         .about-external-link{margin-top:auto;font-size:13px;font-weight:700;color:var(--color-accent-strong);text-decoration:none}
+        .about-rank-box .about-external-link{color:color-mix(in srgb, var(--color-accent-strong) 50%, var(--color-ink))}
         .about-external-link:hover{text-decoration:underline}
         .about-empty{padding:18px;color:var(--color-ink-muted);font-size:14px}
         .about-empty a{color:var(--color-accent-strong)}

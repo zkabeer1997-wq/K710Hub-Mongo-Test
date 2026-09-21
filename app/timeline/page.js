@@ -100,11 +100,11 @@ export default function TimelinePage() {
         .timeline-card:hover{background:var(--color-surface-alt);transform:translateX(4px)}
         .timeline-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
         .timeline-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:999px}
-        .timeline-cat-heroes{background:rgba(120,180,255,.15);color:#7eb8ff}
-        .timeline-cat-pets{background:rgba(120,220,160,.15);color:#6ed9a0}
-        .timeline-cat-truegold{background:rgba(255,200,80,.15);color:#f0c040}
-        .timeline-cat-pvp{background:rgba(255,100,100,.15);color:#ff8a8a}
-        .timeline-cat-feature{background:rgba(180,140,255,.15);color:#c4a8ff}
+        .timeline-cat-heroes{background:rgba(120,180,255,.15);color:#1a5c96}
+        .timeline-cat-pets{background:rgba(120,220,160,.15);color:#3a6b3a}
+        .timeline-cat-truegold{background:rgba(255,200,80,.15);color:#8a6206}
+        .timeline-cat-pvp{background:rgba(255,100,100,.15);color:#b3402f}
+        .timeline-cat-feature{background:rgba(180,140,255,.15);color:#6b46c1}
         .timeline-index{font-size:11px;color:var(--color-ink-muted);font-weight:700}
         .timeline-title{margin:0;font-family:var(--font-display);font-size:clamp(20px,3vw,28px);letter-spacing:-.02em}
         .timeline-notes{margin:0;font-size:14px;color:var(--color-ink-muted);line-height:1.6}
