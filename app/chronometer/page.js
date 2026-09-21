@@ -6,9 +6,9 @@ import { getHomeContent, checkIsAdmin } from '../../lib/homeContent';
 import Chronometer from '../../components/kingdom/world/Chronometer';
 
 export const metadata = {
-  title: 'Bear Hunt Schedule & Transfers',
+  title: 'Transfer to Kingdom 710',
   description:
-    'Kingdom 710 Bear Hunt times, alliance information, and transfer application steps.',
+    'Why players transfer to Kingdom 710, how the transfer process works, and the Bear Hunt schedule for reference.',
   alternates: { canonical: '/chronometer' },
 };
 
@@ -72,24 +72,15 @@ export default async function ChronometerPage() {
       <div className="chamber-atmos" aria-hidden="true" />
       <div className="chamber-shafts" aria-hidden="true" />
 
-      {/* ---- The instrument ---- */}
+      {/* ---- The pitch ---- */}
       <section className="chamber-hero">
         <span className="k-mark">Kingdom 710</span>
-        <h1 className="k-display chamber-title k-engraved">Bear Hunt Schedule</h1>
+        <h1 className="k-display chamber-title k-engraved">Govern with Kingdom 710</h1>
         <p className="k-narrative chamber-lede">
-          Current daily Bear Hunt times for Kingdom 710’s alliances.
-          All times below are shown in UTC.
+          710 is a KvK-first kingdom run across three coordinated alliances, with Bear Hunt
+          coverage spanning every timezone and war-room tooling most kingdoms never bother
+          building. If you&rsquo;re shopping for your next server, start here.
         </p>
-        <Chronometer initialAlliances={bearAlliances} />
-      </section>
-
-      {/* ---- Three alliance standards ---- */}
-      <section className="chamber-section">
-        <header className="chamber-head">
-          <span className="k-mark">{field('wb-head-kicker')}</span>
-          <h2 className="k-display chamber-h2">{field('wb-head-title')}</h2>
-        </header>
-        <PublicBearAlliances layout="chamber" initialAlliances={bearAlliances} notes={bearAllianceNotes(content)} />
       </section>
 
       {/* ---- About the kingdom ---- */}
@@ -161,7 +152,29 @@ export default async function ChronometerPage() {
         </Link>
       </section>
 
+      {/* ---- Bear Hunt schedule (reference) ---- */}
+      <section className="chamber-section">
+        <header className="chamber-head">
+          <span className="k-mark">Reference</span>
+          <h2 className="k-display chamber-h2">Bear Hunt schedule</h2>
+          <p className="k-narrative chamber-lede-small">
+            For reference — current daily Bear Hunt times for Kingdom 710&rsquo;s alliances.
+            All times below are shown in UTC.
+          </p>
+        </header>
+        <Chronometer initialAlliances={bearAlliances} />
+      </section>
+
+      <section className="chamber-section">
+        <header className="chamber-head">
+          <span className="k-mark">{field('wb-head-kicker')}</span>
+          <h2 className="k-display chamber-h2">{field('wb-head-title')}</h2>
+        </header>
+        <PublicBearAlliances layout="chamber" initialAlliances={bearAlliances} notes={bearAllianceNotes(content)} />
+      </section>
+
       <style>{`
+        .chamber-lede-small{margin-top:10px;max-width:70ch;color:var(--parchment-dim)}
         .chamber-faq{display:flex;flex-direction:column;gap:12px;max-width:820px}
         .chamber-faq-item{border:1px solid var(--edge);border-radius:10px;background:rgba(20,17,10,.42);overflow:hidden}
         .chamber-faq-item[open]{border-color:var(--edge-strong)}
