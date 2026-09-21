@@ -39,6 +39,17 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Convenience paths people expect to work that don't map to an
+      // actual route today - point them at the real destination instead
+      // of 404ing.
+      { source: '/apply', destination: '/chronometer', permanent: false },
+      { source: '/join', destination: '/chronometer', permanent: false },
+      { source: '/dashboard', destination: '/player-record', permanent: false },
+      { source: '/members', destination: '/player-record', permanent: false },
+    ];
+  },
   images: {
     // Gallery may still reference historical Supabase CDN URLs from production
     // data import; keep remotePatterns so those images continue to render.
