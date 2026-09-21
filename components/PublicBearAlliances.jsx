@@ -1,9 +1,17 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useBearSchedule } from './BearScheduleProvider';
+import { bearTimeLabel } from '../lib/localTime';
 
 export default function PublicBearAlliances({ layout = 'home', initialAlliances = null, notes = {} }) {
+  // Server render shows UTC; once mounted we upgrade to the viewer's local
+  // time (UTC kept in parentheses). Guarding on `mounted` keeps the first
+  // client render identical to the server's, avoiding a hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const { alliances, loading, error } = useBearSchedule(initialAlliances);
   if (loading) return <p>Loading alliance schedules…</p>;
   if (error) return <p role="status">{error}</p>;
@@ -32,7 +40,7 @@ export default function PublicBearAlliances({ layout = 'home', initialAlliances 
           {index > 0 && <i />}
           <Link href={`/alliances/${alliance.tag.toLowerCase()}`}>
             <b>{alliance.tag}</b><small>{alliance.name}</small>
-            <em>{alliance.bear_times_utc.length ? alliance.bear_times_utc.map(time => `${time} UTC`).join(' · ') : 'No Bear Hunt times set.'}{notes[alliance.tag] ? `\n\n${notes[alliance.tag]}` : ''}</em>
+            <em>{alliance.bear_times_utc.length ? alliance.bear_times_utc.map(time => bearTimeLabel(time, { mounted })).join(' · ') : 'No Bear Hunt times set.'}{notes[alliance.tag] ? `\n\n${notes[alliance.tag]}` : ''}</em>
           </Link>
         </div>
       ))}

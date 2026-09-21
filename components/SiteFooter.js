@@ -17,7 +17,7 @@ export default function SiteFooter() {
         <nav className="site-footer-links" aria-label="Footer">
           <Link href="/">Home</Link>
           <Link href="/about">About</Link>
-          <Link href="/timeline">Timeline</Link>
+          <Link href="/timeline">Game Updates</Link>
           <Link href="/guides">Guides</Link>
           <Link href="/events">Events</Link>
           <Link href="/gallery">Gallery</Link>

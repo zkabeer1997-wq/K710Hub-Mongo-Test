@@ -8,7 +8,7 @@ import { SUPPORT_URL } from '../lib/supportLink';
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
-  { href: '/timeline', label: 'Timeline' },
+  { href: '/timeline', label: 'Game Updates' },
   { href: '/guides', label: 'Guides' },
   { href: '/events', label: 'Events' },
   { href: '/gallery', label: 'Gallery' },
