@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from 'react';
 import { nextEventOccurrence, recurrenceLabel, upcomingEventSeries } from '../../lib/eventRecurrence.mjs';
+import { eventBlurb } from '../../lib/eventBlurb.mjs';
 
 const KIND_LABEL = {
   kvk: 'KvK',
@@ -119,6 +120,7 @@ function EventDetailPanel({ event: series }) {
           <span className="ev-countdown-label">In progress</span>
         </div>
       )}
+      <p className="ev-blurb">{eventBlurb(event)}</p>
 
       <div className="ev-timings">
         <div className="ev-timing-row">
@@ -172,6 +174,7 @@ function EventCard({ event, onOpen, now, local }) {
             <span className="ev-countdown-label">In progress</span>
           </div>
         )}
+        <p className="ev-blurb">{eventBlurb(event)}</p>
 
         <div className="ev-timings">
           <div className="ev-timing-row">
@@ -282,6 +285,7 @@ export default function EventCountdownCards({ events, initialNow }) {
         .ev-countdown-units > div{min-width:52px;display:flex;flex-direction:column;align-items:center;padding:6px 8px;border-radius:8px;background:var(--color-surface);border:1px solid var(--color-border)}
         .ev-countdown-units strong{font-family:var(--font-display);font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
         .ev-countdown-units span{font-size:10px;text-transform:uppercase;color:var(--color-ink-muted);letter-spacing:.04em}
+        .ev-blurb{margin:0;font-size:13px;line-height:1.5;color:var(--color-ink-muted)}
         .ev-timings{display:flex;flex-direction:column;gap:6px}
         .ev-timing-row{display:flex;flex-direction:column;gap:2px;font-size:13.5px}
         .ev-timing-label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-ink-muted);font-weight:700}
