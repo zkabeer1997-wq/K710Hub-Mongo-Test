@@ -34,6 +34,25 @@ const MARCH = [
   { n: '04', titleKey: 'step-4-title', bodyKey: 'step-4-body' },
 ];
 
+const FAQ = [
+  {
+    q: 'How long does the transfer take?',
+    a: 'Most transfers are reviewed within a day or two. New intake windows open regularly — apply now and we will confirm your place when the next window lands.',
+  },
+  {
+    q: 'Do I need to leave my current alliance first?',
+    a: 'No. Send your application first. Leadership will walk you through the timing so you do not lose progress or leave before there is a spot ready for you.',
+  },
+  {
+    q: 'What happens after I apply?',
+    a: 'Your application goes to the council, who review your account, preferred event times, and KvK plans. You will be contacted about migration and which of the three alliances fits you best.',
+  },
+  {
+    q: 'Who do I contact if I have questions?',
+    a: 'The transfer form has a contact field, and our leadership monitors it daily. Ask anything there — no question is too small before you commit to moving.',
+  },
+];
+
 export default async function ChronometerPage() {
   const content = await getHomeContent();
   const bearAlliances = await loadPublicBearScheduleOrNull();
@@ -110,6 +129,25 @@ export default async function ChronometerPage() {
         </ol>
       </section>
 
+      {/* ---- Before you apply ---- */}
+      <section className="chamber-section">
+        <header className="chamber-head">
+          <span className="k-mark">Before you apply</span>
+          <h2 className="k-display chamber-h2">Common questions</h2>
+        </header>
+        <div className="chamber-faq">
+          {FAQ.map((item) => (
+            <details key={item.q} className="chamber-faq-item">
+              <summary>
+                <span className="chamber-faq-q k-display">{item.q}</span>
+                <span className="chamber-faq-mark" aria-hidden="true" />
+              </summary>
+              <p className="k-narrative chamber-faq-a">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       {/* ---- Transfer form ---- */}
       <section className="registry-doors">
         <div className="registry-doors-light" aria-hidden="true" />
@@ -122,6 +160,30 @@ export default async function ChronometerPage() {
           Apply to Join K710
         </Link>
       </section>
+
+      <style>{`
+        .chamber-faq{display:flex;flex-direction:column;gap:12px;max-width:820px}
+        .chamber-faq-item{border:1px solid var(--edge);border-radius:10px;background:rgba(20,17,10,.42);overflow:hidden}
+        .chamber-faq-item[open]{border-color:var(--edge-strong)}
+        .chamber-faq-item summary{
+          display:flex;align-items:center;justify-content:space-between;gap:16px;
+          padding:18px 20px;cursor:pointer;list-style:none;color:var(--parchment);
+        }
+        .chamber-faq-item summary::-webkit-details-marker{display:none}
+        .chamber-faq-item summary:hover{background:rgba(201,164,78,.06)}
+        .chamber-faq-item summary:focus-visible{outline:2px solid var(--gold-hot);outline-offset:-2px}
+        .chamber-faq-q{font-size:clamp(16px,2.1vw,19px);letter-spacing:.02em;line-height:1.3}
+        .chamber-faq-mark{position:relative;flex:none;width:16px;height:16px}
+        .chamber-faq-mark::before,.chamber-faq-mark::after{
+          content:'';position:absolute;top:50%;left:50%;background:var(--gold-hot);
+          transform:translate(-50%,-50%);transition:transform .2s var(--ease-cine,ease);
+        }
+        .chamber-faq-mark::before{width:14px;height:2px}
+        .chamber-faq-mark::after{width:2px;height:14px}
+        .chamber-faq-item[open] .chamber-faq-mark::after{transform:translate(-50%,-50%) scaleY(0)}
+        .chamber-faq-a{margin:0;padding:0 20px 20px;color:var(--parchment-dim);font-size:15px;line-height:1.7;max-width:70ch}
+        @media(prefers-reduced-motion:reduce){.chamber-faq-mark::before,.chamber-faq-mark::after{transition:none}}
+      `}</style>
     </main>
   );
 }
