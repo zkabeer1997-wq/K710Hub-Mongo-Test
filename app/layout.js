@@ -14,6 +14,7 @@ import LanguageProvider from '../components/i18n/LanguageProvider';
 import BearScheduleProvider from '../components/BearScheduleProvider';
 import SiteChrome from '../components/SiteChrome';
 import FilipinoTagalogOptions from '../components/i18n/FilipinoTagalogOptions';
+import { ToastProvider } from '../components/ui/Toast';
 
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['600', '800', '900'], display: 'swap', variable: '--font-display-loaded' });
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap', variable: '--font-body-loaded' });
@@ -45,10 +46,12 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
       <body className="theme-console">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-        <LanguageProvider>
-          <FilipinoTagalogOptions />
-          <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
-        </LanguageProvider>
+        <ToastProvider>
+          <LanguageProvider>
+            <FilipinoTagalogOptions />
+            <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
+          </LanguageProvider>
+        </ToastProvider>
       </body>
     </html>
   );

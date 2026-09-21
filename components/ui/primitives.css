@@ -208,3 +208,82 @@
 @media (max-width: 640px) {
   .ui-page-header { align-items: flex-start; }
 }
+
+/* --- Toast --------------------------------------------------------
+   Fixed-position portal viewport (mounted once by ToastProvider in
+   app/layout.js). Dark/console palette by default since the shell it
+   mounts into is .theme-console; gold accent for success, --danger for
+   error, so it stays legible if a .theme-realm page renders it too. */
+
+.ui-toast-viewport {
+  position: fixed;
+  z-index: 9999;
+  top: var(--space-5);
+  right: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+  max-width: min(380px, calc(100vw - 2 * var(--space-4)));
+}
+
+.ui-toast-stack { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.ui-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  background: var(--stone-lit);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--depth-2);
+  animation: ui-toast-in var(--t-ui) var(--ease-cine);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-toast { animation: none; }
+}
+
+.ui-toast-success { border-left-color: var(--gold-aged); }
+.ui-toast-error { border-left-color: var(--danger); }
+.ui-toast-info { border-left-color: var(--t-secondary); }
+
+.ui-toast-icon { flex-shrink: 0; line-height: 1.4; font-size: var(--text-md); }
+.ui-toast-success .ui-toast-icon { color: var(--gold-aged); }
+.ui-toast-error .ui-toast-icon { color: var(--danger); }
+.ui-toast-info .ui-toast-icon { color: var(--t-secondary); }
+
+.ui-toast-message { flex: 1; font-size: var(--text-sm); line-height: 1.4; color: var(--text); }
+
+.ui-toast-close {
+  flex-shrink: 0;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--t-secondary);
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-xs);
+  transition: color 160ms, background 160ms;
+}
+.ui-toast-close:hover { color: var(--text); background: var(--steel); }
+.ui-toast-close:focus-visible { outline: 2px solid var(--gold-aged); outline-offset: 2px; }
+
+@keyframes ui-toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .ui-toast-viewport {
+    left: var(--space-4);
+    right: var(--space-4);
+    max-width: none;
+  }
+}

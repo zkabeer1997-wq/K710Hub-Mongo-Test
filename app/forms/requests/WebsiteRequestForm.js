@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { KVK_ALLIANCES } from '../../../lib/playerCombatOptions.mjs';
 import { useFormFieldMeta } from '../../../lib/useFormFieldMeta';
+import { useToast } from '../../../components/ui/Toast';
 
 const SECTIONS = ['Tools and Calculators', 'Forms', 'Events', 'Guides', 'General'];
 const MAX_MESSAGE_LENGTH = 2000;
@@ -20,6 +21,7 @@ export default function WebsiteRequestForm() {
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const { intro, fields } = useFormFieldMeta('requests');
+  const toast = useToast();
 
   useEffect(() => {
     let cancelled = false;
@@ -70,9 +72,11 @@ export default function WebsiteRequestForm() {
       setSection('');
       setMessage('');
       setStatus('Thanks - your request has been sent to the admin team.');
+      toast.success('Request sent to the admin team.');
     } catch (error) {
       setIsError(true);
       setStatus(error.message || 'Could not submit. Please try again.');
+      toast.error(error.message || 'Could not submit. Please try again.');
     } finally {
       setLoading(false);
     }
