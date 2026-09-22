@@ -162,7 +162,7 @@ export default async function GuidesPage({ searchParams }) {
         .guides-intro-band>div{padding:30px clamp(24px,4vw,48px);border-right:1px solid rgba(65,40,19,.2)}
         .guides-intro-band>div:last-child{border-right:0}
         .guides-intro-band strong{display:block;margin:10px 0 6px;font-family:var(--font-display);font-size:20px}
-        .guides-intro-band p{margin:0;color:#5d4029;line-height:1.5}
+        .guides-intro-band p{margin:0;color:#4d321c;line-height:1.5}
         .guides-archive{position:relative;z-index:1;width:min(1160px,calc(100% - 48px));margin:0 auto;padding:clamp(70px,9vw,118px) 0 110px}
         .guides-archive-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.75fr);gap:60px;align-items:end;margin-bottom:42px;padding-bottom:28px;border-bottom:1px solid rgba(75,47,24,.22)}
         .guides-archive-head h2{margin:12px 0 0;font-family:var(--font-fraunces-loaded),Georgia,serif;font-size:clamp(42px,6vw,72px);line-height:.95;text-transform:none;letter-spacing:-.045em}

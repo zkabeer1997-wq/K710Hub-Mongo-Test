@@ -285,7 +285,7 @@
   box-shadow: 0 0 0 3px rgba(201, 164, 78, 0.16);
 }
 
-.k-input::placeholder { color: var(--t-muted); }
+.k-input::placeholder { color: var(--t-secondary); }
 
 /* Choice chip — radio/checkbox rendered as a struck marker. */
 .k-choice {
