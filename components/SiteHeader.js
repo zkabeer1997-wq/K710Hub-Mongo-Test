@@ -37,12 +37,56 @@ function isActivePath(pathname, href) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+// Hover-to-open is desktop/pointer-device behavior only — touch has no real
+// hover, and browsers can fire a synthetic mouseenter on tap, which would
+// otherwise pop the menu open right before the tap's own click toggles it
+// shut again. Checked live (not cached) since a hybrid device can change
+// pointer type between checks.
+function isHoverCapable() {
+  try {
+    return window.matchMedia('(hover: hover)').matches;
+  } catch {
+    return false;
+  }
+}
+
+// Delay before a mouseleave actually closes the menu, so crossing the gap
+// between the trigger and its dropdown (or briefly overshooting) doesn't
+// dismiss it.
+const HOVER_CLOSE_DELAY_MS = 150;
+
 function NavDropdown({ item, pathname, openGroup, setOpenGroup }) {
   const isOpen = openGroup === item.id;
   const groupActive = item.children.some((child) => isActivePath(pathname, child.href));
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
   const itemRefs = useRef([]);
+  const closeTimeoutRef = useRef(null);
+
+  function clearCloseTimeout() {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }
+
+  useEffect(() => () => clearCloseTimeout(), []);
+
+  function handleGroupMouseEnter() {
+    if (!isHoverCapable()) return;
+    clearCloseTimeout();
+    setOpenGroup(item.id);
+  }
+
+  function handleGroupMouseLeave() {
+    if (!isHoverCapable()) return;
+    clearCloseTimeout();
+    // Only close the group hover opened, in case the pointer has already
+    // moved on to open a different one before this timer fires.
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenGroup((current) => (current === item.id ? null : current));
+    }, HOVER_CLOSE_DELAY_MS);
+  }
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -97,14 +141,17 @@ function NavDropdown({ item, pathname, openGroup, setOpenGroup }) {
   }
 
   return (
-    <div className="site-nav-group">
+    <div className="site-nav-group" onMouseEnter={handleGroupMouseEnter} onMouseLeave={handleGroupMouseLeave}>
       <button
         type="button"
         ref={triggerRef}
         className={`site-nav-group-trigger${groupActive ? ' active' : ''}`}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        onClick={() => setOpenGroup(isOpen ? null : item.id)}
+        onClick={() => {
+          clearCloseTimeout();
+          setOpenGroup(isOpen ? null : item.id);
+        }}
         onKeyDown={handleTriggerKeyDown}
       >
         {item.label} <span className="site-nav-group-caret" aria-hidden="true">▾</span>
