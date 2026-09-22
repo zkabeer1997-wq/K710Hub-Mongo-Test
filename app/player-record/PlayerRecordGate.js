@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from './member-login.module.css';
 import { getChecklistState } from '../../lib/gettingStarted.mjs';
 import { Term } from '../../components/ui';
+import GiftCodeRewards from '../../components/GiftCodeRewards';
 
 function isSafeNext(next) {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//');
@@ -484,6 +485,13 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               )}
 
               <GettingStartedChecklist items={checklistItems} memberId={memberId} />
+
+              <section className={styles.giftCodesSection} aria-labelledby="dashboard-gift-codes-title">
+                <h2 id="dashboard-gift-codes-title" className={styles.giftCodesTitle}>
+                  Gift codes
+                </h2>
+                <GiftCodeRewards />
+              </section>
 
               <div className={styles.stats} aria-label="Player statistics">
                 <div><span>Power</span><strong>{formatNumber(profile.power)}</strong></div>

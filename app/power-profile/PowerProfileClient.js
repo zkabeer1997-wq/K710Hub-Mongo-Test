@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import GovernorGearOcr from '../../components/GovernorGearOcr';
-import GiftCodeRewards from '../../components/GiftCodeRewards';
 import {
 CHARM_LEVEL_OPTIONS,
 CHARM_SLOTS,
@@ -290,7 +289,6 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
                 Player profile on file - Governor Gear: {onFile.governor_gear || '-'} / Charms: {onFile.charms || '-'} / Heroes: {onFile.heroes?.length ? onFile.heroes.join(', ') : '-'}
               </div>
             )}
-            <GiftCodeRewards />
             <div className="wizard-nav">
               <span />
               <button type="button" className="wizard-next" onClick={() => goToStep(1)}>Next: Troop Levels</button>

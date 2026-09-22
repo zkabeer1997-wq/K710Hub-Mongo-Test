@@ -338,6 +338,21 @@
   letter-spacing: 0.08em;
 }
 
+/* Gift Codes dashboard card — wraps the shared GiftCodeRewards component
+   (also used standalone) in a labeled section so it reads as its own
+   dashboard block rather than an unlabeled drop-in. */
+.giftCodesSection {
+  margin: 4px 0 16px;
+}
+.giftCodesTitle {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted, #8a8578);
+}
+
 /* Getting-started checklist band — compact Console treatment: dense list,
    restrained ornament, non-color-only complete/incomplete state. */
 .checklist {
