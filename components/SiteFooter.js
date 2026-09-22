@@ -1,6 +1,38 @@
 import Link from 'next/link';
 import { SUPPORT_URL } from '../lib/supportLink';
 
+// Mirrors the top-nav structure in SiteHeader.js: the standalone links
+// (Home, Guides, Apply) plus the About and Members dropdown groups, each
+// presented under a small heading. The Admin link is intentionally absent.
+const FOOTER_GROUPS = [
+  {
+    heading: 'Explore',
+    links: [
+      { href: '/', label: 'Home' },
+      { href: '/guides', label: 'Guides' },
+      { href: '/chronometer', label: 'Apply' },
+    ],
+  },
+  {
+    heading: 'About',
+    links: [
+      { href: '/about', label: 'About' },
+      { href: '/timeline', label: 'Game Updates' },
+      { href: '/gallery', label: 'Gallery' },
+      { href: '/glossary', label: 'Glossary' },
+    ],
+  },
+  {
+    heading: 'Members',
+    links: [
+      { href: '/player-record', label: 'Dashboard' },
+      { href: '/forms', label: 'Forms' },
+      { href: '/tools', label: 'Tools' },
+      { href: '/events', label: 'Events' },
+    ],
+  },
+];
+
 export default function SiteFooter() {
   return (
     <footer className="site-footer">
@@ -14,17 +46,22 @@ export default function SiteFooter() {
             <span className="site-footer-tag">Three alliances. One kingdom. KvK-first.</span>
           </div>
         </div>
-        <nav className="site-footer-links" aria-label="Footer">
-          <Link href="/">Home</Link>
-          <Link href="/about">About</Link>
-          <Link href="/timeline">Game Updates</Link>
-          <Link href="/guides">Guides</Link>
-          <Link href="/events">Events</Link>
-          <Link href="/gallery">Gallery</Link>
-          <Link href="/glossary">Glossary</Link>
-          <Link href="/player-record">Members</Link>
-          <Link href="/chronometer">Join K710</Link>
+
+        <nav className="site-footer-nav" aria-label="Footer">
+          {FOOTER_GROUPS.map((group) => (
+            <div className="site-footer-group" key={group.heading}>
+              <h2 className="site-footer-group-heading">{group.heading}</h2>
+              <ul>
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </nav>
+
         <Link
           href={SUPPORT_URL}
           target="_blank"
