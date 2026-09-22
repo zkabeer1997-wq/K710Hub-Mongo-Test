@@ -287,3 +287,74 @@
     max-width: none;
   }
 }
+
+/* --- Term (jargon tooltip) -----------------------------------------
+   Small inline trigger + popover used to gloss K710/game jargon on
+   first use in static copy (see components/ui/Term.jsx). Fixed
+   dark/console palette on purpose — a small definition card reads as a
+   system affordance rather than page content, so it stays legible
+   whether it lands on a .theme-console or .theme-realm page, the same
+   reasoning as .ui-toast above. */
+
+.ui-term { position: relative; display: inline-block; }
+
+.ui-term-trigger {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--edge-strong);
+  text-underline-offset: 3px;
+  border-radius: var(--radius-xs);
+}
+.ui-term-trigger:hover { text-decoration-color: var(--gold-aged); }
+.ui-term-trigger:focus-visible {
+  outline: 2px solid var(--gold-aged);
+  outline-offset: 2px;
+  text-decoration-color: var(--gold-aged);
+}
+
+.ui-term-popover {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  bottom: calc(100% + var(--space-2));
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: var(--space-3) var(--space-4);
+  background: var(--stone-lit);
+  color: var(--text);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--depth-2);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  animation: ui-term-in var(--t-fast) var(--ease-cine);
+  pointer-events: none;
+}
+
+/* Opacity-only (no transform) so this doesn't fight the inline translateX
+   the component applies to keep the popover on-screen near a viewport
+   edge — see Term.jsx's clamping effect. */
+@keyframes ui-term-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-term-popover { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .ui-term-popover { max-width: min(240px, 72vw); }
+}

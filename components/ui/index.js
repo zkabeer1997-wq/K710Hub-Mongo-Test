@@ -10,4 +10,5 @@ export { default as Stat } from './Stat';
 export { default as Callout } from './Callout';
 export { default as EmptyState } from './EmptyState';
 export { default as PageHeader } from './PageHeader';
+export { default as Term } from './Term';
 export { ToastProvider, useToast } from './Toast';

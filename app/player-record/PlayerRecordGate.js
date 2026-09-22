@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './member-login.module.css';
 import { getChecklistState } from '../../lib/gettingStarted.mjs';
+import { Term } from '../../components/ui';
 
 function isSafeNext(next) {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//');
@@ -48,6 +49,9 @@ function GettingStartedChecklist({ items, memberId }) {
       <h2 id="getting-started-title" className={styles.checklistTitle}>
         Getting started
       </h2>
+      <Link href="/glossary" className={styles.checklistGlossaryLink}>
+        What do these terms mean?
+      </Link>
       <ul className={styles.checklistList}>
         {items.map((item) => {
           const href = (CHECKLIST_HREFS[item.key] || (() => '/player-record'))(memberId);
@@ -483,7 +487,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
 
               <div className={styles.stats} aria-label="Player statistics">
                 <div><span>Power</span><strong>{formatNumber(profile.power)}</strong></div>
-                <div><span>Mystic Trial</span><strong>{formatNumber(profile.mysticTrial)}</strong></div>
+                <div><span><Term term="Mystic Trial">Mystic Trial</Term></span><strong>{formatNumber(profile.mysticTrial)}</strong></div>
                 <div><span>Kills</span><strong>{formatNumber(profile.kills)}</strong></div>
               </div>
 

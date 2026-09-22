@@ -3,27 +3,44 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { completionLabel, isCompleted } from '../../lib/formCompletion.mjs';
+import { Term } from '../../components/ui';
 
 // Persists only the collapsed/expanded preference now. The recommended order
 // lives inline on the page (not behind a popup), so returning members who
 // already know the order can tuck it away without ever meeting a modal.
 const ORDER_COLLAPSED_KEY = 'k710-forms-order-collapsed';
 
+// `detail` is JSX (not a plain string) for the steps that introduce jargon,
+// so the first mention on the page can gloss it with <Term>. This is the
+// suggested-order list, not a Link, so nesting a <button> trigger inside it
+// is safe (unlike the form tiles below, which are Links and cannot nest one).
 const ORDER_STEPS = [
   {
     title: 'Gear Tracking',
-    detail:
-      'Update your Governor Gear, Charms, Pets, Masters, and Mystic Trial first. This keeps your power record current for every event.',
+    detail: (
+      <>
+        Update your <Term term="Governor Gear">Governor Gear</Term>, Charms, Pets, Masters, and{' '}
+        <Term term="Mystic Trial">Mystic Trial</Term> first. This keeps your power record current for every event.
+      </>
+    ),
   },
   {
     title: 'KvK Prep Phase Backpack & KvK Availability',
-    detail:
-      'If a Kingdom vs Kingdom event is upcoming, fill out the KvK Prep Phase Backpack form and the KvK Availability form next.',
+    detail: (
+      <>
+        If a <Term term="KvK">Kingdom vs Kingdom</Term> event is upcoming, fill out the KvK Prep Phase Backpack form
+        and the KvK Availability form next.
+      </>
+    ),
   },
   {
     title: 'Flamedragon Tyrant & Noble Advisor Schedule',
-    detail:
-      'If Flamedragon Tyrant is upcoming, complete the Flamedragon Tyrant form and the Noble Advisor Schedule form.',
+    detail: (
+      <>
+        If <Term term="Flamedragon Tyrant">Flamedragon Tyrant</Term> is upcoming, complete the Flamedragon Tyrant
+        form and the Noble Advisor Schedule form.
+      </>
+    ),
   },
 ];
 
@@ -127,6 +144,7 @@ function FormOrderStepper({ collapsed, onToggle }) {
           <p className="k-narrative forms-order-lede">
             Complete forms in this order so leadership has the information they need at the right time.
           </p>
+          <Link href="/glossary" className="forms-glossary-link">What do these terms mean?</Link>
         </div>
         <button
           type="button"
@@ -239,6 +257,8 @@ export default function FormsDirectory({ memberId = '', closedKeys = [], complet
         .forms-order-heading{min-width:0}
         .forms-order-heading h2{margin:8px 0 8px;font-size:clamp(1.2rem,2.6vw,1.5rem);color:#f6eedc}
         .forms-order-lede{margin:0;max-width:60ch;color:var(--parchment-dim);font-size:14px;line-height:1.55}
+        .forms-glossary-link{display:inline-block;margin-top:10px;color:var(--gold-hot);font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+        .forms-glossary-link:hover{color:var(--gold-hot);opacity:.85}
         .forms-order-toggle{
           flex:none;border:1px solid rgba(201,164,78,.35);background:rgba(201,164,78,.08);color:var(--gold-hot);
           font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;

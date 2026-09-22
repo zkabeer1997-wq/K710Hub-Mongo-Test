@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
-import { Card, EmptyState, Button } from '../../components/ui';
+import { Card, EmptyState, Button, Term } from '../../components/ui';
 import { loadPublicBearScheduleOrNull } from '../../lib/publicBearSchedule';
 import { loadPublicAllianceEventsOrNull } from '../../lib/publicAllianceEvents';
 import AllianceEventSchedule from './AllianceEventSchedule';
@@ -55,7 +56,11 @@ export default async function EventsPage() {
         <div className="events-hero-copy">
           <p className="k-mark">Kingdom 710 events</p>
           <h1>Event schedule</h1>
-          <p>Check Bear Hunt times, KvK, Championship, Swordland, and other published events. Times are converted to your device’s time zone.</p>
+          <p>
+            Check <Term term="Bear Hunt">Bear Hunt</Term> times, <Term term="KvK">KvK</Term>, Championship,
+            Swordland, and other published events. Times are converted to your device’s time zone.
+          </p>
+          <Link href="/glossary" className="events-glossary-link">What do these terms mean?</Link>
         </div>
         <div className="events-time-dial" aria-hidden="true">
           <span className="events-dial-hand" />
@@ -106,6 +111,8 @@ export default async function EventsPage() {
         .events-hero{position:relative;max-width:1180px;min-height:530px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:72px;align-items:center;padding:72px 0 80px;color:#fff6e4}
         .events-hero:before{content:'';position:absolute;inset:0 -50vw;background:radial-gradient(circle at 78% 44%,rgba(217,169,78,.18),transparent 25%),linear-gradient(120deg,#0e1728,#1d2d43 56%,#4c2a17);z-index:0}
         .events-hero-copy,.events-time-dial{position:relative;z-index:1}.events-hero .k-mark{color:#f3d99a}
+        .events-glossary-link{display:inline-block;margin-top:16px;color:#f3d99a;font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+        .events-glossary-link:hover{color:#ffe9b8}
         .events-hero h1{max-width:760px;margin:14px 0 0;font:800 clamp(48px,7vw,84px)/.98 var(--font-display);letter-spacing:-.035em;text-wrap:balance}
         .events-hero p:not(.k-mark){max-width:62ch;margin:24px 0 0;color:#d7dce5;font-size:17px;line-height:1.65}
         .events-time-dial{aspect-ratio:1;border:1px solid rgba(243,217,154,.42);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 12px #17243a,inset 0 0 0 13px rgba(243,217,154,.15)}
