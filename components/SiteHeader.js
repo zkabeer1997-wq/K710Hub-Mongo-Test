@@ -219,8 +219,15 @@ export default function SiteHeader() {
             );
           })}
           <Link href="/chronometer" className="site-nav-cta">Apply</Link>
-          <Link href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="site-nav-support">
-            ☕ Support Us
+          <Link
+            href={SUPPORT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="site-nav-support"
+            title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
+            aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
+          >
+            ☕ Support Us <span aria-hidden="true">(donate)</span>
           </Link>
         </nav>
 
@@ -276,8 +283,10 @@ export default function SiteHeader() {
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
             className="site-nav-support"
+            title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
+            aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
           >
-            ☕ Support Us
+            ☕ Support Us <span aria-hidden="true">(donate)</span>
           </Link>
         </nav>
       )}

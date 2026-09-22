@@ -30,8 +30,10 @@ export default function SiteFooter() {
           target="_blank"
           rel="noopener noreferrer"
           className="site-footer-support"
+          title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
+          aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
         >
-          ☕ Support K710 Hub
+          ☕ Support K710 Hub <span aria-hidden="true">(donate)</span>
         </Link>
       </div>
     </footer>
