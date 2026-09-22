@@ -147,7 +147,7 @@ export default async function ChronometerPage() {
         <p className="k-narrative registry-doors-copy">
           Bring your name, your strength, and your intent. The council reviews every petition.
         </p>
-        <Link href="/interest" className="k-btn registry-doors-cta">
+        <Link href="/interest" className="k-btn k-btn-struck registry-doors-cta">
           Apply to Join K710
         </Link>
       </section>
