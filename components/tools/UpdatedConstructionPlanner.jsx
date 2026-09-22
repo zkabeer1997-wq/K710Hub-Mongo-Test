@@ -5,6 +5,7 @@ import { useToolPersistence } from "../../lib/useToolPersistence";
 import { calculateUpdatedConstruction, exportUpdatedConstructionCsv } from "../../lib/updatedConstruction.mjs";
 import { CONSTRUCTION_SOURCE, CONSTRUCTION_TIERS, TOWN_CENTER_PREREQUISITES, UPDATED_CONSTRUCTION_BUILDINGS } from "../../lib/updatedConstructionData.mjs";
 import { DataLabel, FirstUseGuide, SaveToRoadmap } from "./PlannerExperience";
+import { InfoTip } from "../ui";
 import styles from "./UpdatedConstructionPlanner.module.css";
 
 const LEVELS = ["30", ...CONSTRUCTION_TIERS];
@@ -87,7 +88,7 @@ export default function UpdatedConstructionPlanner() {
     <div className={styles.workspace}>
       <div className={styles.inputs}>
         <section className={styles.panel}>
-          <div className={styles.heading}><span>01</span><div><h2>Building targets</h2><p>Each transition represents all five stages in that TG tier.</p></div></div>
+          <div className={styles.heading}><span>01</span><div><h2>Building targets <InfoTip label="About building targets">Pick the tier each building is at now and the tier you want. &ldquo;Required&rdquo; shows the True Gold and Tempered True Gold that upgrade will cost.</InfoTip></h2><p>Each transition represents all five stages in that TG tier.</p></div></div>
           <div className={styles.table} role="table" aria-label="Construction targets">
             <div className={`${styles.row} ${styles.header}`} role="row"><span>Building</span><span>Current</span><span>Target</span><span>Required</span></div>
             {UPDATED_CONSTRUCTION_BUILDINGS.map((building) => {
@@ -115,7 +116,7 @@ export default function UpdatedConstructionPlanner() {
         </section>
 
         <section className={styles.panel}>
-          <div className={styles.heading}><span>02</span><div><h2>Inventory</h2><p>Construction requirements are protected before the schedule spends TG on refining.</p></div></div>
+          <div className={styles.heading}><span>02</span><div><h2>Inventory <InfoTip label="About inventory">Enter what you already own. The True Gold construction needs is set aside first, so the refining schedule only spends what is genuinely spare.</InfoTip></h2><p>Construction requirements are protected before the schedule spends TG on refining.</p></div></div>
           <div className={styles.fields}>
             <label>Current True Gold<input type="number" min="0" inputMode="numeric" value={state.inventory.trueGold} onChange={(event) => updateGroup("inventory", "trueGold", Math.max(0, Number(event.target.value) || 0))} /></label>
             <label>Current Tempered True Gold<input type="number" min="0" inputMode="numeric" value={state.inventory.temperedTrueGold} onChange={(event) => updateGroup("inventory", "temperedTrueGold", Math.max(0, Number(event.target.value) || 0))} /></label>
@@ -125,7 +126,7 @@ export default function UpdatedConstructionPlanner() {
         </section>
 
         <section className={styles.panel}>
-          <div className={styles.heading}><span>03</span><div><h2>Refining schedule</h2><p>The first refinement each day costs 50% less; the 100-attempt ladder resets Monday.</p></div></div>
+          <div className={styles.heading}><span>03</span><div><h2>Refining schedule <InfoTip label="About the refining schedule">Describe your Crucible pace — attempts per day, where you are on the weekly 1&ndash;100 ladder, and any deadline. The planner lays out how many refinements to run each day to hit your Tempered True Gold total.</InfoTip></h2><p>The first refinement each day costs 50% less; the 100-attempt ladder resets Monday.</p></div></div>
           <div className={styles.fields}>
             <label>Next weekly attempt<input type="number" min="1" max="100" value={state.refinement.refinementState} onChange={(event) => updateGroup("refinement", "refinementState", Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /><small>Enter the next attempt number on your current 1–100 weekly ladder. It resets to 1 every Monday.</small></label>
             <label>Already completed today<input type="number" min="0" value={state.refinement.completedToday} onChange={(event) => updateGroup("refinement", "completedToday", Math.max(0, Number(event.target.value) || 0))} /><small>Attempts already made today. This prevents the planner from applying another first-attempt discount today.</small></label>

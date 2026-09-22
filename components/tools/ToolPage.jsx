@@ -6,6 +6,7 @@ export default function ToolPage({
   backHref = '/tools',
   backLabel = 'Tools & Calculators',
   memberId = '',
+  help = null,
   children,
 }) {
   // Member context travels on the query string so a click back up the tree
@@ -48,6 +49,12 @@ export default function ToolPage({
           <h1 className="k-display armory-title">{title}</h1>
           <p className="k-narrative armory-lede">{description}</p>
         </header>
+        {help ? (
+          <details className="tool-help">
+            <summary>About this tool</summary>
+            <div className="tool-help-body">{help}</div>
+          </details>
+        ) : null}
         {children}
       </div>
       <style>{`

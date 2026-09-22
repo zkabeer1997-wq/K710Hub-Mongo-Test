@@ -26,6 +26,7 @@ import {
   NextAction,
   SaveToRoadmap,
 } from "./PlannerExperience";
+import { InfoTip } from "../ui";
 import styles from "./Phase2Planner.module.css";
 
 const number = (value) => Math.max(0, Number(value) || 0);
@@ -206,10 +207,10 @@ function InputSummary({ items }) {
   );
 }
 
-function SectionHeading({ title, description }) {
+function SectionHeading({ title, description, help }) {
   return (
     <header className={styles.sectionHeading}>
-      <h2>{title}</h2>
+      <h2>{title}{help ? <> <InfoTip label={`About ${title}`}>{help}</InfoTip></> : null}</h2>
       {description ? <p>{description}</p> : null}
     </header>
   );
@@ -1021,6 +1022,11 @@ function EquipmentRows({ rows, setRows, hero = false, showTarget = true }) {
             ? "Enter the four equipped pieces for each troop type."
             : "Enter all six pieces; target tiers appear only in target-planning mode."
         }
+        help={
+          hero
+            ? "Set the tier of each equipped piece for every troop type. Lock (protect) any piece you do not want the plan to touch."
+            : "Set the current tier of all six pieces. Lock (protect) any piece you want left as-is, and it stays out of the recommended upgrade order."
+        }
       />
       {hero ? <div className={styles.troopTabs} role="tablist" aria-label="Hero Gear troop type">
         {groups.map((group) => <button key={group.name} type="button" role="tab" aria-selected={activeGroup === group.name} onClick={() => setActiveGroup(group.name)}>{group.name}<span>{group.rows.filter(({ row }) => !row.locked).length} active</span></button>)}
@@ -1425,6 +1431,7 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
           <SectionHeading
             title="Available inventory"
             description="The optimizer ranks the best use of the materials available to this plan."
+            help="Enter the Satin, Gilded Threads, and Artisan’s Visions you can spend, then choose whether to optimize raw stats or KvK Preparation points. Only upgrades your materials can cover are recommended."
           />
           <div className={styles.grid}>
             <Field

@@ -11,4 +11,5 @@ export { default as Callout } from './Callout';
 export { default as EmptyState } from './EmptyState';
 export { default as PageHeader } from './PageHeader';
 export { default as Term } from './Term';
+export { default as InfoTip } from './InfoTip';
 export { ToastProvider, useToast } from './Toast';

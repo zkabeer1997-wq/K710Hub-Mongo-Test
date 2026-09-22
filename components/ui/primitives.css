@@ -358,3 +358,142 @@
 @media (max-width: 480px) {
   .ui-term-popover { max-width: min(240px, 72vw); }
 }
+
+/* --- InfoTip (inline "?" help) -------------------------------------
+   A click/tap-toggled help button + popover for dense calculator forms
+   (see components/ui/InfoTip.jsx). Same fixed dark/console popover palette
+   and reasoning as .ui-term above — a small definition card reads as a
+   system affordance regardless of the page theme it lands on. */
+
+.ui-infotip { position: relative; display: inline-flex; vertical-align: middle; }
+
+.ui-infotip-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--brass-bright);
+  background: color-mix(in srgb, var(--brass) 16%, transparent);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background 160ms, color 160ms, border-color 160ms;
+}
+.ui-infotip-trigger:hover {
+  color: var(--gold-hot);
+  background: color-mix(in srgb, var(--brass) 28%, transparent);
+  border-color: var(--gold-aged);
+}
+.ui-infotip-trigger[aria-expanded='true'] {
+  color: var(--ink);
+  background: var(--gold-aged);
+  border-color: var(--gold-aged);
+}
+.ui-infotip-trigger:focus-visible {
+  outline: 2px solid var(--gold-hot);
+  outline-offset: 2px;
+}
+
+.ui-infotip-popover {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  top: calc(100% + var(--space-2));
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: var(--space-3) var(--space-4);
+  background: var(--stone-lit);
+  color: var(--text);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--depth-2);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  animation: ui-term-in var(--t-fast) var(--ease-cine);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-infotip-popover { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .ui-infotip-popover { max-width: min(240px, 72vw); }
+}
+
+/* --- ToolPage "About this tool" help block ---------------------------
+   Optional collapsible summary rendered by ToolPage when a `help` prop is
+   passed. Native <details> so it works without JS and stays keyboard-
+   accessible; tokenized brass-on-dark to match the armory tool shell. */
+
+.tool-help {
+  margin: 0 0 24px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--stone) 55%, transparent);
+}
+.tool-help > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--brass-bright);
+  cursor: pointer;
+  list-style: none;
+}
+.tool-help > summary::-webkit-details-marker { display: none; }
+.tool-help > summary::before {
+  content: '?';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--gold-aged);
+  border-radius: var(--radius-pill);
+}
+.tool-help > summary::after {
+  content: '▾';
+  margin-left: auto;
+  color: var(--brass-dim);
+  transition: transform 160ms var(--ease-cine);
+}
+.tool-help[open] > summary::after { transform: rotate(180deg); }
+.tool-help > summary:hover { color: var(--gold-hot); }
+.tool-help > summary:focus-visible {
+  outline: 2px solid var(--gold-hot);
+  outline-offset: -2px;
+  border-radius: var(--radius-lg);
+}
+.tool-help-body {
+  padding: 0 18px 16px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--parchment-dim);
+}
+.tool-help-body p { margin: 0 0 10px; }
+.tool-help-body p:last-child { margin-bottom: 0; }
+.tool-help-body strong { color: var(--parchment); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) {
+  .tool-help > summary::after { transition: none; }
+}
