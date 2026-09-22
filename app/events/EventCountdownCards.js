@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { nextEventOccurrence, recurrenceLabel, upcomingEventSeries } from '../../lib/eventRecurrence.mjs';
 import { eventBlurb } from '../../lib/eventBlurb.mjs';
+import { filterEventsByQuery } from '../../lib/eventSearch.mjs';
 
 const KIND_LABEL = {
   kvk: 'KvK',
@@ -248,16 +249,42 @@ function EventModal({ event, onClose }) {
 export default function EventCountdownCards({ events, initialNow }) {
   const [open, setOpen] = useState(null);
   const [local, setLocal] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchId = useId();
   useEffect(() => setLocal(true), []);
   const now = useNow(1000, initialNow);
   const upcoming = upcomingEventSeries(events || [], now);
+  const visible = useMemo(() => filterEventsByQuery(upcoming, search), [upcoming, search]);
 
   if (!events?.length) return null;
 
   return (
     <div className="ev-cards">
+      {upcoming.length > 1 && (
+        <div className="ev-search-field">
+          <label htmlFor={searchId}>Search upcoming events</label>
+          <div className="ev-search-input-wrap">
+            <input
+              id={searchId}
+              type="search"
+              placeholder="Search by title or description…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button type="button" className="ev-search-clear" onClick={() => setSearch('')} aria-label="Clear search">
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {upcoming.length === 0 && <p>No upcoming events.</p>}
-      {upcoming.map(({ event, occurrence }) => (
+      {upcoming.length > 0 && visible.length === 0 && (
+        <p className="ev-search-empty">No upcoming events match “{search}”.</p>
+      )}
+      {visible.map(({ event, occurrence }) => (
         <EventCard key={event.slug} now={now} local={local} event={occurrence} onOpen={() => setOpen(event)} />
       ))}
 
@@ -265,6 +292,15 @@ export default function EventCountdownCards({ events, initialNow }) {
 
       <style>{`
         .ev-cards{display:flex;flex-direction:column;gap:18px}
+        .ev-search-field{display:flex;flex-direction:column;gap:6px;max-width:420px}
+        .ev-search-field label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--color-ink-muted)}
+        .ev-search-input-wrap{position:relative;display:flex;align-items:center}
+        .ev-search-input-wrap input{width:100%;padding:10px 34px 10px 12px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-ink);font-size:14px}
+        .ev-search-input-wrap input:focus-visible{outline:2px solid var(--color-accent);outline-offset:1px}
+        .ev-search-clear{position:absolute;right:6px;border:0;background:transparent;color:var(--color-ink-muted);cursor:pointer;padding:6px;line-height:1;border-radius:6px}
+        .ev-search-clear:hover{color:var(--color-ink)}
+        .ev-search-clear:focus-visible{outline:2px solid var(--color-accent);outline-offset:1px}
+        .ev-search-empty{color:var(--color-ink-muted);font-size:14px}
         .ev-card{border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);transition:border-color .16s,box-shadow .16s,transform .16s}
         .ev-card:hover{border-color:var(--color-accent)}
         .ev-card-live{border-color:rgba(62,207,142,.45);box-shadow:0 0 0 1px rgba(62,207,142,.15)}
