@@ -22,6 +22,7 @@ serializeGovernorGearSelections,
 } from '../../lib/powerProfiles.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { heroSlug, saveStatusLabel } from '../../lib/powerProfileWizard.mjs';
+import { LoadingRow } from '../../components/ui';
 
 // Wizard steps. Presentational grouping only - every field below still
 // reads/writes the same lifted `form` / `governorGear` / `charms` state as
@@ -71,6 +72,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
   const [status, setStatus] = useState('');
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
 
   // Wizard-only UI state. Never read by handleSubmit and never sent to the
   // API - purely for the stepper/progress bar and the save-status line.
@@ -148,8 +150,15 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
   async function lookup(overrideMemberId) {
     const memberId = (overrideMemberId !== undefined ? overrideMemberId : form.member_id).trim();
     if (!memberId) return;
-    const response = await fetch(`/api/power-profile?member_id=${encodeURIComponent(memberId)}`);
-    const result = await response.json();
+    setLookingUp(true);
+    let response;
+    let result;
+    try {
+      response = await fetch(`/api/power-profile?member_id=${encodeURIComponent(memberId)}`);
+      result = await response.json();
+    } finally {
+      setLookingUp(false);
+    }
     if (!response.ok) {
       setOnFile(null);
       return;
@@ -284,6 +293,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
               <label>Your name<input value={form.name} onChange={(e) => updateField('name', e.target.value)} placeholder="Your in-game name" /></label>
               <label>Member ID<input value={form.member_id} onChange={(e) => updateField('member_id', e.target.value)} onBlur={() => lookup()} placeholder="Your Member ID" /></label>
             </div>
+            {lookingUp && <LoadingRow>Looking up your profile…</LoadingRow>}
             {onFile && (
               <div className="on-file">
                 Player profile on file - Governor Gear: {onFile.governor_gear || '-'} / Charms: {onFile.charms || '-'} / Heroes: {onFile.heroes?.length ? onFile.heroes.join(', ') : '-'}

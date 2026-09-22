@@ -12,4 +12,5 @@ export { default as EmptyState } from './EmptyState';
 export { default as PageHeader } from './PageHeader';
 export { default as Term } from './Term';
 export { default as InfoTip } from './InfoTip';
+export { Spinner, LoadingRow, Skeleton } from './Spinner';
 export { ToastProvider, useToast } from './Toast';

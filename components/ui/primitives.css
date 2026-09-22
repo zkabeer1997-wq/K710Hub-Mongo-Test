@@ -497,3 +497,111 @@
 @media (prefers-reduced-motion: reduce) {
   .tool-help > summary::after { transition: none; }
 }
+
+/* --- Spinner / LoadingRow / Skeleton --------------------------------
+   Shared loading affordances (components/ui/Spinner.jsx). Fixed brass-on-
+   dark palette to read as a system affordance on either theme, same
+   reasoning as .ui-toast. Motion is CSS-only; the global reduced-motion
+   rule in globals.css stops it, and the explicit blocks below make the
+   still state legible (a static ring, a flat placeholder — no shimmer). */
+
+.ui-spinner {
+  display: inline-block;
+  position: relative;
+  flex: none;
+  vertical-align: middle;
+}
+.ui-spinner-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--brass) 26%, transparent);
+  border-top-color: var(--gold-hot);
+  animation: ui-spin 720ms linear infinite;
+}
+
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ui-loading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--t-secondary);
+}
+.ui-loading-row-text { line-height: 1.4; }
+
+.ui-skel {
+  display: block;
+  background: color-mix(in srgb, var(--color-ink) 12%, var(--color-surface-alt));
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--color-ink) 10%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  animation: ui-skel-shimmer 1400ms ease-in-out infinite;
+}
+
+@keyframes ui-skel-shimmer {
+  from { background-position: 180% 0; }
+  to { background-position: -80% 0; }
+}
+
+/* Explicit stop (independent of the global reduced-motion rule): freeze the
+   ring and drop the shimmer to a flat placeholder rather than a strobing
+   gradient. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-spinner-ring { animation: none; }
+  .ui-skel { animation: none; background-image: none; }
+}
+
+/* --- Route skeleton scaffold (loading.js) ---------------------------
+   A neutral centered wrapper so each route's loading.js composes Skeleton
+   blocks into a rough page shape without repeating layout CSS. */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ui-skeleton-screen {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+.ui-page-skeleton {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: clamp(90px, 12vh, 150px) var(--space-4) var(--space-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.ui-skel-head { display: flex; flex-direction: column; gap: var(--space-3); }
+.ui-skel-row { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.ui-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+.ui-skel-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+}

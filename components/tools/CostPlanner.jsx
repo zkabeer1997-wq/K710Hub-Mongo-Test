@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
 import {calculateCosts,calculateReach,duration,exportPlanCsv,levelLabel,numberValue,RESOURCE_LABELS} from '../../lib/costPlanner.mjs';
-import {InfoTip} from '../ui';
+import {InfoTip,Spinner} from '../ui';
 import styles from './CostPlanner.module.css';
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2});
 function LevelSelect({item,value,onChange,label,minimum='0'}){
@@ -42,7 +42,7 @@ export default function CostPlanner({dataset,toolKey,construction=false}){
  function calculate(){setError('');try{const options={selections,currentLevels,inventory,modifiers,includePrerequisites,kind:construction?'construction':'research'};setResult(mode==='reach'?calculateReach(dataset,options):calculateCosts(dataset,options));}catch(e){setError(e.message);}}
  function download(){const url=URL.createObjectURL(new Blob([exportPlanCsv(result)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`${toolKey}-upgrade-plan.csv`;a.click();URL.revokeObjectURL(url);}
  return <div className={styles.planner}>
-  <div className={styles.topline}><div><span className="k-mark">{construction?'Building upgrades':'Research upgrades'}</span><strong>{dataset.items.length} {construction?'buildings':'research entries'} · {dataset.items.reduce((n,i)=>n+i.levels.length,0)} level records</strong></div><span role="status">{loading?'Loading saved plan…':saveStatus}</span></div>
+  <div className={styles.topline}><div><span className="k-mark">{construction?'Building upgrades':'Research upgrades'}</span><strong>{dataset.items.length} {construction?'buildings':'research entries'} · {dataset.items.reduce((n,i)=>n+i.levels.length,0)} level records</strong></div><span role="status" style={{display:'inline-flex',alignItems:'center',gap:'8px'}}>{loading?<><Spinner size={15} label="Loading saved plan" />Loading saved plan…</>:saveStatus}</span></div>
   <div className={styles.layout}><fieldset className={styles.inputs} disabled={loading}>
    <section className={styles.panel}>
     <div className={styles.sectionHead}><div><span className={styles.eyebrow}>01 · Upgrade plan</span><h2>What are you upgrading? <InfoTip label="About upgrade plan modes">Add each {construction?'building':'research'} you want, then set current and target levels. <strong>Calculate cost</strong> totals the resources to reach your targets; <strong>What can I afford?</strong> works backwards from your inventory to the highest level you can reach.</InfoTip></h2></div><div className={styles.mode} aria-label="Calculation mode"><button type="button" aria-pressed={mode==='cost'} onClick={()=>{changed();setMode('cost');}}>Calculate cost</button><button type="button" aria-pressed={mode==='reach'} onClick={()=>{changed();setMode('reach');}}>What can I afford?</button></div></div>
