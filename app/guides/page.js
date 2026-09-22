@@ -171,8 +171,10 @@ export default async function GuidesPage({ searchParams }) {
         .guides-search{flex:1 1 320px;max-width:430px;color:#63452f}
         .guides-search span{color:#6b4a31!important}
         .guides-categories{display:flex;flex-wrap:wrap;gap:7px}
-        .guides-category-tab{padding:9px 13px;border:1px solid rgba(76,47,23,.2);background:rgba(255,248,235,.26);color:#6a4c34;font-family:var(--font-body);font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
-        .guides-category-tab:hover,.guides-category-tab.is-active{border-color:#a4652d;background:#2a1a11;color:#efd5ad}
+        .guides-category-tab{padding:9px 13px;border:1px solid rgba(76,47,23,.2);background:rgba(255,248,235,.26);color:#6a4c34;font-family:var(--font-body);font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .16s ease,border-color .16s ease,color .16s ease}
+        .guides-category-tab:hover:not(.is-active){border-color:#a4652d;background:rgba(164,101,45,.16);color:#4a2f17}
+        .guides-category-tab:focus-visible{outline:2px solid #a4652d;outline-offset:2px}
+        .guides-category-tab.is-active{border-color:#2a1a11;background:#2a1a11;color:#efd5ad;box-shadow:inset 0 0 0 1px rgba(239,213,173,.35)}
         .guides-directory{border-top:1px solid rgba(77,48,24,.24)}
         .guide-entry{display:grid;grid-template-columns:132px minmax(0,1fr) 126px;gap:30px;align-items:center;min-height:176px;padding:24px 8px;text-decoration:none;color:inherit;border-bottom:1px solid rgba(77,48,24,.2);transition:padding .2s ease,background .2s ease}
         .guide-entry:hover,.guide-entry:focus-visible{padding-inline:18px;background:rgba(108,66,30,.055);outline:none}
