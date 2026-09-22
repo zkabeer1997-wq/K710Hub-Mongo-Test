@@ -5,6 +5,13 @@ import { useMemo, useState } from 'react';
 import { Field, Input } from '../../components/ui';
 import GuideIcon from './GuideIcon';
 import { guideCategories } from '../../lib/guideValidation.mjs';
+import { guideDifficultyLabel, startHereSlug } from '../../lib/guideTags.mjs';
+
+const DIFFICULTY_TONE = {
+  Beginner: 'guide-tag-beginner',
+  Intermediate: 'guide-tag-intermediate',
+  Advanced: 'guide-tag-advanced',
+};
 
 export default function GuidesDirectory({ guides, categories: savedCategories = [], query, backHref }) {
   const [search, setSearch] = useState('');
@@ -13,6 +20,10 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
   const categories = useMemo(() => {
     return guideCategories(guides, savedCategories);
   }, [guides, savedCategories]);
+
+  // Computed from the full, unfiltered list so the badge stays put on the
+  // same guide regardless of the current search/category filter.
+  const startHere = useMemo(() => startHereSlug(guides), [guides]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -57,24 +68,38 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
         <div className="guides-error k-narrative">{search.trim() ? 'No guides match your search.' : 'No published guides in this category yet.'}</div>
       ) : (
         <div className="guides-directory" role="list">
-          {filtered.map((guide, index) => (
-            <a key={guide.slug} href={`/guides/${guide.slug}${query}`} className="guide-entry" role="listitem">
-              <GuideIcon index={index} />
-              <span className="guide-entry-copy">
-                <span className="k-mark guide-category">{guide.category}</span>
-                <strong className="guide-entry-title">{guide.title}</strong>
-                <span className="guide-description">{guide.description}</span>
-                <span className="guide-entry-sub">
-                  {guide.reading_minutes || 1} min read
-                  {guide.updated_at ? ` · Updated ${new Date(guide.updated_at).toLocaleDateString()}` : ''}
+          {filtered.map((guide, index) => {
+            const difficulty = guideDifficultyLabel(guide);
+            const isStartHere = Boolean(guide.slug) && guide.slug === startHere;
+            return (
+              <a key={guide.slug} href={`/guides/${guide.slug}${query}`} className="guide-entry" role="listitem">
+                <GuideIcon index={index} />
+                <span className="guide-entry-copy">
+                  <span className="guide-entry-tags">
+                    <span className="k-mark guide-category">{guide.category}</span>
+                    {isStartHere && (
+                      <span className="guide-tag guide-tag-start" title="Recommended first guide">
+                        ★ Start here
+                      </span>
+                    )}
+                    {difficulty && (
+                      <span className={`guide-tag ${DIFFICULTY_TONE[difficulty] || ''}`}>{difficulty}</span>
+                    )}
+                  </span>
+                  <strong className="guide-entry-title">{guide.title}</strong>
+                  <span className="guide-description">{guide.description}</span>
+                  <span className="guide-entry-sub">
+                    {guide.reading_minutes || 1} min read
+                    {guide.updated_at ? ` · Updated ${new Date(guide.updated_at).toLocaleDateString()}` : ''}
+                  </span>
                 </span>
-              </span>
-              <span className="guide-entry-meta">
-                <span>Open guide</span>
-                <b aria-hidden="true">→</b>
-              </span>
-            </a>
-          ))}
+                <span className="guide-entry-meta">
+                  <span>Open guide</span>
+                  <b aria-hidden="true">→</b>
+                </span>
+              </a>
+            );
+          })}
         </div>
       )}
 

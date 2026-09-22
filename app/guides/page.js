@@ -181,7 +181,13 @@ export default async function GuidesPage({ searchParams }) {
         .guide-device-glow{position:absolute;z-index:1;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,rgba(159,90,37,.16),transparent 70%);filter:blur(8px)}
         .guide-entry:hover .guide-book{transform:translateY(-4px) rotate(-2deg)}
         .guide-entry-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
-        .guide-category{color:#9b5a27;font-size:10px;margin-bottom:8px}
+        .guide-entry-tags{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
+        .guide-category{color:#9b5a27;font-size:10px;margin:0}
+        .guide-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:var(--radius-pill,999px);font-family:var(--font-mono);font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(76,47,23,.28);background:rgba(255,248,235,.5);color:#6a4c34}
+        .guide-tag-start{border-color:#a4652d;background:#f0d5a8;color:#5a3413}
+        .guide-tag-beginner{border-color:rgba(77,122,77,.4);background:rgba(77,122,77,.14);color:#3c5e3c}
+        .guide-tag-intermediate{border-color:rgba(180,120,40,.4);background:rgba(180,120,40,.14);color:#8a5a1f}
+        .guide-tag-advanced{border-color:rgba(179,64,47,.4);background:rgba(179,64,47,.14);color:#8a3221}
         .guide-entry-title{font-family:var(--font-fraunces-loaded),Georgia,serif;font-size:clamp(24px,3vw,34px);line-height:1.02;letter-spacing:-.025em;color:#2b1a10}
         .guide-description{margin-top:9px;color:#72553b;font-size:15px;line-height:1.55;max-width:62ch}
         .guide-entry-sub{margin-top:10px;color:#967452;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
