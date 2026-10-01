@@ -1,25 +1,40 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import Icon from '../../components/ui/icons';
 
 const CATEGORIES = ['UPDATED TOOLS', 'Account Progression', 'Charms', 'Special Event Shops'];
 
 const TOOLS = [
-  { key: 'updated-hero-gear', category: 'UPDATED TOOLS', event: 'Stats + KvK Preparation', title: 'Updated Hero Gear Optimizer', description: 'Optimize Enhancement, Mastery, Red ascension, imbuement, reforging, and the exact four-resource shortfall.', status: 'Updated', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
-  { key: 'updated-governor-gear', category: 'UPDATED TOOLS', event: 'Stats + KvK Preparation', title: 'Updated Governor Gear Optimizer', description: 'Rank all six pieces with squared scarcity, troop priorities, set bonuses, and sourced KvK upgrade points.', status: 'Updated', icon: '/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp' },
-  { key: 'updated-charms', category: 'UPDATED TOOLS', event: 'Stats + KvK Preparation', title: 'Updated Charms Optimizer', description: 'Optimize all 18 charms with exact level costs, shared inventory, target planning, and connected weekly packs.', status: 'Updated', icon: '/images/kingshot/charms/infantry.webp' },
-  { key: 'governor-gear-sailing-tool', category: 'UPDATED TOOLS', event: "Governor's Expedition", title: 'Governor Gear Sailing Tool', description: 'Calculate Governor Gear chest merges for a target tier, including Exquisite and Majestic outcomes.', status: 'New', icon: '/images/kingshot/governor-gear/infantry_gear_1_green_t0_s0.webp' },
-  { key: 'updated-masters', category: 'UPDATED TOOLS', event: 'Progression + monthly packs', title: 'Updated Masters Optimizer', description: 'Combine multiple relationship and skill targets, partial Affinity progress, inventory, and purchase scheduling.', status: 'Updated', icon: '/images/kingshot/masters/roman.png' },
-  { key: 'updated-pets', category: 'UPDATED TOOLS', event: 'Progression + weekly packs', title: 'Updated Pets Optimizer', description: 'Plan every pet from the complete dataset and turn the combined shortfall into a weekly pack schedule.', status: 'Updated', icon: '/images/pet-pack-compass.svg' },
-  { key: 'updated-construction', category: 'UPDATED TOOLS', event: 'TG1–TG10 + refining', title: 'Updated Construction Planner', description: 'Combine eight building targets, supplied TG and TTG tier totals, inventory shortfalls, and a daily Tempered True Gold schedule.', status: 'Updated', icon: '/images/updated-construction.svg' },
-  { key: 'updated-research', category: 'UPDATED TOOLS', event: 'Academy + War Academy', title: 'Unified Research Planner', description: 'Plan exact Academy, War Academy, and Advanced Research levels with prerequisites, inventory shortfalls, adjusted time, and exports.', status: 'Updated', icon: '/images/updated-research.svg' },
-  { key: 'account-progression', category: 'Account Progression', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New', icon: '/images/kingshot/hero-gear/infantry-helm.png' },
-  { key: 'wavebound-charms', category: 'Charms', event: 'Wavebound Voyage', title: 'Charms Sailing Optimizer', description: 'Calculate Tidal Treasure merges for a target Charm level, including Exquisite and Majestic outcomes.', status: 'Available', icon: '/images/wavebound-charm-sail.svg' },
-  { key: 'flamedragon-shop', category: 'Special Event Shops', event: 'Flamedragon Tyrant', title: 'Dragon’s Caravan Optimizer', description: 'Build a reward cart, prioritize the best-value shop items, and calculate the cheapest Dragon Essence pack combination.', status: 'New', icon: '/images/flamedragon-caravan.svg' },
-  { key: 'adventure-stall', category: 'Special Event Shops', event: 'Adventure Stall', title: 'Adventure Stall Optimizer', description: 'Choose your event rewards and calculate the lowest-cost daily pack plan after using the Shells already in your inventory.', status: 'New', icon: '/images/adventure-stall.svg' },
+  { key: 'updated-hero-gear', category: 'UPDATED TOOLS', event: 'Stats + KvK Preparation', title: 'Updated Hero Gear Optimizer', description: 'Optimize Enhancement, Mastery, Red ascension, imbuement, reforging, and the exact four-resource shortfall.', status: 'Updated' },
+  { key: 'updated-governor-gear', category: 'UPDATED TOOLS', event: 'Stats + KvK Preparation', title: 'Updated Governor Gear Optimizer', description: 'Rank all six pieces with squared scarcity, troop priorities, set bonuses, and sourced KvK upgrade points.', status: 'Updated' },
+  { key: 'updated-charms', category: 'UPDATED TOOLS', event: 'Stats + KvK Preparation', title: 'Updated Charms Optimizer', description: 'Optimize all 18 charms with exact level costs, shared inventory, target planning, and connected weekly packs.', status: 'Updated' },
+  { key: 'governor-gear-sailing-tool', category: 'UPDATED TOOLS', event: "Governor's Expedition", title: 'Governor Gear Sailing Tool', description: 'Calculate Governor Gear chest merges for a target tier, including Exquisite and Majestic outcomes.', status: 'New' },
+  { key: 'updated-masters', category: 'UPDATED TOOLS', event: 'Progression + monthly packs', title: 'Updated Masters Optimizer', description: 'Combine multiple relationship and skill targets, partial Affinity progress, inventory, and purchase scheduling.', status: 'Updated' },
+  { key: 'updated-pets', category: 'UPDATED TOOLS', event: 'Progression + weekly packs', title: 'Updated Pets Optimizer', description: 'Plan every pet from the complete dataset and turn the combined shortfall into a weekly pack schedule.', status: 'Updated' },
+  { key: 'updated-construction', category: 'UPDATED TOOLS', event: 'TG1–TG10 + refining', title: 'Updated Construction Planner', description: 'Combine eight building targets, supplied TG and TTG tier totals, inventory shortfalls, and a daily Tempered True Gold schedule.', status: 'Updated' },
+  { key: 'updated-research', category: 'UPDATED TOOLS', event: 'Academy + War Academy', title: 'Unified Research Planner', description: 'Plan exact Academy, War Academy, and Advanced Research levels with prerequisites, inventory shortfalls, adjusted time, and exports.', status: 'Updated' },
+  { key: 'account-progression', category: 'Account Progression', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New' },
+  { key: 'wavebound-charms', category: 'Charms', event: 'Wavebound Voyage', title: 'Charms Sailing Optimizer', description: 'Calculate Tidal Treasure merges for a target Charm level, including Exquisite and Majestic outcomes.', status: 'Available' },
+  { key: 'flamedragon-shop', category: 'Special Event Shops', event: 'Flamedragon Tyrant', title: 'Dragon’s Caravan Optimizer', description: 'Build a reward cart, prioritize the best-value shop items, and calculate the cheapest Dragon Essence pack combination.', status: 'New' },
+  { key: 'adventure-stall', category: 'Special Event Shops', event: 'Adventure Stall', title: 'Adventure Stall Optimizer', description: 'Choose your event rewards and calculate the lowest-cost daily pack plan after using the Shells already in your inventory.', status: 'New' },
 ];
+
+const TOOL_ICON = {
+  'updated-hero-gear': 'gear',
+  'updated-governor-gear': 'gear',
+  'governor-gear-sailing-tool': 'sail',
+  'updated-charms': 'charms',
+  'updated-masters': 'masters',
+  'updated-pets': 'pets',
+  'updated-construction': 'construction',
+  'updated-research': 'research',
+  'account-progression': 'roadmap',
+  'wavebound-charms': 'sail',
+  'flamedragon-shop': 'shop',
+  'adventure-stall': 'shop',
+};
 
 const STATUS_TONE = {
   New: 'tool-badge-new',
@@ -29,11 +44,10 @@ const STATUS_TONE = {
 
 function ToolBox({ tool, query }) {
   return (
-    <Link key={tool.key} href={`/tools/${tool.key}${query}`} className="tool-box" role="listitem">
+    <Link key={tool.key} href={`/tools/${tool.key}${query}`} className="tool-box">
       <span className={`tool-box-badge ${STATUS_TONE[tool.status] || ''}`}>{tool.status}</span>
       <span className="tool-box-icon" aria-hidden="true">
-        <span className="tool-box-icon-glow" />
-        <Image className="tool-box-icon-art" src={tool.icon} alt="" width={72} height={72} />
+        <Icon name={TOOL_ICON[tool.key] || 'gear'} size={26} />
       </span>
       <span className="tool-box-category">{tool.category}</span>
       <strong className="k-display tool-box-title">{tool.title}</strong>
@@ -97,7 +111,7 @@ export default function ToolsDirectory({ memberId, category }) {
           <p className="k-narrative">Try a different search term or category.</p>
         </div>
       ) : (
-        <div className="tools-grid" role="list">
+        <div className="tools-grid">
           {filtered.map((tool) => <ToolBox key={tool.key} tool={tool} query={query} />)}
         </div>
       )}
@@ -122,8 +136,8 @@ export default function ToolsDirectory({ memberId, category }) {
         .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
 
         .tool-box{
-          position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
-          padding:28px 20px 24px;border:1px solid rgba(201,164,78,.24);border-radius:10px;
+          position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:10px;
+          padding:22px 20px 20px;border:1px solid rgba(201,164,78,.24);border-radius:10px;
           background:linear-gradient(180deg,rgba(20,17,10,.7),rgba(9,10,18,.86));
           text-decoration:none;color:inherit;
           transition:transform .18s var(--ease-cine,ease),border-color .18s ease,box-shadow .18s ease,background .18s ease;
@@ -142,10 +156,8 @@ export default function ToolsDirectory({ memberId, category }) {
         .tool-badge-new{background:rgba(65,164,255,.14);color:#7fbfff;border-color:rgba(65,164,255,.32)}
         .tool-badge-available{background:rgba(201,164,78,.14);color:var(--gold-hot);border-color:rgba(201,164,78,.32)}
 
-        .tool-box-icon{position:relative;width:88px;height:88px;display:grid;place-items:center;margin-top:6px;isolation:isolate}
-        .tool-box-icon-art{position:relative;z-index:2;object-fit:contain;filter:drop-shadow(0 10px 10px rgba(0,0,0,.55));transition:transform .2s var(--ease-cine,ease)}
-        .tool-box-icon-glow{position:absolute;z-index:1;inset:6px;border-radius:50%;background:radial-gradient(circle,rgba(65,164,255,.2),rgba(201,164,78,.09) 46%,transparent 72%);filter:blur(8px);opacity:.72}
-        .tool-box:hover .tool-box-icon-art{transform:translateY(-3px) scale(1.06)}
+        .tool-box-icon{width:48px;height:48px;display:grid;place-items:center;border:1px solid rgba(201,164,78,.34);border-radius:var(--radius-md);color:var(--gold-hot);background:rgba(201,164,78,.07);transition:color .18s ease,border-color .18s ease,background .18s ease}
+        .tool-box:hover .tool-box-icon,.tool-box:focus-visible .tool-box-icon{border-color:var(--gold-aged);background:rgba(201,164,78,.14)}
 
         .tool-box-category{
           font-family:var(--font-mono);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;

@@ -1,3 +1,4 @@
+import PageHero from '../../components/ui/PageHero';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import FormsDirectory from './FormsDirectory';
 import { getFormGates } from '../../lib/formGates.server.js';
@@ -29,13 +30,7 @@ export default async function FormsPage({ searchParams: searchParamsPromise }) {
       <span className="armory-rack-r" aria-hidden="true" />
       <div className="armory-inner tools-workshop-inner">
         <Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Forms" />
-        <header className="armory-head tools-workshop-head">
-          <span className="k-mark">Kingdom 710</span>
-          <h1 className="k-display armory-title">Member Forms</h1>
-          <p className="k-narrative armory-lede">
-            Update your profile and submit event forms for Kingdom 710.
-          </p>
-        </header>
+        <PageHero tone="console" className="tools-workshop-head" eyebrow="Kingdom 710 · Members" title="Member Forms" lede="Update your profile and submit event forms for Kingdom 710." />
 
         <FormsDirectory memberId={memberId} closedKeys={closedKeys} completions={completions} />
 
@@ -43,7 +38,7 @@ export default async function FormsPage({ searchParams: searchParamsPromise }) {
       <style>{`
         .forms-workshop{color:var(--parchment)}
         .tools-workshop-inner{width:min(1100px,100%)}
-        .tools-workshop-head{margin-bottom:clamp(28px,5vh,48px)}
+        .tools-workshop-head .ph-inner{padding-inline:0}
         .tools-back{display:inline-block;margin-top:34px;color:var(--brass);font-family:var(--font-body);font-size:12px;text-decoration:none;letter-spacing:.06em}
         .tools-back:hover{color:var(--gold-hot)}
         @media(max-width:700px){.tools-workshop-inner{padding-top:86px}}

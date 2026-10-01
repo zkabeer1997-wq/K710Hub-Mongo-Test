@@ -54,7 +54,7 @@
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--brass);
+  color: var(--color-accent-text, var(--brass-bright));
 }
 
 /* Engraved / struck-metal title treatment. */
@@ -779,10 +779,10 @@
 }
 .petition-index-item {
   display: inline-flex; align-items: center; gap: 8px;
-  min-height: 40px; padding: 0 14px;
+  min-height: 44px; padding: 0 14px; background: transparent;
   font-family: var(--font-body); font-size: 12px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--color-ink-dim); text-decoration: none;
+  color: var(--color-ink-muted); text-decoration: none; cursor: pointer;
   border: 1px solid transparent; border-radius: 2px;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
@@ -799,7 +799,8 @@
   color: var(--brass); letter-spacing: 0.06em;
   min-width: 1.6em; text-align: center;
 }
-.petition-act-title { margin: 0; font-size: clamp(15px, 1.8vw, 21px); letter-spacing: 0.12em; color: var(--parchment); }
+.petition-act-title { margin: 0; font-family: var(--font-editorial); text-transform: none; font-size: clamp(20px, 2.4vw, 28px); letter-spacing: -0.01em; color: var(--parchment); }
+.petition-act-sub { margin: -10px 0 18px; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-ink-muted); letter-spacing: 0.02em; }
 .petition-act-rule { height: 1px; background: linear-gradient(90deg, var(--color-border-strong), transparent); }
 .petition-act-body { display: flex; flex-direction: column; gap: 22px; }
 
@@ -935,13 +936,13 @@
     radial-gradient(ellipse 80% 40% at 50% 100%, rgba(120,84,52,0.10), transparent 70%);
 }
 .registry-inner { position: relative; z-index: 2; width: min(940px, 100%); margin: 0 auto; padding: clamp(84px, 11vh, 130px) clamp(16px, 4vw, 32px) 0; }
-.registry-head { text-align: center; margin-bottom: clamp(28px, 4vh, 46px); }
+.registry-head .ph-inner { padding-inline: 0; }
 .registry-title { margin: 12px 0 0; font-size: clamp(26px, 4.6vw, 48px); letter-spacing: 0.10em; }
 .registry-lede { max-width: 54ch; margin: 16px auto 0; }
 .registry-head-link {
-  display: inline-block; margin-top: 14px;
+  display: inline-block;
   font-family: var(--font-body); font-size: 13px; letter-spacing: 0.04em;
-  color: var(--color-ink-dim); text-decoration: none; border-bottom: 1px solid transparent;
+  color: var(--color-ink-muted); text-decoration: none; border-bottom: 1px solid transparent;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
 .registry-head-link:hover { color: var(--parchment); border-color: var(--color-border-strong); }
@@ -1272,7 +1273,7 @@
 .muster-back-link {
   position: absolute; left: 0; top: 4px;
   color: var(--brass); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
-  text-decoration: none; opacity: 0.8; transition: opacity var(--t-ui) ease;
+  text-decoration: none; transition: color var(--t-ui) ease;
 }
 .muster-back-link:hover, .muster-back-link:focus-visible { opacity: 1; text-decoration: underline; }
 
@@ -1314,9 +1315,9 @@
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   margin-top: 16px; text-align: center; min-height: 92px;
 }
-.hall-kicker { color: var(--brass); font-size: 9.5px; }
+.hall-kicker { color: var(--brass-bright); font-size: 9.5px; }
 .hall-title { font-size: clamp(14px, 1.35vw, 18px); letter-spacing: 0.09em; }
-.hall-line { font-size: 13px; max-width: 22ch; }
+.hall-line { font-size: 13px; max-width: 22ch; color: var(--parchment-dim); }
 .hall-closed-tag {
   margin-top: 2px; padding: 2px 9px; border-radius: 999px;
   border: 1px solid rgba(163, 40, 60, 0.6); background: rgba(163, 40, 60, 0.18);
@@ -1445,7 +1446,7 @@
 .armory .war-ledger-form label,
 .armory .war-ledger-form .ledger-select > span {
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em;
-  color: var(--brass-dim);
+  color: var(--brass);
 }
 
 .armory .war-ledger-form button[type="submit"] { align-self: flex-start; }

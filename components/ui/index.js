@@ -14,3 +14,6 @@ export { default as Term } from './Term';
 export { default as InfoTip } from './InfoTip';
 export { Spinner, LoadingRow, Skeleton } from './Spinner';
 export { ToastProvider, useToast } from './Toast';
+export { default as PageHero } from './PageHero';
+export { default as SectionHeader } from './SectionHeader';
+export { default as Icon } from './icons';

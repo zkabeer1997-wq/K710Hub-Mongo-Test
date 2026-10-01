@@ -50,7 +50,7 @@
   --leather:         #2a1d14;
   --leather-lit:     #3a2a1d;
 
-  --brass:           #a8834a;
+  --brass:           #bd9a5e; /* AA on dark surfaces; was #a8834a (4.2:1 on --stone-lit) */
   --brass-bright:    #d9b878;
   --brass-dim:       #6e5530;
   --gold-aged:       #c9a44e;
@@ -58,7 +58,7 @@
 
   /* Single source for the two colliding names. */
   --parchment:       #e8dcc0;
-  --parchment-dim:   #c4b493;
+  --parchment-dim:   #d2c5a6;
   --ink:             #14100a;
 
   --fire:            #e2692a;
@@ -73,8 +73,8 @@
   --wb-sky-deep:     #1f3f6d;
 
   --t-primary:       #ece3d0;
-  --t-secondary:     #9aa1b4;
-  --t-muted:         #6a7085;
+  --t-secondary:     #a9afc0;
+  --t-muted:         #949bb0; /* AA (>=4.5:1) on every dark surface incl. --stone-lit; was #6a7085 (2.6-4.1:1) */
   --t-gold:          var(--gold-aged);
 
   --edge:            rgba(201, 164, 78, 0.18);
@@ -102,7 +102,7 @@
   --border-soft:     rgba(217, 169, 78, 0.12);
   --gold:            #d9a94e;
   --gold-bright:     #f0c669;
-  --ember:           #d9622d;
+  --ember:           #e8794a; /* AA text on dark; was #d9622d */
   --ember-bright:    #ef8348;
   --text:            #f3e9d2;
   --text-muted:      #aab4d0;
@@ -118,6 +118,10 @@
   --font-body:       var(--font-body-loaded), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono:       var(--font-mono-loaded), 'SF Mono', Consolas, monospace;
   --font-narrative:  var(--font-narrative-loaded), Georgia, 'Times New Roman', serif;
+  /* Editorial display serif for H1/H2 on every public page (PageHero /
+     SectionHeader). Cinzel (--font-display on console) is reserved for
+     small eyebrows and labels. */
+  --font-editorial:  var(--font-fraunces-loaded), Georgia, 'Times New Roman', serif;
 
   /* Fixed, non-themed text colors for copy sitting directly over the
      Gate backdrop's photographic/atmospheric scene (GateBackdrop.jsx,
@@ -152,6 +156,19 @@
   --space-10: 64px;
   --space-11: 80px;
   --space-12: 96px;
+
+  /* --- Page hero / section header (components/ui/PageHero.jsx) --- */
+  --page-max:        1120px;
+  --page-gutter:     clamp(16px, 4vw, 24px);
+  --hero-band:       linear-gradient(135deg, #24170b 0%, #3b2410 58%, #7b4018 100%);
+  --hero-band-glow:  radial-gradient(circle at 74% 45%, rgba(217,122,31,0.16), transparent 34%);
+  --hero-eyebrow:    #f3d99a;
+  --hero-lede:       #e9d9bd;
+
+  /* --- Shadows (add new ones here, not inline) --- */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.28);
+  --shadow-md:  0 8px 24px rgba(0,0,0,0.38);
+  --shadow-lg:  0 18px 48px rgba(0,0,0,0.5);
 
   /* --- Radius scale ------------------------------------------ */
   --radius-xs:   2px;
@@ -223,6 +240,8 @@
   --color-ink-dim:       var(--t-muted);
   --color-accent:        var(--gold-aged);
   --color-accent-strong: var(--gold-hot);
+  --color-accent-text:   var(--gold-aged);   /* accent usable as small text */
+  --color-link:          var(--gold-hot);
   --color-on-accent:     var(--ink);
   --color-border:        var(--edge);
   --color-border-strong: var(--edge-strong);
@@ -243,8 +262,10 @@
   --color-surface:       #fffaf0;
   --color-surface-alt:   #fdf1da;
   --color-ink:           #2c1c0c;
-  --color-ink-muted:     #6b5738;
-  --color-ink-dim:       rgba(44, 28, 12, 0.55);
+  --color-ink-muted:     #5a4528;
+  --color-ink-dim:       #5f4a2b;
+  --color-accent-text:   #7a3f08;   /* orange accent is 2:1 on cream - use this for small text/links */
+  --color-link:          #7a3f08;
   --color-accent:        #d97a1f;
   --color-accent-strong: #f2941f;
   --color-on-accent:     #2c1c0c;

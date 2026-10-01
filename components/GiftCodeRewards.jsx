@@ -237,6 +237,7 @@ export default function GiftCodeRewards({ className = '' }) {
       ) : null}
 
       <style>{`
+        .gift-code-rewards .ledger-block-head a{color:var(--color-link);text-decoration:underline;text-underline-offset:2px}
         .gift-code-ready-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
         .gift-code-ready-card{border:1px solid var(--border-soft, #3a3a3a);border-radius:10px;padding:12px 14px;background:rgba(255,255,255,0.03)}
         .gift-code-ready-head{display:flex;align-items:center;gap:8px;font-size:1.05rem}

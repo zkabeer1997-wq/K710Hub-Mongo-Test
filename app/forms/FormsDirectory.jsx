@@ -207,7 +207,7 @@ export default function FormsDirectory({ memberId = '', closedKeys = [], complet
     <section className="forms-catalog">
       <FormOrderStepper collapsed={orderCollapsed} onToggle={toggleOrder} />
 
-      <div className="forms-menu-grid" role="list">
+      <div className="forms-menu-grid">
         {FORMS.map((form) => {
           const isClosed = !form.ungated && closedKeys.includes(form.key);
           const label = completionLabel(completions[form.key]);
@@ -217,7 +217,6 @@ export default function FormsDirectory({ memberId = '', closedKeys = [], complet
               key={form.key}
               href={form.href(encoded)}
               className="forms-menu-tile"
-              role="listitem"
               data-closed={isClosed || undefined}
               aria-disabled={isClosed || undefined}
             >

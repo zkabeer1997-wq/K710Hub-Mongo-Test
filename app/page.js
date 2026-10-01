@@ -11,6 +11,7 @@ import { getGalleryImages } from '../lib/gallery';
 import NextBearHunt from '../components/NextBearHunt';
 import { getMemberHome } from '../lib/memberHome.server';
 import { OPTIMIZER_RECORD } from '../lib/kingdomExternalData.mjs';
+import SectionHeader from '../components/ui/SectionHeader';
 import './home-extras.css';
 
 export const metadata = {
@@ -105,26 +106,28 @@ const COPY_REWRITES = {
     to: 'The schedules are spread across different time zones. Check the Events page to find the alliance and hunt time that work for you.',
   },
   'why-2-title': {
-    from: ['Vetted for commitment, not just power', 'Activity matters more than a power number'],
-    to: 'Transfers are reviewed',
+    from: ['Activity matters more than a power number', 'Transfers are reviewed'],
+    to: 'Vetted for commitment, not just power',
   },
   'why-2-body': {
     from: [
       'Our transfer review looks at T11 troop levels, Mystic Trial stages, and KvK-prep habits — because a kingdom of quiet whales loses to a kingdom that shows up.',
       'We look for players who join events, prepare for KvK, and help their alliance. Big accounts are useful; reliable teammates are better.',
+      'We review your account, preferred event times, and KvK participation before confirming a place. The transfer form explains what information is required.',
     ],
-    to: 'We review your account, preferred event times, and KvK participation before confirming a place. The transfer form explains what information is required.',
+    to: 'Our transfer review looks at T11 troop levels, Mystic Trial stages, and KvK-prep habits, because a kingdom that shows up beats a kingdom of quiet big accounts.',
   },
   'why-3-title': {
-    from: ['Real war-room tooling', 'Useful tools for members'],
-    to: 'One website for member tasks',
+    from: ['Useful tools for members', 'One website for member tasks'],
+    to: 'Real war-room tooling',
   },
   'why-3-body': {
     from: [
       'Rally roster tracking, King Skill scheduling, and live power profiles — purpose-built for this kingdom, not a shared Google Sheet from three seasons ago.',
       'Update your power profile, plan upgrades, check event times, and complete KvK forms without digging through old messages.',
+      'Members can update their power profile, submit KvK availability, check events, read guides, and use the upgrade calculators here.',
     ],
-    to: 'Members can update their power profile, submit KvK availability, check events, read guides, and use the upgrade calculators here.',
+    to: 'Power profiles, KvK availability forms, event schedules, and upgrade calculators, all built for this kingdom instead of a shared spreadsheet.',
   },
   'wb-head-kicker': {
     from: ['THE THREE ALLIANCES'],
@@ -259,9 +262,7 @@ export default async function HomePage() {
       <section className="home-v2-story">
         <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
         <div className="home-v2-story-copy">
-          <span className="k-mark">{field('why-head-kicker')}</span>
-          <h2>{field('why-head-title')}</h2>
-          <p>{field('why-head-sub', { multiline: true })}</p>
+          <SectionHeader eyebrow={field('why-head-kicker')} title={field('why-head-title')} lede={field('why-head-sub', { multiline: true })} />
           <div className="home-v2-doctrine">
             {DOCTRINE.map((d) => <div key={d.n}><b>{d.n}</b><span><strong>{field(d.titleKey)}</strong><small>{field(d.bodyKey, { multiline: true })}</small></span></div>)}
           </div>
@@ -277,9 +278,7 @@ export default async function HomePage() {
 
       <section className="home-v2-command">
         <div className="home-v2-command-copy">
-          <span className="k-mark">{field('deck-head-kicker')}</span>
-          <h2>{field('deck-head-title')}</h2>
-          <p>{field('deck-head-sub', { multiline: true })}</p>
+          <SectionHeader eyebrow={field('deck-head-kicker')} title={field('deck-head-title')} lede={field('deck-head-sub', { multiline: true })} />
         </div>
         <div className="home-v2-command-list">
           {COMMAND.map((item) => (
@@ -289,8 +288,7 @@ export default async function HomePage() {
       </section>
 
       <section className="home-v2-alliances" id="alliances">
-        <span className="k-mark">{field('wb-head-kicker')}</span>
-        <h2>{field('wb-head-title')}</h2>
+        <SectionHeader eyebrow={field('wb-head-kicker')} title={field('wb-head-title')} />
         <PublicBearAlliances initialAlliances={bearAlliances} notes={bearAllianceNotes(content)} />
       </section>
 

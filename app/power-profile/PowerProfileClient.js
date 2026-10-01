@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import PageHero from '../../components/ui/PageHero';
 import GovernorGearOcr from '../../components/GovernorGearOcr';
 import {
 CHARM_LEVEL_OPTIONS,
@@ -239,11 +240,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
       <div className="armory-rack-l" aria-hidden="true" />
       <div className="armory-rack-r" aria-hidden="true" />
       <div className="armory-inner">
-        <header className="armory-head">
-          <span className="k-mark">{formIntro.kicker}</span>
-          <h1 className="k-display armory-title k-engraved">{formIntro.heading}</h1>
-          <p className="k-narrative armory-lede">{formIntro.description}</p>
-        </header>
+        <PageHero tone="console" className="armory-page-hero" eyebrow={formIntro.kicker} title={formIntro.heading} lede={formIntro.description} />
         {intro}
 
         <nav className="wizard-stepper" aria-label="Power Profile steps">

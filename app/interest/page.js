@@ -1,6 +1,7 @@
 import EditableSection from '../../components/EditableSection';
 import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
 import InterestForm from './InterestForm';
+import PageHero from '../../components/ui/PageHero';
 
 export const metadata = {
   title: 'The Registry',
@@ -24,17 +25,14 @@ export default async function InterestPage() {
     <main className="registry">
       <div className="registry-atmos" aria-hidden="true" />
       <div className="registry-inner">
-        <header className="registry-head">
-          <span className="k-mark">The Registry</span>
-          <h1 className="k-display registry-title k-engraved">Petition for Entry</h1>
-          <p className="k-narrative registry-lede">
-            State your name, your strength, and your intent. The council reviews
-            every petition before intake opens.
-          </p>
-          <a href="/about#alliances" className="registry-head-link">
-            Want to check alliance schedules first? →
-          </a>
-        </header>
+        <PageHero
+          tone="console"
+          className="registry-head"
+          eyebrow="The Registry · Transfer application"
+          title="Petition for Entry"
+          lede="State your name, your strength, and your intent. The council reviews every petition before intake opens."
+          actions={<a href="/about#alliances" className="registry-head-link">Want to check alliance schedules first? →</a>}
+        />
 
         {(hasIntro || isAdmin) && (
           <EditableSection

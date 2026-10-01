@@ -605,3 +605,96 @@
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--color-surface) 60%, transparent);
 }
+
+
+/* --- PageHero / SectionHeader ---------------------------------------
+   One hero and one section heading for every public route.
+   Voices: eyebrow = Cinzel (small label), H1/H2 = Fraunces, lede = Inter.
+   .ph--realm  warm full-bleed editorial band (public / story pages)
+   .ph--console compact header for tool, form and record pages.        */
+
+.ph { position: relative; isolation: isolate; width: 100%; }
+.ph-inner { max-width: var(--page-max); margin: 0 auto; padding-inline: var(--page-gutter); position: relative; }
+.ph-copy { min-width: 0; }
+.ph-eyebrow {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display-loaded), Cinzel, Georgia, serif;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+}
+.ph-title {
+  margin: 0; font-family: var(--font-editorial); font-weight: 800;
+  line-height: 1.02; letter-spacing: -0.03em; text-wrap: balance; text-transform: none;
+}
+.ph-lede { margin: var(--space-5) 0 0; font-family: var(--font-body); line-height: 1.65; text-wrap: pretty; max-width: 62ch; }
+.ph-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+
+/* Realm: dark warm band, light text. */
+.ph--realm {
+  background: var(--hero-band-glow), var(--hero-band);
+  color: #fff6e4;
+}
+.ph--realm .ph-inner {
+  display: block; padding-block: clamp(56px, 8vw, 96px) clamp(48px, 7vw, 80px);
+}
+.ph--realm.ph--has-aside .ph-inner {
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.65fr);
+  gap: clamp(32px, 6vw, 88px); align-items: center;
+}
+.ph--realm .ph-eyebrow { color: var(--hero-eyebrow); }
+.ph--realm .ph-title { font-size: clamp(40px, 6.4vw, 76px); max-width: 16ch; color: #fff6e4; }
+.ph--realm .ph-lede { font-size: clamp(16px, 1.8vw, 19px); color: var(--hero-lede); }
+.ph--realm .ph-aside { min-width: 0; }
+
+.ph--realm .ph-actions a, .ph--realm .ph-actions button {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4);
+  border: 1px solid rgba(243,217,154,0.5); border-radius: var(--radius-sm); background: transparent;
+  color: #fff6e4; font: 700 13px/1 var(--font-body); text-decoration: none; cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
+}
+.ph--realm .ph-actions a:hover, .ph--realm .ph-actions button:hover { background: #f3d99a; color: #24170b; transform: translateY(-1px); }
+.ph--realm .ph-actions a:focus-visible, .ph--realm .ph-actions button:focus-visible { outline: 2px solid #f3d99a; outline-offset: 3px; }
+
+/* Console: compact, rule underneath, no band. */
+.ph--console { color: var(--color-ink); }
+.ph--console .ph-inner {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap;
+  padding-block: 0 var(--space-6); margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+.ph--console .ph-eyebrow { color: var(--color-accent-text); margin-bottom: var(--space-2); }
+.ph--console .ph-title { font-size: clamp(30px, 4.2vw, 44px); line-height: 1.08; color: var(--color-ink); max-width: 24ch; }
+.ph--console .ph-lede { margin-top: var(--space-3); font-size: var(--text-md); color: var(--color-ink-muted); max-width: 64ch; }
+.ph--console .ph-actions { margin-top: var(--space-4); }
+.ph--console .ph-aside { flex-shrink: 0; }
+
+@media (max-width: 760px) {
+  .ph--realm.ph--has-aside .ph-inner { grid-template-columns: 1fr; }
+  .ph--realm .ph-title { max-width: none; }
+}
+
+.sh { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; margin-bottom: var(--space-6); }
+.sh--center { flex-direction: column; align-items: center; text-align: center; }
+.sh-copy { min-width: 0; }
+.sh-eyebrow {
+  margin: 0 0 var(--space-2); color: var(--sh-accent, var(--color-accent-text));
+  font-family: var(--font-display-loaded), Cinzel, Georgia, serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+}
+.sh-title {
+  margin: 0; font-family: var(--font-editorial); font-weight: 800; text-transform: none;
+  font-size: clamp(26px, 3.6vw, 40px); line-height: 1.08; letter-spacing: -0.025em; text-wrap: balance;
+  color: var(--sh-ink, var(--color-ink));
+}
+.sh-lede { margin: var(--space-3) 0 0; max-width: 62ch; font-size: var(--text-md); line-height: 1.6; color: var(--sh-muted, var(--color-ink-muted)); }
+.sh-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+
+/* Inline icon set */
+.ui-icon { display: block; flex-shrink: 0; }
+
+/* A console hero inside a page container that already supplies gutters. */
+.armory-inner .ph-inner, .registry-inner .ph-inner { padding-inline: 0; }
+
+.ph--realm .cost-tool-crumbs { border-bottom-color: rgba(243,217,154,0.22); }
+.ph--realm .cost-tool-crumbs a { color: var(--hero-eyebrow); }
+.ph--realm .cost-tool-crumbs [aria-current="page"] span { color: var(--hero-lede); }
+.ph--realm .cost-tool-crumbs li + li::before { color: rgba(243,217,154,0.6); }

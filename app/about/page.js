@@ -7,7 +7,7 @@ import HomeEditableText from '../../components/HomeEditableText';
 import { getHomeContent } from '../../lib/homeContent';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
-import { Button, Card, Tag } from '../../components/ui';
+import { Button, Card, Tag, PageHero, SectionHeader } from '../../components/ui';
 import {
   OPTIMIZER_RECORD,
   ATLAS_RANKING,
@@ -99,33 +99,24 @@ export default async function AboutPage() {
 
   return (
     <main className="theme-realm about-page">
-      <div className="about-page-inner">
-        <header className="about-head">
-          <div className="about-head-copy">
-            <span className="k-mark">Kingdom 710</span>
-            <h1 className="about-title">About Kingdom 710</h1>
-            <p className="about-lede">
-              Kingdom 710 includes three alliances: 710, RED, and SKY. We coordinate KvK preparation,
-              run daily Bear Hunts, and share the same events, guides, forms, and member tools.
-            </p>
-            <nav className="about-jump" aria-label="About page sections">
-              <a href="#alliances">Meet the alliances</a>
-              <a href="#competitive-record">See our record</a>
-            </nav>
-          </div>
+      <PageHero
+        eyebrow="Kingdom 710"
+        title="About Kingdom 710"
+        lede="Kingdom 710 includes three alliances: 710, RED, and SKY. We coordinate KvK preparation, run daily Bear Hunts, and share the same events, guides, forms, and member tools."
+        actions={<><a href="#alliances">Meet the alliances</a><a href="#competitive-record">See our record</a></>}
+        aside={
           <div className="about-standard" aria-label="Kingdom 710 standard">
             <span className="about-standard-ring" aria-hidden="true" />
             <span className="about-standard-crown" aria-hidden="true">♜</span>
             <strong>710</strong>
             <span>710 · RED · SKY</span>
           </div>
-        </header>
+        }
+      />
+      <div className="about-page-inner">
 
         <section className="about-section">
-          <div className="about-section-heading">
-            <h2 className="about-section-title">How the kingdom works</h2>
-            <p>These are the practical arrangements shared across all three alliances.</p>
-          </div>
+          <SectionHeader title="How the kingdom works" className="about-sh" lede="These are the practical arrangements shared across all three alliances." />
           <div className="about-doctrine">
             {DOCTRINE_KEYS.map((d, i) => (
               <Card key={d.titleKey} className="about-doctrine-card">
@@ -138,12 +129,7 @@ export default async function AboutPage() {
         </section>
 
         <section className="about-section" id="alliances">
-          <div className="about-section-heading split">
-            <h2 className="about-section-title">Our three alliances</h2>
-            <p className="about-section-lede">
-              Each alliance has its own Bear Hunt times, leadership, languages, and current recruiting status.
-            </p>
-          </div>
+          <SectionHeader title="Our three alliances" className="about-sh" lede="Each alliance has its own Bear Hunt times, leadership, languages, and current recruiting status." />
           {alliances.length === 0 ? (
             <Card className="about-empty">Alliance directory is loading or unavailable right now.</Card>
           ) : (
@@ -180,15 +166,10 @@ export default async function AboutPage() {
         </section>
 
         <section className="about-section" id="competitive-record">
-          <div className="about-section-heading split">
-            <h2 className="about-section-title">KvK record</h2>
-            <p className="about-section-lede">
-              Competitive record verified through{' '}
+          <SectionHeader title="KvK record" className="about-sh" lede={<>Competitive record verified through{' '}
               <a href={OPTIMIZER_KINGDOM_URL} target="_blank" rel="noopener noreferrer">
                 Kingshot Optimizer
-              </a>.
-            </p>
-          </div>
+              </a>.</>} />
           <Card className="about-record-card">
             <div className="about-record-stats">
               <div>
@@ -267,7 +248,7 @@ export default async function AboutPage() {
         </section>
 
         <section className="about-section" id="kingdom-rankings">
-          <h2 className="about-section-title">Kingdom Rankings</h2>
+          <SectionHeader title="Kingdom Rankings" className="about-sh" />
           <div className="about-rankings-grid">
             <Card className="about-rank-box about-rank-optimizer">
               <h3>Optimizer Ranking</h3>
@@ -301,7 +282,7 @@ export default async function AboutPage() {
         </section>
 
         <section className="about-section">
-          <h2 className="about-section-title">Sources</h2>
+          <SectionHeader title="Sources" className="about-sh" />
           {(hasSources || isAdmin) ? (
             <EditableSection page="about-sources" initialBlocks={sourcesBlocks} isAdmin={isAdmin} as="div" className="about-editable" />
           ) : (
@@ -315,10 +296,7 @@ export default async function AboutPage() {
         </section>
 
         <section className="about-section" id="how-to-transfer">
-          <div className="about-section-heading split">
-            <h2 className="about-section-title">How transferring works</h2>
-            <p className="about-section-lede">Four steps from application to your first Bear Hunt.</p>
-          </div>
+          <SectionHeader title="How transferring works" className="about-sh" lede="Four steps from application to your first Bear Hunt." />
           <ol className="about-march">
             {MARCH.map((m) => (
               <li key={m.n}>
@@ -349,19 +327,9 @@ export default async function AboutPage() {
       </div>
 
       <style>{`
-        .about-page{padding:0 24px 112px;background:var(--color-bg);color:var(--color-ink);min-height:100vh;overflow:hidden}
-        .about-page-inner{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(64px,9vw,112px)}
-        .about-head{position:relative;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);align-items:center;gap:clamp(36px,7vw,96px);min-height:600px;padding:80px 0 72px}
-        .about-head:before{content:'';position:absolute;inset:0 -50vw;background:radial-gradient(circle at 72% 45%,rgba(217,122,31,.16),transparent 32%),linear-gradient(135deg,#24170b 0%,#3b2410 58%,#7b4018 100%);z-index:0}
-        .about-head:after{content:'K710';position:absolute;left:-8px;bottom:20px;color:rgba(255,246,228,.045);font:800 clamp(96px,18vw,230px)/.75 var(--font-display);letter-spacing:-.03em;z-index:0}
-        .about-head-copy{position:relative;z-index:1;color:#fff6e4}
-        .about-head .k-mark{color:#f3d99a}
-        .about-title{max-width:720px;margin:14px 0 0;font-family:var(--font-display);font-size:clamp(48px,7vw,82px);line-height:.98;letter-spacing:-.035em;text-wrap:balance}
-        .about-lede{margin:24px 0 0;font-size:clamp(16px,2vw,19px);line-height:1.65;color:#e9d9bd;max-width:62ch;text-wrap:pretty}
-        .about-jump{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
-        .about-jump a{display:inline-flex;padding:11px 15px;border:1px solid rgba(243,217,154,.42);border-radius:var(--radius-sm);color:#fff6e4;font-size:13px;font-weight:800;text-decoration:none;transition:background .2s ease,color .2s ease,transform .2s ease}
-        .about-jump a:hover{background:#f3d99a;color:#24170b;transform:translateY(-2px)}
-        .about-standard{position:relative;z-index:1;aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff6e4;background:linear-gradient(160deg,#a3283c,#611620);border:1px solid rgba(243,217,154,.5);clip-path:polygon(0 0,100% 0,100% 84%,50% 100%,0 84%);filter:drop-shadow(0 12px 8px rgba(0,0,0,.28))}
+        .about-page{padding:0 0 112px;background:var(--color-bg);color:var(--color-ink);min-height:100vh;overflow:hidden}
+        .about-page-inner{max-width:1120px;margin:0 auto;padding:clamp(64px,9vw,112px) 24px 0;display:flex;flex-direction:column;gap:clamp(64px,9vw,112px)}
+        .about-standard{position:relative;z-index:1;width:min(300px,100%);justify-self:end;aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff6e4;background:linear-gradient(160deg,#a3283c,#611620);border:1px solid rgba(243,217,154,.5);clip-path:polygon(0 0,100% 0,100% 84%,50% 100%,0 84%);filter:drop-shadow(0 12px 8px rgba(0,0,0,.28))}
         .about-standard:before,.about-standard:after{content:'';position:absolute;inset:14px;border:1px solid rgba(243,217,154,.34);clip-path:inherit}
         .about-standard:after{inset:24px;border-color:rgba(243,217,154,.12)}
         .about-standard-ring{position:absolute;width:62%;aspect-ratio:1;border:1px solid rgba(243,217,154,.26);border-radius:50%}
@@ -369,16 +337,11 @@ export default async function AboutPage() {
         .about-standard strong{font:800 clamp(54px,7vw,84px)/1 var(--font-display);letter-spacing:-.03em}
         .about-standard > span:last-child{max-width:14ch;text-align:center;color:#f3d99a;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
         .about-section{scroll-margin-top:96px}
-        .about-section-heading{margin-bottom:24px;max-width:700px}
-        .about-section-heading.split{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(260px,1.2fr);gap:48px;align-items:end;max-width:none;border-bottom:1px solid var(--color-border);padding-bottom:24px}
-        .about-section-heading p{margin:8px 0 0;color:var(--color-ink-muted);line-height:1.6}
-        .about-section-title{margin:0;font-family:var(--font-display);font-size:clamp(30px,4vw,48px);line-height:1.05;letter-spacing:-.025em;text-wrap:balance}
-        .about-section-lede{margin:0 0 16px;font-size:14px;color:var(--color-ink-muted);line-height:1.5}
-        .about-section-lede a{color:var(--color-accent-strong)}
+        .about-sh{margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--color-border)}.about-sh .sh-title{font-size:clamp(30px,4vw,46px)}.about-sh .sh-lede a{color:var(--color-link)}
         .about-doctrine{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
         .about-doctrine-card{padding:28px 30px;display:flex;flex-direction:column;gap:10px;border:0;border-radius:0;background:transparent}
         .about-doctrine-card+.about-doctrine-card{border-left:1px solid var(--color-border)}
-        .about-doctrine-card .k-mark{color:var(--color-accent)}
+        .about-doctrine-card .k-mark{color:var(--color-accent-text)}
         .about-doctrine-card h3{margin:0;font-family:var(--font-display);font-size:16px}
         .about-doctrine-card p{margin:0;font-size:13.5px;color:var(--color-ink-muted);line-height:1.55}
         .about-alliances-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
@@ -393,15 +356,16 @@ export default async function AboutPage() {
         .about-alliance-facts div{display:flex;justify-content:space-between;gap:8px;font-size:12px;border-top:1px solid var(--color-border);padding-top:6px}
         .about-alliance-facts dt{color:var(--color-ink-muted);margin:0}
         .about-alliance-facts dd{margin:0;font-weight:700}
-        .about-alliance-more{margin-top:auto;color:var(--color-accent-strong);font-weight:700;font-size:12.5px}
+        .about-alliance-more{margin-top:auto;color:var(--color-link);font-weight:700;font-size:12.5px}
         .about-record-card{padding:clamp(24px,4vw,40px);display:flex;flex-direction:column;gap:28px;background:#2c1c0c;color:#fff6e4;border:0}
         .about-record-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:12px}
         .about-stat-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#c4b493;margin-bottom:6px}
         .about-record-stats strong{font-size:clamp(26px,4vw,40px);font-family:var(--font-display)}
-        .about-rank{color:var(--color-accent-strong)}
+        .about-rank{color:var(--color-link)}
+        .about-record-card .about-rank,.about-record-card .about-external-link{color:var(--hero-eyebrow)}
         .about-stat-split .win{color:#3ecf8e}
         .about-stat-split .loss{color:#f07178}
-        .about-stat-split .sep{margin:0 2px;color:var(--color-ink-muted)}
+        .about-stat-split .sep{margin:0 2px;color:rgba(255,246,228,.7)}
         .about-record-matchups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;font-size:13.5px}
         .about-record-matchups p{margin:4px 0 0}
         .about-record-matchups .win{color:#3ecf8e;text-transform:capitalize}
@@ -418,13 +382,13 @@ export default async function AboutPage() {
         .about-atlas-pill{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(56,140,220,.18),rgba(80,120,255,.12));border:1px solid rgba(100,160,255,.35);font-size:13.5px}
         .about-atlas-pill .about-atlas-top{color:#1a5c96;font-weight:700}
         .about-atlas-tier{margin:0;font-size:13px;color:color-mix(in srgb, var(--color-accent-strong) 50%, var(--color-ink));font-weight:700}
-        .about-external-link{margin-top:auto;font-size:13px;font-weight:700;color:var(--color-accent-strong);text-decoration:none}
+        .about-external-link{margin-top:auto;font-size:13px;font-weight:700;color:var(--color-link);text-decoration:none}
         .about-rank-box .about-external-link{color:color-mix(in srgb, var(--color-accent-strong) 50%, var(--color-ink))}
         .about-external-link:hover{text-decoration:underline}
         .about-march{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
         .about-march li{padding:24px 24px;display:flex;flex-direction:column;gap:8px}
         .about-march li+li{border-left:1px solid var(--color-border)}
-        .about-march .k-mark{color:var(--color-accent)}
+        .about-march .k-mark{color:var(--color-accent-text)}
         .about-march h3{margin:0;font-family:var(--font-display);font-size:17px}
         .about-march p{margin:0;font-size:13.5px;color:var(--color-ink-muted);line-height:1.55}
         .about-faq{margin-top:28px;max-width:760px}
@@ -437,10 +401,10 @@ export default async function AboutPage() {
         @media(max-width:860px){.about-march{grid-template-columns:1fr 1fr}.about-march li:nth-child(3){border-left:0}.about-march li:nth-child(n+3){border-top:1px solid var(--color-border)}}
         @media(max-width:520px){.about-march{grid-template-columns:1fr}.about-march li+li{border-left:0;border-top:1px solid var(--color-border)}}
         .about-empty{padding:18px;color:var(--color-ink-muted);font-size:14px}
-        .about-empty a{color:var(--color-accent-strong)}
+        .about-empty a{color:var(--color-link)}
         .about-links{display:flex;gap:12px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--color-border)}
         .about-admin-note{margin-top:12px}
-        @media (max-width:760px){.about-head{grid-template-columns:1fr;min-height:auto;padding:64px 0}.about-head:before{right:-24px}.about-standard{width:min(260px,72vw);justify-self:center}.about-section-heading.split{grid-template-columns:1fr;gap:12px}.about-doctrine{grid-template-columns:1fr}.about-doctrine-card+.about-doctrine-card{border-left:0;border-top:1px solid var(--color-border)}}
+        @media (max-width:760px){.about-standard{width:min(190px,56vw);justify-self:start}.about-doctrine{grid-template-columns:1fr}.about-doctrine-card+.about-doctrine-card{border-left:0;border-top:1px solid var(--color-border)}}
         @media (prefers-reduced-motion:reduce){.about-jump a,.about-alliance-card{transition:none}}
       `}</style>
     </main>

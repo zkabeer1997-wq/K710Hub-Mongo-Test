@@ -20,3 +20,13 @@
 @media(max-width:860px){.home-v2-member{grid-template-columns:1fr}}
 @media(max-width:980px){.home-v2-copy{top:96px;transform:none}.home-v2-hero{min-height:960px}}
 @media(max-width:640px){.home-v2-hero{min-height:900px}.home-v2-facts{gap:12px 24px}}
+
+/* ---- Shared SectionHeader / eyebrow colours on the homepage's grounds ---- */
+.home-v2-hero .k-mark, .home-v2-final .k-mark, .home-v2-command .k-mark,
+.home-v2-alliances .k-mark, .home-v2-member .k-mark { color: var(--hero-eyebrow); }
+.home-v2-command .sh, .home-v2-alliances .sh { --sh-ink: #f3e9d2; --sh-muted: #b9c0cc; --sh-accent: var(--hero-eyebrow); }
+.home-v2-story .sh { --sh-ink: #241408; --sh-muted: #5a4528; --sh-accent: var(--color-accent-text); display: block; margin-bottom: 0; }
+.home-v2-story-copy .sh-lede { font-size: 18px; line-height: 1.65; max-width: none; }
+.home-v2-command-copy .sh-lede { max-width: 500px; line-height: 1.65; }
+.home-v2-command-copy .sh, .home-v2-alliances .sh { display: block; margin-bottom: 0; }
+.home-v2-alliances .sh-title { margin: 18px 0 24px; }

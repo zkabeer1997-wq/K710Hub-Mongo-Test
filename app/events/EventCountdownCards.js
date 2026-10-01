@@ -307,7 +307,7 @@ export default function EventCountdownCards({ events, initialNow }) {
         .ev-card-hit{display:flex;flex-direction:column;gap:14px;width:100%;padding:22px 24px;margin:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit;border-radius:inherit}
         .ev-card-hit:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
         .ev-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-        .ev-kind{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px;border-radius:999px;background:rgba(180,140,255,.14);color:var(--color-accent-strong)}
+        .ev-kind{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px;border-radius:999px;background:rgba(180,140,255,.14);color:var(--color-link)}
         .ev-status{font-size:12px;font-weight:700}
         .ev-status-upcoming{color:var(--color-ink-muted)}
         .ev-status-live{color:#3ecf8e}
@@ -332,9 +332,9 @@ export default function EventCountdownCards({ events, initialNow }) {
         .ev-body{display:flex;flex-direction:column;gap:10px;font-size:14.5px;line-height:1.6;color:var(--color-ink)}
         .ev-body p{margin:0}
         .ev-card-actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding-top:2px}
-        .ev-link-ics{font-size:13px;font-weight:700;color:var(--color-accent-strong);text-decoration:none}
+        .ev-link-ics{font-size:13px;font-weight:700;color:var(--color-link);text-decoration:none}
         .ev-link-ics:hover{text-decoration:underline}
-        .ev-open-hint{font-size:12.5px;font-weight:700;color:var(--color-accent-strong)}
+        .ev-open-hint{font-size:12.5px;font-weight:700;color:var(--color-link)}
 
         .ev-modal-root{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center}
         @media (min-width:720px){

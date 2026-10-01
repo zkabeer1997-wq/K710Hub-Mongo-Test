@@ -7,14 +7,18 @@
  *
  * Asserts per route: HTTP 200, exactly one <h1>, no console errors, main
  * content visible above the fold, no horizontal scroll at 390px.
- * axe-core violations are REPORTED, not failing (set QA_AXE_STRICT=1 to fail).
+ * axe-core violations are REPORTED. With QA_AXE_STRICT=1 any color-contrast
+ * violation FAILS the run (QA_AXE_STRICT=all fails on every axe violation).
+ * Note axe cannot evaluate text over gradients/images; scripts/qa-contrast.js
+ * samples real pixels for those.
  */
 const { chromium } = require('playwright');
 const path = require('path');
 
 const B = process.env.QA_BASE || 'http://localhost:3111';
 const SECRET = process.env.MEMBER_SESSION_SECRET || 'qa-smoke-secret';
-const STRICT_AXE = process.env.QA_AXE_STRICT === '1';
+const STRICT_AXE = process.env.QA_AXE_STRICT === '1' || process.env.QA_AXE_STRICT === 'all';
+const STRICT_ALL = process.env.QA_AXE_STRICT === 'all';
 
 const ROUTES = [
   '/', '/about', '/alliances/710', '/alliances/red', '/alliances/sky', '/events', '/guides',
@@ -59,9 +63,10 @@ async function run(browser, label, cookies) {
       }
       if (vw === 1440) {
         await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
-        const v = await page.evaluate(async () => (await axe.run({ resultTypes: ['violations'] })).violations.map((x) => `${x.id}(${x.nodes.length})`));
-        console.log(`AXE   ${tag} ${v.length ? v.join(', ') : 'clean'}`);
-        if (STRICT_AXE) ok(`${tag} axe clean`, v.length === 0);
+        const v = await page.evaluate(async () => (await axe.run({ resultTypes: ['violations'] })).violations.map((x) => ({ id: x.id, n: x.nodes.length })));
+        console.log(`AXE   ${tag} ${v.length ? v.map((x) => `${x.id}(${x.n})`).join(', ') : 'clean'}`);
+        if (STRICT_AXE) ok(`${tag} axe color-contrast`, !v.some((x) => x.id === 'color-contrast'));
+        if (STRICT_ALL) ok(`${tag} axe clean`, v.length === 0);
       }
     }
     await ctx.close();

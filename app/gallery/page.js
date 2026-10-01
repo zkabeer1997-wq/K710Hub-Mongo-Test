@@ -7,6 +7,8 @@ export const metadata = {
   alternates: { canonical: '/gallery' },
 };
 
+import PageHero from '../../components/ui/PageHero';
+
 export const dynamic = 'force-dynamic';
 
 export default async function GalleryPage() {
@@ -16,10 +18,7 @@ export default async function GalleryPage() {
 
   return (
     <main className="theme-realm gallery-page">
-      <header className="gallery-hero">
-        <h1>Kingdom Gallery</h1>
-        <p>Events, victories, and the people behind Kingdom 710.</p>
-      </header>
+      <PageHero eyebrow="Kingdom 710" title="Kingdom Gallery" lede="Events, victories, and the people behind Kingdom 710." />
       <section className="gallery-body" aria-label="Kingdom photos">
         {loadError ? <p className="gallery-empty">The gallery could not be loaded. Please try again.</p> : images.length ? <GalleryGrid images={images} /> : <p className="gallery-empty">No photos have been published yet.</p>}
       </section>

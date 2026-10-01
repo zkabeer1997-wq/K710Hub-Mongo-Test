@@ -32,11 +32,11 @@ const SPENDING_OPTIONS = [
 // on screen at once, matching the "5-6 fields, no account" feel of a short
 // funnel without dropping the vetting data behind it.
 const ACTS = [
-  { id: 'identity', num: 'I', label: 'Who Approaches', required: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
-  { id: 'intake', num: 'II', label: 'The Crossing', required: ['migrateAlliance'] },
-  { id: 'troops', num: 'III', label: 'Strength of Arms', required: ['highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower'], requiresT11: true },
-  { id: 'commitment', num: 'IV', label: 'The Oath', required: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'] },
-  { id: 'battle-report', num: 'V', label: 'Proof', requiresScreenshot: true },
+  { id: 'identity', num: 'I', label: 'Who Approaches', sub: 'Step 1 · Your account', required: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
+  { id: 'intake', num: 'II', label: 'The Crossing', sub: 'Step 2 · Transfer details', required: ['migrateAlliance'] },
+  { id: 'troops', num: 'III', label: 'Strength of Arms', sub: 'Step 3 · Your power and troops', required: ['highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower'], requiresT11: true },
+  { id: 'commitment', num: 'IV', label: 'The Oath', sub: 'Step 4 · Your commitment', required: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'] },
+  { id: 'battle-report', num: 'V', label: 'Proof', sub: 'Step 5 · Screenshots and submit', requiresScreenshot: true },
 ];
 
 function Chapter({ id, title, children }) {
@@ -110,7 +110,11 @@ useEffect(() => {
   return () => { cancelled = true; };
 }, []);
 
+const prevStep = useRef(step);
 useEffect(() => {
+  // Don't hijack scroll/focus on first paint - only when the step changes.
+  if (prevStep.current === step) return;
+  prevStep.current = step;
   const section = document.getElementById(ACTS[step].id);
   section?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
   // Move focus to the new step's heading so keyboard/screen-reader users
@@ -315,6 +319,7 @@ return (
       type="button"
       className={`petition-index-item ${i === step ? 'is-current' : ''} ${i < step ? 'is-done' : ''}`}
       aria-current={i === step ? 'step' : undefined}
+      title={a.sub}
       onClick={() => { if (i <= step || validateStep(step)) setStep(i); }}
     >
       <span className="petition-index-num">{a.num}</span>
@@ -346,6 +351,7 @@ return (
 <h2 className="petition-act-title k-display" tabIndex={-1}>Who Approaches</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
+<p className="petition-act-sub">Step 1 · Your account</p>
 <div className="petition-act-body">
 <Chapter id="identity-fields" title="Identity">
 <div className="identity-grid">
@@ -367,6 +373,7 @@ return (
 <h2 className="petition-act-title k-display" tabIndex={-1}>The Crossing</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
+<p className="petition-act-sub">Step 2 · Transfer details</p>
 <div className="petition-act-body">
 <Chapter id="intake-fields" title="Intake window">
 <div className="troop-section public-section">
@@ -408,6 +415,7 @@ return (
 <h2 className="petition-act-title k-display" tabIndex={-1}>Strength of Arms</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
+<p className="petition-act-sub">Step 3 · Your power and troops</p>
 <div className="petition-act-body">
 <Chapter id="troops-fields" title="Troops">
 <div className="troop-section public-section">
@@ -473,6 +481,7 @@ return (
 <h2 className="petition-act-title k-display" tabIndex={-1}>The Oath</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
+<p className="petition-act-sub">Step 4 · Your commitment</p>
 <div className="petition-act-body">
 <Chapter id="commitment-fields" title="Commitment">
 <div className="troop-section public-section">
@@ -555,6 +564,7 @@ return (
 <h2 className="petition-act-title k-display" tabIndex={-1}>Proof</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
+<p className="petition-act-sub">Step 5 · Screenshots and submit</p>
 <div className="petition-act-body">
 <Chapter id="proof-fields" title="Battle report">
 <div className="troop-section public-section">

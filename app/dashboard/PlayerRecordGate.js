@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './member-login.module.css';
 import { getChecklistState } from '../../lib/gettingStarted.mjs';
-import { Term } from '../../components/ui';
+import { Term, PageHero } from '../../components/ui';
 import GiftCodeRewards from '../../components/GiftCodeRewards';
 
 function isSafeNext(next) {
@@ -282,18 +282,15 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
       <div className={styles.shell}>
         <div className={styles.rightColumn}>
           <section className={styles.intro} aria-labelledby="member-login-title">
-            <div>
-              <span className={styles.eyebrow}>Secure player access · Kingdom 710</span>
-              <h1 id="member-login-title">
-                Dashboard<br />
-                <em>{view === 'profile' ? `Welcome back, ${displayName}.` : 'Sign in with your Player ID.'}</em>
-              </h1>
-              <p>
-                {view === 'profile'
-                  ? 'Your account is connected. Choose where to go next.'
-                  : 'Login to your Account with a code sent directly to your game.'}
-              </p>
-            </div>
+            <PageHero
+              tone="console"
+              className={styles.hero}
+              eyebrow="Secure player access · Kingdom 710"
+              title="Dashboard"
+              lede={view === 'profile'
+                ? `Welcome back, ${displayName}. Your account is connected. Choose where to go next.`
+                : 'Sign in with your Player ID. We send a login code directly to your game.'}
+            />
 
             <div className={styles.assurance}>
               <span className={styles.assuranceMark} aria-hidden="true">◆</span>

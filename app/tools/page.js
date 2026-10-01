@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import ToolsDirectory from './ToolsDirectory';
+import PageHero from '../../components/ui/PageHero';
 
 export const metadata = { title: 'Tools & Calculators' };
 
@@ -16,9 +17,9 @@ export default async function ToolsPage({ searchParams: searchParamsPromise }) {
     <div className="armory-atmos" aria-hidden="true"/><span className="armory-rack-l" aria-hidden="true"/><span className="armory-rack-r" aria-hidden="true"/>
     <div className="armory-inner tools-workshop-inner">
       <Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Tools & Calculators" />
-      <header className="armory-head tools-workshop-head"><span className="k-mark">Kingdom 710</span><h1 className="k-display armory-title">Tools &amp; Calculators</h1><p className="k-narrative armory-lede">Search or filter by category to find the calculator you need.</p><Link href="/glossary" className="tools-glossary-link">What do these terms mean?</Link></header>
+      <PageHero tone="console" className="tools-workshop-head" eyebrow="Kingdom 710 · Members" title="Tools & Calculators" lede="Search or filter by category to find the calculator you need." actions={<Link href="/glossary" className="tools-glossary-link">What do these terms mean?</Link>} />
       <ToolsDirectory memberId={memberId} category={category}/>
     </div>
-    <style>{`.tools-workshop{color:var(--parchment)}.tools-workshop-inner{width:min(1100px,100%)}.tools-workshop-head{margin-bottom:clamp(28px,5vh,48px)}.tools-back{display:inline-block;margin-top:34px;color:var(--brass);font-family:var(--font-body);font-size:12px;text-decoration:none;letter-spacing:.06em}.tools-back:hover{color:var(--gold-hot)}.tools-glossary-link{display:inline-block;margin-top:12px;color:var(--gold-hot);font-family:var(--font-body);font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:3px}@media(max-width:700px){.tools-workshop-inner{padding-top:86px}}`}</style>
+    <style>{`.tools-workshop{color:var(--parchment)}.tools-workshop-inner{width:min(1100px,100%)}.tools-workshop-head .ph-inner{padding-inline:0}.tools-workshop-head .ph-actions{margin-top:0}.tools-back{display:inline-block;margin-top:34px;color:var(--brass);font-family:var(--font-body);font-size:12px;text-decoration:none;letter-spacing:.06em}.tools-back:hover{color:var(--gold-hot)}.tools-glossary-link{display:inline-block;color:var(--gold-hot);font-family:var(--font-body);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}@media(max-width:700px){.tools-workshop-inner{padding-top:86px}}`}</style>
   </main>;
 }

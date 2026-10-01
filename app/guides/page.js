@@ -5,6 +5,7 @@ import { guidesTable } from '../../lib/guideAccess.mjs';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
 import Link from 'next/link';
+import { PageHero, SectionHeader } from '../../components/ui';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import GuidesDirectory from './GuidesDirectory';
 import { guideCategories, guideSummary } from '../../lib/guideValidation.mjs';
@@ -74,38 +75,31 @@ export default async function GuidesPage({ searchParams }) {
 
   return (
     <main className="theme-realm guides-page">
-      <section className="guides-hero">
-        <div className="guides-hero-grid" aria-hidden="true" />
-        <div className="guides-hero-copy">
-          <Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Guides" />
-          <span className="k-mark">Kingdom 710</span>
-          <h1>Guides</h1>
-          <p>
-            Read kingdom instructions, event strategies, and game information maintained by the K710 team.
-          </p>
-          <div className="guides-hero-links">
-            <a href="#archive">Browse guides</a>
-            <Link href="/events">View events</Link>
-          </div>
-        </div>
-
-        <aside className="guides-index" aria-label="Guide summary">
-          <div>
-            <span>Published guides</span>
-            <strong>{guides.length || '—'}</strong>
-          </div>
-          <div>
-            <span>Categories</span>
-            <strong>{categoryCount || '—'}</strong>
-          </div>
-          <div>
-            <span>Latest revision</span>
-            <strong className="guides-index-small">
-              {latest?.updated_at ? new Date(latest.updated_at).toLocaleDateString() : 'No revisions yet'}
-            </strong>
-          </div>
-        </aside>
-      </section>
+      <PageHero
+        before={<Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Guides" />}
+        eyebrow="Kingdom 710"
+        title="Guides"
+        lede="Read kingdom instructions, event strategies, and game information maintained by the K710 team."
+        actions={<><a href="#archive">Browse guides</a><Link href="/events">View events</Link></>}
+        aside={
+          <aside className="guides-index" aria-label="Guide summary">
+            <div>
+              <span>Published guides</span>
+              <strong>{guides.length || '—'}</strong>
+            </div>
+            <div>
+              <span>Categories</span>
+              <strong>{categoryCount || '—'}</strong>
+            </div>
+            <div>
+              <span>Latest revision</span>
+              <strong className="guides-index-small">
+                {latest?.updated_at ? new Date(latest.updated_at).toLocaleDateString() : 'No revisions yet'}
+              </strong>
+            </div>
+          </aside>
+        }
+      />
 
       <section className="guides-intro-band">
         <div>
@@ -126,15 +120,7 @@ export default async function GuidesPage({ searchParams }) {
       </section>
 
       <section className="guides-archive" id="archive">
-        <div className="guides-archive-head">
-          <div>
-            <span className="k-mark">All guides</span>
-            <h2>Find a guide</h2>
-          </div>
-          <p>
-            Search the published guides below or choose a category.
-          </p>
-        </div>
+        <SectionHeader eyebrow="All guides" title="Find a guide" lede="Search the published guides below or choose a category." className="guides-archive-head" />
 
         {loadError ? (
           <div className="guides-error">{loadError}</div>
@@ -146,29 +132,19 @@ export default async function GuidesPage({ searchParams }) {
       <style>{`
         .guides-page{min-height:100vh;background:linear-gradient(180deg,#ead9b9 0%,#ead8b7 44%,#e2c99f 100%);color:#291b11;overflow:hidden}
         .guides-page:before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 82% 12%,rgba(176,82,28,.10),transparent 28%),linear-gradient(90deg,rgba(70,43,20,.03) 1px,transparent 1px),linear-gradient(rgba(70,43,20,.025) 1px,transparent 1px);background-size:auto,72px 72px,72px 72px;mix-blend-mode:multiply}
-        .guides-hero{position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:clamp(36px,6vw,92px);align-items:end;min-height:620px;padding:clamp(80px,10vw,132px) clamp(24px,6vw,92px) 72px;background:linear-gradient(135deg,#17110d 0%,#2b190f 58%,#5d2e17 100%);color:#f4e3c5;overflow:hidden}
-        .guides-hero:after{content:'710';position:absolute;right:-2vw;bottom:-8px;font:800 clamp(140px,25vw,360px)/.72 var(--font-display);letter-spacing:-.06em;color:rgba(244,227,197,.035);pointer-events:none}
-        .guides-hero-grid{position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px);background-size:72px 72px;mask-image:linear-gradient(90deg,transparent,black 38%,black 100%)}
-        .guides-hero-copy,.guides-index{position:relative;z-index:2}
-        .guides-hero-copy h1{max-width:760px;margin:16px 0 22px;font-family:var(--font-fraunces-loaded),Georgia,serif;font-size:clamp(54px,7.5vw,104px);line-height:.9;letter-spacing:-.055em;text-transform:none}
-        .guides-hero-copy p{max-width:660px;margin:0;color:#c8b79d;font-size:18px;line-height:1.65}
-        .guides-hero-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
-        .guides-hero-links a{display:inline-flex;padding:12px 15px;border:1px solid rgba(222,177,111,.36);color:#edd7b4;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
-        .guides-hero-links a:first-child{background:#d7a059;color:#1b120d;border-color:#d7a059}
         .guides-index{display:grid;border-top:1px solid rgba(233,209,174,.22)}
         .guides-index>div{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding:22px 0;border-bottom:1px solid rgba(233,209,174,.18)}
-        .guides-index span{color:#978a79;font:600 10px/1.4 var(--font-mono);letter-spacing:.14em;text-transform:uppercase}
+        .guides-index span{color:#cdbfa9;font:600 10px/1.4 var(--font-mono);letter-spacing:.14em;text-transform:uppercase}
         .guides-index strong{font-family:var(--font-display);font-size:34px;color:#f0d5a8}
         .guides-index-small{font-size:18px!important;letter-spacing:.02em}
         .guides-intro-band{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#d2a05f;color:#21150d;border-bottom:1px solid rgba(65,40,19,.2)}
         .guides-intro-band>div{padding:30px clamp(24px,4vw,48px);border-right:1px solid rgba(65,40,19,.2)}
+        .guides-intro-band .k-mark{color:#4a2a05}
         .guides-intro-band>div:last-child{border-right:0}
         .guides-intro-band strong{display:block;margin:10px 0 6px;font-family:var(--font-display);font-size:20px}
         .guides-intro-band p{margin:0;color:#4d321c;line-height:1.5}
         .guides-archive{position:relative;z-index:1;width:min(1160px,calc(100% - 48px));margin:0 auto;padding:clamp(70px,9vw,118px) 0 110px}
-        .guides-archive-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.75fr);gap:60px;align-items:end;margin-bottom:42px;padding-bottom:28px;border-bottom:1px solid rgba(75,47,24,.22)}
-        .guides-archive-head h2{margin:12px 0 0;font-family:var(--font-fraunces-loaded),Georgia,serif;font-size:clamp(42px,6vw,72px);line-height:.95;text-transform:none;letter-spacing:-.045em}
-        .guides-archive-head p{margin:0;color:#74583e;line-height:1.65}
+        .guides-archive-head{margin-bottom:42px;padding-bottom:28px;border-bottom:1px solid rgba(75,47,24,.22)}.guides-archive-head .sh-title{font-size:clamp(34px,5vw,56px)}
         .guides-toolbar{display:flex;gap:24px;flex-wrap:wrap;align-items:end;margin-bottom:26px}
         .guides-search{flex:1 1 320px;max-width:430px;color:#63452f}
         .guides-search span{color:#6b4a31!important}
@@ -199,11 +175,10 @@ export default async function GuidesPage({ searchParams }) {
         .guide-entry-meta b{font-size:25px;font-family:var(--font-body);font-weight:400;color:#8e5229}
         .guides-ledger{margin-top:38px;padding-top:22px;border-top:1px solid rgba(77,48,24,.18);max-width:68ch}
         .guides-ledger p{margin:8px 0 0;color:#765a40;font-size:14px;line-height:1.55}
-        .guides-page .cost-tool-crumbs{border-bottom-color:rgba(60,40,20,.25)}.guides-page .cost-tool-crumbs a{color:#754723;font-weight:700}.guides-page .cost-tool-crumbs [aria-current="page"] span{color:#4a3320}
         .guides-back{display:inline-block;margin-top:34px;color:#754723;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:.05em;text-transform:uppercase}
-        .guides-error{padding:26px 0;border-block:1px solid rgba(77,48,24,.2);color:#74583e}
-        @media(max-width:820px){.guides-hero{grid-template-columns:1fr;min-height:auto;padding-top:82px}.guides-index{grid-template-columns:repeat(3,1fr)}.guides-index>div{grid-template-columns:1fr;padding:16px}.guides-intro-band{grid-template-columns:1fr}.guides-intro-band>div{border-right:0;border-bottom:1px solid rgba(65,40,19,.2)}.guides-archive-head{grid-template-columns:1fr;gap:18px}.guide-entry{grid-template-columns:96px minmax(0,1fr);gap:18px}.guide-entry-meta{grid-column:2;align-items:flex-start;flex-direction:row}.guide-device{height:100px}.guide-book{width:90px;height:90px}}
-        @media(max-width:560px){.guides-hero{padding-inline:20px}.guides-hero-copy h1{font-size:50px}.guides-index{grid-template-columns:1fr}.guides-index>div{grid-template-columns:1fr auto}.guides-archive{width:min(100% - 32px,1160px)}.guide-entry{grid-template-columns:1fr;padding:22px 0}.guide-device{display:none}.guide-entry-meta{grid-column:1}.guides-toolbar{align-items:stretch}.guides-search{max-width:none}}
+        .guides-error{padding:26px 0;border-block:1px solid rgba(77,48,24,.2);color:#5a4528}
+        @media(max-width:820px){.guides-index{grid-template-columns:repeat(3,1fr)}.guides-index>div{grid-template-columns:1fr;padding:16px}.guides-intro-band{grid-template-columns:1fr}.guides-intro-band>div{border-right:0;border-bottom:1px solid rgba(65,40,19,.2)}.guides-archive-head{grid-template-columns:1fr;gap:18px}.guide-entry{grid-template-columns:96px minmax(0,1fr);gap:18px}.guide-entry-meta{grid-column:2;align-items:flex-start;flex-direction:row}.guide-device{height:100px}.guide-book{width:90px;height:90px}}
+        @media(max-width:560px){.guides-index{grid-template-columns:1fr}.guides-index>div{grid-template-columns:1fr auto}.guides-archive{width:min(100% - 32px,1160px)}.guide-entry{grid-template-columns:1fr;padding:22px 0}.guide-device{display:none}.guide-entry-meta{grid-column:1}.guides-toolbar{align-items:stretch}.guides-search{max-width:none}}
         @media(prefers-reduced-motion:reduce){.guide-entry,.guide-book{transition:none}}
       `}</style>
     </main>

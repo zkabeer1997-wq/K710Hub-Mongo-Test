@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { Tag, Card, Button } from '../../../components/ui';
+import { Tag, Card, Button, PageHero, SectionHeader } from '../../../components/ui';
 import { AllianceBearTimes } from '../../../components/BearScheduleProvider';
 
 const STATUS_LABEL = { open: 'Recruiting', selective: 'Selective', closed: 'Closed' };
@@ -64,11 +64,8 @@ export default async function AlliancePage({ params }) {
   } catch (error) {
     console.error('alliance page load failed', error);
     return (
-      <main className="theme-realm alliance-page" style={{ minHeight: '100vh', padding: '56px 24px', background: 'var(--color-bg)', color: 'var(--color-ink)' }}>
-        <div className="alliance-page-inner" style={{ maxWidth: 700, margin: '0 auto' }}>
-          <Link href="/alliances" className="alliance-back">← Alliances</Link>
-          <p className="alliance-blurb" style={{ marginTop: 16 }}>This alliance could not be loaded right now.</p>
-        </div>
+      <main className="theme-realm alliance-page" style={{ minHeight: '100vh', background: 'var(--color-bg)', color: 'var(--color-ink)' }}>
+        <PageHero eyebrow="Kingdom 710 alliance" title="Alliance" lede="This alliance could not be loaded right now." actions={<Link href="/about#alliances">← All alliances</Link>} />
       </main>
     );
   }
@@ -76,18 +73,21 @@ export default async function AlliancePage({ params }) {
 
   return (
     <main className="theme-realm alliance-page">
+      <PageHero
+        eyebrow={`Kingdom 710 alliance · ${alliance.tag}`}
+        title={alliance.name}
+        lede={stripLegacyBearCopy(alliance.blurb) || undefined}
+        actions={<Link href="/about#alliances">← All alliances</Link>}
+        aside={
+          <div className="alliance-head">
+            <Tag band={alliance.tag}>{alliance.tag}</Tag>
+            <Tag tone={STATUS_TONE[alliance.recruiting_status] || 'neutral'}>
+              {STATUS_LABEL[alliance.recruiting_status] || alliance.recruiting_status}
+            </Tag>
+          </div>
+        }
+      />
       <div className="alliance-page-inner">
-        <Link href="/alliances" className="alliance-back">← Alliances</Link>
-
-        <div className="alliance-head">
-          <Tag band={alliance.tag}>{alliance.tag}</Tag>
-          <Tag tone={STATUS_TONE[alliance.recruiting_status] || 'neutral'}>
-            {STATUS_LABEL[alliance.recruiting_status] || alliance.recruiting_status}
-          </Tag>
-        </div>
-        <h1 className="alliance-title">{alliance.name}</h1>
-        {stripLegacyBearCopy(alliance.blurb) && <p className="alliance-blurb">{stripLegacyBearCopy(alliance.blurb)}</p>}
-
         <Card className="alliance-facts">
           <div><dt>Timezone focus</dt><dd>{alliance.timezone_focus || 'Not listed'}</dd></div>
           <div><dt>Roster size</dt><dd>{alliance.roster_size != null ? `${alliance.roster_size} members` : 'Not listed'}</dd></div>
@@ -96,7 +96,7 @@ export default async function AlliancePage({ params }) {
         </Card>
 
         <section className="alliance-windows">
-          <h2 className="alliance-section-title">Bear Hunt windows</h2>
+          <SectionHeader title="Bear Hunt windows" className="alliance-sh" />
           <div className="alliance-windows-list">
             <AllianceBearTimes tag={alliance.tag} initialTimes={alliance.bear_times_utc} />
           </div>
@@ -107,12 +107,9 @@ export default async function AlliancePage({ params }) {
       </div>
 
       <style>{`
-        .alliance-page{padding:56px 24px 96px;background:var(--color-bg);color:var(--color-ink);min-height:100vh}
-        .alliance-page-inner{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
-        .alliance-back{color:var(--color-accent-strong);text-decoration:none;font-size:13px;font-weight:700}
-        .alliance-back:hover{text-decoration:underline}
-        .alliance-head{display:flex;gap:8px;margin-top:8px}
-        .alliance-title{margin:4px 0 0;font-family:var(--font-display);font-size:clamp(30px,5vw,48px)}
+        .alliance-page{padding:0 0 96px;background:var(--color-bg);color:var(--color-ink);min-height:100vh}
+        .alliance-page-inner{max-width:700px;margin:0 auto;padding:48px 24px 0;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+        .alliance-head{display:flex;gap:8px;flex-wrap:wrap}
         .alliance-blurb{margin:0;font-size:16px;color:var(--color-ink-muted);max-width:60ch}
         .alliance-facts{padding:20px;display:flex;flex-direction:column;gap:8px;width:100%}
         .alliance-facts div{display:flex;justify-content:space-between;border-top:1px solid var(--color-border);padding-top:8px}
@@ -120,10 +117,10 @@ export default async function AlliancePage({ params }) {
         .alliance-facts dt{margin:0;color:var(--color-ink-muted);font-size:13px}
         .alliance-facts dd{margin:0;font-weight:700}
         .alliance-windows{width:100%}
-        .alliance-section-title{margin:0 0 10px;font-family:var(--font-display);font-size:18px}
+        .alliance-sh{margin-bottom:var(--space-3)}.alliance-sh .sh-title{font-size:24px}
         .alliance-windows-list{display:flex;gap:8px;flex-wrap:wrap}
         .alliance-window-chip{padding:6px 12px;border-radius:var(--radius-pill);background:var(--color-surface-alt);font-family:var(--font-mono);font-size:12px}
-        .alliance-events-link{display:inline-block;margin-top:10px;color:var(--color-accent-strong);font-size:13px;font-weight:700;text-decoration:none}
+        .alliance-events-link{display:inline-block;margin-top:10px;color:var(--color-link);font-size:13px;font-weight:700;text-decoration:none}
         .alliance-events-link:hover{text-decoration:underline}
         .alliance-cta{margin-top:8px}
       `}</style>
