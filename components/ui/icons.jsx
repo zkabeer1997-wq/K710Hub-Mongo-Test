@@ -69,6 +69,59 @@ const PATHS = {
       <path d="M4 19c2.5 2 5 2 8 0 3 2 5.5 2 8 0" />
     </>
   ),
+  // --- member action center ---
+  shield: (
+    <>
+      <path d="M12 3 4 6v5c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-3Z" />
+      <circle cx="12" cy="11" r="2.6" />
+    </>
+  ),
+  sword: (
+    <>
+      <path d="m14.5 4.5 5-1-1 5-9 9-4-4 9-9Z" />
+      <path d="m5.5 14.5-2.5 2.5M7 19l-2 2M9.5 16.5 7 19" />
+    </>
+  ),
+  castle: (
+    <>
+      <path d="M4 21V8h3v2h2V8h2v2h2V8h2v2h2V8h1v13H4Z" />
+      <path d="M10 21v-5a2 2 0 0 1 4 0v5" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
+  backpack: (
+    <>
+      <path d="M8 6a4 4 0 0 1 8 0" />
+      <rect x="5" y="6" width="14" height="15" rx="3" />
+      <path d="M9 14h6M9 11h6" />
+    </>
+  ),
+  flame: <path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.5 1 2 2 2-.5-3 0-5 1-8Z" />,
+  crown: (
+    <>
+      <path d="m3 8 4.5 4L12 5l4.5 7L21 8l-1.8 10H4.8L3 8Z" />
+      <path d="M5 21h14" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+  alert: (
+    <>
+      <path d="M12 3 2.5 20h19L12 3Z" />
+      <path d="M12 10v4M12 17.2v.1" />
+    </>
+  ),
+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
 };
 
 export const ICON_NAMES = Object.keys(PATHS);

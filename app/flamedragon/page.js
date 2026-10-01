@@ -1,6 +1,7 @@
 import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
 import { getFormGate } from '../../lib/formGates.server.js';
 import EditableSection from '../../components/EditableSection';
+import UpsertNotice from '../../components/member/UpsertNotice';
 import FormClosedNotice from '../../components/FormClosedNotice';
 import FlamedragonClient from './FlamedragonClient';
 
@@ -33,5 +34,5 @@ export default async function FlamedragonPage() {
       </main>
     );
   }
-  return <FlamedragonClient intro={intro} />;
+  return <FlamedragonClient intro={<><UpsertNotice formKey="dragon" />{intro}</>} />;
 }

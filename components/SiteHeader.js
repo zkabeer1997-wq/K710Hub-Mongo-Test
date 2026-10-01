@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { SUPPORT_URL } from '../lib/supportLink';
+import { useMemberFormStatus } from '../lib/useMemberFormStatus';
+import UtcClock from './member/UtcClock';
+import FormStatusMark from './member/FormStatusMark';
 
 const NAV_ITEMS = [
   { type: 'link', href: '/', label: 'Home' },
@@ -25,13 +28,25 @@ const NAV_ITEMS = [
     label: 'Members',
     children: [
       { href: '/dashboard', label: 'Dashboard' },
-      { href: '/power-profile', label: 'Power Profile' },
       { href: '/forms', label: 'Forms' },
       { href: '/tools', label: 'Tools' },
       { href: '/events', label: 'Events' },
     ],
   },
 ];
+
+// The signed-in Members menu also lists every form with its live status
+// (red dot = open and not yet submitted, badge = outside its window).
+function membersChildren(base, status) {
+  if (!status?.signedIn || !status.forms?.length) {
+    return base.flatMap((c) => (c.href === '/forms' ? [{ href: '/power-profile', label: 'Power Profile' }, c] : [c]));
+  }
+  return [
+    ...base,
+    { separator: true, label: 'My forms' },
+    ...status.forms.map((f) => ({ href: f.href, label: f.shortLabel, status: f })),
+  ];
+}
 
 function isActivePath(pathname, href) {
   if (href === '/') return pathname === '/';
@@ -56,9 +71,12 @@ function isHoverCapable() {
 // dismiss it.
 const HOVER_CLOSE_DELAY_MS = 150;
 
-function NavDropdown({ item, pathname, openGroup, setOpenGroup }) {
+function NavDropdown({ item, pathname, openGroup, setOpenGroup, memberStatus }) {
   const isOpen = openGroup === item.id;
-  const groupActive = item.children.some((child) => isActivePath(pathname, child.href));
+  const children = item.id === 'members' ? membersChildren(item.children, memberStatus) : item.children;
+  const links = children.filter((child) => !child.separator);
+  const groupActive = links.some((child) => isActivePath(pathname, child.href));
+  const groupPending = item.id === 'members' && links.some((child) => child.status?.needsInput);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
   const itemRefs = useRef([]);
@@ -155,25 +173,34 @@ function NavDropdown({ item, pathname, openGroup, setOpenGroup }) {
         }}
         onKeyDown={handleTriggerKeyDown}
       >
-        {item.label} <span className="site-nav-group-caret" aria-hidden="true">▾</span>
+        {item.label}
+        {groupPending && (<><span className="form-status-dot" aria-hidden="true" /><span className="sr-only">: forms not submitted</span></>)}
+        {' '}<span className="site-nav-group-caret" aria-hidden="true">▾</span>
       </button>
       {isOpen && (
         <div className="site-nav-group-menu" role="menu" ref={menuRef} aria-label={item.label}>
-          {item.children.map((child, index) => (
-            <Link
-              key={child.href}
-              href={child.href}
-              role="menuitem"
-              ref={(el) => {
-                itemRefs.current[index] = el;
-              }}
-              className={isActivePath(pathname, child.href) ? 'active' : ''}
-              aria-current={isActivePath(pathname, child.href) ? 'page' : undefined}
-              onClick={() => setOpenGroup(null)}
-            >
-              {child.label}
-            </Link>
-          ))}
+          {children.map((child) => {
+            if (child.separator) {
+              return <span key={`sep-${child.label}`} className="site-nav-group-label" role="presentation">{child.label}</span>;
+            }
+            const index = links.indexOf(child);
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                role="menuitem"
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
+                className={isActivePath(pathname, child.href) ? 'active' : ''}
+                aria-current={isActivePath(pathname, child.href) ? 'page' : undefined}
+                onClick={() => setOpenGroup(null)}
+              >
+                <span>{child.label}</span>
+                <FormStatusMark status={child.status} />
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
@@ -189,6 +216,7 @@ export default function SiteHeader() {
   const toggleRef = useRef(null);
   const mobileRef = useRef(null);
   const headerRef = useRef(null);
+  const { status: memberStatus } = useMemberFormStatus(pathname);
 
   // Close the mobile menu on route change.
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -256,6 +284,7 @@ export default function SiteHeader() {
                   pathname={pathname}
                   openGroup={openGroup}
                   setOpenGroup={setOpenGroup}
+                  memberStatus={memberStatus}
                 />
               );
             }
@@ -283,6 +312,8 @@ export default function SiteHeader() {
           </Link>
         </nav>
 
+        <UtcClock />
+
         <button
           type="button"
           ref={toggleRef}
@@ -304,18 +335,22 @@ export default function SiteHeader() {
         <nav className="site-nav-mobile" id="site-nav-mobile" ref={mobileRef} aria-label="Mobile site">
           {NAV_ITEMS.map((item) => {
             if (item.type === 'group') {
-              const groupActive = item.children.some((child) => isActivePath(pathname, child.href));
+              const kids = item.id === 'members' ? membersChildren(item.children, memberStatus) : item.children;
+              const groupActive = kids.some((child) => !child.separator && isActivePath(pathname, child.href));
               return (
                 <div key={item.id} className="site-nav-mobile-group">
                   <span className={`site-nav-mobile-heading${groupActive ? ' active' : ''}`}>{item.label}</span>
-                  {item.children.map((child) => (
+                  {kids.map((child) => child.separator ? (
+                    <span key={`sep-${child.label}`} className="site-nav-group-label">{child.label}</span>
+                  ) : (
                     <Link
                       key={child.href}
                       href={child.href}
                       onClick={() => setOpen(false)}
                       className={isActivePath(pathname, child.href) ? 'active' : ''}
                     >
-                      {child.label}
+                      <span>{child.label}</span>
+                      <FormStatusMark status={child.status} />
                     </Link>
                   ))}
                 </div>

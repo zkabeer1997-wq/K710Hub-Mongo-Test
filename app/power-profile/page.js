@@ -1,6 +1,7 @@
 import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
 import { getFormGate } from '../../lib/formGates.server.js';
 import EditableSection from '../../components/EditableSection';
+import UpsertNotice from '../../components/member/UpsertNotice';
 import FormClosedNotice from '../../components/FormClosedNotice';
 import PowerProfileClient from './PowerProfileClient';
 
@@ -35,5 +36,5 @@ export default async function PowerProfilePage() {
       </main>
     );
   }
-  return <PowerProfileClient intro={intro} />;
+  return <PowerProfileClient intro={<><UpsertNotice formKey="lead" />{intro}</>} />;
 }

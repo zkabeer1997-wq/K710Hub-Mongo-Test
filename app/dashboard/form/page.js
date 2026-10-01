@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { checkIsAdmin } from '../../../lib/contentBlocks';
 import { getFormGate } from '../../../lib/formGates.server.js';
+import UpsertNotice from '../../../components/member/UpsertNotice';
 import FormClosedNotice from '../../../components/FormClosedNotice';
 import PlayerRecordFormClient from './PlayerRecordFormClient';
 
@@ -17,6 +18,7 @@ export default async function PlayerRecordFormPage() {
 
   return (
     <main className="page public-page">
+      <UpsertNotice formKey="joiner" />
       <Suspense fallback={null}>
         <PlayerRecordFormClient />
       </Suspense>

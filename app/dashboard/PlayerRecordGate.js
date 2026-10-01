@@ -7,6 +7,7 @@ import styles from './member-login.module.css';
 import { getChecklistState } from '../../lib/gettingStarted.mjs';
 import { Term, PageHero } from '../../components/ui';
 import GiftCodeRewards from '../../components/GiftCodeRewards';
+import NeedsInputCard from '../../components/member/NeedsInputCard';
 
 function isSafeNext(next) {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//');
@@ -480,6 +481,8 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                   Your member account does not have administrator access.
                 </div>
               )}
+
+              <NeedsInputCard />
 
               <GettingStartedChecklist items={checklistItems} memberId={memberId} />
 
