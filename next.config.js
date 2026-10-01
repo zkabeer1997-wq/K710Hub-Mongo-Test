@@ -8,6 +8,20 @@
 // PR's scope. What's still worth doing without that rewrite: block the
 // unrelated-but-genuinely-dangerous vectors (framing, arbitrary base tags,
 // cross-origin form submission, plugin content) outright.
+// Mirrors TOOL_SLUG_RENAMES in lib/toolKeys.mjs (a test keeps them in sync;
+// this file is CommonJS so it cannot import the ES module directly).
+const TOOL_SLUG_RENAMES = {
+  'updated-hero-gear': 'hero-gear',
+  'updated-governor-gear': 'governor-gear',
+  'updated-charms': 'charms',
+  'updated-masters': 'masters',
+  'updated-pets': 'pets',
+  'updated-construction': 'construction',
+  'updated-research': 'research',
+  'wavebound-charms': 'charm-sailing-optimizer',
+  'flamedragon-shop': 'dragons-caravan-optimizer',
+};
+
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
@@ -51,6 +65,13 @@ const nextConfig = {
       { source: '/player-record', destination: '/dashboard', permanent: true },
       { source: '/player-record/:path*', destination: '/dashboard/:path*', permanent: true },
       { source: '/chronometer', destination: '/about', permanent: true },
+      // Tool slugs without "Updated" / matching their card titles. Saved plans
+      // keep their original storage keys (see lib/toolKeys.mjs), so only the
+      // URLs move. Nested paths and query strings (member_id) are preserved.
+      ...Object.entries(TOOL_SLUG_RENAMES).flatMap(([from, to]) => [
+        { source: `/tools/${from}`, destination: `/tools/${to}`, permanent: true },
+        { source: `/tools/${from}/:path*`, destination: `/tools/${to}/:path*`, permanent: true },
+      ]),
     ];
   },
   images: {

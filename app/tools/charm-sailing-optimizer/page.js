@@ -5,11 +5,11 @@ import Link from 'next/link';
 import WaveboundCharmOptimizer from '../WaveboundCharmOptimizer';
 
 export const metadata = {
-  title: 'Wavebound Charm Merge Optimizer',
+  title: 'Charm Sailing Optimizer',
 };
 
 export default async function WaveboundCharmsPage({ searchParams: searchParamsPromise }) {
-  const configuration = await loadToolConfiguration('wavebound-charms');
+  const configuration = await loadToolConfiguration('charm-sailing-optimizer');
   const searchParams = await searchParamsPromise;
   const memberId = typeof searchParams?.member_id === 'string' ? searchParams.member_id : '';
   const query = memberId ? `?member_id=${encodeURIComponent(memberId)}` : '';
@@ -21,10 +21,10 @@ export default async function WaveboundCharmsPage({ searchParams: searchParamsPr
       <span className="armory-rack-r" aria-hidden="true" />
 
       <div className="armory-inner wavebound-tool-inner">
-        <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Tools & Calculators', href: `/tools${query}` }]} current="Charm Merge Optimizer" />
+        <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Tools & Calculators', href: `/tools${query}` }]} current="Charm Sailing Optimizer" />
 
         <header className="armory-head wavebound-tool-head">
-          <h1 className="k-display armory-title">Charm Merge Optimizer</h1>
+          <h1 className="k-display armory-title">Charm Sailing Optimizer</h1>
           <p className="k-narrative armory-lede">Plan the Tidal Treasure merges needed to reach your target Charm level without wasting the material type you need most.</p>
         </header>
 

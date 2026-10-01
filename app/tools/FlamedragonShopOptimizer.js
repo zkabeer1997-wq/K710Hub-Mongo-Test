@@ -33,7 +33,7 @@ export default function FlamedragonShopOptimizer({ configuration }) {
     let cancelled = false;
     async function load() {
       try {
-        const response = await fetch('/api/tool-state/flamedragon-shop', { cache: 'no-store' });
+        const response = await fetch('/api/tool-state/dragons-caravan-optimizer', { cache: 'no-store' });
         if (!response.ok) {
           setSaveStatus(response.status === 401 ? 'Sign in as a member to restore and save this plan.' : 'Could not load saved inputs.');
           return;
@@ -65,7 +65,7 @@ export default function FlamedragonShopOptimizer({ configuration }) {
     setSaveStatus('Saving…');
     saveTimer.current = setTimeout(async () => {
       try {
-        const response = await fetch('/api/tool-state/flamedragon-shop', {
+        const response = await fetch('/api/tool-state/dragons-caravan-optimizer', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ state: { cart, ownedEssence, daysRemaining, limits } }),
         });

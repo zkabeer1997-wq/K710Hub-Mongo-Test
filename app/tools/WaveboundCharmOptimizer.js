@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { toolConfiguration } from '../../lib/toolCatalog.mjs';
-const DEFAULT_CONFIG=toolConfiguration('wavebound-charms');
+const DEFAULT_CONFIG=toolConfiguration('charm-sailing-optimizer');
 
 function choose(n,k){
   if(k<0||k>n) return 0;
@@ -46,7 +46,7 @@ export default function WaveboundCharmOptimizer({configuration=DEFAULT_CONFIG}){
     let cancelled=false;
     async function loadSaved(){
       try{
-        const response=await fetch('/api/tool-state/wavebound-charms',{cache:'no-store'});
+        const response=await fetch('/api/tool-state/charm-sailing-optimizer',{cache:'no-store'});
         if(!response.ok){
           setSaveStatus(response.status===401?'Log in to restore saved inputs.':'Could not load saved inputs.');
           return;
@@ -85,7 +85,7 @@ export default function WaveboundCharmOptimizer({configuration=DEFAULT_CONFIG}){
     setSaveStatus('Saving…');
     saveTimer.current=setTimeout(async()=>{
       try{
-        const response=await fetch('/api/tool-state/wavebound-charms',{
+        const response=await fetch('/api/tool-state/charm-sailing-optimizer',{
           method:'PUT',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({state:{currentLevel,targetLevel,charmCount,ownedGuides,ownedDesigns,common,premium,exquisite,majestic,confidence,calculated}}),

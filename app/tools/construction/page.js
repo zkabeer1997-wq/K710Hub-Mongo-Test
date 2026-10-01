@@ -1,12 +1,11 @@
 import ToolPage from "../../../components/tools/ToolPage";
 import UpdatedConstructionPlanner from "../../../components/tools/UpdatedConstructionPlanner";
 
-export const metadata = { title: "Updated Construction Planner" };
+export const metadata = { title: "Construction Planner" };
 
 export default async function UpdatedConstructionPage({ searchParams }) {
   const params = await searchParams;
   const memberId = typeof params?.member_id === "string" ? params.member_id : "";
-  const suffix = memberId ? `&member_id=${encodeURIComponent(memberId)}` : "";
   const help = (
     <>
       <p>Work out everything it takes to push your buildings from their current True Gold tier to a target tier, then turn the leftover cost into a day-by-day refining schedule.</p>
@@ -15,5 +14,5 @@ export default async function UpdatedConstructionPage({ searchParams }) {
       <p><strong>Refining schedule:</strong> tell it your Crucible pace and it lays out how many refinements to run each day to reach your TTG total — and whether a deadline is reachable.</p>
     </>
   );
-  return <ToolPage title="Updated Construction Planner" description="Plan TG1–TG10 upgrades across eight buildings and generate the Tempered True Gold schedule needed to complete them." backHref={`/tools?category=UPDATED+TOOLS${suffix}`} backLabel="Updated Tools" help={help}><UpdatedConstructionPlanner /></ToolPage>;
+  return <ToolPage title="Construction Planner" description="Plan TG1–TG10 upgrades across eight buildings and generate the Tempered True Gold schedule needed to complete them." memberId={memberId} help={help}><UpdatedConstructionPlanner /></ToolPage>;
 }

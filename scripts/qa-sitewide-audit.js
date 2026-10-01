@@ -14,7 +14,7 @@ const ROUTES = [
   '/gate', '/guides', '/guides/rally-joiner', '/guides/kvk-preparation', '/guides/rally-lead',
   '/events', '/events/castle-battle', '/events/flamedragon-tyrant-battle', '/interest', '/dashboard',
   '/forms', '/dashboard/form', '/power-profile', '/flamedragon', '/prep-phase-backpack', '/tools',
-  '/tools/adventure-stall', '/tools/charm-pack-optimizer', '/tools/flamedragon-shop', '/tools/pet-pack-optimizer', '/tools/wavebound-charms',
+  '/tools/adventure-stall', '/tools/charm-pack-optimizer', '/tools/dragons-caravan-optimizer', '/tools/pet-pack-optimizer', '/tools/charm-sailing-optimizer',
   '/admin', '/admin/login', '/admin/dashboard', '/admin/dashboard/guides', '/admin/dashboard/alliance-events',
   '/admin/dashboard/form-gates', '/admin/dashboard/member-pins', '/admin/dashboard/interest',
   '/admin/dashboard/prep-ministers', '/admin/dashboard/flamedragon',

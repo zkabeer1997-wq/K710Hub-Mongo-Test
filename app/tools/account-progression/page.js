@@ -13,7 +13,7 @@ export default async function Page({ searchParams }) {
   return (
     <ToolPage
       title="Account Progression Summary"
-      description="See your saved Updated Tool targets, exact KvK points, next actions, and material bottlenecks in one place."
+      description="See your saved Tool targets, exact KvK points, next actions, and material bottlenecks in one place."
       memberId={memberId}
     >
       <AccountProgressionPlanner memberId={memberId} initialGoal={initialGoal} />

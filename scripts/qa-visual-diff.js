@@ -109,8 +109,8 @@ const ROUTES = [
   { path: '/tools', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/tools/charm-pack-optimizer', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/tools/adventure-stall', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
-  { path: '/tools/flamedragon-shop', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
-  { path: '/tools/wavebound-charms', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
+  { path: '/tools/dragons-caravan-optimizer', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
+  { path: '/tools/charm-sailing-optimizer', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/tools/pet-pack-optimizer', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
 
   // theme-console — AdminShell, already unified structurally

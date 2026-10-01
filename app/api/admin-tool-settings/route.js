@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
+import { resolveToolStorageKey, TOOL_SLUG_RENAMES } from '../../../lib/toolKeys.mjs';
 import { TOOL_CATALOG, defaultQuantities, validateToolQuantities } from '../../../lib/toolCatalog.mjs';
 
 const headers = { 'Cache-Control': 'no-store' };
@@ -50,16 +51,17 @@ export async function PUT(request) {
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400, headers });
   }
-  const { quantities, error } = validateToolQuantities(body?.tool, body?.quantities);
+  const toolKey = resolveToolStorageKey(body?.tool);
+  const { quantities, error } = validateToolQuantities(toolKey, body?.quantities);
   if (error) return NextResponse.json({ error }, { status: 400, headers });
   try {
     const coll = await getCollection('tool_settings');
     await coll.updateOne(
-      { tool_key: body.tool },
-      { $set: { tool_key: body.tool, quantities, updated_at: new Date() } },
+      { tool_key: toolKey },
+      { $set: { tool_key: toolKey, quantities, updated_at: new Date() } },
       { upsert: true }
     );
-    revalidatePath(`/tools/${body.tool}`);
+    revalidatePath(`/tools/${TOOL_SLUG_RENAMES[toolKey] || toolKey}`);
     return NextResponse.json({ ok: true, quantities }, { headers });
   } catch {
     return NextResponse.json({ error: 'Unable to save tool settings.' }, { status: 500, headers });

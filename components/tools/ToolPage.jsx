@@ -17,7 +17,7 @@ export default function ToolPage({
 
   // Full trail: Members › Tools & Calculators › [category] › this tool.
   // The category crumb only appears when a tool overrides backHref to point at
-  // a filtered category or a sub-hub (e.g. Updated Tools, Research Tools);
+  // a filtered category or a sub-hub (e.g. Research Tools);
   // default tools sit directly under Tools & Calculators.
   const crumbs = [
     { label: 'Members', href: `/dashboard${mq}` },

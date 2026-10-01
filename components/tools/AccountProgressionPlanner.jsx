@@ -58,7 +58,7 @@ export default function AccountProgressionPlanner({ memberId = "", initialGoal =
   const [inputs, setInputs] = useState(() => ({ ...DEFAULT_INPUTS, ...(initialGoal === "kvk" ? { view: "kvk", objective: "kvk" } : {}) }));
   const [sources, setSources] = useState({});
   const [loadState, setLoadState] = useState("loading");
-  const [loadMessage, setLoadMessage] = useState("Connecting your Updated Tools…");
+  const [loadMessage, setLoadMessage] = useState("Connecting your saved tools…");
   const restore = useCallback((saved) => setInputs((current) => ({ ...current, ...saved })), []);
   const migrate = useCallback((saved) => ({ ...DEFAULT_INPUTS, view: saved.activeView === "calendar" ? "kvk" : "summary", objective: saved.objective === "kvkPoints" ? "kvk" : "summary", kvkStartDate: saved.kvkStartDate || "", dailyTarget: saved.dailyChestTarget ?? 200000 }), []);
   const persistence = useToolPersistence({ toolKey: "account-progression", schemaVersion: 2, inputs, restore, migrate, autoDetect: true });
@@ -67,7 +67,7 @@ export default function AccountProgressionPlanner({ memberId = "", initialGoal =
     setLoadState("loading");
     try {
       const response = await fetch("/api/tool-state/summary", { cache: "no-store" });
-      if (response.status === 401) throw new Error("Sign in as a member to connect saved Updated Tools.");
+      if (response.status === 401) throw new Error("Sign in as a member to connect your saved tools.");
       if (!response.ok) throw new Error("Saved tool summaries could not be loaded.");
       let body = await response.json();
       const preview = buildAccountSummaries({ sources: body.sources || {}, datasets: { academy, warAcademy, advancedResearch } });
@@ -83,7 +83,7 @@ export default function AccountProgressionPlanner({ memberId = "", initialGoal =
       }
       setSources(body.sources || {});
       setLoadState("ready");
-      setLoadMessage("Updated Tool summaries connected.");
+      setLoadMessage("Saved tool summaries connected.");
     } catch (error) { setLoadState("error"); setLoadMessage(error.message); }
   }, []);
   useEffect(() => { refresh(); }, [refresh]);

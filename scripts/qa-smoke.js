@@ -24,6 +24,7 @@ const ROUTES = [
   '/', '/about', '/alliances/710', '/alliances/red', '/alliances/sky', '/events', '/guides',
   '/tools', '/forms', '/power-profile', '/interest', '/timeline', '/gallery',
   '/glossary', '/dashboard',
+  '/tools/charms', '/tools/hero-gear', '/tools/research',
 ];
 
 let pass = 0, fail = 0;

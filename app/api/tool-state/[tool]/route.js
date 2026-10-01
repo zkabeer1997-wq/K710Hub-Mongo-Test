@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
 import { readMemberSession } from '../../../../lib/memberAuth';
+import { resolveToolStorageKey } from '../../../../lib/toolKeys.mjs';
 
 function validToolKey(tool) {
   return typeof tool === 'string' && /^[a-z0-9-]{1,64}$/.test(tool);
@@ -12,8 +13,9 @@ export async function GET(request, { params: paramsPromise }) {
   if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
 
   const params = await paramsPromise;
-  const tool = params?.tool;
-  if (!validToolKey(tool)) return NextResponse.json({ error: 'Invalid tool.' }, { status: 400 });
+  const requested = params?.tool;
+  const tool = resolveToolStorageKey(requested);
+  if (!validToolKey(requested)) return NextResponse.json({ error: 'Invalid tool.' }, { status: 400 });
 
   try {
     const coll = await getCollection(COLLECTIONS.MEMBER_TOOL_STATE);
@@ -33,8 +35,9 @@ export async function PUT(request, { params: paramsPromise }) {
   if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
 
   const params = await paramsPromise;
-  const tool = params?.tool;
-  if (!validToolKey(tool)) return NextResponse.json({ error: 'Invalid tool.' }, { status: 400 });
+  const requested = params?.tool;
+  const tool = resolveToolStorageKey(requested);
+  if (!validToolKey(requested)) return NextResponse.json({ error: 'Invalid tool.' }, { status: 400 });
 
   let body;
   try {

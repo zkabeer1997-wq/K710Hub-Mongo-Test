@@ -6,10 +6,9 @@ import advancedResearch from "../../../lib/data/advanced-research.json";
 
 export const metadata = { title: "Unified Research Planner" };
 
-export default async function UpdatedResearchPage({ searchParams }) {
+export default async function ResearchPage({ searchParams }) {
   const params = await searchParams;
   const memberId = typeof params?.member_id === "string" ? params.member_id : "";
-  const suffix = memberId ? `&member_id=${encodeURIComponent(memberId)}` : "";
   const datasets = { academy, "war-academy": warAcademy, "advanced-research": advancedResearch };
   const help = (
     <>
@@ -19,5 +18,5 @@ export default async function UpdatedResearchPage({ searchParams }) {
       <p>Numbers come from verified per-level records; workbook tree totals shown for context are rounded estimates. Export any plan as CSV when you are done.</p>
     </>
   );
-  return <ToolPage title="Unified Research Planner" description="Plan exact Academy, War Academy, and Advanced Research levels from one workspace, including prerequisites, inventory, adjusted time, and exports." backHref={`/tools?category=UPDATED+TOOLS${suffix}`} backLabel="Updated Tools" help={help}><UnifiedResearchPlanner datasets={datasets} /></ToolPage>;
+  return <ToolPage title="Unified Research Planner" description="Plan exact Academy, War Academy, and Advanced Research levels from one workspace, including prerequisites, inventory, adjusted time, and exports." memberId={memberId} help={help}><UnifiedResearchPlanner datasets={datasets} /></ToolPage>;
 }
