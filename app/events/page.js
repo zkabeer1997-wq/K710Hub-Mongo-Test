@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { unstable_rethrow } from 'next/navigation';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
 import { Card, EmptyState, Button, Term, PageHero, SectionHeader } from '../../components/ui';
@@ -50,6 +51,7 @@ export default async function EventsPage() {
   try {
     events = await loadUpcomingEvents(bearAlliances);
   } catch (error) {
+    unstable_rethrow(error);
     console.error('events page load failed', error);
     loadError = 'The event calendar could not be opened right now.';
   }

@@ -1,6 +1,6 @@
 import { stripLegacyBearCopy } from '../../../lib/publicBearSchedule';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, unstable_rethrow } from 'next/navigation';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { Tag, Card, Button, PageHero, SectionHeader } from '../../../components/ui';
@@ -10,19 +10,10 @@ import { AllianceBearTimes } from '../../../components/BearScheduleProvider';
 const STATUS_LABEL = { open: 'Recruiting', selective: 'Selective', closed: 'Closed' };
 const STATUS_TONE = { open: 'success', selective: 'accent', closed: 'neutral' };
 
-// No cookies()/searchParams here - same lesson as PR 7 (guides) and PR 8
-// (events): this page has no admin-preview requirement, so there's no
-// reason to risk the DYNAMIC_SERVER_USAGE conflict at all.
-export async function generateStaticParams() {
-  try {
-    const coll = await getCollection(COLLECTIONS.ALLIANCES);
-    const data = await coll.find({ active: true }).project({ tag: 1, _id: 0 }).toArray();
-    return (data || []).map((a) => ({ tag: String(a.tag).toLowerCase() }));
-  } catch (error) {
-    console.error('alliances generateStaticParams failed', error);
-    return [];
-  }
-}
+// The root layout reads headers() (per-request CSP nonce), so every route is
+// dynamic. Declare that explicitly: a page with generateStaticParams would be
+// treated as ISR and its runtime render would throw DYNAMIC_SERVER_USAGE.
+export const dynamic = 'force-dynamic';
 
 async function loadAlliance(tagParam) {
   const coll = await getCollection(COLLECTIONS.ALLIANCES);
@@ -52,7 +43,8 @@ export async function generateMetadata({ params }) {
     const alliance = await loadAlliance(tag);
     if (!alliance) return { title: 'Alliance', alternates: { canonical } };
     return { title: alliance.name, description: alliance.blurb || undefined, alternates: { canonical } };
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     return { title: 'Alliance', alternates: { canonical } };
   }
 }
@@ -63,6 +55,7 @@ export default async function AlliancePage({ params }) {
   try {
     alliance = await loadAlliance(tag);
   } catch (error) {
+    unstable_rethrow(error);
     console.error('alliance page load failed', error);
     return (
       <main className="theme-realm alliance-page" style={{ minHeight: '100vh', background: 'var(--color-bg)', color: 'var(--color-ink)' }}>

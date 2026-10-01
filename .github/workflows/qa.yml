@@ -1,8 +1,9 @@
 name: QA (a11y + smoke)
 
 # Blocking accessibility/smoke gate. CI has no MongoDB, so the smoke script
-# runs with QA_NO_DB=1 (tolerates 5xx /api console errors and skips the
-# DB-backed /alliances/* pages). Does not deploy anything.
+# runs with QA_NO_DB=1 (tolerates expected 5xx /api console errors). Does not
+# deploy anything.
+
 on:
   pull_request:
   push:

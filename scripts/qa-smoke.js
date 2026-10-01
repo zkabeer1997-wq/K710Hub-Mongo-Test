@@ -11,8 +11,8 @@
  * violation FAILS the run (QA_AXE_STRICT=all fails on every axe violation).
  * Also at 390 and 768 wide: interactive elements under 44x44px are REPORTED;
  * primary nav / CTA / form controls under 44px FAIL.
- * QA_NO_DB=1 tolerates expected DB-less conditions (5xx /api console errors;
- * the DB-backed /alliances/* pages are skipped) for CI where MongoDB is absent.
+ * QA_NO_DB=1 tolerates expected DB-less conditions (5xx /api console errors)
+ * for CI where MongoDB is absent.
  * Note axe cannot evaluate text over gradients/images; scripts/qa-contrast.js
  * samples real pixels for those.
  */
@@ -28,7 +28,7 @@ const STRICT_ALL = process.env.QA_AXE_STRICT === 'all';
 
 const ROUTES = [
   '/', '/about', '/alliances/710', '/alliances/red', '/alliances/sky', '/events', '/guides',
-  '/tools', '/forms', '/power-profile', '/interest', '/timeline', '/gallery',
+  '/tools', '/forms', '/forms/swordland-showdown', '/power-profile', '/interest', '/timeline', '/gallery',
   '/glossary', '/dashboard',
   '/tools/charms', '/tools/hero-gear', '/tools/research',
 ];
@@ -58,9 +58,6 @@ async function run(browser, label, cookies) {
       errors.length = 0;
       const tag = `[${label} ${vw}] ${r}`;
       const res = await page.goto(B + r, { waitUntil: 'networkidle' }).catch(() => null);
-      const dbRoute = NO_DB && r.startsWith('/alliances/');
-      // DB-backed alliance pages can't render without MongoDB (500 / no h1): skip them in QA_NO_DB mode.
-      if (dbRoute) { console.log(`SKIP  ${tag} (QA_NO_DB: DB-backed page, status ${res && res.status()})`); continue; }
       ok(`${tag} 200`, res && res.status() === 200, `status ${res && res.status()}`);
       if (!res) continue;
       const h1 = await page.locator('h1').count();

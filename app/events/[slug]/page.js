@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
-import { notFound } from 'next/navigation';
+import { notFound, unstable_rethrow } from 'next/navigation';
 import Link from 'next/link';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
@@ -20,16 +20,8 @@ const KIND_LABEL = {
   custom: 'Kingdom Event',
 };
 
-export async function generateStaticParams() {
-  try {
-    const coll = await getCollection(COLLECTIONS.EVENTS);
-    const data = await coll.find({ published: true }).project({ slug: 1, _id: 0 }).toArray();
-    return (data || []).map((e) => ({ slug: e.slug }));
-  } catch (error) {
-    console.error('events generateStaticParams failed', error);
-    return [];
-  }
-}
+// Root layout reads headers() (CSP nonce) so this route is always dynamic.
+export const dynamic = 'force-dynamic';
 
 async function loadEvent(slug) {
   const coll = await getCollection(COLLECTIONS.EVENTS);
@@ -60,7 +52,8 @@ export async function generateMetadata({ params }) {
       openGraph: { title: event.title, description: event.description || undefined },
       twitter: { card: 'summary_large_image', title: event.title, description: event.description || undefined },
     };
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     return { title: 'Event' };
   }
 }
@@ -71,6 +64,7 @@ export default async function EventPage({ params }) {
   try {
     event = await loadEvent(slug);
   } catch (error) {
+    unstable_rethrow(error);
     console.error('event page load failed', error);
     return (
       <main className="theme-realm event-page" style={{ minHeight: '100vh', padding: '56px 24px', background: 'var(--color-bg)', color: 'var(--color-ink)' }}>
