@@ -180,13 +180,64 @@ function NavDropdown({ item, pathname, openGroup, setOpenGroup }) {
   );
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState(null);
+  const toggleRef = useRef(null);
+  const mobileRef = useRef(null);
+  const headerRef = useRef(null);
+
+  // Close the mobile menu on route change.
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  // Open mobile menu: focus trap (Tab cycles toggle + menu links), Esc closes
+  // and returns focus to the trigger, outside pointer (backdrop) closes, and
+  // body scroll is locked while open.
+  useEffect(() => {
+    if (!open) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    mobileRef.current?.querySelector(FOCUSABLE)?.focus();
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        toggleRef.current?.focus();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const nodes = [toggleRef.current, ...(mobileRef.current?.querySelectorAll(FOCUSABLE) || [])].filter(Boolean);
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !nodes.includes(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !nodes.includes(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    // If the viewport grows past the mobile breakpoint, drop the menu state.
+    function onResize() {
+      if (window.innerWidth >= 760) setOpen(false);
+    }
+    document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('resize', onResize);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [open]);
 
   return (
-    <header className="site-header">
+    <header className="site-header" ref={headerRef}>
       <div className="site-header-inner">
         <Link href="/" className="site-brand" onClick={() => setOpen(false)}>
           <svg viewBox="0 0 40 40" fill="none" aria-hidden="true" className="site-brand-crest">
@@ -234,9 +285,11 @@ export default function SiteHeader() {
 
         <button
           type="button"
+          ref={toggleRef}
           className="site-nav-toggle"
           aria-expanded={open}
-          aria-label="Toggle navigation menu"
+          aria-controls="site-nav-mobile"
+          aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
           onClick={() => setOpen((v) => !v)}
         >
           <span />
@@ -246,7 +299,9 @@ export default function SiteHeader() {
       </div>
 
       {open && (
-        <nav className="site-nav-mobile" aria-label="Mobile site">
+        <>
+        <div className="site-nav-backdrop" aria-hidden="true" onClick={() => setOpen(false)} />
+        <nav className="site-nav-mobile" id="site-nav-mobile" ref={mobileRef} aria-label="Mobile site">
           {NAV_ITEMS.map((item) => {
             if (item.type === 'group') {
               const groupActive = item.children.some((child) => isActivePath(pathname, child.href));
@@ -290,6 +345,7 @@ export default function SiteHeader() {
             ☕ Support Us <span aria-hidden="true">(donate)</span>
           </Link>
         </nav>
+        </>
       )}
     </header>
   );

@@ -30,7 +30,7 @@ export const metadata = {
   description: 'The Kingdom 710 website for events, alliance schedules, member forms, guides, calculators, and transfer applications.',
   applicationName: 'K710 Hub',
   alternates: { canonical: './' },
-  icons: { apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }] },
+  icons: { icon: [{ url: '/icon.svg', type: 'image/svg+xml' }], apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }] },
   openGraph: { title: 'K710 Hub', description: 'The Kingdom 710 website for events, alliance schedules, member forms, guides, calculators, and transfer applications.', siteName: 'K710 Hub', type: 'website' },
   twitter: { card: 'summary_large_image', title: 'K710 Hub', description: 'The Kingdom 710 website for events, alliance schedules, member forms, guides, calculators, and transfer applications.' },
 };

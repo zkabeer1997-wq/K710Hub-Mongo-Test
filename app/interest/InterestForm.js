@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import SealedPetition from '../../components/kingdom/world/SealedPetition';
 import { processInterestImages } from './processInterestImages';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
+import FormErrorSummary from '../../components/FormErrorSummary';
+import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
+import { draftKey, firstInvalidStep, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
 
 const MIGRATE_OPTIONS = [
 '710 (Bear 0200UTC and 1300UTC)',
@@ -76,63 +79,6 @@ mainLanguageOther: '',
 website: '',
 };
 
-export default function InterestForm() {
-const [form, setForm] = useState(initialForm);
-const [screenshots, setScreenshots] = useState([]);
-const [processingImages, setProcessingImages] = useState(false);
-const [status, setStatus] = useState('');
-const [isError, setIsError] = useState(false);
-const [loading, setLoading] = useState(false);
-const [sealed, setSealed] = useState(false);
-const [reducedMotion, setReducedMotion] = useState(false);
-const [step, setStep] = useState(0);
-const [confirmedInfo, setConfirmedInfo] = useState({});
-const [activePeriod, setActivePeriod] = useState(null);
-const [activePeriodLoaded, setActivePeriodLoaded] = useState(false);
-const { fields: editableFields } = useFormFieldMeta('interest');
-const editableLabel = (key, fallback) => editableFields.find((f) => f.key === key)?.label || fallback;
-const editablePlaceholder = (key, fallback) => editableFields.find((f) => f.key === key)?.placeholder || fallback;
-const renderedAt = useRef(Date.now());
-const screenshotInput = useRef(null);
-
-useEffect(() => {
-  if (typeof window === 'undefined') return;
-  setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-}, []);
-
-useEffect(() => {
-  let cancelled = false;
-  fetch('/api/intake-periods/active')
-    .then((r) => r.json())
-    .then((data) => { if (!cancelled) setActivePeriod(data.label || null); })
-    .catch(() => { if (!cancelled) setActivePeriod(null); })
-    .finally(() => { if (!cancelled) setActivePeriodLoaded(true); });
-  return () => { cancelled = true; };
-}, []);
-
-const prevStep = useRef(step);
-useEffect(() => {
-  // Don't hijack scroll/focus on first paint - only when the step changes.
-  if (prevStep.current === step) return;
-  prevStep.current = step;
-  const section = document.getElementById(ACTS[step].id);
-  section?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
-  // Move focus to the new step's heading so keyboard/screen-reader users
-  // perceive the step change, not just a visual scroll.
-  section?.querySelector('.petition-act-title')?.focus();
-}, [step, reducedMotion]);
-
-function updateField(key, value) {
-setForm((current) => ({ ...current, [key]: value }));
-}
-
-function toggleT11(option) {
-setForm((current) => {
-const has = current.t11.includes(option);
-return { ...current, t11: has ? current.t11.filter((o) => o !== option) : [...current.t11, option] };
-});
-}
-
 const FIELD_LABELS = {
   inGameName: 'In-game name',
   playerId: 'Player ID',
@@ -152,7 +98,6 @@ const FIELD_LABELS = {
   spendingArchetype: 'Spending archetype',
   mainLanguage: 'Main language',
 };
-
 // Digits only, with optional thousands commas (e.g. "245,000,000") - loose
 // enough for power/TG figures pasted straight from in-game, strict enough
 // to catch stray letters or negative numbers before they reach admin review.
@@ -161,40 +106,167 @@ function isNumericValue(value) {
   return /^[0-9][0-9,]*$/.test(String(value || '').trim());
 }
 
-function validateStep(index) {
+// Pure per-step validation: returns [{ id, key, message }] (ids are the DOM
+// anchors of the offending field, see gp() in the component).
+function computeErrors(index, form, screenshots, label) {
   const act = ACTS[index];
+  const found = [];
   for (const key of act.required || []) {
-    if (!String(form[key] || '').trim()) {
-      setIsError(true);
-      setStatus(`Please fill in: ${editableLabel(key, FIELD_LABELS[key])}.`);
-      return false;
-    }
+    if (!String(form[key] || '').trim()) found.push({ id: `f-${key}`, key, message: `${label(key)} is required.` });
   }
   for (const key of NUMERIC_FIELDS) {
-    if (key in form && form[key] && !isNumericValue(form[key])) {
-      setIsError(true);
-      setStatus(`${editableLabel(key, FIELD_LABELS[key])} should be numbers only.`);
-      return false;
+    const inAct = (index === 2 && ['currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'].includes(key));
+    if (inAct && form[key] && !isNumericValue(form[key]) && !found.some((f) => f.key === key)) {
+      found.push({ id: `f-${key}`, key, message: `${label(key)} should be numbers only.` });
     }
   }
   if (act.id === 'intake' && form.migrateAlliance === 'Other' && !form.migrateAllianceOther.trim()) {
-    setIsError(true);
-    setStatus('Please specify which alliance you want to migrate to.');
-    return false;
+    found.push({ id: 'f-migrateAllianceOther', key: 'migrateAllianceOther', message: 'Please specify which alliance you want to migrate to.' });
   }
   if (act.id === 'commitment' && form.mainLanguage === 'Other' && !form.mainLanguageOther.trim()) {
-    setIsError(true);
-    setStatus('Please specify your main language.');
-    return false;
+    found.push({ id: 'f-mainLanguageOther', key: 'mainLanguageOther', message: 'Please specify your main language.' });
   }
   if (act.requiresT11 && form.t11.length === 0) {
-    setIsError(true);
-    setStatus('Please select at least one T11 option.');
-    return false;
+    found.push({ id: 'f-t11', key: 't11', message: 'Select at least one T11 option.' });
   }
   if (act.requiresScreenshot && screenshots.length === 0) {
-    setIsError(true);
-    setStatus('Please upload at least one screenshot.');
+    found.push({ id: 'f-screenshots', key: 'screenshots', message: 'Upload at least one screenshot.' });
+  }
+  return found;
+}
+
+const DRAFT_KEY = draftKey('interest');
+
+export default function InterestForm() {
+const [form, setForm] = useState(initialForm);
+const [screenshots, setScreenshots] = useState([]);
+const [processingImages, setProcessingImages] = useState(false);
+const [status, setStatus] = useState('');
+const [isError, setIsError] = useState(false);
+const [loading, setLoading] = useState(false);
+const [sealed, setSealed] = useState(false);
+const [reducedMotion, setReducedMotion] = useState(false);
+const [errors, setErrors] = useState([]);
+const [errorSignal, setErrorSignal] = useState(0);
+const formRef = useRef(initialForm);
+const screenshotsRef = useRef([]);
+const labelRef = useRef((key) => FIELD_LABELS[key] || key);
+const { step, setStep, initFromUrl } = useWizardUrlStep(ACTS.length, () => {
+  const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, formRef.current, screenshotsRef.current, labelRef.current));
+  return bad < 0 ? ACTS.length - 1 : bad;
+});
+const draftReady = useRef(false);
+const suppressFocus = useRef(false);
+const [confirmedInfo, setConfirmedInfo] = useState({});
+const [activePeriod, setActivePeriod] = useState(null);
+const [activePeriodLoaded, setActivePeriodLoaded] = useState(false);
+const { fields: editableFields } = useFormFieldMeta('interest');
+const editableLabel = (key, fallback) => editableFields.find((f) => f.key === key)?.label || fallback;
+const labelFor = (key) => editableLabel(key, FIELD_LABELS[key] || key);
+useEffect(() => {
+  labelRef.current = labelFor;
+  formRef.current = form;
+  screenshotsRef.current = screenshots;
+});
+const editablePlaceholder = (key, fallback) => editableFields.find((f) => f.key === key)?.placeholder || fallback;
+const renderedAt = useRef(Date.now());
+const screenshotInput = useRef(null);
+
+useEffect(() => {
+  if (typeof window === 'undefined') return;
+  setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}, []);
+
+useEffect(() => {
+  let cancelled = false;
+  fetch('/api/intake-periods/active')
+    .then((r) => r.json())
+    .then((data) => { if (!cancelled) setActivePeriod(data.label || null); })
+    .catch(() => { if (!cancelled) setActivePeriod(null); })
+    .finally(() => { if (!cancelled) setActivePeriodLoaded(true); });
+  return () => { cancelled = true; };
+}, []);
+
+// Restore the local draft (never PINs/passwords/files - see lib/wizardState)
+// and then the ?step= value, limited to the first step that fails validation.
+useEffect(() => {
+  try {
+    const restored = mergeDraft(initialForm, parseDraft(window.localStorage.getItem(DRAFT_KEY)));
+    restored.website = '';
+    formRef.current = restored;
+    setForm(restored);
+  } catch { /* storage unavailable */ }
+  // A deep-linked step shouldn't steal focus on first paint.
+  if (initFromUrl() > 0) suppressFocus.current = true;
+  draftReady.current = true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+// Save the draft (debounced) once the initial restore has happened.
+useEffect(() => {
+  if (!draftReady.current || sealed) return undefined;
+  const t = setTimeout(() => {
+    try {
+      const { website, ...rest } = form; // honeypot is never stored
+      void website;
+      window.localStorage.setItem(DRAFT_KEY, serializeDraft(rest));
+    } catch { /* ignore */ }
+  }, 400);
+  return () => clearTimeout(t);
+}, [form, sealed]);
+
+const prevStep = useRef(step);
+useEffect(() => {
+  // Don't hijack scroll/focus on first paint - only when the step changes.
+  if (prevStep.current === step) return;
+  prevStep.current = step;
+  if (suppressFocus.current) { suppressFocus.current = false; return; }
+  // Move focus to the new step's heading so keyboard/screen-reader users
+  // perceive the step change. preventScroll + a manual scroll only when the
+  // heading is out of view, so the page never jumps past the hero.
+  const heading = document.getElementById(ACTS[step].id)?.querySelector('.petition-act-title');
+  if (!heading) return;
+  heading.focus({ preventScroll: true });
+  const top = heading.getBoundingClientRect().top;
+  if (top < 80 || top > window.innerHeight * 0.7) {
+    window.scrollTo({ top: Math.max(0, window.scrollY + top - 96), behavior: reducedMotion ? 'auto' : 'smooth' });
+  }
+}, [step, reducedMotion]);
+
+function updateField(key, value) {
+setForm((current) => ({ ...current, [key]: value }));
+setErrors((current) => (current.some((e) => e.key === key) ? current.filter((e) => e.key !== key) : current));
+}
+
+// Field a11y wiring: id doubles as the error-summary anchor; aria-invalid and
+// aria-describedby point at the inline message rendered by fe().
+const errorFor = (key) => errors.find((e) => e.key === key);
+const gp = (key) => {
+  const err = errorFor(key);
+  return { id: `f-${key}`, 'aria-invalid': err ? 'true' : undefined, 'aria-describedby': err ? `f-${key}-error` : undefined };
+};
+const fe = (key) => {
+  const err = errorFor(key);
+  return err ? <p id={`f-${key}-error`} className="field-error">{err.message}</p> : null;
+};
+
+function toggleT11(option) {
+setForm((current) => {
+const has = current.t11.includes(option);
+return { ...current, t11: has ? current.t11.filter((o) => o !== option) : [...current.t11, option] };
+});
+setErrors((current) => current.filter((e) => e.key !== 't11'));
+}
+
+
+
+function validateStep(index) {
+  const found = computeErrors(index, form, screenshots, (key) => editableLabel(key, FIELD_LABELS[key] || key));
+  setErrors(found);
+  if (found.length) {
+    setIsError(false);
+    setStatus('');
+    setErrorSignal((n) => n + 1);
     return false;
   }
   setIsError(false);
@@ -204,13 +276,14 @@ function validateStep(index) {
 
 function goNext() {
   if (!validateStep(step)) return;
-  setStep((s) => Math.min(s + 1, ACTS.length - 1));
+  setStep(step + 1);
 }
 
 function goBack() {
   setIsError(false);
   setStatus('');
-  setStep((s) => Math.max(s - 1, 0));
+  setErrors([]);
+  setStep(step - 1);
 }
 
 async function handleScreenshotChange(event) {
@@ -236,6 +309,8 @@ async function handleScreenshotChange(event) {
 
 async function handleSubmit(e) {
 e.preventDefault();
+const bad = firstInvalidStep(ACTS.length + 1, (i) => computeErrors(Math.min(i, ACTS.length - 1), form, screenshots, labelRef.current));
+if (bad !== -1 && bad < step) { setStep(bad); setErrors(computeErrors(bad, form, screenshots, labelRef.current)); setErrorSignal((n) => n + 1); return; }
 if (!validateStep(step)) return;
 
 setLoading(true);
@@ -292,8 +367,10 @@ setStatus('');
 setConfirmedInfo({ intakePeriod: activePeriod, discordUsername: form.discordUsername, reference: result.reference || null });
 setForm(initialForm);
 setScreenshots([]);
+setErrors([]);
+try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
 if (screenshotInput.current) screenshotInput.current.value = '';
-setStep(0);
+setStep(0, { replace: true });
 renderedAt.current = Date.now();
 setSealed(true);
 }
@@ -320,7 +397,15 @@ return (
       className={`petition-index-item ${i === step ? 'is-current' : ''} ${i < step ? 'is-done' : ''}`}
       aria-current={i === step ? 'step' : undefined}
       title={a.sub}
-      onClick={() => { if (i <= step || validateStep(step)) setStep(i); }}
+      onClick={() => {
+        if (i <= step) { setErrors([]); setStep(i); return; }
+        const bad = firstInvalidStep(ACTS.length, (n) => computeErrors(n, form, screenshots, labelRef.current));
+        if (bad === -1 || bad >= i) { setErrors([]); setStep(i); return; }
+        if (bad === step) { validateStep(step); return; }
+        setStep(bad);
+        setErrors(computeErrors(bad, form, screenshots, labelRef.current));
+        setErrorSignal((n) => n + 1);
+      }}
     >
       <span className="petition-index-num">{a.num}</span>
       {a.label}
@@ -355,11 +440,11 @@ return (
 <div className="petition-act-body">
 <Chapter id="identity-fields" title="Identity">
 <div className="identity-grid">
-<label>{editableLabel('inGameName', 'In-game name')}<input value={form.inGameName} onChange={(e) => updateField('inGameName', e.target.value)} /></label>
-<label>{editableLabel('playerId', 'Player ID')}<input value={form.playerId} onChange={(e) => updateField('playerId', e.target.value)} /></label>
-<label>{editableLabel('discordUsername', 'Discord username')}<input value={form.discordUsername} onChange={(e) => updateField('discordUsername', e.target.value)} /></label>
-<label>{editableLabel('currentServer', 'Your current server (prior to transfer)')}<input value={form.currentServer} onChange={(e) => updateField('currentServer', e.target.value)} /></label>
-<label>{editableLabel('currentAlliance', 'Your current alliance (prior to transfer)')}<input value={form.currentAlliance} onChange={(e) => updateField('currentAlliance', e.target.value)} /></label>
+<div className="wizard-field"><label>{editableLabel('inGameName', 'In-game name')}<input {...gp('inGameName')} value={form.inGameName} onChange={(e) => updateField('inGameName', e.target.value)} /></label>{fe('inGameName')}</div>
+<div className="wizard-field"><label>{editableLabel('playerId', 'Player ID')}<input {...gp('playerId')} value={form.playerId} onChange={(e) => updateField('playerId', e.target.value)} /></label>{fe('playerId')}</div>
+<div className="wizard-field"><label>{editableLabel('discordUsername', 'Discord username')}<input {...gp('discordUsername')} value={form.discordUsername} onChange={(e) => updateField('discordUsername', e.target.value)} /></label>{fe('discordUsername')}</div>
+<div className="wizard-field"><label>{editableLabel('currentServer', 'Your current server (prior to transfer)')}<input {...gp('currentServer')} value={form.currentServer} onChange={(e) => updateField('currentServer', e.target.value)} /></label>{fe('currentServer')}</div>
+<div className="wizard-field"><label>{editableLabel('currentAlliance', 'Your current alliance (prior to transfer)')}<input {...gp('currentAlliance')} value={form.currentAlliance} onChange={(e) => updateField('currentAlliance', e.target.value)} /></label>{fe('currentAlliance')}</div>
 </div>
 </Chapter>
 </div>
@@ -391,7 +476,7 @@ return (
 <Chapter id="migration-fields" title="Migration">
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Migration</span><h3>Which alliance are you looking to migrate to?</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('migrateAlliance')} {...gp('migrateAlliance')}>
 {MIGRATE_OPTIONS.map((option) => (
 <label key={option} className="radio-option">
 <input type="radio" name="migrateAlliance" checked={form.migrateAlliance === option} onChange={() => updateField('migrateAlliance', option)} />
@@ -399,8 +484,9 @@ return (
 </label>
 ))}
 </div>
+{fe('migrateAlliance')}
 {form.migrateAlliance === 'Other' && (
-<input placeholder="Please specify" value={form.migrateAllianceOther} onChange={(e) => updateField('migrateAllianceOther', e.target.value)} />
+<><input {...gp('migrateAllianceOther')} aria-label="Please specify" placeholder="Please specify" value={form.migrateAllianceOther} onChange={(e) => updateField('migrateAllianceOther', e.target.value)} />{fe('migrateAllianceOther')}</>
 )}
 </div>
 </Chapter>
@@ -420,7 +506,7 @@ return (
 <Chapter id="troops-fields" title="Troops">
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Troops</span><h3>Current highest troop level (not TC)</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('highestTroopLevel')} {...gp('highestTroopLevel')}>
 {TROOP_LEVEL_OPTIONS.map((option) => (
 <label key={option} className="radio-option">
 <input type="radio" name="highestTroopLevel" checked={form.highestTroopLevel === option} onChange={() => updateField('highestTroopLevel', option)} />
@@ -428,15 +514,16 @@ return (
 </label>
 ))}
 </div>
+{fe('highestTroopLevel')}
 </div>
 
 <div className="identity-grid">
-<label>{editableLabel('currentTg', 'Current amount of TG')}<input inputMode="numeric" value={form.currentTg} onChange={(e) => updateField('currentTg', e.target.value)} placeholder={editablePlaceholder('currentTg', 'We need to understand how far you can push your TG level')} /></label>
+<div className="wizard-field"><label>{editableLabel('currentTg', 'Current amount of TG')}<input {...gp('currentTg')} inputMode="numeric" value={form.currentTg} onChange={(e) => updateField('currentTg', e.target.value)} placeholder={editablePlaceholder('currentTg', 'We need to understand how far you can push your TG level')} /></label>{fe('currentTg')}</div>
 </div>
 
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Troops</span><h3>Do you have T11?</h3></div>
-<div className="checkbox-grid">
+<div className="checkbox-grid" role="group" aria-label="T11 troop types" {...gp('t11')}>
 {T11_OPTIONS.map((option) => (
 <label key={option} className="checkbox-item">
 <input type="checkbox" checked={form.t11.includes(option)} onChange={() => toggleT11(option)} />
@@ -444,18 +531,19 @@ return (
 </label>
 ))}
 </div>
+{fe('t11')}
 </div>
 </Chapter>
 
 <Chapter id="power-fields" title="Power">
 <div className="identity-grid">
-<label>{editableLabel('mysticTrialStages', 'Current Mystic Trial TOTAL STAGES')}<input inputMode="numeric" value={form.mysticTrialStages} onChange={(e) => updateField('mysticTrialStages', e.target.value)} /></label>
-<label>{editableLabel('totalPower', 'Total Power')}<input inputMode="numeric" value={form.totalPower} onChange={(e) => updateField('totalPower', e.target.value)} /></label>
+<div className="wizard-field"><label>{editableLabel('mysticTrialStages', 'Current Mystic Trial TOTAL STAGES')}<input {...gp('mysticTrialStages')} inputMode="numeric" value={form.mysticTrialStages} onChange={(e) => updateField('mysticTrialStages', e.target.value)} /></label>{fe('mysticTrialStages')}</div>
+<div className="wizard-field"><label>{editableLabel('totalPower', 'Total Power')}<input {...gp('totalPower')} inputMode="numeric" value={form.totalPower} onChange={(e) => updateField('totalPower', e.target.value)} /></label>{fe('totalPower')}</div>
 </div>
 
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Power</span><h3>Are you willing to reduce your power? (for normal invite power cap)</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('willingReducePower')} {...gp('willingReducePower')}>
 {YES_NO.map((option) => (
 <label key={option} className="radio-option">
 <input type="radio" name="willingReducePower" checked={form.willingReducePower === option} onChange={() => updateField('willingReducePower', option)} />
@@ -463,11 +551,12 @@ return (
 </label>
 ))}
 </div>
+{fe('willingReducePower')}
 </div>
 
 <div className="identity-grid">
-<label>{editableLabel('passesRequired', 'Number of passes required for you to transfer to 710')}<input inputMode="numeric" value={form.passesRequired} onChange={(e) => updateField('passesRequired', e.target.value)} /></label>
-<label>{editableLabel('currentPasses', 'Your current number of transfer passes')}<input inputMode="numeric" value={form.currentPasses} onChange={(e) => updateField('currentPasses', e.target.value)} /></label>
+<div className="wizard-field"><label>{editableLabel('passesRequired', 'Number of passes required for you to transfer to 710')}<input {...gp('passesRequired')} inputMode="numeric" value={form.passesRequired} onChange={(e) => updateField('passesRequired', e.target.value)} /></label>{fe('passesRequired')}</div>
+<div className="wizard-field"><label>{editableLabel('currentPasses', 'Your current number of transfer passes')}<input {...gp('currentPasses')} inputMode="numeric" value={form.currentPasses} onChange={(e) => updateField('currentPasses', e.target.value)} /></label>{fe('currentPasses')}</div>
 </div>
 </Chapter>
 </div>
@@ -486,7 +575,7 @@ return (
 <Chapter id="commitment-fields" title="Commitment">
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Commitment</span><h3>Are you able to actively commit to game, and participate in alliance events?</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('activeCommit')} {...gp('activeCommit')}>
 {YES_NO.map((option) => (
 <label key={option} className="radio-option">
 <input type="radio" name="activeCommit" checked={form.activeCommit === option} onChange={() => updateField('activeCommit', option)} />
@@ -494,11 +583,12 @@ return (
 </label>
 ))}
 </div>
+{fe('activeCommit')}
 </div>
 
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Commitment</span><h3>Are you willing to save resources for kvk prep, doing only minimal rewards on sub-events?</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('willingSaveResources')} {...gp('willingSaveResources')}>
 {YES_NO.map((option) => (
 <label key={option} className="radio-option">
 <input type="radio" name="willingSaveResources" checked={form.willingSaveResources === option} onChange={() => updateField('willingSaveResources', option)} />
@@ -506,11 +596,12 @@ return (
 </label>
 ))}
 </div>
+{fe('willingSaveResources')}
 </div>
 
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Commitment</span><h3>Do you participate in Sanctuaries, Castle and KVK battles?</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('participatesBattles')} {...gp('participatesBattles')}>
 {YES_NO.map((option) => (
 <label key={option} className="radio-option">
 <input type="radio" name="participatesBattles" checked={form.participatesBattles === option} onChange={() => updateField('participatesBattles', option)} />
@@ -518,13 +609,14 @@ return (
 </label>
 ))}
 </div>
+{fe('participatesBattles')}
 </div>
 </Chapter>
 
 <Chapter id="spending-fields" title="Spending">
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Spending</span><h3>Your spending archetype</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('spendingArchetype')} {...gp('spendingArchetype')}>
 {SPENDING_OPTIONS.map((option) => (
 <label key={option} className="radio-option">
 <input type="radio" name="spendingArchetype" checked={form.spendingArchetype === option} onChange={() => updateField('spendingArchetype', option)} />
@@ -532,13 +624,14 @@ return (
 </label>
 ))}
 </div>
+{fe('spendingArchetype')}
 </div>
 </Chapter>
 
 <Chapter id="language-fields" title="Language">
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Language</span><h3>Main language of communication in-game</h3></div>
-<div className="radio-group">
+<div className="radio-group" role="radiogroup" aria-label={labelFor('mainLanguage')} {...gp('mainLanguage')}>
 <label className="radio-option">
 <input type="radio" name="mainLanguage" checked={form.mainLanguage === 'English'} onChange={() => updateField('mainLanguage', 'English')} />
 <span>English</span>
@@ -548,8 +641,9 @@ return (
 <span>Other</span>
 </label>
 </div>
+{fe('mainLanguage')}
 {form.mainLanguage === 'Other' && (
-<input placeholder="Please specify" value={form.mainLanguageOther} onChange={(e) => updateField('mainLanguageOther', e.target.value)} />
+<><input {...gp('mainLanguageOther')} aria-label="Please specify" placeholder="Please specify" value={form.mainLanguageOther} onChange={(e) => updateField('mainLanguageOther', e.target.value)} />{fe('mainLanguageOther')}</>
 )}
 </div>
 </Chapter>
@@ -570,13 +664,13 @@ return (
 <div className="troop-section public-section">
 <div className="section-title-row"><span>Screenshots</span><h3>Upload your most recent battle report</h3><p>Should show your in-game name, Gov Gears/charms, Hero Gears and Masters.</p></div>
 <input
-  id="battle-report-upload"
+  {...gp('screenshots')}
   ref={screenshotInput}
   type="file"
   multiple
   accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
   aria-label="Upload battle report screenshots"
-  aria-describedby="battle-report-upload-help"
+  aria-describedby={errorFor('screenshots') ? 'f-screenshots-error battle-report-upload-help' : 'battle-report-upload-help'}
   disabled={processingImages || loading}
   onChange={handleScreenshotChange}
 />
@@ -587,14 +681,16 @@ return (
       ? `${screenshots.length} screenshot${screenshots.length === 1 ? '' : 's'} ready · JPG, PNG, WebP, HEIC, and HEIF supported`
       : 'Up to 4 screenshots · 12 MB each · JPG, PNG, WebP, HEIC, or HEIF'}
 </p>
+{fe('screenshots')}
 </div>
 </Chapter>
 </div>
 </section>
 )}
 
+<FormErrorSummary errors={errors} focusSignal={errorSignal} />
 {status && (
-  <div className={isError ? 'status error' : 'status'} role="alert" aria-live="assertive">
+  <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'} aria-live={isError ? 'assertive' : 'polite'}>
     {status}
   </div>
 )}

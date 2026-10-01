@@ -24,6 +24,22 @@ serializeGovernorGearSelections,
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { heroSlug, saveStatusLabel } from '../../lib/powerProfileWizard.mjs';
 import { LoadingRow } from '../../components/ui';
+import FormErrorSummary from '../../components/FormErrorSummary';
+import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
+import { draftKey, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
+
+const DRAFT_KEY = draftKey('power-profile');
+
+// Per-step validation (only step 1 has required fields; the API rejects a
+// profile without a name and Member ID). Returns [{ id, key, message }].
+function stepErrors(index, form) {
+  const found = [];
+  if (index === 0) {
+    if (!String(form.name || '').trim()) found.push({ id: 'pp-name', key: 'name', message: 'Your name is required.' });
+    if (!String(form.member_id || '').trim()) found.push({ id: 'pp-member_id', key: 'member_id', message: 'Member ID is required.' });
+  }
+  return found;
+}
 
 // Wizard steps. Presentational grouping only - every field below still
 // reads/writes the same lifted `form` / `governorGear` / `charms` state as
@@ -77,28 +93,103 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
 
   // Wizard-only UI state. Never read by handleSubmit and never sent to the
   // API - purely for the stepper/progress bar and the save-status line.
-  const [step, setStep] = useState(0);
   const [dirty, setDirty] = useState(false);
+  const [errors, setErrors] = useState([]);
+  const [errorSignal, setErrorSignal] = useState(0);
   const headingRefs = useRef([]);
-  const skipFocusRef = useRef(true);
+  const skipFocusRef = useRef(false);
+  const prevStepRef = useRef(0);
+  const formRef = useRef(form);
+  const draftReady = useRef(false);
+  const { step, setStep, initFromUrl } = useWizardUrlStep(STEPS.length, () => {
+    // A deep link can't skip past step 1 while its required fields are empty.
+    return stepErrors(0, formRef.current).length ? 0 : STEPS.length - 1;
+  });
+  useEffect(() => { formRef.current = form; });
 
+  // Moving forward past step 1 requires its fields; going back is always free.
   function goToStep(index) {
     const bounded = Math.max(0, Math.min(STEPS.length - 1, index));
+    if (bounded > step) {
+      const found = stepErrors(step === 0 ? 0 : -1, form);
+      if (found.length) {
+        setErrors(found);
+        setErrorSignal((n) => n + 1);
+        return;
+      }
+      if (bounded > 0) {
+        const first = stepErrors(0, form);
+        if (first.length) { setStep(0); setErrors(first); setErrorSignal((n) => n + 1); return; }
+      }
+    }
+    setErrors([]);
     setStep(bounded);
   }
 
+  // Restore the local draft, then the ?step= value (limited by validity).
   useEffect(() => {
+    try {
+      const draft = parseDraft(window.localStorage.getItem(DRAFT_KEY));
+      if (draft) {
+        const restored = mergeDraft(form, draft.form || {});
+        if (initialMemberId) restored.member_id = initialMemberId;
+        formRef.current = restored;
+        setForm(restored);
+        if (draft.governorGear && typeof draft.governorGear === 'object') setGovernorGear((cur) => mergeDraft(cur, draft.governorGear));
+        if (draft.charms && typeof draft.charms === 'object') setCharms((cur) => mergeDraft(cur, draft.charms));
+      }
+    } catch { /* storage unavailable */ }
+    // A deep-linked step shouldn't steal focus on first paint.
+    skipFocusRef.current = initFromUrl() > 0;
+    draftReady.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced draft save. Contains only the profile fields below - no PINs,
+  // passwords or uploaded files ever enter this form's state.
+  useEffect(() => {
+    if (!draftReady.current) return undefined;
+    const t = setTimeout(() => {
+      try {
+        window.localStorage.setItem(DRAFT_KEY, serializeDraft({ form, governorGear, charms }));
+      } catch { /* ignore */ }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [form, governorGear, charms]);
+
+  useEffect(() => {
+    if (prevStepRef.current === step) return;
+    prevStepRef.current = step;
     if (skipFocusRef.current) {
       skipFocusRef.current = false;
       return;
     }
-    headingRefs.current[step]?.focus();
+    // Focus without letting the browser jump; only scroll if the heading is
+    // off-screen, so the hero is not scrolled past on every step change.
+    const heading = headingRefs.current[step];
+    if (!heading) return;
+    heading.focus({ preventScroll: true });
+    const top = heading.getBoundingClientRect().top;
+    if (top < 80 || top > window.innerHeight * 0.7) {
+      window.scrollTo({ top: Math.max(0, window.scrollY + top - 96), behavior: 'auto' });
+    }
   }, [step]);
 
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
+    setErrors((current) => (current.some((e) => e.key === key) ? current.filter((e) => e.key !== key) : current));
     setDirty(true);
   }
+
+  const errorFor = (key) => errors.find((e) => e.key === key);
+  const fieldProps = (key) => {
+    const err = errorFor(key);
+    return { id: `pp-${key}`, 'aria-invalid': err ? 'true' : undefined, 'aria-describedby': err ? `pp-${key}-error` : undefined };
+  };
+  const fieldError = (key) => {
+    const err = errorFor(key);
+    return err ? <p id={`pp-${key}-error`} className="field-error">{err.message}</p> : null;
+  };
 
   function updateGovernorGear(key, value) {
     setGovernorGear((current) => {
@@ -205,6 +296,14 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
     event.preventDefault();
     setStatus('');
     setIsError(false);
+    const missing = stepErrors(0, form);
+    if (missing.length) {
+      setStep(0);
+      setErrors(missing);
+      setErrorSignal((n) => n + 1);
+      return;
+    }
+    setErrors([]);
     setLoading(true);
     const response = await fetch('/api/power-profile', {
       method: 'POST',
@@ -219,6 +318,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
       return;
     }
     setOnFile(result.profile);
+    try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     setDirty(false);
     setStatus(result.status === 'created' ? 'Power Profile created.' : 'Power Profile updated.');
   }
@@ -275,6 +375,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
         </nav>
 
         <form
+          noValidate
           className="public-form-card war-ledger-form wizard-form"
           onSubmit={handleSubmit}
           onKeyDown={handleFormKeyDown}
@@ -287,15 +388,23 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
               <p>Your name and Member ID look you up and prefill anything already on file.</p>
             </div>
             <div className="identity-grid">
-              <label>Your name<input value={form.name} onChange={(e) => updateField('name', e.target.value)} placeholder="Your in-game name" /></label>
-              <label>Member ID<input value={form.member_id} onChange={(e) => updateField('member_id', e.target.value)} onBlur={() => lookup()} placeholder="Your Member ID" /></label>
+              <div className="wizard-field">
+                <label>Your name<input {...fieldProps('name')} autoComplete="nickname" value={form.name} onChange={(e) => updateField('name', e.target.value)} placeholder="Your in-game name" /></label>
+                {fieldError('name')}
+              </div>
+              <div className="wizard-field">
+                <label>Member ID<input {...fieldProps('member_id')} value={form.member_id} onChange={(e) => updateField('member_id', e.target.value)} onBlur={() => lookup()} placeholder="Your Member ID" /></label>
+                {fieldError('member_id')}
+              </div>
             </div>
-            {lookingUp && <LoadingRow>Looking up your profile…</LoadingRow>}
+            {/* Reserved height: the row appearing on blur must not shift the Next button mid-click. */}
+            <div className="lookup-slot" aria-live="polite">{lookingUp && <LoadingRow>Looking up your profile…</LoadingRow>}</div>
             {onFile && (
               <div className="on-file">
                 Player profile on file - Governor Gear: {onFile.governor_gear || '-'} / Charms: {onFile.charms || '-'} / Heroes: {onFile.heroes?.length ? onFile.heroes.join(', ') : '-'}
               </div>
             )}
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} />
             <div className="wizard-nav">
               <span />
               <button type="button" className="wizard-next" onClick={() => goToStep(1)}>Next: Troop Levels</button>
@@ -484,7 +593,8 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
             </div>
 
             {statusLine && <p className="save-status-line" aria-live="polite">{statusLine}</p>}
-            {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} id="form-error-summary-review" />
+            {status && <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>{status}</div>}
             <div className="wizard-nav">
               <button type="button" className="wizard-back" onClick={() => goToStep(3)}>Back</button>
               <button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Power Profile'}</button>

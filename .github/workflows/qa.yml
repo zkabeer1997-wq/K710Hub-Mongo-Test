@@ -1,0 +1,51 @@
+name: QA (a11y + smoke)
+
+# Blocking accessibility/smoke gate. CI has no MongoDB, so the smoke script
+# runs with QA_NO_DB=1 (tolerates 5xx /api console errors and skips the
+# DB-backed /alliances/* pages). Does not deploy anything.
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ADMIN_PASSWORD: ci-admin-password
+      MEMBER_SESSION_SECRET: qa-smoke-secret
+      QA_BASE: http://localhost:3111
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Start production server
+        run: |
+          nohup npm run start -- -p 3111 > server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fs -o /dev/null http://localhost:3111/ && exit 0
+            sleep 1
+          done
+          cat server.log
+          exit 1
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Smoke + axe (blocking)
+        run: QA_AXE_STRICT=1 QA_NO_DB=1 node scripts/qa-smoke.js
+      - name: Keyboard / wizard interactions
+        run: node scripts/qa-interactions.js
+      - name: Server log on failure
+        if: failure()
+        run: tail -n 100 server.log || true
