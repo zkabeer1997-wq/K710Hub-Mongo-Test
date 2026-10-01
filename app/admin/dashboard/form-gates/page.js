@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Field, Input, Table, Textarea } from '../../../../components/ui';
-import { FORM_GATE_KEYS as ORDER, FORM_GATE_LABELS as LABELS } from '../../../../lib/formGates.mjs';
+import { FORM_GATE_KEYS as ORDER, FORM_GATE_LABELS as LABELS, EVENT_GATE_KEYS } from '../../../../lib/formGates.mjs';
+import { windowState, windowMessage, formatUtc } from '../../../../lib/deadlines.mjs';
+import { toUtcInput, fromUtcInput } from '../../../../lib/formGateWindow.mjs';
 import { FORM_META_KEYS, FORM_META_TITLES, FORM_FIELDS_REORDERABLE, DEFAULT_FORM_FIELDS } from '../../../../lib/formFieldMeta.mjs';
 
 const OTHER_FORM_KEYS = FORM_META_KEYS.filter((key) => !ORDER.includes(key));
@@ -17,6 +19,7 @@ export default function AdminFormGatesPage() {
   const [status, setStatus] = useState('');
   const [savingKey, setSavingKey] = useState(null);
   const [drafts, setDrafts] = useState({});
+  const [windows, setWindows] = useState({});
   const [editingFormKey, setEditingFormKey] = useState(null);
   const [editorLoading, setEditorLoading] = useState(false);
   const [editorSaving, setEditorSaving] = useState(false);
@@ -34,10 +37,13 @@ export default function AdminFormGatesPage() {
       if (!response.ok || !Array.isArray(result?.gates)) throw new Error(result?.error || 'Unable to load form status. Please reload the page.');
       const byKey = {};
       const nextDrafts = {};
+      const nextWindows = {};
       for (const gate of result.gates || []) {
         byKey[gate.form_key] = gate;
         nextDrafts[gate.form_key] = gate.message || '';
+        nextWindows[gate.form_key] = { opens: toUtcInput(gate.opens_at), closes: toUtcInput(gate.closes_at), cycle: gate.cycle_id || 'current' };
       }
+      setWindows(nextWindows);
       setGates(byKey);
       setDrafts(nextDrafts);
     } catch (err) {
@@ -122,6 +128,36 @@ export default function AdminFormGatesPage() {
     await save(formKey, current?.is_open !== false, drafts[formKey] ?? '');
   }
 
+  async function saveWindow(formKey) {
+    const w = windows[formKey] || {};
+    setSavingKey(formKey);
+    setError('');
+    setStatus('');
+    try {
+      const gate = gates[formKey] || {};
+      const response = await fetch('/api/admin-form-gates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          form_key: formKey,
+          is_open: gate.is_open !== false,
+          message: drafts[formKey] ?? '',
+          opens_at: fromUtcInput(w.opens),
+          closes_at: fromUtcInput(w.closes),
+          cycle_id: w.cycle || 'current',
+        }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || result?.gate?.form_key !== formKey) throw new Error(result?.error || 'Unable to save the voting window.');
+      setGates((prev) => ({ ...prev, [formKey]: result.gate }));
+      setStatus(`${LABELS[formKey]} window saved.`);
+    } catch (err) {
+      setError(err.message || 'Unable to save the voting window.');
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
   async function save(formKey, isOpen, message) {
     setSavingKey(formKey);
     setError('');
@@ -162,7 +198,8 @@ export default function AdminFormGatesPage() {
               const gate = gates[formKey] || { is_open: true, message: '' };
               const isOpen = gate.is_open !== false;
               return (
-                <tr key={formKey}>
+                <Fragment key={formKey}>
+                <tr>
                   <td>{LABELS[formKey]}</td>
                   <td>{isOpen ? 'Open' : 'Closed'}</td>
                   <td style={{ minWidth: 260 }}>
@@ -187,6 +224,24 @@ export default function AdminFormGatesPage() {
                     <Button variant="quiet" onClick={() => openEditor(formKey)}>Edit Form</Button>
                   </td>
                 </tr>
+                {EVENT_GATE_KEYS.includes(formKey) && (() => {
+                  const w = windows[formKey] || { opens: '', closes: '', cycle: 'current' };
+                  const win = windowState(gate, Date.now(), { requireWindow: true });
+                  return (
+                    <tr>
+                      <td colSpan={4}>
+                        <fieldset className="form-window" style={{ border: 0, padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+                          <legend style={{ fontSize: 12, marginBottom: 6 }}>Voting window for {LABELS[formKey]} (times are UTC) · now: {windowMessage(win)}{win.closesAt ? ` · closes ${formatUtc(win.closesAt)}` : ''}</legend>
+                          <Field label="Opens (UTC)"><Input tone="console" type="datetime-local" value={w.opens} onChange={(e) => setWindows((cur) => ({ ...cur, [formKey]: { ...w, opens: e.target.value } }))} /></Field>
+                          <Field label="Closes (UTC)"><Input tone="console" type="datetime-local" value={w.closes} onChange={(e) => setWindows((cur) => ({ ...cur, [formKey]: { ...w, closes: e.target.value } }))} /></Field>
+                          <Field label="Cycle id" hint="Change to start a fresh round of votes."><Input tone="console" value={w.cycle} maxLength={40} onChange={(e) => setWindows((cur) => ({ ...cur, [formKey]: { ...w, cycle: e.target.value } }))} /></Field>
+                          <Button onClick={() => saveWindow(formKey)} disabled={savingKey === formKey}>{savingKey === formKey ? 'Saving…' : 'Save window'}</Button>
+                        </fieldset>
+                      </td>
+                    </tr>
+                  );
+                })()}
+                </Fragment>
               );
             })}
           </tbody>
