@@ -58,6 +58,7 @@ export async function generateMetadata({ params }) {
       title: event.title,
       description: event.description || undefined,
       openGraph: { title: event.title, description: event.description || undefined },
+      twitter: { card: 'summary_large_image', title: event.title, description: event.description || undefined },
     };
   } catch {
     return { title: 'Event' };

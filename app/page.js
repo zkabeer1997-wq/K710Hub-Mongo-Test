@@ -12,6 +12,7 @@ import NextBearHunt from '../components/NextBearHunt';
 import { getMemberHome } from '../lib/memberHome.server';
 import { OPTIMIZER_RECORD } from '../lib/kingdomExternalData.mjs';
 import SectionHeader from '../components/ui/SectionHeader';
+import { jsonLdString, organizationJsonLd, websiteJsonLd } from '../lib/jsonLd';
 import './home-extras.css';
 
 export const metadata = {
@@ -193,6 +194,8 @@ export default async function HomePage() {
 
   return (
     <main className="theme-realm home-v2">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(organizationJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(websiteJsonLd) }} />
       <HomeForgeIntro />
 
       <section className="home-v2-hero">

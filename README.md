@@ -35,6 +35,7 @@ Admin surface (shared password, or a Kingshot session with admin/superadmin role
 
 | Variable | Notes |
 |---|---|
+| `SITE_URL` | Public origin (no trailing slash), e.g. `https://k710.example`. Drives `metadataBase`, canonical URLs, sitemap, robots, JSON-LD and Open Graph image URLs (`lib/siteUrl.js`). Defaults to the testing site; **set it in production**. |
 | `KINGSHOT_API_BASE_URL`, `KINGSHOT_PLAYER_API_URL`, `KINGSHOT_PLAYER_SEARCH_URL` | Upstream endpoints for the Kingshot login flow (`lib/kingshotLogin.js`) |
 | `CHARM_OCR_ENDPOINT`, `GOVERNOR_CHARM_OCR_ENDPOINT`, `GOVERNOR_GEAR_OCR_ENDPOINT` | Screenshot-scanning tools; those features degrade gracefully without them |
 | `K710_LIBRETRANSLATE_URLS` | Comma-separated LibreTranslate mirrors for `/api/translate-ui`; falls back to public mirrors |

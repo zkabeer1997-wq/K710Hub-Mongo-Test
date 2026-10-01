@@ -14,6 +14,7 @@ import LanguageProvider from '../components/i18n/LanguageProvider';
 import BearScheduleProvider from '../components/BearScheduleProvider';
 import SiteChrome from '../components/SiteChrome';
 import FilipinoTagalogOptions from '../components/i18n/FilipinoTagalogOptions';
+import { headers } from 'next/headers';
 import { SITE_URL } from '../lib/siteUrl';
 import { ToastProvider } from '../components/ui/Toast';
 
@@ -28,25 +29,21 @@ export const metadata = {
   title: { default: 'K710 Hub', template: '%s · K710 Hub' },
   description: 'The Kingdom 710 website for events, alliance schedules, member forms, guides, calculators, and transfer applications.',
   applicationName: 'K710 Hub',
+  alternates: { canonical: './' },
+  icons: { apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }] },
   openGraph: { title: 'K710 Hub', description: 'The Kingdom 710 website for events, alliance schedules, member forms, guides, calculators, and transfer applications.', siteName: 'K710 Hub', type: 'website' },
+  twitter: { card: 'summary_large_image', title: 'K710 Hub', description: 'The Kingdom 710 website for events, alliance schedules, member forms, guides, calculators, and transfer applications.' },
 };
 
 export const viewport = { themeColor: '#0b0e13', width: 'device-width', initialScale: 1 };
 
-const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'Kingdom 710',
-  alternateName: 'K710',
-  url: SITE_URL,
-  description: 'Kingdom 710 — a KvK-first Kingshot kingdom run across three coordinated alliances: 710, RED, and SKY.',
-};
-
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Reading request headers opts every page into dynamic rendering so Next can
+  // stamp the per-request CSP nonce (set in proxy.js) onto its inline scripts.
+  await headers();
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
       <body className="theme-console">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
         <ToastProvider>
           <LanguageProvider>
             <FilipinoTagalogOptions />

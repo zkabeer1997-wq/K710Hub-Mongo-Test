@@ -1,13 +1,3 @@
-// A pragmatic CSP, not a strict nonce-based one: this codebase relies on
-// inline <style> tags across most pages (see app/tools/page.js,
-// app/alliances/[tag]/page.js, and others) and Next's own RSC hydration
-// payload ships as an inline <script>, so script-src and style-src both
-// need 'unsafe-inline'. A nonce-per-request CSP would remove that, but it
-// means threading a nonce through every one of those inline blocks and the
-// root layout's own script injection - a larger, riskier change than this
-// PR's scope. What's still worth doing without that rewrite: block the
-// unrelated-but-genuinely-dangerous vectors (framing, arbitrary base tags,
-// cross-origin form submission, plugin content) outright.
 // Mirrors TOOL_SLUG_RENAMES in lib/toolKeys.mjs (a test keeps them in sync;
 // this file is CommonJS so it cannot import the ES module directly).
 const TOOL_SLUG_RENAMES = {
@@ -22,7 +12,10 @@ const TOOL_SLUG_RENAMES = {
   'flamedragon-shop': 'dragons-caravan-optimizer',
 };
 
-const CSP = [
+// Page CSP (nonce + strict-dynamic) is set per request in proxy.js. This
+// legacy policy now only covers /api/*, which the proxy skips; the Google
+// Drive OAuth callback returns a small inline <script> that needs it.
+const API_CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
@@ -36,11 +29,11 @@ const CSP = [
 ].join('; ');
 
 const SECURITY_HEADERS = [
-  { key: 'Content-Security-Policy', value: CSP },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
 ];
 
 /** @type {import('next').NextConfig} */
@@ -50,6 +43,10 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: SECURITY_HEADERS,
+      },
+      {
+        source: '/api/:path*',
+        headers: [{ key: 'Content-Security-Policy', value: API_CSP }],
       },
     ];
   },

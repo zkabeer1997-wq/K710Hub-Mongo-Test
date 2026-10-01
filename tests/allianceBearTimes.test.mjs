@@ -137,7 +137,7 @@ test('Events is public while admin and member forms remain gated', async () => {
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('location'), null);
   }
-  assert.ok(proxyConfig.matcher.every(path => !path.startsWith('/events')));
+  assert.ok(proxyConfig.matcher.every(m => !(typeof m === 'string' ? m : m.source).startsWith('/events')));
   for (const path of ['/admin/dashboard/alliance-events', '/tools', '/forms', '/dashboard/form']) {
     const url = new URL(`https://example.com${path}`);
     const response = await proxy({ url: url.href, nextUrl: url, cookies: { get: () => undefined } });

@@ -26,22 +26,19 @@ const MEMBER_PREFIXES = [
   '/tools',
 ];
 
+// Runs on every page request (not /api, build assets or the favicon) so each
+// response carries a per-request CSP nonce; the auth gates below still only
+// apply to the ADMIN/MEMBER prefixes. Prefetches are excluded: they never
+// render HTML that needs a nonce.
 export const config = {
   matcher: [
-    '/admin/dashboard',
-    '/admin/dashboard/:path*',
-    '/forms',
-    '/forms/:path*',
-    '/dashboard/form',
-    '/dashboard/form/:path*',
-    '/power-profile',
-    '/power-profile/:path*',
-    '/flamedragon',
-    '/flamedragon/:path*',
-    '/prep-phase-backpack',
-    '/prep-phase-backpack/:path*',
-    '/tools',
-    '/tools/:path*',
+    {
+      source: '/((?!api|_next/static|_next/image|favicon.ico|icon.svg|icon-.*\\.png|apple-touch-icon.png).*)',
+      missing: [
+        { type: 'header', key: 'next-router-prefetch' },
+        { type: 'header', key: 'purpose', value: 'prefetch' },
+      ],
+    },
   ],
 };
 
@@ -49,28 +46,66 @@ function matchesPrefix(pathname, prefixes) {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+function buildCsp(nonce) {
+  const dev = process.env.NODE_ENV === 'development';
+  return [
+    "default-src 'self'",
+    // Nonce for every inline script; no 'unsafe-inline'. 'strict-dynamic' is
+    // deliberately NOT used: Next 16 emits the segment chunk <script> for
+    // loading.js boundaries without a nonce, and strict-dynamic would make
+    // browsers block it ('self' covers same-origin chunks instead).
+    `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''}`,
+    // Inline <style> blocks are used across many pages; styles cannot run code.
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+}
+
+function withCsp(request, csp, nonce, redirectTo) {
+  if (redirectTo) {
+    const res = NextResponse.redirect(redirectTo);
+    res.headers.set('Content-Security-Policy', csp);
+    return res;
+  }
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('Content-Security-Policy', csp);
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set('Content-Security-Policy', csp);
+  return res;
+}
+
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
+  const nonce = btoa(crypto.randomUUID());
+  const csp = buildCsp(nonce);
 
   if (matchesPrefix(pathname, ADMIN_PREFIXES)) {
     if (!(await isAdminRequest(request))) {
-      const loginUrl = new URL('/admin/login', request.url);
-      return NextResponse.redirect(loginUrl);
+      return withCsp(request, csp, nonce, new URL('/admin/login', request.url));
     }
-    return NextResponse.next();
+    return withCsp(request, csp, nonce);
   }
 
-  if (matchesPrefix(pathname, MEMBER_PREFIXES)) {
+  // Generated social images are public so crawlers can fetch them.
+  const isSocialImage = /\/opengraph-image(-[a-z0-9]+)?$/.test(pathname);
+
+  if (!isSocialImage && matchesPrefix(pathname, MEMBER_PREFIXES)) {
     // Kingshot login now issues the same edge-safe signed cookie format
     // as legacy PIN login, so one read covers both.
     const session = await readMemberSession(request);
     if (!session) {
       const loginUrl = new URL('/dashboard', request.url);
       loginUrl.searchParams.set('next', pathname + request.nextUrl.search);
-      return NextResponse.redirect(loginUrl);
+      return withCsp(request, csp, nonce, loginUrl);
     }
-    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  return withCsp(request, csp, nonce);
 }
