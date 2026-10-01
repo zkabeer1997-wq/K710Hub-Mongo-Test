@@ -6,7 +6,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { validateEventSchedule } from '../../../lib/eventRecurrence.mjs';
 
-const KINDS = ['kvk', 'championship', 'swordland', 'custom'];
+const KINDS = ['kvk', 'championship', 'swordland', 'bear_hunt', 'custom'];
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
 
 async function requireAdmin(request) {

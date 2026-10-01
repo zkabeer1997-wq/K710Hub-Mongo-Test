@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { huntsFromAlliances } from '../lib/bearHuntSchedule';
+import BearTimes from './BearTimes';
 
 const Context = createContext({ alliances: null, error: '' });
 export const BEAR_SCHEDULE_CHANGED = 'k710-bear-schedule-changed';
@@ -63,5 +64,5 @@ export function AllianceBearTimes({ tag, initialTimes }) {
   const times = alliances.find(alliance => alliance.tag === tag)?.bear_times_utc || [];
   if (loading) return <span>Loading Bear Hunt times…</span>;
   if (error) return <span>{error}</span>;
-  return <span>{times.length ? times.map(time => `${time} UTC`).join(' · ') : 'No Bear Hunt times set.'}</span>;
+  return <BearTimes times={times} />;
 }

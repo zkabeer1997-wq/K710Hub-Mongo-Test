@@ -9,11 +9,14 @@ import { Button, Tag } from '../../../components/ui';
 
 import { RECURRENCE_FIELDS } from '../../../lib/eventRecurrence.mjs';
 import EventSchedule from '../EventSchedule';
+import { findDefaultEvent } from '../../../lib/defaultEvents.mjs';
+import { loadPublicBearScheduleOrNull } from '../../../lib/publicBearSchedule';
 
 const KIND_LABEL = {
   kvk: 'KvK',
   championship: 'Championship',
   swordland: 'Swordland',
+  bear_hunt: 'Bear Hunt',
   custom: 'Kingdom Event',
 };
 
@@ -30,8 +33,8 @@ export async function generateStaticParams() {
 
 async function loadEvent(slug) {
   const coll = await getCollection(COLLECTIONS.EVENTS);
-  return coll.findOne(
-    { slug, published: true },
+  const stored = await coll.findOne(
+    { slug },
     {
       projection: {
         slug: 1, title: 1, kind: 1, description: 1, body_md: 1,
@@ -41,6 +44,9 @@ async function loadEvent(slug) {
       },
     }
   );
+  // A stored event with this slug (even a draft) overrides the built-in default.
+  if (stored) return stored.published ? stored : null;
+  return findDefaultEvent(slug, (await loadPublicBearScheduleOrNull()) || []);
 }
 
 export async function generateMetadata({ params }) {

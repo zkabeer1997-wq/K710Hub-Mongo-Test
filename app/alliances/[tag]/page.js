@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { Tag, Card, Button, PageHero, SectionHeader } from '../../../components/ui';
+import { allianceFacts } from '../../../lib/allianceFacts.mjs';
 import { AllianceBearTimes } from '../../../components/BearScheduleProvider';
 
 const STATUS_LABEL = { open: 'Recruiting', selective: 'Selective', closed: 'Closed' };
@@ -70,6 +71,7 @@ export default async function AlliancePage({ params }) {
     );
   }
   if (!alliance) notFound();
+  const facts = allianceFacts(alliance);
 
   return (
     <main className="theme-realm alliance-page">
@@ -88,18 +90,20 @@ export default async function AlliancePage({ params }) {
         }
       />
       <div className="alliance-page-inner">
-        <Card className="alliance-facts">
-          <div><dt>Timezone focus</dt><dd>{alliance.timezone_focus || 'Not listed'}</dd></div>
-          <div><dt>Roster size</dt><dd>{alliance.roster_size != null ? `${alliance.roster_size} members` : 'Not listed'}</dd></div>
-          <div><dt>Primary language</dt><dd>{alliance.language || 'Not listed'}</dd></div>
-          <div><dt>Leadership contact</dt><dd>{alliance.leader_player_id || 'Not listed'}</dd></div>
-        </Card>
+        {facts.length > 0 && (
+          <Card className="alliance-facts">
+            <dl>
+              {facts.map(fact => <div key={fact.key}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}
+            </dl>
+          </Card>
+        )}
 
         <section className="alliance-windows">
           <SectionHeader title="Bear Hunt windows" className="alliance-sh" />
           <div className="alliance-windows-list">
             <AllianceBearTimes tag={alliance.tag} initialTimes={alliance.bear_times_utc} />
           </div>
+          <a className="alliance-events-link" href={`/api/events/bear-hunt.ics?alliance=${alliance.tag}`} download>Add {alliance.tag} Bear Hunts to my calendar</a>
           <Link href="/about#alliances" className="alliance-events-link">See all alliance Bear Hunt times →</Link>
         </section>
 
@@ -111,7 +115,7 @@ export default async function AlliancePage({ params }) {
         .alliance-page-inner{max-width:700px;margin:0 auto;padding:48px 24px 0;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
         .alliance-head{display:flex;gap:8px;flex-wrap:wrap}
         .alliance-blurb{margin:0;font-size:16px;color:var(--color-ink-muted);max-width:60ch}
-        .alliance-facts{padding:20px;display:flex;flex-direction:column;gap:8px;width:100%}
+        .alliance-facts{padding:20px;width:100%}.alliance-facts dl{margin:0;display:flex;flex-direction:column;gap:8px}
         .alliance-facts div{display:flex;justify-content:space-between;border-top:1px solid var(--color-border);padding-top:8px}
         .alliance-facts div:first-child{border-top:0;padding-top:0}
         .alliance-facts dt{margin:0;color:var(--color-ink-muted);font-size:13px}

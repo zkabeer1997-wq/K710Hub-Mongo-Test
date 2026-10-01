@@ -8,6 +8,7 @@ import AllianceEventSchedule from './AllianceEventSchedule';
 import BearHuntSchedule from './BearHuntSchedule';
 import EventCountdownCards from './EventCountdownCards';
 import { upcomingEventSeries } from '../../lib/eventRecurrence.mjs';
+import { mergeDefaultEvents } from '../../lib/defaultEvents.mjs';
 
 export const metadata = {
   title: 'Events',
@@ -17,11 +18,12 @@ export const metadata = {
 
 export const revalidate = 300;
 
-async function loadUpcomingEvents() {
+async function loadUpcomingEvents(alliances) {
   const coll = await getCollection(COLLECTIONS.EVENTS);
   const data = await coll
-    .find({ published: true })
+    .find({})
     .project({
+      published: 1,
       slug: 1,
       title: 1,
       kind: 1,
@@ -36,7 +38,9 @@ async function loadUpcomingEvents() {
     })
     .sort({ starts_at: 1 })
     .toArray();
-  return upcomingEventSeries(data || []).map((entry) => entry.event);
+  // Built-in recurring defaults appear unless a stored event (even a draft) reuses their slug.
+  const merged = mergeDefaultEvents(data || [], alliances || []).filter((event) => event.published);
+  return upcomingEventSeries(merged).map((entry) => entry.event);
 }
 
 export default async function EventsPage() {
@@ -44,7 +48,7 @@ export default async function EventsPage() {
   let events = [];
   let loadError = '';
   try {
-    events = await loadUpcomingEvents();
+    events = await loadUpcomingEvents(bearAlliances);
   } catch (error) {
     console.error('events page load failed', error);
     loadError = 'The event calendar could not be opened right now.';

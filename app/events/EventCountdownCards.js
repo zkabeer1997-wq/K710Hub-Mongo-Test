@@ -9,6 +9,7 @@ const KIND_LABEL = {
   kvk: 'KvK',
   championship: 'Championship',
   swordland: 'Swordland',
+  bear_hunt: 'Bear Hunt',
   custom: 'Kingdom Event',
 };
 

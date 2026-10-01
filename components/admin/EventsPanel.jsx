@@ -5,9 +5,10 @@ import ConfirmDialog from './ConfirmDialog';
 import TableSkeleton from './TableSkeleton';
 import { Button, Field, Input, Select, Textarea, Table } from '../ui';
 
+import { DEFAULT_KINGDOM_EVENTS } from '../../lib/defaultEvents.mjs';
 import { nextEventOccurrence, recurrenceLabel, validateEventSchedule } from '../../lib/eventRecurrence.mjs';
 
-const KINDS = ['kvk', 'championship', 'swordland', 'custom'];
+const KINDS = ['kvk', 'championship', 'swordland', 'bear_hunt', 'custom'];
 const EMPTY_FORM = {
   slug: '', title: '', kind: 'custom', description: '', body_md: '',
   starts_at: '', ends_at: '', published: false,
@@ -100,6 +101,20 @@ export default function EventsPanel() {
       recurrence_frequency: row.recurrence_frequency || 'none',
       recurrence_interval: row.recurrence_interval || 1,
       recurrence_until: row.recurrence_until || '',
+    });
+  }
+
+  // Start a stored event that overrides a built-in default (same slug).
+  function customizeDefault(def) {
+    setError('');
+    setStatus('');
+    setEditingId('new');
+    const choice = `${def.recurrence_frequency}:${def.recurrence_interval}`;
+    setRepeatChoice(['daily:1', 'daily:2', 'weekly:1', 'weekly:2', 'monthly:1', 'yearly:1'].includes(choice) ? choice : 'custom');
+    setForm({
+      slug: def.slug, title: def.title, kind: def.kind, description: def.description || '', body_md: '',
+      starts_at: toLocalInputValue(def.starts_at), ends_at: toLocalInputValue(def.ends_at), published: true,
+      recurrence_frequency: def.recurrence_frequency, recurrence_interval: def.recurrence_interval, recurrence_until: '',
     });
   }
 
@@ -268,6 +283,27 @@ export default function EventsPanel() {
           </tbody>
         </Table>
       )}
+
+      <h3 style={{ marginTop: 28 }}>Built-in recurring events</h3>
+      <p className="admin-page-lead">These appear on the public Events page without being stored. Daily Bear Hunts per alliance come from each alliance&apos;s Bear Hunt times. To change or hide one of the series below, customize it: that saves an event with the same slug, which replaces the built-in one (save it as Draft to hide it). Starting dates are defaults; confirm them with leadership.</p>
+      <Table>
+        <thead><tr><th>Title</th><th>Slug</th><th>Repeats</th><th /></tr></thead>
+        <tbody>
+          {DEFAULT_KINGDOM_EVENTS.map((def) => {
+            const overridden = rows.some((row) => row.slug === def.slug);
+            return (
+              <tr key={def.slug}>
+                <td>{def.title}</td>
+                <td>{def.slug}</td>
+                <td>{recurrenceLabel(def)}{overridden ? ' · overridden above' : ''}</td>
+                <td className="admin-table-actions">
+                  <Button variant="quiet" onClick={() => customizeDefault(def)} disabled={editingId !== null || overridden}>Customize</Button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
 
       <ConfirmDialog
         open={Boolean(confirmRow)}

@@ -698,3 +698,14 @@
 .ph--realm .cost-tool-crumbs a { color: var(--hero-eyebrow); }
 .ph--realm .cost-tool-crumbs [aria-current="page"] span { color: var(--hero-lede); }
 .ph--realm .cost-tool-crumbs li + li::before { color: rgba(243,217,154,0.6); }
+
+/* BearTimes: local time first, UTC second, next hunt highlighted. Inherits text colour from its surface. */
+.bear-times { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); justify-content: inherit; }
+.bear-time { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; border: 1px solid color-mix(in srgb, currentColor 22%, transparent); border-radius: var(--radius-sm); font-variant-numeric: tabular-nums; }
+.bear-time-main { font-weight: 700; color: inherit; }
+.bear-time-utc { font-family: var(--font-mono); font-size: 0.78em; opacity: 0.75; }
+.bear-time[data-next="true"] { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.bear-time-flag { font-size: 0.68em; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-text); }
+.home-v2-alliance-fragment .bear-times { justify-content: center; }
+.home-v2-alliance-fragment .bear-time-flag { color: #f3c889; }
+.bear-note { display: block; margin-top: 12px; }

@@ -14,6 +14,7 @@ import {
   OPTIMIZER_KINGDOM_URL,
   OPTIMIZER_RANKINGS_URL,
   ATLAS_KINGDOM_URL,
+  KINGDOM_DATA_AS_OF,
 } from '../../lib/kingdomExternalData.mjs';
 
 export const metadata = {
@@ -96,6 +97,7 @@ export default async function AboutPage() {
   const hasSources = sourcesBlocks.length > 0;
   const rec = OPTIMIZER_RECORD;
   const atlas = ATLAS_RANKING;
+  const dataAsOf = new Date(`${KINGDOM_DATA_AS_OF}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
   return (
     <main className="theme-realm about-page">
@@ -166,10 +168,8 @@ export default async function AboutPage() {
         </section>
 
         <section className="about-section" id="competitive-record">
-          <SectionHeader title="KvK record" className="about-sh" lede={<>Competitive record verified through{' '}
-              <a href={OPTIMIZER_KINGDOM_URL} target="_blank" rel="noopener noreferrer">
-                Kingshot Optimizer
-              </a>.</>} />
+          <span id="kingdom-rankings" aria-hidden="true" />
+          <SectionHeader title="KvK record and rankings" className="about-sh" lede={`Data as of ${dataAsOf}. Snapshot from Kingshot Optimizer and Kingshot Atlas; the linked pages are always current.`} />
           <Card className="about-record-card">
             <div className="about-record-stats">
               <div>
@@ -193,12 +193,16 @@ export default async function AboutPage() {
                 </strong>
               </div>
               <div>
-                <span className="about-stat-label">Rating</span>
+                <span className="about-stat-label">Optimizer rating</span>
                 <strong>{rec.rating}</strong>
               </div>
               <div>
-                <span className="about-stat-label">Rank</span>
+                <span className="about-stat-label">Optimizer rank</span>
                 <strong className="about-rank">#{rec.rank}</strong>
+              </div>
+              <div>
+                <span className="about-stat-label">Atlas rank</span>
+                <strong className="about-rank">#{atlas.rank}</strong>
               </div>
             </div>
             <div className="about-record-matchups">
@@ -224,15 +228,17 @@ export default async function AboutPage() {
                   <span className="loss">Battle {rec.toughestMatchup.battle}</span>
                 </p>
               </div>
+              <div>
+                <span className="about-stat-label">Atlas</span>
+                <p>Score {atlas.atlasScore} · Top {atlas.topPercent}{atlas.tier ? ` · ${atlas.tier}` : ''}</p>
+              </div>
             </div>
-            <a
-              className="about-external-link"
-              href={OPTIMIZER_KINGDOM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open full record on Optimizer →
-            </a>
+            <p className="about-record-sources">
+              Sources:{' '}
+              <a href={OPTIMIZER_KINGDOM_URL} target="_blank" rel="noopener noreferrer">Kingshot Optimizer record</a>,{' '}
+              <a href={OPTIMIZER_RANKINGS_URL} target="_blank" rel="noopener noreferrer">Optimizer rankings</a>,{' '}
+              <a href={ATLAS_KINGDOM_URL} target="_blank" rel="noopener noreferrer">Kingshot Atlas</a>.
+            </p>
           </Card>
           {isAdmin && (
             <div className="about-admin-note">
@@ -247,53 +253,12 @@ export default async function AboutPage() {
           )}
         </section>
 
-        <section className="about-section" id="kingdom-rankings">
-          <SectionHeader title="Kingdom Rankings" className="about-sh" />
-          <div className="about-rankings-grid">
-            <Card className="about-rank-box about-rank-optimizer">
-              <h3>Optimizer Ranking</h3>
-              <p className="about-rank-source">Kingshot Optimizer</p>
-              <dl className="about-rank-facts">
-                <div><dt>Rank</dt><dd>#{rec.rank}</dd></div>
-                <div><dt>Rating</dt><dd>{rec.rating}</dd></div>
-                <div><dt>Prep</dt><dd>{rec.prep.wins}–{rec.prep.losses}</dd></div>
-                <div><dt>Battle</dt><dd>{rec.battle.wins}–{rec.battle.losses}</dd></div>
-                <div><dt>KvKs</dt><dd>{rec.kvksParticipated}</dd></div>
-              </dl>
-              <a href={OPTIMIZER_RANKINGS_URL} target="_blank" rel="noopener noreferrer" className="about-external-link">
-                View on Optimizer rankings →
-              </a>
-            </Card>
-
-            <Card className="about-rank-box about-rank-atlas">
-              <h3>Atlas Ranking</h3>
-              <p className="about-rank-source">Kingshot Atlas</p>
-              <div className="about-atlas-pill">
-                <span>Atlas Score: <strong>{atlas.atlasScore}</strong></span>
-                <span>Rank: <strong>#{atlas.rank}</strong></span>
-                <span className="about-atlas-top">Top {atlas.topPercent}</span>
-              </div>
-              {atlas.tier && <p className="about-atlas-tier">{atlas.tier}</p>}
-              <a href={ATLAS_KINGDOM_URL} target="_blank" rel="noopener noreferrer" className="about-external-link">
-                View on Atlas →
-              </a>
-            </Card>
-          </div>
-        </section>
-
-        <section className="about-section">
-          <SectionHeader title="Sources" className="about-sh" />
-          {(hasSources || isAdmin) ? (
+        {(hasSources || isAdmin) && (
+          <section className="about-section">
+            <SectionHeader title="More sources" className="about-sh" />
             <EditableSection page="about-sources" initialBlocks={sourcesBlocks} isAdmin={isAdmin} as="div" className="about-editable" />
-          ) : (
-            <Card className="about-empty">
-              Rankings and competitive record are sourced from{' '}
-              <a href={OPTIMIZER_KINGDOM_URL} target="_blank" rel="noopener noreferrer">Kingshot Optimizer</a>
-              {' '}and{' '}
-              <a href={ATLAS_KINGDOM_URL} target="_blank" rel="noopener noreferrer">Kingshot Atlas</a>.
-            </Card>
-          )}
-        </section>
+          </section>
+        )}
 
         <section className="about-section" id="how-to-transfer">
           <SectionHeader title="How transferring works" className="about-sh" lede="Four steps from application to your first Bear Hunt." />
@@ -371,6 +336,7 @@ export default async function AboutPage() {
         .about-record-matchups .win{color:#3ecf8e;text-transform:capitalize}
         .about-record-matchups .loss{color:#f07178;text-transform:capitalize}
         .about-record-matchups .muted{color:#c4b493}
+        .about-record-sources{margin:0;font-size:12.5px;color:#c4b493}.about-record-sources a{color:var(--hero-eyebrow)}
         .about-rankings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
         .about-rank-box{padding:20px;display:flex;flex-direction:column;gap:10px}
         .about-rank-box h3{margin:0;font-family:var(--font-display);font-size:18px}

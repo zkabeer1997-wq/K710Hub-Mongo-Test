@@ -5,6 +5,9 @@ import { useMemo, useState } from 'react';
 import { Field, Input } from '../../components/ui';
 import GuideIcon from './GuideIcon';
 import { guideCategories } from '../../lib/guideValidation.mjs';
+import { formatGuideDate, guideSubtitle, guideUpdatedAt } from '../../lib/guideContent.mjs';
+
+const updatedLabel = (guide) => formatGuideDate(guideUpdatedAt(guide));
 import { guideDifficultyLabel, startHereSlug } from '../../lib/guideTags.mjs';
 
 const DIFFICULTY_TONE = {
@@ -87,10 +90,10 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
                     )}
                   </span>
                   <strong className="guide-entry-title">{guide.title}</strong>
-                  <span className="guide-description">{guide.description}</span>
+                  {guideSubtitle(guide.title, guide.description) && <span className="guide-description">{guide.description}</span>}
                   <span className="guide-entry-sub">
                     {guide.reading_minutes || 1} min read
-                    {guide.updated_at ? ` · Updated ${new Date(guide.updated_at).toLocaleDateString()}` : ''}
+                    {updatedLabel(guide) ? ` · Updated ${updatedLabel(guide)}` : ''}
                   </span>
                 </span>
                 <span className="guide-entry-meta">

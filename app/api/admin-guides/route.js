@@ -38,6 +38,7 @@ export async function GET(request) {
         position: 1,
         is_published: 1,
         access_level: 1,
+        reviewed_by: 1,
         created_at: 1,
         updated_at: 1,
         _id: 0,

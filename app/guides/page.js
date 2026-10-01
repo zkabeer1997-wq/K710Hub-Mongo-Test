@@ -9,6 +9,7 @@ import { PageHero, SectionHeader } from '../../components/ui';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import GuidesDirectory from './GuidesDirectory';
 import { guideCategories, guideSummary } from '../../lib/guideValidation.mjs';
+import { formatGuideDate, guideUpdatedAt } from '../../lib/guideContent.mjs';
 
 export const metadata = {
   title: 'Guides',
@@ -38,6 +39,9 @@ async function loadGuides() {
       category: 1,
       description: 1,
       body: 1,
+      f2p_content: 1,
+      spender_content: 1,
+      created_at: 1,
       access_level: 1,
       position: 1,
       updated_at: 1,
@@ -94,7 +98,7 @@ export default async function GuidesPage({ searchParams }) {
             <div>
               <span>Latest revision</span>
               <strong className="guides-index-small">
-                {latest?.updated_at ? new Date(latest.updated_at).toLocaleDateString() : 'No revisions yet'}
+                {latest?.updated_at ? formatGuideDate(guideUpdatedAt(latest)) : 'No revisions yet'}
               </strong>
             </div>
           </aside>

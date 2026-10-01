@@ -1,17 +1,33 @@
 'use client';
 
 import Breadcrumbs from '../../../components/Breadcrumbs';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
+import { guideHeadings, guideMeta, guideSubtitle, headingIdFactory, linkifyBareUrls, shouldShowToc } from '../../../lib/guideContent.mjs';
 
-function readingTime(body) {
-  const words = String(body || '').trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
+// Runs after sanitizing: gives h1-h3 the same ids guideHeadings() lists in the TOC.
+function hastText(node) {
+  if (node.type === 'text') return node.value;
+  return (node.children || []).map(hastText).join('');
 }
+function rehypeHeadingIds() {
+  return (tree) => {
+    const nextId = headingIdFactory();
+    const walk = (node) => {
+      if (node.type === 'element' && /^h[1-3]$/.test(node.tagName)) {
+        const text = hastText(node).trim();
+        if (text) node.properties = { ...node.properties, id: nextId(text) };
+      }
+      (node.children || []).forEach(walk);
+    };
+    walk(tree);
+  };
+}
+const REHYPE_PLUGINS = [rehypeSanitize, rehypeHeadingIds];
 
 export default function GuideArticle({ slug, initialGuide, initialIsAdmin = false, initialError = '', prev, next }) {
   const searchParams = useSearchParams();
@@ -32,6 +48,12 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
     : contentTab === 'spenders'
       ? (guide?.spender_content || guide?.body)
       : (guide?.f2p_content || guide?.body);
+
+  const renderedContent = useMemo(() => linkifyBareUrls(activeContent || ''), [activeContent]);
+  const headings = useMemo(() => guideHeadings(renderedContent), [renderedContent]);
+  const showToc = shouldShowToc(renderedContent, headings);
+  const meta = guideMeta(guide || {});
+  const subtitle = guideSubtitle(guide?.title, guide?.description);
 
   const query = memberId ? `?member_id=${encodeURIComponent(memberId)}` : '';
   const guidesHref = `/guides${query}`;
@@ -156,7 +178,7 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
               />
             </div>
           )}
-          <p className="k-narrative">{guide.description}</p>
+          {subtitle && <p className="k-narrative">{subtitle}</p>}
           <div className="guide-rule" aria-hidden="true" />
         </header>
 
@@ -170,9 +192,19 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
                   <button type="button" role="tab" aria-selected={contentTab === 'spenders'} className={contentTab === 'spenders' ? 'is-active' : undefined} onClick={() => setContentTab('spenders')}>Spenders</button>
                 </div>
               )}
+              {showToc && (
+                <nav className="guide-toc" aria-label="On this page">
+                  <strong>On this page</strong>
+                  <ol>
+                    {headings.map((heading) => (
+                      <li key={heading.id} data-level={heading.level}><a href={`#${heading.id}`}>{heading.text}</a></li>
+                    ))}
+                  </ol>
+                </nav>
+              )}
               {activeContent ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-                  {activeContent}
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={REHYPE_PLUGINS}>
+                  {renderedContent}
                 </ReactMarkdown>
               ) : (
                 'This guide has not been written yet.'
@@ -215,7 +247,11 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
         )}
 
         <footer className="guide-footer">
-          <span>{readingTime(guide.body)} min read · Last updated {guide.updated_at ? new Date(guide.updated_at).toLocaleString() : '—'}</span>
+          <span>
+            {meta.minutes} min read
+            {meta.updatedLabel && <> · Updated <time dateTime={meta.updatedIso}>{meta.updatedLabel}</time></>}
+            {meta.reviewedBy && <> · Last reviewed by {meta.reviewedBy}</>}
+          </span>
           {memberId && <span>Member {memberId}</span>}
         </footer>
 
@@ -256,6 +292,12 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
         .guide-volume:before{content:'';position:absolute;inset:10px;border:1px solid rgba(201,164,78,.11);pointer-events:none}
         .guide-volume-spine{position:absolute;left:0;top:0;bottom:0;width:8px;background:linear-gradient(90deg,#1a120b,#79592b,#2b1d10);border-right:1px solid rgba(201,164,78,.35)}
         .guide-body{position:relative;z-index:1;color:#e6dcc2;font-size:17px;line-height:1.82;letter-spacing:.005em}
+        .guide-toc{margin:0 0 26px;padding:14px 18px;border:1px solid rgba(201,164,78,.22);background:rgba(16,15,13,.5)}
+        .guide-toc strong{display:block;margin-bottom:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+        .guide-toc ol{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:15px;line-height:1.4}
+        .guide-toc li[data-level="3"]{padding-left:16px;font-size:14px}
+        .guide-toc a{color:var(--parchment);text-decoration:none}.guide-toc a:hover{color:var(--gold-hot);text-decoration:underline}
+        .guide-body :global(h2),.guide-body :global(h3){scroll-margin-top:96px}
         .guide-content-tabs{display:flex;gap:6px;margin:0 0 22px;border-bottom:1px solid rgba(201,164,78,.22)}
         .guide-content-tabs button{padding:9px 16px;background:none;border:0;border-bottom:2px solid transparent;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--parchment-dim);cursor:pointer}
         .guide-content-tabs button.is-active{color:var(--gold-hot);border-bottom-color:var(--gold-hot)}

@@ -23,6 +23,7 @@ const EMPTY_FORM = {
   position: '0',
   is_published: false,
   access_level: 'public',
+  reviewed_by: '',
 };
 
 const CONTENT_TABS = [
@@ -304,6 +305,9 @@ export default function AdminGuidesPage() {
             </Field>
           </div>
           <datalist id="guide-category-options">{categoryNames.map(name => <option key={name} value={name} />)}</datalist>
+          <Field label="Last reviewed by (optional)" htmlFor="guide-reviewed-by" hint="Shown to readers as “Last reviewed by …”. Leave empty to hide it.">
+            <Input id="guide-reviewed-by" tone="console" value={form.reviewed_by || ''} maxLength={80} onChange={(event) => setForm((current) => ({ ...current, reviewed_by: event.target.value }))} />
+          </Field>
           <Field label="Short description" htmlFor="guide-description">
             <Textarea id="guide-description" tone="console" rows={3} maxLength={500} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
           </Field>

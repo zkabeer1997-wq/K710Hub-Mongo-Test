@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { huntsFromAlliances } from '../../../../lib/bearHuntSchedule';
+import { bearHuntIcsEvents } from '../../../../lib/bearIcs.mjs';
 import { loadPublicBearSchedule } from '../../../../lib/publicBearSchedule';
 import { buildIcsCalendar } from '../../../../lib/ics';
 
@@ -10,37 +10,25 @@ import { buildIcsCalendar } from '../../../../lib/ics';
 // ICS natively expresses "every day at this UTC time."
 export const dynamic = 'force-dynamic';
 
-function nextOccurrence(utcHHMM) {
-  const now = new Date();
-  const [h, m] = utcHHMM.split(':').map(Number);
-  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), h, m, 0));
-  if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
-  return next;
-}
-
-export async function GET() {
+export async function GET(request) {
+  const tag = (request?.url ? new URL(request.url).searchParams.get('alliance') : null);
+  if (tag && !/^[A-Za-z0-9]{2,10}$/.test(tag)) return NextResponse.json({ error: 'Invalid alliance.' }, { status: 400 });
   let alliances;
   try { alliances = await loadPublicBearSchedule(); }
   catch (error) {
     console.error('Bear Hunt calendar load failed', error);
     return NextResponse.json({ error: 'The Bear Hunt calendar is temporarily unavailable.' }, { status: 503 });
   }
-  const events = huntsFromAlliances(alliances)
-    .map((hunt) => ({
-      uid: `bear-hunt-${hunt.band}-${hunt.utc.replace(':', '')}@k710hub`,
-      start: nextOccurrence(hunt.utc),
-      rrule: 'FREQ=DAILY',
-      summary: `Bear Hunt — ${hunt.band} (${hunt.utc} UTC)`,
-      description: `Kingdom 710 ${hunt.band} alliance Bear Hunt window, daily at ${hunt.utc} UTC.`,
-    }));
+  const events = bearHuntIcsEvents(alliances, { tag });
+  if (tag && !events.length) return NextResponse.json({ error: 'No Bear Hunt times for that alliance.' }, { status: 404 });
 
-  const ics = buildIcsCalendar({ name: 'K710 Bear Hunt Schedule', events });
+  const ics = buildIcsCalendar({ name: tag ? `K710 ${tag.toUpperCase()} Bear Hunt Schedule` : 'K710 Bear Hunt Schedule', events });
 
   return new NextResponse(ics, {
     headers: {
       'Cache-Control': 'no-store',
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="k710-bear-hunt.ics"',
+      'Content-Disposition': `attachment; filename="${tag ? `k710-bear-hunt-${tag.toLowerCase()}` : 'k710-bear-hunt'}.ics"`,
     },
   });
 }

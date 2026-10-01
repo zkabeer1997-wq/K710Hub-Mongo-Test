@@ -2,17 +2,13 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../../lib/mongoCollections';
 import { buildIcsCalendar } from '../../../../../lib/ics';
-import { readMemberSession } from '../../../../../lib/memberAuth';
+import { loadPublicBearScheduleOrNull } from '../../../../../lib/publicBearSchedule';
+import { findDefaultEvent } from '../../../../../lib/defaultEvents.mjs';
 import { recurrenceRule } from '../../../../../lib/eventRecurrence.mjs';
 
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
 
-export async function GET(request, { params: paramsPromise }) {
-  const session = await readMemberSession(request);
-  if (!session) {
-    return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
-  }
-
+export async function GET(_request, { params: paramsPromise }) {
   const params = await paramsPromise;
   const slug = params?.slug;
   if (!SLUG_RE.test(slug || '')) {
@@ -20,8 +16,10 @@ export async function GET(request, { params: paramsPromise }) {
   }
 
   try {
+    // Published events are public, so their calendar files are too. A built-in
+    // default (see lib/defaultEvents.mjs) is used when no stored event overrides it.
     const coll = await getCollection(COLLECTIONS.EVENTS);
-    const event = await coll.findOne(
+    let event = await coll.findOne(
       { slug },
       {
         projection: {
@@ -31,6 +29,7 @@ export async function GET(request, { params: paramsPromise }) {
       }
     );
 
+    if (!event) event = findDefaultEvent(slug, (await loadPublicBearScheduleOrNull()) || []);
     if (!event || !event.published) {
       return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
     }
