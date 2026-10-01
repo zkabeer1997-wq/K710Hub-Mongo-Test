@@ -25,10 +25,16 @@ const PUBLIC_PROJECT = {
 };
 
 export async function GET(request) {
+  // Prefill is only for the signed-in player's own record. Without this
+  // check anyone could read any member's profile by guessing a Member ID.
+  const session = await readMemberSession(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Please sign in to load your profile.' }, { status: 401 });
+  }
   const url = new URL(request.url);
-  const memberId = String(url.searchParams.get('member_id') || '').trim();
-  if (!memberId) {
-    return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
+  const memberId = String(url.searchParams.get('member_id') || session.memberId).trim();
+  if (memberId !== session.memberId) {
+    return NextResponse.json({ error: 'You can only load your own profile.' }, { status: 403 });
   }
   try {
     const coll = await getCollection(COLLECTIONS.POWER_PROFILES);

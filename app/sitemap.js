@@ -2,7 +2,7 @@ import { guidesTable } from '../lib/guideAccess.mjs';
 import { getCollection } from '../lib/mongo';
 import { COLLECTIONS } from '../lib/mongoCollections';
 
-const BASE_URL = 'https://k710hub.vercel.app';
+import { SITE_URL as BASE_URL } from '../lib/siteUrl';
 
 const STATIC_ROUTES = [
   { path: '/', priority: 1.0, changeFrequency: 'weekly' },

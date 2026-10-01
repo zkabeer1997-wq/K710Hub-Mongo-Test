@@ -1,4 +1,4 @@
-const BASE_URL = 'https://k710hub.vercel.app';
+import { SITE_URL as BASE_URL } from '../lib/siteUrl';
 
 export default function robots() {
   return {

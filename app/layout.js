@@ -14,6 +14,7 @@ import LanguageProvider from '../components/i18n/LanguageProvider';
 import BearScheduleProvider from '../components/BearScheduleProvider';
 import SiteChrome from '../components/SiteChrome';
 import FilipinoTagalogOptions from '../components/i18n/FilipinoTagalogOptions';
+import { SITE_URL } from '../lib/siteUrl';
 import { ToastProvider } from '../components/ui/Toast';
 
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['600', '800', '900'], display: 'swap', variable: '--font-display-loaded' });
@@ -23,7 +24,7 @@ const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['400', '500'
 const fraunces = Fraunces({ subsets: ['latin'], weight: ['500', '600', '700', '800'], display: 'swap', variable: '--font-fraunces-loaded' });
 
 export const metadata = {
-  metadataBase: new URL('https://k710hub.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   title: { default: 'K710 Hub', template: '%s · K710 Hub' },
   description: 'The Kingdom 710 website for events, alliance schedules, member forms, guides, calculators, and transfer applications.',
   applicationName: 'K710 Hub',
@@ -37,13 +38,13 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: 'Kingdom 710',
   alternateName: 'K710',
-  url: 'https://k710hub.vercel.app',
+  url: SITE_URL,
   description: 'Kingdom 710 — a KvK-first Kingshot kingdom run across three coordinated alliances: 710, RED, and SKY.',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
       <body className="theme-console">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
         <ToastProvider>
