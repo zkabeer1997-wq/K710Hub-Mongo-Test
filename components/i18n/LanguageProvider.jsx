@@ -10,129 +10,31 @@ import {
   useState,
 } from 'react';
 import { usePathname } from 'next/navigation';
+import {
+  SUGGESTED_LANGUAGES, QUICK_LANGUAGES, RTL_LANGUAGE_RE, normalize, isEnglish, resolveBrowserLanguageCode, languageShortCode,
+} from '../../lib/i18nLanguages.mjs';
+import { translateWithProtectedTerms } from '../../lib/i18nTerms.mjs';
 
 const STORAGE_KEY = 'k710-language-v1';
-const CACHE_PREFIX = 'k710-ui-translations-v3:';
+// v4: cached strings now keep protected game terms (lib/i18nTerms.mjs).
+const CACHE_PREFIX = 'k710-ui-translations-v4:';
 const BATCH_SIZE = 40;
 
 const LanguageContext = createContext({
   language: 'English',
+  languageCode: 'EN',
   hasChosenLanguage: false,
+  translationStatus: 'idle',
   openLanguageChooser: () => {},
 });
 
-// Chrome's stable on-device Translator API currently supports these language
-// families. These cover the principal K710 languages without any cloud API.
-const SUGGESTED_LANGUAGES = [
-  ['English', 'English'],
-  ['Arabic', 'العربية'],
-  ['French', 'Français'],
-  ['Turkish', 'Türkçe'],
-  ['Korean', '한국어'],
-  ['Spanish', 'Español'],
-  ['German', 'Deutsch'],
-  ['Portuguese', 'Português'],
-  ['Italian', 'Italiano'],
-  ['Dutch', 'Nederlands'],
-  ['Polish', 'Polski'],
-  ['Russian', 'Русский'],
-  ['Ukrainian', 'Українська'],
-  ['Greek', 'Ελληνικά'],
-  ['Romanian', 'Română'],
-  ['Czech', 'Čeština'],
-  ['Hungarian', 'Magyar'],
-  ['Swedish', 'Svenska'],
-  ['Norwegian', 'Norsk'],
-  ['Danish', 'Dansk'],
-  ['Finnish', 'Suomi'],
-  ['Chinese (Simplified)', '简体中文'],
-  ['Chinese (Traditional)', '繁體中文'],
-  ['Japanese', '日本語'],
-  ['Hindi', 'हिन्दी'],
-  ['Bengali', 'বাংলা'],
-  ['Thai', 'ไทย'],
-  ['Vietnamese', 'Tiếng Việt'],
-  ['Indonesian', 'Bahasa Indonesia'],
-  ['Hebrew', 'עברית'],
-  ['Bulgarian', 'Български'],
-  ['Croatian', 'Hrvatski'],
-  ['Kannada', 'ಕನ್ನಡ'],
-  ['Lithuanian', 'Lietuvių'],
-  ['Marathi', 'मराठी'],
-  ['Slovak', 'Slovenčina'],
-  ['Slovenian', 'Slovenščina'],
-  ['Tamil', 'தமிழ்'],
-  ['Telugu', 'తెలుగు'],
-];
 
-const BROWSER_LANGUAGE_CODES = new Map([
-  ['english', 'en'], ['en', 'en'],
-  ['arabic', 'ar'], ['العربية', 'ar'], ['ar', 'ar'],
-  ['bulgarian', 'bg'], ['български', 'bg'], ['bg', 'bg'],
-  ['bengali', 'bn'], ['বাংলা', 'bn'], ['bn', 'bn'],
-  ['czech', 'cs'], ['čeština', 'cs'], ['cs', 'cs'],
-  ['danish', 'da'], ['dansk', 'da'], ['da', 'da'],
-  ['german', 'de'], ['deutsch', 'de'], ['de', 'de'],
-  ['greek', 'el'], ['ελληνικά', 'el'], ['el', 'el'],
-  ['spanish', 'es'], ['español', 'es'], ['espanol', 'es'], ['es', 'es'],
-  ['finnish', 'fi'], ['suomi', 'fi'], ['fi', 'fi'],
-  ['french', 'fr'], ['français', 'fr'], ['francais', 'fr'], ['fr', 'fr'],
-  ['hebrew', 'he'], ['עברית', 'he'], ['he', 'he'],
-  ['hindi', 'hi'], ['हिन्दी', 'hi'], ['हिंदी', 'hi'], ['hi', 'hi'],
-  ['croatian', 'hr'], ['hrvatski', 'hr'], ['hr', 'hr'],
-  ['hungarian', 'hu'], ['magyar', 'hu'], ['hu', 'hu'],
-  ['indonesian', 'id'], ['bahasa indonesia', 'id'], ['id', 'id'],
-  ['italian', 'it'], ['italiano', 'it'], ['it', 'it'],
-  ['japanese', 'ja'], ['日本語', 'ja'], ['ja', 'ja'],
-  ['kannada', 'kn'], ['ಕನ್ನಡ', 'kn'], ['kn', 'kn'],
-  ['korean', 'ko'], ['한국어', 'ko'], ['ko', 'ko'],
-  ['lithuanian', 'lt'], ['lietuvių', 'lt'], ['lt', 'lt'],
-  ['marathi', 'mr'], ['मराठी', 'mr'], ['mr', 'mr'],
-  ['dutch', 'nl'], ['nederlands', 'nl'], ['nl', 'nl'],
-  ['norwegian', 'no'], ['norsk', 'no'], ['no', 'no'], ['nb', 'no'],
-  ['polish', 'pl'], ['polski', 'pl'], ['pl', 'pl'],
-  ['portuguese', 'pt'], ['português', 'pt'], ['portugues', 'pt'], ['pt', 'pt'],
-  ['romanian', 'ro'], ['română', 'ro'], ['romana', 'ro'], ['ro', 'ro'],
-  ['russian', 'ru'], ['русский', 'ru'], ['ru', 'ru'],
-  ['slovak', 'sk'], ['slovenčina', 'sk'], ['sk', 'sk'],
-  ['slovenian', 'sl'], ['slovenščina', 'sl'], ['sl', 'sl'],
-  ['swedish', 'sv'], ['svenska', 'sv'], ['sv', 'sv'],
-  ['tamil', 'ta'], ['தமிழ்', 'ta'], ['ta', 'ta'],
-  ['telugu', 'te'], ['తెలుగు', 'te'], ['te', 'te'],
-  ['thai', 'th'], ['ไทย', 'th'], ['th', 'th'],
-  ['turkish', 'tr'], ['türkçe', 'tr'], ['turkce', 'tr'], ['tr', 'tr'],
-  ['ukrainian', 'uk'], ['українська', 'uk'], ['uk', 'uk'],
-  ['vietnamese', 'vi'], ['tiếng việt', 'vi'], ['tieng viet', 'vi'], ['vi', 'vi'],
-  ['chinese', 'zh'], ['chinese simplified', 'zh'], ['chinese (simplified)', 'zh'], ['简体中文', 'zh'], ['zh', 'zh'],
-  ['chinese traditional', 'zh-Hant'], ['chinese (traditional)', 'zh-Hant'], ['繁體中文', 'zh-Hant'], ['zh-hant', 'zh-Hant'],
-]);
-
-const RTL_LANGUAGE_RE = /\b(arabic|hebrew|persian|farsi|urdu|pashto|sorani|kurdish|yiddish|uyghur)\b/i;
 const BLOCKED_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE']);
-
-function normalize(value) {
-  return String(value || '').replace(/\s+/g, ' ').trim();
-}
-
-function normalizeLanguage(value) {
-  return normalize(value).toLocaleLowerCase('en-US').replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function resolveBrowserLanguageCode(value) {
-  const raw = normalize(value);
-  const exact = BROWSER_LANGUAGE_CODES.get(raw.toLocaleLowerCase('en-US'));
-  if (exact) return exact;
-  return BROWSER_LANGUAGE_CODES.get(normalizeLanguage(value)) || null;
-}
 
 function preserveWhitespace(raw, translated) {
   const prefix = raw.match(/^\s*/)?.[0] || '';
   const suffix = raw.match(/\s*$/)?.[0] || '';
   return `${prefix}${translated}${suffix}`;
-}
-
-function isEnglish(language) {
-  return /^english(?:\s*\(.*\))?$/i.test(normalize(language)) || normalizeLanguage(language) === 'en';
 }
 
 function shouldSkipElement(element) {
@@ -176,6 +78,7 @@ export default function LanguageProvider({ children }) {
   const [languageError, setLanguageError] = useState('');
   const [downloadProgress, setDownloadProgress] = useState(null);
 
+  const openerRef = useRef(null);
   const languageRef = useRef('English');
   const cacheRef = useRef(new Map());
   const originalTextRef = useRef(new WeakMap());
@@ -373,7 +276,12 @@ export default function LanguageProvider({ children }) {
       if (!translator) translator = await startBrowserTranslator(targetLanguage);
 
       if (translator) {
-        const values = await Promise.all(items.map((source) => translator.translate(source)));
+        // Game terms are masked before the on-device translator sees them.
+        const values = await translateWithProtectedTerms(
+          items,
+          (masked) => Promise.all(masked.map((source) => translator.translate(source))),
+          browserCode,
+        );
         const results = new Map();
         items.forEach((source, index) => results.set(source, values[index]));
         return results;
@@ -579,6 +487,9 @@ export default function LanguageProvider({ children }) {
       cacheRef.current = readCache(clean);
       setHasChosenLanguage(true);
       setChooserOpen(false);
+      const opener = openerRef.current;
+      openerRef.current = null;
+      if (opener && typeof opener.focus === 'function') window.setTimeout(() => opener.focus(), 0);
       try {
         localStorage.setItem(STORAGE_KEY, clean);
       } catch {
@@ -590,12 +501,35 @@ export default function LanguageProvider({ children }) {
 
   const openLanguageChooser = useCallback(() => {
     failureUntilRef.current = 0;
+    openerRef.current = typeof document !== 'undefined' ? document.activeElement : null;
     setChooserOpen(true);
   }, []);
 
+  const closeLanguageChooser = useCallback(() => {
+    setChooserOpen(false);
+    const opener = openerRef.current;
+    openerRef.current = null;
+    // Return focus to whatever opened the chooser (the header switcher).
+    if (opener && typeof opener.focus === 'function') window.setTimeout(() => opener.focus(), 0);
+  }, []);
+
+  // Escape closes the chooser, but only once a language has been chosen: the
+  // very first visit still has to pick one (the forge intro waits for it).
+  useEffect(() => {
+    if (!chooserOpen || !hasChosenLanguage) return undefined;
+    function onKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeLanguageChooser();
+      }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [chooserOpen, hasChosenLanguage, closeLanguageChooser]);
+
   const contextValue = useMemo(
-    () => ({ language, hasChosenLanguage, openLanguageChooser }),
-    [language, hasChosenLanguage, openLanguageChooser],
+    () => ({ language, languageCode: languageShortCode(language), hasChosenLanguage, translationStatus, openLanguageChooser }),
+    [language, hasChosenLanguage, translationStatus, openLanguageChooser],
   );
 
   return (
@@ -639,9 +573,31 @@ export default function LanguageProvider({ children }) {
               <p className="k710-language-error" role="alert">{languageError}</p>
             )}
 
+            <div className="k710-language-quick" role="group" aria-label="Common languages">
+              {QUICK_LANGUAGES.map((name) => {
+                const native = SUGGESTED_LANGUAGES.find(([n]) => n === name)?.[1] || name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    className="k710-language-chip"
+                    aria-pressed={normalize(language) === name && hasChosenLanguage}
+                    onClick={() => applyLanguage(name)}
+                  >
+                    {native}
+                  </button>
+                );
+              })}
+            </div>
+
             <button type="button" className="k710-language-enter" onClick={() => applyLanguage(inputLanguage)}>
-              Enter the Kingdom
+              {hasChosenLanguage ? 'Apply language' : 'Enter the Kingdom'}
             </button>
+            {hasChosenLanguage && (
+              <button type="button" className="k710-language-cancel" onClick={closeLanguageChooser}>
+                Cancel
+              </button>
+            )}
             <p className="k710-language-footnote">Chrome 138+ desktop supports 38 on-device translation languages.</p>
           </div>
         </div>
@@ -653,10 +609,10 @@ export default function LanguageProvider({ children }) {
           className="k710-language-globe"
           data-k710-no-translate
           onClick={openLanguageChooser}
-          aria-label="Change language"
+          aria-label={`Language: ${language}. Change language`}
           title="Change language"
         >
-          🌐
+          {languageShortCode(language)}
         </button>
       )}
     </LanguageContext.Provider>

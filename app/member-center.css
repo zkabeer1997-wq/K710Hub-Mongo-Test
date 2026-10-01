@@ -84,3 +84,47 @@
 .event-form-error{margin:0 0 14px;color:#ffb4a8;font-size:14px}
 .event-form-ok{margin:0 0 14px;color:#a8e6b0;font-size:14px}
 @media(pointer:coarse){.deadline-ticker-item a{min-height:44px}.deadline-ticker-list{padding-block:0}}
+
+/* KvK appointments (tabs, hour picker, status list, schedule) */
+.appt-page{max-width:880px}
+.appt-tabs{display:flex;gap:4px;margin:0 0 16px;border-bottom:1px solid var(--edge);overflow-x:auto}
+.appt-tabs a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;color:var(--t-secondary);text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;font-weight:600}
+.appt-tabs a:hover{color:var(--parchment)}
+.appt-tabs a.is-current{color:var(--parchment);border-bottom-color:var(--brass)}
+.appt-tabs a:focus-visible,.appt-daytab:focus-visible{outline:2px solid var(--gold-hot);outline-offset:2px}
+.appt-card .help,.appt-help{color:var(--t-secondary);font-size:13px}
+.appt-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.hour-picker{border:0;margin:0 0 18px;padding:0;min-width:0}
+.hour-picker legend{padding:0;margin-bottom:6px;font-weight:700;font-size:14px}
+.hour-picker-count{margin:0 0 10px;font-size:13px;color:var(--t-secondary)}
+.hour-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.hour-option{position:relative;display:flex;flex-direction:column;gap:2px;min-height:52px;padding:8px 34px 8px 38px;text-transform:none;letter-spacing:0;font-weight:400;border:1px solid var(--steel-bright);border-radius:8px;cursor:pointer}
+.hour-option input{position:absolute;left:12px;top:50%;width:18px;height:18px;margin:-9px 0 0;accent-color:var(--brass)}
+.hour-option.is-checked{border-color:var(--brass);background:rgba(217,169,78,.1)}
+.hour-option:has(input:focus-visible){outline:2px solid var(--gold-hot);outline-offset:2px}
+.hour-option:has(input:disabled){opacity:.55;cursor:not-allowed}
+.hour-option-utc{white-space:nowrap;font-family:var(--font-mono,monospace);font-size:14px;font-variant-numeric:tabular-nums}
+.hour-option-local{font-size:12px;color:var(--t-secondary);white-space:nowrap}
+.hour-option-rank{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:var(--brass);color:#14100a;font-size:12px;font-weight:800;display:grid;place-items:center}
+.appt-lede{margin:0 0 14px;color:var(--t-secondary);font-size:14px}
+.appt-status-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.appt-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 14px;border:1px solid var(--steel-bright);border-radius:8px}
+.appt-status-text{flex:1 1 220px;font-weight:700}
+.appt-chip{padding:2px 10px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid currentColor}
+.appt-status--not_applied .appt-chip{color:var(--t-secondary)}
+.appt-status--pending .appt-chip{color:var(--brass)}
+.appt-status--assigned .appt-chip{color:#a8e6b0}
+.appt-local{font-size:13px;color:var(--t-secondary)}
+.appt-link{display:inline-flex;align-items:center;min-height:44px;color:var(--brass);font-weight:700}
+.appt-daytabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.appt-daytab{min-height:44px;padding:0 14px;border:1px solid var(--steel-bright);border-radius:8px;background:transparent;color:var(--parchment);font:inherit;cursor:pointer}
+.appt-daytab[aria-pressed="true"]{border-color:var(--brass);background:rgba(217,169,78,.12);font-weight:700}
+.appt-table-wrap{max-height:520px;overflow:auto;border:1px solid var(--steel-bright);border-radius:8px}
+.appt-table{width:100%;border-collapse:collapse;font-size:14px}
+.appt-table th,.appt-table td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--edge)}
+.appt-table thead th{position:sticky;top:0;background:#12151f;color:var(--t-secondary);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.appt-table tr.is-mine td{background:rgba(217,169,78,.12)}
+.appt-mono{font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums;white-space:nowrap}
+.appt-open{color:var(--t-secondary)}
+.appt-you{color:var(--brass)}
+@media(max-width:560px){.appt-numbers{grid-template-columns:1fr}.hour-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

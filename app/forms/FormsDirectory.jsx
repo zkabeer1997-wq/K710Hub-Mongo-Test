@@ -63,6 +63,13 @@ const FORMS = [
     ungated: true,
   },
   {
+    key: 'appointments',
+    group: 'When KvK is upcoming',
+    title: 'KvK Appointments',
+    description: 'Apply for a minister or advisor buff, see your status, and view the published schedule.',
+    href: () => '/forms/kvk-appointments?tab=apply',
+  },
+  {
     key: 'dragon-hub',
     group: 'When Flamedragon is upcoming',
     title: 'Flamedragon Tyrant Forms',

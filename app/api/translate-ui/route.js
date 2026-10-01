@@ -1,5 +1,6 @@
 import uiStrings from '../../../public/ui-strings.json';
 import { clientIp, isRateLimited } from '../../../lib/rateLimit.mjs';
+import { protectTerms, restoreTerms } from '../../../lib/i18nTerms.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -278,7 +279,17 @@ export async function POST(request) {
 
   let provider = 'memory-cache';
   if (misses.length) {
-    const translated = await translateWithFallback(misses, target);
+    // Game terms (KvK, TG, Governor Gear, ...) are masked before the engine sees
+    // them and restored afterwards; a damaged placeholder keeps the English string.
+    const masked = misses.map((value) => protectTerms(value));
+    const raw = await translateWithFallback(masked.map((m) => m.text), target);
+    const translated = raw && {
+      provider: raw.provider,
+      translated: raw.translated.map((value, i) => {
+        const restored = restoreTerms(value, masked[i].terms, target);
+        return restored === null ? misses[i] : restored;
+      }),
+    };
     if (!translated) {
       return Response.json(
         {

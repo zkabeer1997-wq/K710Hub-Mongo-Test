@@ -3,8 +3,8 @@ const path = require('node:path');
 
 const ROOT = process.cwd();
 const SOURCE_DIRS = ['app', 'components', 'lib'];
-const EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.css']);
-const OUTPUT = path.join(ROOT, 'public', 'ui-strings.json');
+const EXTENSIONS = new Set(['.js', '.jsx', '.mjs', '.ts', '.tsx', '.css']);
+const OUTPUT = process.env.UI_STRINGS_OUT ? path.resolve(process.env.UI_STRINGS_OUT) : path.join(ROOT, 'public', 'ui-strings.json');
 
 function normalize(value) {
   return value

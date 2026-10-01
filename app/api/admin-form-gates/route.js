@@ -13,6 +13,7 @@ const ROUTE_BY_KEY = {
   prep: '/prep-phase-backpack',
   dragon: '/flamedragon',
   noble: '/forms/flamedragon-tyrant/noble-advisor',
+  appointments: '/forms/kvk-appointments',
   requests: '/forms/requests',
   swordland: '/forms/swordland-showdown',
   'tri-alliance': '/forms/tri-alliance-clash',

@@ -7,6 +7,7 @@ import { SUPPORT_URL } from '../lib/supportLink';
 import { useMemberFormStatus } from '../lib/useMemberFormStatus';
 import UtcClock from './member/UtcClock';
 import FormStatusMark from './member/FormStatusMark';
+import LanguageSwitcher from './i18n/LanguageSwitcher';
 
 const NAV_ITEMS = [
   { type: 'link', href: '/', label: 'Home' },
@@ -231,6 +232,8 @@ export default function SiteHeader() {
     mobileRef.current?.querySelector(FOCUSABLE)?.focus();
 
     function onKeyDown(event) {
+      // The language chooser dialog manages its own keys and focus.
+      if (event.target?.closest?.('.k710-language-overlay')) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         setOpen(false);
@@ -313,6 +316,7 @@ export default function SiteHeader() {
         </nav>
 
         <UtcClock />
+        <LanguageSwitcher className="lang-switch--header" />
 
         <button
           type="button"
@@ -333,6 +337,7 @@ export default function SiteHeader() {
         <>
         <div className="site-nav-backdrop" aria-hidden="true" onClick={() => setOpen(false)} />
         <nav className="site-nav-mobile" id="site-nav-mobile" ref={mobileRef} aria-label="Mobile site">
+          <LanguageSwitcher className="lang-switch--mobile" showLabel onOpen={() => setOpen(false)} />
           {NAV_ITEMS.map((item) => {
             if (item.type === 'group') {
               const kids = item.id === 'members' ? membersChildren(item.children, memberStatus) : item.children;

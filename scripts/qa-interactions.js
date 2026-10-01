@@ -136,11 +136,88 @@ async function profileWizard(browser) {
   await ctx.close();
 }
 
+async function memberCookie(ctx) {
+  const crypto = require('crypto');
+  const payload = Buffer.from(JSON.stringify({ memberId: 'qa-member', role: 'member', nonce: 'qa', exp: Date.now() + 3600e3 })).toString('base64url');
+  const sig = crypto.createHash('sha256').update(`k710-member-v2:${payload}:${process.env.MEMBER_SESSION_SECRET || 'qa-smoke-secret'}`).digest('hex');
+  await ctx.addCookies([{ name: 'k710_member_session', value: `${payload}.${sig}`, url: B }]);
+}
+
+// KvK appointments: the hour picker must render real options and allow exactly 3.
+async function kvkAppointments(browser) {
+  const { ctx, page } = await newPage(browser, 1280, 900);
+  await memberCookie(ctx);
+  await page.goto(B + '/forms/kvk-appointments?tab=apply', { waitUntil: 'networkidle' });
+  const boxes = page.locator('.hour-option input[type=checkbox]');
+  const n = await boxes.count();
+  ok('appointments: hour picker renders options (>0, 24 UTC hours)', n === 24, `count=${n}`);
+  ok('appointments: options show UTC time', /00:00 UTC/.test(await page.locator('.hour-option').first().innerText()));
+  await page.waitForFunction(() => /local/.test(document.querySelector('.hour-option')?.textContent || ''));
+  ok('appointments: options also show viewer local time', true);
+  for (const i of [0, 5, 9]) await boxes.nth(i).check();
+  ok('appointments: 3 selected', (await page.locator('.hour-option input:checked').count()) === 3);
+  ok('appointments: 4th option disabled once 3 chosen', await boxes.nth(12).isDisabled());
+  ok('appointments: counter says 3 of 3', /3 of 3 selected/.test(await page.locator('.hour-picker-count').innerText()));
+  await boxes.nth(5).uncheck();
+  ok('appointments: unchecking re-enables the rest', !(await boxes.nth(12).isDisabled()) && (await page.locator('.hour-option input:checked').count()) === 2);
+  await page.getByRole('button', { name: /Submit my application|Update my application/ }).click();
+  ok('appointments: submit with 2 hours shows an error', (await page.locator('[role=alert]', { hasText: 'exactly 3' }).count()) === 1);
+  const cur = page.locator('.appt-tabs a[aria-current=page]');
+  ok('appointments: current tab marked (Apply)', (await cur.innerText()) === 'Apply');
+  await page.getByRole('link', { name: 'My Appointments' }).click();
+  await page.waitForURL('**tab=mine');
+  ok('appointments: tabs have their own URL (?tab=mine)', (await page.locator('.appt-tabs a[aria-current=page]').innerText()) === 'My Appointments');
+  await page.goto(B + '/forms/kvk-appointments?tab=schedule', { waitUntil: 'networkidle' });
+  ok('appointments: ?tab=schedule deep link', (await page.locator('.appt-tabs a[aria-current=page]').innerText()) === 'View Schedule');
+  await ctx.close();
+}
+
+// Language switcher: visible code, keyboard operable dialog, focus returns, 44px, mobile menu row.
+async function languageSwitcher(browser) {
+  const { ctx, page } = await newPage(browser, 1280, 900);
+  await page.goto(B + '/about', { waitUntil: 'networkidle' });
+  const sw = page.locator('.lang-switch--header');
+  ok('lang: header switcher visible with code EN', (await sw.isVisible()) && (await sw.locator('.lang-switch-code').innerText()) === 'EN');
+  const box = await sw.boundingBox();
+  ok('lang: switcher tap target >= 44px', box.width >= 44 && box.height >= 44, `${box.width}x${box.height}`);
+  ok('lang: accessible name includes language', /Language: .*Change language/.test(await sw.getAttribute('aria-label')));
+  await sw.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('[role=dialog].k710-language-overlay');
+  ok('lang: Enter opens chooser dialog', true);
+  ok('lang: focus inside dialog', await page.evaluate(() => !!document.activeElement.closest('.k710-language-overlay')));
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('.k710-language-overlay', { state: 'detached' });
+  ok('lang: Escape closes dialog', true);
+  await page.waitForFunction(() => document.activeElement.classList.contains('lang-switch'));
+  ok('lang: focus returns to switcher', true);
+  await sw.click();
+  await page.getByRole('button', { name: 'English', exact: true }).click();
+  await page.waitForSelector('.k710-language-overlay', { state: 'detached' });
+  ok('lang: quick-pick English applies and closes', (await sw.locator('.lang-switch-code').innerText()) === 'EN');
+  await ctx.close();
+
+  const m = await newPage(browser);
+  await m.page.goto(B + '/about', { waitUntil: 'networkidle' });
+  ok('lang: header button hidden on mobile (menu row instead)', !(await m.page.locator('.lang-switch--header').isVisible()));
+  await m.page.locator('button.site-nav-toggle').click();
+  const row = m.page.locator('#site-nav-mobile .lang-switch--mobile');
+  await row.waitFor();
+  const rb = await row.boundingBox();
+  ok('lang: mobile menu row visible, >= 44px, shows language', rb.height >= 44 && /EN/.test(await row.innerText()), `h=${rb.height}`);
+  await row.click();
+  await m.page.waitForSelector('[role=dialog].k710-language-overlay');
+  ok('lang: mobile row opens chooser and closes the menu', (await m.page.locator('#site-nav-mobile').count()) === 0);
+  await m.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.QA_CHROMIUM || undefined, args: ['--no-sandbox'] });
   await mobileMenu(browser);
   await interestWizard(browser);
   await profileWizard(browser);
+  await kvkAppointments(browser);
+  await languageSwitcher(browser);
   await browser.close();
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
