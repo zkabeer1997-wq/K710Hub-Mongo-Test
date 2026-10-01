@@ -8,10 +8,13 @@ import HomeForgeIntro from '../components/kingdom/world/HomeForgeIntro';
 import RealmShieldLoader from '../components/kingdom/world/RealmShieldLoader';
 import GalleryCarousel from '../components/gallery/GalleryCarousel';
 import { getGalleryImages } from '../lib/gallery';
-import { readMemberSession } from '../lib/memberAuth';
+import NextBearHunt from '../components/NextBearHunt';
+import { getMemberHome } from '../lib/memberHome.server';
+import { OPTIMIZER_RECORD } from '../lib/kingdomExternalData.mjs';
+import './home-extras.css';
 
 export const metadata = {
-  title: { absolute: 'Kingdom 710 · Kingshot' },
+  title: { absolute: 'K710 Hub · Kingdom 710' },
   description: 'The Kingdom 710 website for alliance schedules, events, member forms, guides, upgrade tools, and transfer applications.',
   alternates: { canonical: '/' },
 };
@@ -165,14 +168,15 @@ export default async function HomePage() {
   const content = await getHomeContent();
   const bearAlliances = await loadPublicBearScheduleOrNull();
   const isAdmin = await checkIsAdmin();
-  let isMember = false;
+  let member = null;
   try {
     const cookieStore = await cookies();
-    const memberSession = await readMemberSession({ cookies: { get: (name) => cookieStore.get(name) } });
-    isMember = !!memberSession;
+    member = await getMemberHome(cookieStore, (bearAlliances || []).map((a) => a.tag));
   } catch {
-    isMember = false;
+    member = null;
   }
+  const isMember = !!member;
+  const rec = OPTIMIZER_RECORD;
   let galleryImages = [];
   try { galleryImages = await getGalleryImages({ limit: 10 }); } catch (error) { console.error('homepage gallery load failed', error); }
   const field = (key, props = {}) => {
@@ -199,7 +203,7 @@ export default async function HomePage() {
           {isMember ? (
             <>
               <span className="k-mark">Kingdom 710</span>
-              <h1>Welcome back.</h1>
+              <h1>{member.name ? `Welcome back, ${member.name}.` : 'Welcome back.'}</h1>
               <p>Jump straight to the tools you use most.</p>
               <div className="home-v2-actions home-v2-actions-member">
                 {MEMBER_QUICK_LINKS.map((link) => (
@@ -213,9 +217,14 @@ export default async function HomePage() {
               <h1>{field('hero-title', { as: 'span' })}</h1>
               <p>{field('hero-sub', { as: 'span', multiline: true })}</p>
               <div className="home-v2-actions">
-                <Link href="/interest" className="home-v2-primary">Apply to Join</Link>
-                <Link href="/tools" className="home-v2-secondary">View member tools →</Link>
+                <Link href="/interest" className="home-v2-primary">Apply to transfer</Link>
+                <a href="#alliances" className="home-v2-secondary">See alliance schedules</a>
               </div>
+              <dl className="home-v2-facts" aria-label="Kingdom 710 at a glance">
+                <div><dt>Alliances</dt><dd>3</dd></div>
+                <div><dt>KvK battle record</dt><dd>{rec.battle.wins}–{rec.battle.losses}</dd></div>
+                <div><dt>Optimizer rank</dt><dd>#{rec.rank}</dd></div>
+              </dl>
             </>
           )}
         </div>
@@ -223,6 +232,29 @@ export default async function HomePage() {
         <RealmShieldLoader />
 
       </section>
+
+      {isMember && (
+        <section className="home-v2-member" aria-label="Your Kingdom 710 dashboard">
+          <div className="home-v2-member-hunt">
+            <NextBearHunt alliances={bearAlliances || []} allianceTag={member.allianceTag} />
+          </div>
+          <div className="home-v2-member-forms">
+            <h2>Outstanding forms</h2>
+            {member.outstanding.length ? (
+              <ul>
+                {member.outstanding.map((form) => (
+                  <li key={form.key}>
+                    <Link href={form.href}><span>{form.title}</span><em>Not yet submitted</em></Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>All caught up. Nothing is waiting on you.</p>
+            )}
+            <Link href="/forms" className="home-v2-story-link">All forms →</Link>
+          </div>
+        </section>
+      )}
 
       <section className="home-v2-story">
         <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
@@ -256,7 +288,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="home-v2-alliances">
+      <section className="home-v2-alliances" id="alliances">
         <span className="k-mark">{field('wb-head-kicker')}</span>
         <h2>{field('wb-head-title')}</h2>
         <PublicBearAlliances initialAlliances={bearAlliances} notes={bearAllianceNotes(content)} />

@@ -93,7 +93,7 @@ test('save flows through public schedule, clock helpers, and calendar with no ol
   const ics = await (await calendarGet()).text();
   assert.match(ics, /034000Z/); assert.match(ics, /221500Z/);
   assert.doesNotMatch(ics, /11:05|19:00|23:20/);
-  for (const path of ['/', '/about', '/alliances', '/alliances/red', '/events', '/chronometer', '/api/bear-schedule', '/api/events/bear-hunt.ics']) assert.ok(state.paths.includes(path), path);
+  for (const path of ['/', '/about', '/alliances', '/alliances/red', '/events', '/api/bear-schedule', '/api/events/bear-hunt.ics']) assert.ok(state.paths.includes(path), path);
 });
 test('partial alliance edits preserve saved times', async () => {
   await PUT(request({ language: 'English' }), params);
@@ -138,7 +138,7 @@ test('Events is public while admin and member forms remain gated', async () => {
     assert.equal(response.headers.get('location'), null);
   }
   assert.ok(proxyConfig.matcher.every(path => !path.startsWith('/events')));
-  for (const path of ['/admin/dashboard/alliance-events', '/tools', '/forms', '/player-record/form']) {
+  for (const path of ['/admin/dashboard/alliance-events', '/tools', '/forms', '/dashboard/form']) {
     const url = new URL(`https://example.com${path}`);
     const response = await proxy({ url: url.href, nextUrl: url, cookies: { get: () => undefined } });
     assert.equal(response.status, 307);

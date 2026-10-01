@@ -2,7 +2,7 @@ import MusterHall from '../../../components/kingdom/world/MusterHall';
 import { getFormGates } from '../../../lib/formGates.server.js';
 
 export const metadata = {
-  title: 'K710 KvK Forms',
+  title: 'KvK Forms',
 };
 
 export default async function KvkFormsPage({ searchParams: searchParamsPromise }) {

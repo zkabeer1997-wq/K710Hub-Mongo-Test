@@ -1,9 +1,10 @@
+import Breadcrumbs from '../../../components/Breadcrumbs';
 export const dynamic = 'force-dynamic';
 import { loadToolConfiguration } from '../../../lib/toolSettings';
 import Link from 'next/link';
 import FlamedragonShopOptimizer from '../FlamedragonShopOptimizer';
 
-export const metadata = { title: 'Flamedragon Tyrant Shop Optimizer | K710' };
+export const metadata = { title: 'Flamedragon Tyrant Shop Optimizer' };
 
 export default async function FlamedragonShopPage({ searchParams: searchParamsPromise }) {
   const configuration = await loadToolConfiguration('flamedragon-shop');
@@ -13,7 +14,7 @@ export default async function FlamedragonShopPage({ searchParams: searchParamsPr
   return <main className="armory ft-shop-page">
     <div className="armory-atmos" aria-hidden="true"/><span className="armory-rack-l" aria-hidden="true"/><span className="armory-rack-r" aria-hidden="true"/>
     <div className="armory-inner ft-shop-inner">
-      <div className="ft-shop-nav"><Link href={`/tools${query}`}>← Tools &amp; Calculators</Link><span className="k-mark">Special Event Shops</span></div>
+      <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Tools & Calculators', href: `/tools${query}` }]} current="Flamedragon Tyrant Shop Optimizer" />
       <header className="armory-head ft-shop-head"><h1 className="k-display armory-title">Flamedragon Tyrant</h1><p className="k-narrative armory-lede">Prioritize the Dragon’s Caravan rewards you want and find the lowest-cost legal pack combination.</p></header>
       <FlamedragonShopOptimizer configuration={configuration}/>
     </div>

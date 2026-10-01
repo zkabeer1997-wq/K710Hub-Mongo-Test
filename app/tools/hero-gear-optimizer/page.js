@@ -1,6 +1,6 @@
 import ToolPage from "../../../components/tools/ToolPage";
 import { HeroGearPlanner } from "../../../components/tools/Phase2Planners";
-export const metadata = { title: "Hero Gear Optimizer | K710" };
+export const metadata = { title: "Hero Gear Optimizer" };
 export default async function Page({ searchParams }) {
   const params = await searchParams;
   const memberId =

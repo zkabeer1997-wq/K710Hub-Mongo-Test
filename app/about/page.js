@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AllianceBearTimes } from '../../components/BearScheduleProvider';
 import EditableSection from '../../components/EditableSection';
 import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
+import HomeEditableText from '../../components/HomeEditableText';
 import { getHomeContent } from '../../lib/homeContent';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
@@ -26,6 +27,27 @@ const DOCTRINE_KEYS = [
   { titleKey: 'why-1-title', bodyKey: 'why-1-body' },
   { titleKey: 'why-2-title', bodyKey: 'why-2-body' },
   { titleKey: 'why-3-title', bodyKey: 'why-3-body' },
+];
+
+const MARCH = [1, 2, 3, 4].map((n) => ({ n: `0${n}`, titleKey: `step-${n}-title`, bodyKey: `step-${n}-body` }));
+
+const FAQ = [
+  {
+    q: 'How long does the transfer take?',
+    a: 'Most transfers are reviewed within a day or two. New intake windows open regularly — apply now and we will confirm your place when the next window lands.',
+  },
+  {
+    q: 'Do I need to leave my current alliance first?',
+    a: 'No. Send your application first. Leadership will walk you through the timing so you do not lose progress or leave before there is a spot ready for you.',
+  },
+  {
+    q: 'What happens after I apply?',
+    a: 'Your application goes to the council, who review your account, preferred event times, and KvK plans. You will be contacted about migration and which of the three alliances fits you best.',
+  },
+  {
+    q: 'Who do I contact if I have questions?',
+    a: 'The transfer form has a contact field, and our leadership monitors it daily. Ask anything there — no question is too small before you commit to moving.',
+  },
 ];
 
 const STATUS_LABEL = { open: 'Recruiting', selective: 'Selective', closed: 'Closed' };
@@ -65,6 +87,11 @@ export default async function AboutPage() {
     getHomeContent(),
     loadAlliances(),
   ]);
+
+  const field = (key, props = {}) => {
+    const c = homeContent[key] || { id: null, text: '' };
+    return <HomeEditableText id={c.id} fieldKey={key} initialText={c.text} isAdmin={isAdmin} {...props} />;
+  };
 
   const hasSources = sourcesBlocks.length > 0;
   const rec = OPTIMIZER_RECORD;
@@ -287,9 +314,37 @@ export default async function AboutPage() {
           )}
         </section>
 
+        <section className="about-section" id="how-to-transfer">
+          <div className="about-section-heading split">
+            <h2 className="about-section-title">How transferring works</h2>
+            <p className="about-section-lede">Four steps from application to your first Bear Hunt.</p>
+          </div>
+          <ol className="about-march">
+            {MARCH.map((m) => (
+              <li key={m.n}>
+                <span className="k-mark">Step {m.n}</span>
+                <h3>{field(m.titleKey, { as: 'span' })}</h3>
+                <p>{field(m.bodyKey, { as: 'span' })}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="about-faq">
+            {FAQ.map((item) => (
+              <details key={item.q}>
+                <summary>{item.q}</summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
+          <div className="about-apply">
+            <p>Ready to move? The council reviews every application.</p>
+            <Button href="/interest">Apply to transfer</Button>
+          </div>
+        </section>
+
         <section className="about-section about-links">
-          <Button href="/timeline" variant="quiet">Kingdom timeline →</Button>
-          <Button href="/chronometer" variant="quiet">Read the full recruitment story →</Button>
+          <Button href="/timeline" variant="quiet">Release timeline →</Button>
+          <Button href="/interest" variant="quiet">Transfer application →</Button>
         </section>
       </div>
 
@@ -366,6 +421,21 @@ export default async function AboutPage() {
         .about-external-link{margin-top:auto;font-size:13px;font-weight:700;color:var(--color-accent-strong);text-decoration:none}
         .about-rank-box .about-external-link{color:color-mix(in srgb, var(--color-accent-strong) 50%, var(--color-ink))}
         .about-external-link:hover{text-decoration:underline}
+        .about-march{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
+        .about-march li{padding:24px 24px;display:flex;flex-direction:column;gap:8px}
+        .about-march li+li{border-left:1px solid var(--color-border)}
+        .about-march .k-mark{color:var(--color-accent)}
+        .about-march h3{margin:0;font-family:var(--font-display);font-size:17px}
+        .about-march p{margin:0;font-size:13.5px;color:var(--color-ink-muted);line-height:1.55}
+        .about-faq{margin-top:28px;max-width:760px}
+        .about-faq details{border-bottom:1px solid var(--color-border)}
+        .about-faq summary{cursor:pointer;padding:16px 4px;font-weight:700;color:var(--color-ink)}
+        .about-faq summary:focus-visible{outline:2px solid var(--color-accent-strong);outline-offset:2px}
+        .about-faq p{margin:0 0 16px;padding:0 4px;color:var(--color-ink-muted);line-height:1.65;max-width:68ch}
+        .about-apply{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:32px}
+        .about-apply p{margin:0;font-family:var(--font-display);font-size:clamp(20px,2.4vw,26px)}
+        @media(max-width:860px){.about-march{grid-template-columns:1fr 1fr}.about-march li:nth-child(3){border-left:0}.about-march li:nth-child(n+3){border-top:1px solid var(--color-border)}}
+        @media(max-width:520px){.about-march{grid-template-columns:1fr}.about-march li+li{border-left:0;border-top:1px solid var(--color-border)}}
         .about-empty{padding:18px;color:var(--color-ink-muted);font-size:14px}
         .about-empty a{color:var(--color-accent-strong)}
         .about-links{display:flex;gap:12px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--color-border)}

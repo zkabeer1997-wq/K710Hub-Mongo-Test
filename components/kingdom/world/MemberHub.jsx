@@ -14,7 +14,7 @@ const destinations = [
     key: 'forms',
     kicker: 'Member information',
     title: 'Forms',
-    description: 'Gear Tracking, KvK Availability, KvK Prep, and Flamedragon Tyrant.',
+    description: 'Power Profile, KvK Availability, KvK Prep, and Flamedragon Tyrant.',
     href: (id) => `/forms?member_id=${id}`,
   },
   {
@@ -150,7 +150,7 @@ export default function MemberHub({ memberId }) {
       <div className="muster-inner member-chambers-inner">
         <header className="muster-head member-chambers-head">
           <span className="k-mark">Member {memberId}</span>
-          <h1 className="k-display member-chambers-title">Member page</h1>
+          <h1 className="k-display member-chambers-title">Dashboard</h1>
           <p className="k-narrative member-chambers-lede">Choose the section you want to open.</p>
         </header>
 

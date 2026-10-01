@@ -1,10 +1,10 @@
-import Link from 'next/link';
+import Breadcrumbs from '../../components/Breadcrumbs';
 import FormsDirectory from './FormsDirectory';
 import { getFormGates } from '../../lib/formGates.server.js';
 import { getMemberFormCompletions } from '../../lib/formCompletionQueries.server.js';
 
 export const metadata = {
-  title: 'K710 Forms',
+  title: 'Forms',
 };
 
 export default async function FormsPage({ searchParams: searchParamsPromise }) {
@@ -19,8 +19,8 @@ export default async function FormsPage({ searchParams: searchParamsPromise }) {
     .map((gate) => gate.form_key);
 
   const backHref = memberId
-    ? `/player-record?member_id=${encodeURIComponent(memberId)}`
-    : '/player-record';
+    ? `/dashboard?member_id=${encodeURIComponent(memberId)}`
+    : '/dashboard';
 
   return (
     <main className="armory tools-workshop forms-workshop">
@@ -28,6 +28,7 @@ export default async function FormsPage({ searchParams: searchParamsPromise }) {
       <span className="armory-rack-l" aria-hidden="true" />
       <span className="armory-rack-r" aria-hidden="true" />
       <div className="armory-inner tools-workshop-inner">
+        <Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Forms" />
         <header className="armory-head tools-workshop-head">
           <span className="k-mark">Kingdom 710</span>
           <h1 className="k-display armory-title">Member Forms</h1>
@@ -38,9 +39,6 @@ export default async function FormsPage({ searchParams: searchParamsPromise }) {
 
         <FormsDirectory memberId={memberId} closedKeys={closedKeys} completions={completions} />
 
-        <Link href={backHref} className="tools-back">
-          ← Return to member page
-        </Link>
       </div>
       <style>{`
         .forms-workshop{color:var(--parchment)}

@@ -101,8 +101,8 @@ export default function SealedPetition({ onClose, reducedMotion = false, intakeP
               Check transfer status
             </Link>
           ) : (
-            <Link href="/chronometer" className="k-btn k-btn-quiet">
-              Back to the Chamber
+            <Link href="/about" className="k-btn k-btn-quiet">
+              Back to About
             </Link>
           )}
         </div>

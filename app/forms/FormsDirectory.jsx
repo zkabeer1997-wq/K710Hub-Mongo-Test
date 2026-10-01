@@ -16,7 +16,7 @@ const ORDER_COLLAPSED_KEY = 'k710-forms-order-collapsed';
 // is safe (unlike the form tiles below, which are Links and cannot nest one).
 const ORDER_STEPS = [
   {
-    title: 'Gear Tracking',
+    title: 'Power Profile',
     detail: (
       <>
         Update your <Term term="Governor Gear">Governor Gear</Term>, Charms, Pets, Masters, and{' '}
@@ -48,7 +48,7 @@ const FORMS = [
   {
     key: 'lead',
     group: 'Always first',
-    title: 'Gear Tracking',
+    title: 'Power Profile',
     description:
       'Update your Governor Gear, Charms, Pets, Masters, and Mystic Trial so leadership has accurate power data.',
     href: (id) => `/power-profile?member_id=${id}`,

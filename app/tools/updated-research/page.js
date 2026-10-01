@@ -4,7 +4,7 @@ import academy from "../../../lib/data/academy.json";
 import warAcademy from "../../../lib/data/war-academy.json";
 import advancedResearch from "../../../lib/data/advanced-research.json";
 
-export const metadata = { title: "Unified Research Planner | K710" };
+export const metadata = { title: "Unified Research Planner" };
 
 export default async function UpdatedResearchPage({ searchParams }) {
   const params = await searchParams;

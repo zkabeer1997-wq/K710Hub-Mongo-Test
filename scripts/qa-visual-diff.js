@@ -92,9 +92,8 @@ const ROUTES = [
   { path: '/alliances/SKY', theme: 'theme-realm' },
 
   // dark, public, no session needed
-  { path: '/chronometer', theme: 'chamber' },
   { path: '/interest', theme: 'registry' },
-  { path: '/player-record', theme: 'gatehouse' },
+  { path: '/dashboard', theme: 'gatehouse' },
   { path: '/admin/login', theme: 'command-hall' },
   { path: '/guides', theme: 'armory' },
   { path: '/guides', theme: 'armory', slugFrom: { list: '/guides', linkSelector: 'a[href^="/guides/"]', template: (href) => href } },
@@ -105,7 +104,7 @@ const ROUTES = [
   { path: '/power-profile', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/flamedragon', theme: 'glass', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/prep-phase-backpack', theme: 'glass', auth: 'member', query: `?member_id=${MEMBER_ID}` },
-  { path: '/player-record/form', theme: 'glass', auth: 'member', query: `?member_id=${MEMBER_ID}` },
+  { path: '/dashboard/form', theme: 'glass', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/events', theme: 'theme-realm', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/tools', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
   { path: '/tools/charm-pack-optimizer', theme: 'armory', auth: 'member', query: `?member_id=${MEMBER_ID}` },
@@ -205,7 +204,7 @@ async function resolveDynamicRoutes(page) {
   const memberCookie = mintMemberCookie();
   const adminCookie = mintAdminCookie();
   if (ROUTES.some((r) => r.auth === 'member') && !memberCookie) {
-    console.log('NOTE: MEMBER_SESSION_SECRET not set — member-gated routes will redirect to /player-record and screenshot the login gate instead of their real content.');
+    console.log('NOTE: MEMBER_SESSION_SECRET not set — member-gated routes will redirect to /dashboard and screenshot the login gate instead of their real content.');
   }
   if (ROUTES.some((r) => r.auth === 'admin') && !adminCookie) {
     console.log('NOTE: ADMIN_PASSWORD not set — admin routes will redirect to /admin/login instead of their real content.');

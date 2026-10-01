@@ -121,7 +121,7 @@ function InterestStatusInner() {
           <p>{result.next_step}</p>
           {result.status === 'accepted' && (
             <p>
-              <Link href="/player-record">Go to member login →</Link>
+              <Link href="/dashboard">Go to Dashboard →</Link>
             </p>
           )}
         </div>

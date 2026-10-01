@@ -31,7 +31,7 @@ export default async function InterestPage() {
             State your name, your strength, and your intent. The council reviews
             every petition before intake opens.
           </p>
-          <a href="/chronometer" className="registry-head-link">
+          <a href="/about#alliances" className="registry-head-link">
             Want to check alliance schedules first? →
           </a>
         </header>

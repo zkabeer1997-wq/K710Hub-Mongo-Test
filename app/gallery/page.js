@@ -2,7 +2,7 @@ import GalleryGrid from '../../components/gallery/GalleryGrid';
 import { getGalleryImages } from '../../lib/gallery';
 
 export const metadata = {
-  title: 'Gallery · Kingdom 710',
+  title: 'Gallery',
   description: 'Photos and shared moments from Kingdom 710.',
   alternates: { canonical: '/gallery' },
 };

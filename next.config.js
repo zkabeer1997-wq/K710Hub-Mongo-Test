@@ -44,10 +44,13 @@ const nextConfig = {
       // Convenience paths people expect to work that don't map to an
       // actual route today - point them at the real destination instead
       // of 404ing.
-      { source: '/apply', destination: '/chronometer', permanent: false },
-      { source: '/join', destination: '/chronometer', permanent: false },
-      { source: '/dashboard', destination: '/player-record', permanent: false },
-      { source: '/members', destination: '/player-record', permanent: false },
+      { source: '/apply', destination: '/interest', permanent: false },
+      { source: '/join', destination: '/interest', permanent: false },
+      { source: '/members', destination: '/dashboard', permanent: false },
+      // Renamed routes: permanent so bookmarks and search engines follow.
+      { source: '/player-record', destination: '/dashboard', permanent: true },
+      { source: '/player-record/:path*', destination: '/dashboard/:path*', permanent: true },
+      { source: '/chronometer', destination: '/about', permanent: true },
     ];
   },
   images: {

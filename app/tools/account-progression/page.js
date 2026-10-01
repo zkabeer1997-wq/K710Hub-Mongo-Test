@@ -1,7 +1,7 @@
 import AccountProgressionPlanner from "../../../components/tools/AccountProgressionPlanner";
 import ToolPage from "../../../components/tools/ToolPage";
 
-export const metadata = { title: "Account Progression Summary | K710" };
+export const metadata = { title: "Account Progression Summary" };
 
 export default async function Page({ searchParams }) {
   const params = await searchParams;

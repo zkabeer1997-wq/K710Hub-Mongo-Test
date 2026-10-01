@@ -2,7 +2,7 @@ import MusterHall from '../../../components/kingdom/world/MusterHall';
 import { getFormGates } from '../../../lib/formGates.server.js';
 
 export const metadata = {
-  title: 'K710 Flamedragon Tyrant Forms',
+  title: 'Flamedragon Tyrant Forms',
 };
 
 export default async function FlamedragonTyrantFormsPage({ searchParams: searchParamsPromise }) {

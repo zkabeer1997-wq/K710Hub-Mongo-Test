@@ -44,7 +44,7 @@ export async function generateMetadata({ params }) {
   try {
     const data = await loadGuideBySlug(slug);
     if (!data?.is_published || data.access_level === 'members') {
-      return { title: 'Member guide | K710', robots: { index: false, follow: false } };
+      return { title: 'Member guide', robots: { index: false, follow: false } };
     }
     return {
       title: data.title,
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }) {
       alternates: { canonical: `/guides/${slug}` },
     };
   } catch {
-    return { title: 'Kingdom Guide | K710' };
+    return { title: 'Kingdom Guide' };
   }
 }
 
@@ -99,7 +99,7 @@ export default async function GuidePage({ params }) {
               : 'This guide is unavailable or has not been published.')}
         </p>
         {membersOnly ? (
-          <Link href={`/player-record?next=${encodeURIComponent(`/guides/${slug}`)}`}>Member login</Link>
+          <Link href={`/dashboard?next=${encodeURIComponent(`/guides/${slug}`)}`}>Sign in on the Dashboard</Link>
         ) : (
           <Link href="/guides">Browse guides</Link>
         )}

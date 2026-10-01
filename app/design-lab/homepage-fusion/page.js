@@ -24,7 +24,7 @@ export default function HomepageFusion() {
           <h1>Enter the kingdom.<br/><em>Join the machine.</em></h1>
           <p>World-building at the threshold, forge identity at the center, and a live command layer built directly into the homepage.</p>
           <div className="hero-actions">
-            <Link href="/chronometer" className="cta-primary">Request entry</Link>
+            <Link href="/interest" className="cta-primary">Request entry</Link>
             <Link href="/tools" className="cta-secondary">Member command →</Link>
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function HomepageFusion() {
 
       <section className="final-cta">
         <div><span>THE GATE IS OPEN</span><h2>Come in as a player.<br/>Stay because it works.</h2></div>
-        <Link href="/chronometer">Start transfer path</Link>
+        <Link href="/interest">Start transfer path</Link>
       </section>
     </main>
   );

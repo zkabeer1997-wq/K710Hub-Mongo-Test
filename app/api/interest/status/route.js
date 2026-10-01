@@ -74,7 +74,7 @@ export async function GET(request) {
         target_alliance: publicStatus === 'accepted' ? doc.migrate_alliance || null : null,
         next_step:
           publicStatus === 'accepted'
-            ? 'Log in at /player-record with your Kingshot Player ID. Leadership will assign your alliance.'
+            ? 'Log in at /dashboard with your Kingshot Player ID. Leadership will assign your alliance.'
             : publicStatus === 'waitlist'
               ? 'You are on the waitlist. Leadership will update this status when an intake window opens.'
               : publicStatus === 'rejected'

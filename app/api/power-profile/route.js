@@ -58,7 +58,7 @@ export async function POST(request) {
   }
   if (profile.member_id !== session.memberId) {
     return NextResponse.json(
-      { error: 'Sign in with this Member ID to update its Gear Tracking.' },
+      { error: 'Sign in with this Member ID to update its Power Profile.' },
       { status: 403 }
     );
   }

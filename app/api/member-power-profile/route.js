@@ -3,7 +3,7 @@ import { readMemberSession } from '../../../lib/memberAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 
-// General Gear Tracking -> tools linkage: returns the signed-in member's
+// General Power Profile -> tools linkage: returns the signed-in member's
 // saved power_profiles document so a calculator can pre-fill from it.
 // member-charm-profile already does this for the charms field alone
 // (consumed by CharmPackOptimizer); this covers the rest of the profile
@@ -33,6 +33,6 @@ export async function GET(request) {
     return NextResponse.json({ profile: data || null });
   } catch (error) {
     console.error('member-power-profile GET failed', error);
-    return NextResponse.json({ error: 'Unable to load saved Gear Tracking profile.' }, { status: 500 });
+    return NextResponse.json({ error: 'Unable to load saved Power Profile profile.' }, { status: 500 });
   }
 }

@@ -35,7 +35,7 @@ export default function SceneOverlay({ hoveredRoad, onHover, onSelect, phase }) 
           onMouseLeave={() => onHover(null)}
           onFocus={() => onHover('right')}
           onBlur={() => onHover(null)}
-          onClick={() => onSelect('right', '/player-record')}
+          onClick={() => onSelect('right', '/dashboard')}
           disabled={disabled}
           aria-label="Enter Kingdom — members report to the inner checkpoint"
           data-active={hoveredRoad === 'right'}

@@ -42,7 +42,7 @@ test('saveStatusLabel reports unsaved changes before a successful status exists'
 
 test('saveStatusLabel reports saved once status is set and nothing is dirty', () => {
   assert.equal(
-    saveStatusLabel({ loading: false, isError: false, dirty: false, status: 'Gear Tracking updated.' }),
+    saveStatusLabel({ loading: false, isError: false, dirty: false, status: 'Power Profile updated.' }),
     'All changes saved',
   );
 });

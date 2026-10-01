@@ -10,14 +10,14 @@ const FOOTER_GROUPS = [
     links: [
       { href: '/', label: 'Home' },
       { href: '/guides', label: 'Guides' },
-      { href: '/chronometer', label: 'Apply' },
+      { href: '/interest', label: 'Apply' },
     ],
   },
   {
     heading: 'About',
     links: [
       { href: '/about', label: 'About' },
-      { href: '/timeline', label: 'Game Updates' },
+      { href: '/timeline', label: 'Release Timeline' },
       { href: '/gallery', label: 'Gallery' },
       { href: '/glossary', label: 'Glossary' },
     ],
@@ -25,7 +25,8 @@ const FOOTER_GROUPS = [
   {
     heading: 'Members',
     links: [
-      { href: '/player-record', label: 'Dashboard' },
+      { href: '/dashboard', label: 'Dashboard' },
+      { href: '/power-profile', label: 'Power Profile' },
       { href: '/forms', label: 'Forms' },
       { href: '/tools', label: 'Tools' },
       { href: '/events', label: 'Events' },

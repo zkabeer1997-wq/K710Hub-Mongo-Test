@@ -49,10 +49,10 @@ export async function generateMetadata({ params }) {
   const canonical = `/alliances/${String(tag || '').toLowerCase()}`;
   try {
     const alliance = await loadAlliance(tag);
-    if (!alliance) return { title: 'Alliance | K710', alternates: { canonical } };
-    return { title: `${alliance.name} — K710`, description: alliance.blurb || undefined, alternates: { canonical } };
+    if (!alliance) return { title: 'Alliance', alternates: { canonical } };
+    return { title: alliance.name, description: alliance.blurb || undefined, alternates: { canonical } };
   } catch {
-    return { title: 'Alliance | K710', alternates: { canonical } };
+    return { title: 'Alliance', alternates: { canonical } };
   }
 }
 
@@ -100,7 +100,7 @@ export default async function AlliancePage({ params }) {
           <div className="alliance-windows-list">
             <AllianceBearTimes tag={alliance.tag} initialTimes={alliance.bear_times_utc} />
           </div>
-          <Link href="/chronometer" className="alliance-events-link">See all alliance Bear Hunt times →</Link>
+          <Link href="/about#alliances" className="alliance-events-link">See all alliance Bear Hunt times →</Link>
         </section>
 
         <Button href="/interest" variant="struck" className="alliance-cta">Join {alliance.name}</Button>

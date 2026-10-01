@@ -124,7 +124,7 @@ export async function POST(request) {
         name,
         login: 'kingshot',
         message:
-          'Member is ready. They should log in at /login or /player-record with their Player ID and in-game verification code.',
+          'Member is ready. They should log in at /login or /dashboard with their Player ID and in-game verification code.',
         userCreated,
         userExisted: !!existingUser,
         recordCreated,

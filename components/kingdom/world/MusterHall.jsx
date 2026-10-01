@@ -278,7 +278,7 @@ const VARIANTS = {
         key: 'lead',
         art: CommandTable,
         kicker: 'Account details',
-        title: 'Gear Tracking',
+        title: 'Power Profile',
         line: 'Record your gear, troops, and heroes.',
         href: (id) => `/power-profile?member_id=${id}`,
       },
@@ -323,7 +323,7 @@ const VARIANTS = {
         kicker: 'KvK form',
         title: 'KvK Availability',
         line: 'Tell leadership when you are available.',
-        href: (id) => `/player-record/form?member_id=${id}`,
+        href: (id) => `/dashboard/form?member_id=${id}`,
       },
       {
         key: 'prep',

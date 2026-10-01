@@ -8,7 +8,7 @@ export async function POST() {
     {
       error: 'PIN registration is no longer available. Use Kingshot Player ID login on the Members page.',
       code: 'PIN_REGISTER_RETIRED',
-      loginPath: '/player-record',
+      loginPath: '/dashboard',
     },
     { status: 410 }
   );
@@ -19,7 +19,7 @@ export async function GET() {
     {
       error: 'PIN registration is no longer available. Use Kingshot Player ID login on the Members page.',
       code: 'PIN_REGISTER_RETIRED',
-      loginPath: '/player-record',
+      loginPath: '/dashboard',
     },
     { status: 410 }
   );

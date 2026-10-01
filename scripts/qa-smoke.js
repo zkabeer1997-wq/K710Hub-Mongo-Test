@@ -18,8 +18,8 @@ const STRICT_AXE = process.env.QA_AXE_STRICT === '1';
 
 const ROUTES = [
   '/', '/about', '/alliances/710', '/alliances/red', '/alliances/sky', '/events', '/guides',
-  '/tools', '/forms', '/power-profile', '/interest', '/chronometer', '/timeline', '/gallery',
-  '/glossary', '/player-record',
+  '/tools', '/forms', '/power-profile', '/interest', '/timeline', '/gallery',
+  '/glossary', '/dashboard',
 ];
 
 let pass = 0, fail = 0;

@@ -1,7 +1,7 @@
-import PlayerRecordGate from '../player-record/PlayerRecordGate';
+import PlayerRecordGate from '../dashboard/PlayerRecordGate';
 
 export const metadata = {
-  title: 'Member login · K710 Hub',
+  title: 'Sign in',
   alternates: { canonical: '/login' },
 };
 

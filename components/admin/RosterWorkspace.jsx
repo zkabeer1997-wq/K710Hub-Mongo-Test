@@ -624,7 +624,7 @@ export default function RosterWorkspace({
         <div><span>Available</span><strong>{availableCount}</strong></div>
         <div><span>Assigned</span><strong>{assignedCount}</strong></div>
         <div className="unassigned-stat"><span>Unassigned</span><strong>{Math.max(seasonFilteredRows.length - assignedCount, 0)}</strong></div>
-        <div><span>Gear Tracking</span><strong>{powerProfileCount}</strong></div>
+        <div><span>Power Profile</span><strong>{powerProfileCount}</strong></div>
         <div><span>Rallies</span><strong>{rallyCount}</strong></div>
         <div><span>Latest update</span><strong>{lastUpdated ? new Date(lastUpdated).toLocaleDateString() : '-'}</strong></div>
       </div>

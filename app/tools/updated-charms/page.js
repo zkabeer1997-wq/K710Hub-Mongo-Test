@@ -2,7 +2,7 @@ import ToolPage from "../../../components/tools/ToolPage";
 import { CharmStatPlanner } from "../../../components/tools/Phase2Planners";
 import { loadToolConfiguration } from "../../../lib/toolSettings";
 
-export const metadata = { title: "Updated Charms Optimizer | K710" };
+export const metadata = { title: "Updated Charms Optimizer" };
 
 export default async function Page({ searchParams }) {
   let packConfiguration = null;

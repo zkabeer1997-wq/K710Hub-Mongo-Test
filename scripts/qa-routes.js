@@ -23,14 +23,14 @@ const ok = (n, c, d = '') => { c ? pass++ : fail++; console.log(`${c ? 'PASS' : 
   p.on('pageerror', (e) => errs.push(String(e)));
 
   // 1. route status
-  const routes = ['/', '/chronometer', '/interest', '/player-record', '/player-record/form', '/power-profile', '/prep-phase-backpack', '/flamedragon', '/admin/login'];
+  const routes = ['/', '/interest', '/dashboard', '/dashboard/form', '/power-profile', '/prep-phase-backpack', '/flamedragon', '/admin/login'];
   for (const r of routes) {
     const res = await p.goto(B + r, { waitUntil: 'domcontentloaded' });
     ok(`route ${r} 200`, res.status() === 200, `status ${res.status()}`);
   }
 
   // 2. exactly one h1 per public route
-  for (const r of ['/', '/chronometer', '/interest', '/player-record', '/player-record/form', '/power-profile', '/prep-phase-backpack', '/flamedragon']) {
+  for (const r of ['/', '/interest', '/dashboard', '/dashboard/form', '/power-profile', '/prep-phase-backpack', '/flamedragon']) {
     await p.goto(B + r, { waitUntil: 'networkidle' });
     const n = await p.locator('h1').count();
     ok(`single h1 on ${r}`, n === 1, `found ${n}`);
@@ -63,13 +63,8 @@ const ok = (n, c, d = '') => { c ? pass++ : fail++; console.log(`${c ? 'PASS' : 
   ok('admin login has password field', await p.locator('input[type=password]').count() === 1);
 
   // 5. PIN gate on member path
-  await p.goto(B + '/player-record', { waitUntil: 'networkidle' });
-  ok('player-record shows PIN gate, not hall', await p.locator('input[type=password]').count() >= 1 && await p.locator('.hall-station').count() === 0);
-
-  // 6. live chronometer
-  await p.goto(B + '/chronometer', { waitUntil: 'networkidle' });
-  const marks = await p.locator('.chrono-hunt').count();
-  ok('chronometer renders 7 hunts', marks === 7, `${marks}`);
+  await p.goto(B + '/dashboard', { waitUntil: 'networkidle' });
+  ok('dashboard shows PIN gate, not hall', await p.locator('input[type=password]').count() >= 1 && await p.locator('.hall-station').count() === 0);
 
   // 7. gate roads navigate
   await p.goto(B + '/', { waitUntil: 'networkidle' });
@@ -85,7 +80,7 @@ const ok = (n, c, d = '') => { c ? pass++ : fail++; console.log(`${c ? 'PASS' : 
   for (const w of widths) {
     const pg = await b.newPage({ viewport: { width: w, height: 900 } });
     let worst = null;
-    for (const r of ['/', '/chronometer', '/interest', '/player-record', '/power-profile', '/prep-phase-backpack', '/flamedragon', '/admin/login']) {
+    for (const r of ['/', '/interest', '/dashboard', '/power-profile', '/prep-phase-backpack', '/flamedragon', '/admin/login']) {
       await pg.goto(B + r, { waitUntil: 'networkidle' });
       const ov = await pg.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       if (ov > 1 && (!worst || ov > worst.ov)) worst = { r, ov };

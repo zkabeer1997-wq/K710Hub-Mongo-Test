@@ -5,11 +5,12 @@ import { guidesTable } from '../../lib/guideAccess.mjs';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
 import Link from 'next/link';
+import Breadcrumbs from '../../components/Breadcrumbs';
 import GuidesDirectory from './GuidesDirectory';
 import { guideCategories, guideSummary } from '../../lib/guideValidation.mjs';
 
 export const metadata = {
-  title: 'K710 Guides',
+  title: 'Guides',
   description: 'Kingdom 710 strategy, event, and member guides.',
   alternates: { canonical: '/guides' },
 };
@@ -51,7 +52,7 @@ export default async function GuidesPage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const memberId = typeof resolvedSearchParams?.member_id === 'string' ? resolvedSearchParams.member_id : '';
   const query = memberId ? `?member_id=${encodeURIComponent(memberId)}` : '';
-  const backHref = memberId ? `/player-record?member_id=${encodeURIComponent(memberId)}` : '/player-record';
+  const backHref = memberId ? `/dashboard?member_id=${encodeURIComponent(memberId)}` : '/dashboard';
 
   let guides = [];
   let loadError = '';
@@ -76,6 +77,7 @@ export default async function GuidesPage({ searchParams }) {
       <section className="guides-hero">
         <div className="guides-hero-grid" aria-hidden="true" />
         <div className="guides-hero-copy">
+          <Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Guides" />
           <span className="k-mark">Kingdom 710</span>
           <h1>Guides</h1>
           <p>
@@ -197,6 +199,7 @@ export default async function GuidesPage({ searchParams }) {
         .guide-entry-meta b{font-size:25px;font-family:var(--font-body);font-weight:400;color:#8e5229}
         .guides-ledger{margin-top:38px;padding-top:22px;border-top:1px solid rgba(77,48,24,.18);max-width:68ch}
         .guides-ledger p{margin:8px 0 0;color:#765a40;font-size:14px;line-height:1.55}
+        .guides-page .cost-tool-crumbs{border-bottom-color:rgba(60,40,20,.25)}.guides-page .cost-tool-crumbs a{color:#754723;font-weight:700}.guides-page .cost-tool-crumbs [aria-current="page"] span{color:#4a3320}
         .guides-back{display:inline-block;margin-top:34px;color:#754723;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:.05em;text-transform:uppercase}
         .guides-error{padding:26px 0;border-block:1px solid rgba(77,48,24,.2);color:#74583e}
         @media(max-width:820px){.guides-hero{grid-template-columns:1fr;min-height:auto;padding-top:82px}.guides-index{grid-template-columns:repeat(3,1fr)}.guides-index>div{grid-template-columns:1fr;padding:16px}.guides-intro-band{grid-template-columns:1fr}.guides-intro-band>div{border-right:0;border-bottom:1px solid rgba(65,40,19,.2)}.guides-archive-head{grid-template-columns:1fr;gap:18px}.guide-entry{grid-template-columns:96px minmax(0,1fr);gap:18px}.guide-entry-meta{grid-column:2;align-items:flex-start;flex-direction:row}.guide-device{height:100px}.guide-book{width:90px;height:90px}}

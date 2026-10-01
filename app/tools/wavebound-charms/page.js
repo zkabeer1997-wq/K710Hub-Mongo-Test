@@ -1,3 +1,4 @@
+import Breadcrumbs from '../../../components/Breadcrumbs';
 export const dynamic = 'force-dynamic';
 import { loadToolConfiguration } from '../../../lib/toolSettings';
 import Link from 'next/link';
@@ -20,10 +21,7 @@ export default async function WaveboundCharmsPage({ searchParams: searchParamsPr
       <span className="armory-rack-r" aria-hidden="true" />
 
       <div className="armory-inner wavebound-tool-inner">
-        <div className="wavebound-tool-nav">
-          <Link href={`/tools${query}`} className="wavebound-back">← Tools &amp; Calculators</Link>
-          <span className="k-mark">Wavebound Voyage</span>
-        </div>
+        <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Tools & Calculators', href: `/tools${query}` }]} current="Charm Merge Optimizer" />
 
         <header className="armory-head wavebound-tool-head">
           <h1 className="k-display armory-title">Charm Merge Optimizer</h1>

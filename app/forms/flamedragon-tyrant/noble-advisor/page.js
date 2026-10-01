@@ -7,11 +7,11 @@ import { getFormFieldMeta } from '../../../../lib/formFieldMeta.server';
 import FormClosedNotice from '../../../../components/FormClosedNotice';
 import NobleAdvisorForm from './NobleAdvisorForm';
 
-export const metadata = { title: 'Noble Advisor Schedule | K710' };
+export const metadata = { title: 'Noble Advisor Schedule' };
 
 export default async function NobleAdvisorPage() {
   const session = await readMemberSession({ cookies: await cookies() });
-  if (!session) redirect('/player-record?next=/forms/flamedragon-tyrant/noble-advisor');
+  if (!session) redirect('/dashboard?next=/forms/flamedragon-tyrant/noble-advisor');
   const [gate, fieldMeta] = await Promise.all([
     getFormGate('noble'),
     getFormFieldMeta('noble').catch(() => null),

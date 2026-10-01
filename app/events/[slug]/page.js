@@ -47,14 +47,14 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   try {
     const event = await loadEvent(slug);
-    if (!event) return { title: 'Event | K710' };
+    if (!event) return { title: 'Event' };
     return {
       title: event.title,
       description: event.description || undefined,
       openGraph: { title: event.title, description: event.description || undefined },
     };
   } catch {
-    return { title: 'Event | K710' };
+    return { title: 'Event' };
   }
 }
 

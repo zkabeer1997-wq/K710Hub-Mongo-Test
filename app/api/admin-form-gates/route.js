@@ -8,7 +8,7 @@ import { getFormGates } from '../../../lib/formGates.server.js';
 
 const ROUTE_BY_KEY = {
   lead: '/power-profile',
-  joiner: '/player-record/form',
+  joiner: '/dashboard/form',
   prep: '/prep-phase-backpack',
   dragon: '/flamedragon',
   noble: '/forms/flamedragon-tyrant/noble-advisor',

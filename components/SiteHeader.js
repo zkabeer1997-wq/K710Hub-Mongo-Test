@@ -13,7 +13,7 @@ const NAV_ITEMS = [
     label: 'About',
     children: [
       { href: '/about', label: 'About' },
-      { href: '/timeline', label: 'Game Updates' },
+      { href: '/timeline', label: 'Release Timeline' },
       { href: '/gallery', label: 'Gallery' },
       { href: '/glossary', label: 'Glossary' },
     ],
@@ -24,7 +24,8 @@ const NAV_ITEMS = [
     id: 'members',
     label: 'Members',
     children: [
-      { href: '/player-record', label: 'Dashboard' },
+      { href: '/dashboard', label: 'Dashboard' },
+      { href: '/power-profile', label: 'Power Profile' },
       { href: '/forms', label: 'Forms' },
       { href: '/tools', label: 'Tools' },
       { href: '/events', label: 'Events' },
@@ -218,7 +219,7 @@ export default function SiteHeader() {
               </Link>
             );
           })}
-          <Link href="/chronometer" className="site-nav-cta">Apply</Link>
+          <Link href="/interest" className="site-nav-cta">Apply</Link>
           <Link
             href={SUPPORT_URL}
             target="_blank"
@@ -276,7 +277,7 @@ export default function SiteHeader() {
               </Link>
             );
           })}
-          <Link href="/chronometer" onClick={() => setOpen(false)} className="site-nav-cta">Apply</Link>
+          <Link href="/interest" onClick={() => setOpen(false)} className="site-nav-cta">Apply</Link>
           <Link
             href={SUPPORT_URL}
             target="_blank"

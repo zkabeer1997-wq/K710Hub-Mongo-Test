@@ -5,7 +5,7 @@ import FormClosedNotice from '../../components/FormClosedNotice';
 import FlamedragonClient from './FlamedragonClient';
 
 export const metadata = {
-  title: 'K710 Flamedragon Tyrant Form',
+  title: 'Flamedragon Tyrant Form',
 };
 
 export default async function FlamedragonPage() {

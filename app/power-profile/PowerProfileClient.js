@@ -28,7 +28,7 @@ import { LoadingRow } from '../../components/ui';
 // reads/writes the same lifted `form` / `governorGear` / `charms` state as
 // before, so moving between steps can never drop an input.
 const STEPS = [
-  { id: 'power', kicker: 'Governor Power', label: 'Governor Power' },
+  { id: 'power', kicker: 'Power & Gift Codes', label: 'Power & Gift Codes' },
   { id: 'troops', kicker: 'Army Strength', label: 'Troop Levels' },
   { id: 'heroes', kicker: 'Hero Roster', label: 'Hero Roster' },
   { id: 'gear', kicker: 'Power Data', label: 'Gear & Charms' },
@@ -214,12 +214,12 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
     setLoading(false);
     if (!response.ok) {
       setIsError(true);
-      setStatus(result.error || 'Could not save Gear Tracking.');
+      setStatus(result.error || 'Could not save Power Profile.');
       return;
     }
     setOnFile(result.profile);
     setDirty(false);
-    setStatus(result.status === 'created' ? 'Gear Tracking created.' : 'Gear Tracking updated.');
+    setStatus(result.status === 'created' ? 'Power Profile created.' : 'Power Profile updated.');
   }
 
   // Guards against a bare Enter key implicitly submitting the form from an
@@ -246,7 +246,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
         </header>
         {intro}
 
-        <nav className="wizard-stepper" aria-label="Gear Tracking steps">
+        <nav className="wizard-stepper" aria-label="Power Profile steps">
           <div
             className="wizard-stepper-progress"
             role="progressbar"
@@ -282,11 +282,11 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
           onSubmit={handleSubmit}
           onKeyDown={handleFormKeyDown}
         >
-          {/* ---------- Step 1: Governor Power & Gift Codes ---------- */}
+          {/* ---------- Step 1: Power & Gift Codes ---------- */}
           <section className="ledger-block wizard-step" hidden={step !== 0}>
             <div className="ledger-block-head">
               <span className="ledger-block-kicker">{STEPS[0].kicker}</span>
-              <h2 ref={(el) => { headingRefs.current[0] = el; }} tabIndex={-1}>Governor Power</h2>
+              <h2 ref={(el) => { headingRefs.current[0] = el; }} tabIndex={-1}>Power &amp; Gift Codes</h2>
               <p>Your name and Member ID look you up and prefill anything already on file.</p>
             </div>
             <div className="identity-grid">
@@ -433,12 +433,12 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
             <div className="ledger-block-head">
               <span className="ledger-block-kicker">{STEPS[4].kicker}</span>
               <h2 ref={(el) => { headingRefs.current[4] = el; }} tabIndex={-1}>Review &amp; Submit</h2>
-              <p>Confirm everything below, then save your Gear Tracking.</p>
+              <p>Confirm everything below, then save your Power Profile.</p>
             </div>
 
             <div className="wizard-review-grid">
               <div className="wizard-review-card">
-                <h4>Governor Power</h4>
+                <h4>Power &amp; Gift Codes</h4>
                 <dl>
                   <div><dt>Name</dt><dd>{form.name || '-'}</dd></div>
                   <div><dt>Member ID</dt><dd>{form.member_id || '-'}</dd></div>
@@ -490,7 +490,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
             {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
             <div className="wizard-nav">
               <button type="button" className="wizard-back" onClick={() => goToStep(3)}>Back</button>
-              <button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Gear Tracking'}</button>
+              <button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Power Profile'}</button>
             </div>
           </section>
         </form>

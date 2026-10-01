@@ -11,16 +11,16 @@ const WIDTHS = [375, 768, 1440];
 const MEMBER_ID = 'qa-sitewide-member';
 const ROUTES = [
   '/', '/about', '/timeline', '/alliances', '/alliances/710', '/alliances/red', '/alliances/sky',
-  '/chronometer', '/gate', '/guides', '/guides/rally-joiner', '/guides/kvk-preparation', '/guides/rally-lead',
-  '/events', '/events/castle-battle', '/events/flamedragon-tyrant-battle', '/interest', '/player-record',
-  '/forms', '/player-record/form', '/power-profile', '/flamedragon', '/prep-phase-backpack', '/tools',
+  '/gate', '/guides', '/guides/rally-joiner', '/guides/kvk-preparation', '/guides/rally-lead',
+  '/events', '/events/castle-battle', '/events/flamedragon-tyrant-battle', '/interest', '/dashboard',
+  '/forms', '/dashboard/form', '/power-profile', '/flamedragon', '/prep-phase-backpack', '/tools',
   '/tools/adventure-stall', '/tools/charm-pack-optimizer', '/tools/flamedragon-shop', '/tools/pet-pack-optimizer', '/tools/wavebound-charms',
   '/admin', '/admin/login', '/admin/dashboard', '/admin/dashboard/guides', '/admin/dashboard/alliance-events',
   '/admin/dashboard/form-gates', '/admin/dashboard/member-pins', '/admin/dashboard/interest',
   '/admin/dashboard/prep-ministers', '/admin/dashboard/flamedragon',
   '/design-lab/homepage', '/design-lab/homepage-fusion'
 ];
-const MEMBER_PREFIXES = ['/forms','/player-record/form','/power-profile','/flamedragon','/prep-phase-backpack','/tools'];
+const MEMBER_PREFIXES = ['/forms','/dashboard/form','/power-profile','/flamedragon','/prep-phase-backpack','/tools'];
 const ADMIN_PREFIX = '/admin/dashboard';
 
 function b64(v){return Buffer.from(v,'utf8').toString('base64url')}

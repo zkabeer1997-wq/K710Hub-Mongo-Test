@@ -1,3 +1,4 @@
+import Breadcrumbs from '../../../components/Breadcrumbs';
 export const dynamic = 'force-dynamic';
 import { loadToolConfiguration } from '../../../lib/toolSettings';
 import Link from 'next/link';
@@ -20,10 +21,7 @@ export default async function GovernorGearSailingToolPage({ searchParams: search
       <span className="armory-rack-r" aria-hidden="true" />
 
       <div className="armory-inner wavebound-tool-inner">
-        <div className="wavebound-tool-nav">
-          <Link href={`/tools${query}`} className="wavebound-back">← Tools &amp; Calculators</Link>
-          <span className="k-mark">Governor&apos;s Expedition</span>
-        </div>
+        <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Tools & Calculators', href: `/tools${query}` }]} current="Governor Gear Merge Optimizer" />
 
         <header className="armory-head wavebound-tool-head">
           <h1 className="k-display armory-title">Governor Gear Merge Optimizer</h1>

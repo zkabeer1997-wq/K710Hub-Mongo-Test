@@ -3,8 +3,8 @@ import EditableSection from '../../components/EditableSection';
 import PlayerRecordGate from './PlayerRecordGate';
 
 export const metadata = {
-  title: 'K710 Member Login',
-  alternates: { canonical: '/player-record' },
+  title: 'Dashboard',
+  alternates: { canonical: '/dashboard' },
 };
 
 export default async function PlayerRecordPage({ searchParams: searchParamsPromise }) {

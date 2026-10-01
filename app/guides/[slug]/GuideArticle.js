@@ -1,5 +1,6 @@
 'use client';
 
+import Breadcrumbs from '../../../components/Breadcrumbs';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -36,8 +37,8 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
   const guidesHref = `/guides${query}`;
 
   useEffect(() => {
-    if (guide?.title) document.title = `${guide.title} | K710`;
-    return () => { document.title = 'Kingdom Guide | K710'; };
+    if (guide?.title) document.title = `${guide.title} · K710 Hub`;
+    return () => { document.title = 'Guides · K710 Hub'; };
   }, [guide?.title]);
 
   // The server-rendered pass is always anonymous (see page.js - a static
@@ -120,7 +121,7 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
       <main className="armory guide-page">
         <div className="armory-atmos" aria-hidden="true" />
         <div className="armory-inner guide-inner">
-          <Link href={guidesHref} className="guide-back">← Guides</Link>
+          <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }]} current="Guides" />
           <div className="guide-error k-narrative">{error || 'Guide not found.'}</div>
         </div>
         <style jsx>{`.guide-inner{width:min(940px,100%);padding-top:clamp(82px,10vh,118px)}.guide-back{color:var(--brass);text-decoration:none}.guide-error{margin-top:40px;color:var(--parchment-dim)}`}</style>
@@ -135,10 +136,8 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
       <span className="armory-rack-r" aria-hidden="true" />
 
       <div className="armory-inner guide-inner">
-        <div className="guide-topbar">
-          <Link href={guidesHref} className="guide-back">← Guides</Link>
-          {isAdmin && <span className="guide-admin-badge">Admin editing available</span>}
-        </div>
+        <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Guides', href: guidesHref }]} current={guide.title} />
+        {isAdmin && <div className="guide-topbar"><span className="guide-admin-badge">Admin editing available</span></div>}
 
         <header className="guide-header">
           <span className="k-mark">{guide.category}</span>

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-const REALM_PREFIXES = ['/', '/about', '/timeline', '/events', '/guides', '/alliances', '/chronometer', '/interest', '/gate'];
+const REALM_PREFIXES = ['/', '/about', '/timeline', '/events', '/guides', '/alliances', '/interest', '/gate'];
 
 function isRealm(pathname) {
   if (pathname === '/') return true;

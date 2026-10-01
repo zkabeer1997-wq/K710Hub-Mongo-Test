@@ -12,14 +12,14 @@ import { readMemberSession } from './lib/memberAuth';
 // two lists below are the only places "does this route need a session"
 // is decided.
 //
-// /player-record itself (the Gatehouse login/register screen) is
+// /dashboard itself (the Gatehouse login/register screen) is
 // deliberately NOT in ADMIN or MEMBER prefixes below: it's where an
 // unauthenticated visitor is supposed to land. Events and Guides are public;
 // Tools and member forms still require a member session.
 const ADMIN_PREFIXES = ['/admin/dashboard'];
 const MEMBER_PREFIXES = [
   '/forms',
-  '/player-record/form',
+  '/dashboard/form',
   '/power-profile',
   '/flamedragon',
   '/prep-phase-backpack',
@@ -32,8 +32,8 @@ export const config = {
     '/admin/dashboard/:path*',
     '/forms',
     '/forms/:path*',
-    '/player-record/form',
-    '/player-record/form/:path*',
+    '/dashboard/form',
+    '/dashboard/form/:path*',
     '/power-profile',
     '/power-profile/:path*',
     '/flamedragon',
@@ -65,7 +65,7 @@ export async function proxy(request) {
     // as legacy PIN login, so one read covers both.
     const session = await readMemberSession(request);
     if (!session) {
-      const loginUrl = new URL('/player-record', request.url);
+      const loginUrl = new URL('/dashboard', request.url);
       loginUrl.searchParams.set('next', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }

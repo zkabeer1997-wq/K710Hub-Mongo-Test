@@ -1,7 +1,7 @@
 import ToolPage from "../../../components/tools/ToolPage";
 import { GovernorGearPlanner } from "../../../components/tools/Phase2Planners";
 
-export const metadata = { title: "Updated Governor Gear Optimizer | K710" };
+export const metadata = { title: "Updated Governor Gear Optimizer" };
 
 export default async function Page({ searchParams }) {
   const params = await searchParams;

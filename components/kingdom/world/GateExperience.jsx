@@ -14,7 +14,7 @@ const GateScene = dynamic(() => import('./GateScene'), { ssr: false });
 const ROADS = {
   left: {
     key: 'left',
-    href: '/chronometer',
+    href: '/interest',
     kicker: 'The Gold Road',
     title: 'Request Entry',
     sub: 'Petition the registry to transfer into 710.',
@@ -22,7 +22,7 @@ const ROADS = {
   },
   right: {
     key: 'right',
-    href: '/player-record',
+    href: '/dashboard',
     kicker: 'The Inner Gate',
     title: 'Enter Kingdom',
     sub: 'Members report to the checkpoint.',

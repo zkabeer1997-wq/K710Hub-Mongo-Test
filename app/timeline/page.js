@@ -7,7 +7,7 @@ import {
 } from '../../lib/kingdomExternalData.mjs';
 
 export const metadata = {
-  title: 'Timeline',
+  title: 'Kingshot Release Timeline',
   description:
     'Kingdom 710 timeline — heroes, pets, Truegold, PvP milestones, and feature unlocks from Kingshot Optimizer.',
   alternates: { canonical: '/timeline' },

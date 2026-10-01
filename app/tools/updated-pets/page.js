@@ -3,7 +3,7 @@ import PetPackOptimizer from "../PetPackOptimizer";
 import { loadToolConfiguration } from "../../../lib/toolSettings";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Updated Pets Optimizer | K710" };
+export const metadata = { title: "Updated Pets Optimizer" };
 
 export default async function Page({ searchParams }) {
   let configuration = null;

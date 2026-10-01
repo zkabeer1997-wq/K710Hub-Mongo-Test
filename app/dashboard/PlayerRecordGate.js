@@ -55,7 +55,7 @@ function GettingStartedChecklist({ items, memberId }) {
       </Link>
       <ul className={styles.checklistList}>
         {items.map((item) => {
-          const href = (CHECKLIST_HREFS[item.key] || (() => '/player-record'))(memberId);
+          const href = (CHECKLIST_HREFS[item.key] || (() => '/dashboard'))(memberId);
           return (
             <li key={item.key} className={styles.checklistItem} data-complete={item.complete || undefined}>
               {item.complete ? (
@@ -285,8 +285,8 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
             <div>
               <span className={styles.eyebrow}>Secure player access · Kingdom 710</span>
               <h1 id="member-login-title">
-                Welcome back,<br />
-                <em>{view === 'profile' ? `${displayName}.` : 'Governor.'}</em>
+                Dashboard<br />
+                <em>{view === 'profile' ? `Welcome back, ${displayName}.` : 'Sign in with your Player ID.'}</em>
               </h1>
               <p>
                 {view === 'profile'

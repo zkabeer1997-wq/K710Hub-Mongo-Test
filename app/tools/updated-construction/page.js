@@ -1,7 +1,7 @@
 import ToolPage from "../../../components/tools/ToolPage";
 import UpdatedConstructionPlanner from "../../../components/tools/UpdatedConstructionPlanner";
 
-export const metadata = { title: "Updated Construction Planner | K710" };
+export const metadata = { title: "Updated Construction Planner" };
 
 export default async function UpdatedConstructionPage({ searchParams }) {
   const params = await searchParams;

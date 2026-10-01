@@ -91,7 +91,7 @@ export default function WebsiteRequestForm() {
           <p>Your session has expired. Sign in again to submit a website request.</p>
         </section>
         <div className="public-form-card">
-          <Link href="/player-record">Sign in</Link>
+          <Link href="/dashboard">Sign in</Link>
         </div>
       </div>
     );

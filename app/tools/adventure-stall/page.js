@@ -1,9 +1,10 @@
+import Breadcrumbs from '../../../components/Breadcrumbs';
 export const dynamic = 'force-dynamic';
 import { loadToolConfiguration } from '../../../lib/toolSettings';
 import Link from 'next/link';
 import AdventureStallOptimizer from '../AdventureStallOptimizer';
 
-export const metadata = { title: 'Adventure Stall Optimizer | K710' };
+export const metadata = { title: 'Adventure Stall Optimizer' };
 
 export default async function AdventureStallPage({ searchParams: searchParamsPromise }) {
   const configuration = await loadToolConfiguration('adventure-stall');
@@ -13,7 +14,7 @@ export default async function AdventureStallPage({ searchParams: searchParamsPro
   return <main className="armory as-page">
     <div className="armory-atmos" aria-hidden="true"/><span className="armory-rack-l" aria-hidden="true"/><span className="armory-rack-r" aria-hidden="true"/>
     <div className="armory-inner as-inner">
-      <div className="as-nav"><Link href={`/tools${query}`}>← Tools &amp; Calculators</Link><span className="k-mark">Special Event Shops</span></div>
+      <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Tools & Calculators', href: `/tools${query}` }]} current="Adventure Stall" />
       <header className="armory-head as-head"><h1 className="k-display armory-title">Adventure Stall</h1><p className="k-narrative armory-lede">Build your reward cart and find the lowest-cost legal Shell pack combination across the event days remaining.</p></header>
       <AdventureStallOptimizer configuration={configuration}/>
     </div>

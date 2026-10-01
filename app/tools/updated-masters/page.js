@@ -1,7 +1,7 @@
 import ToolPage from "../../../components/tools/ToolPage";
 import MastersPackOptimizer from "../MastersPackOptimizer";
 
-export const metadata = { title: "Updated Masters Optimizer | K710" };
+export const metadata = { title: "Updated Masters Optimizer" };
 
 export default async function Page({ searchParams }) {
   const params = await searchParams;

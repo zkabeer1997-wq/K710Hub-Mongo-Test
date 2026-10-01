@@ -103,7 +103,6 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
         </div>
       )}
 
-      <Link href={backHref} className="guides-back">← Return to member page</Link>
     </>
   );
 }

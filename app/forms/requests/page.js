@@ -4,7 +4,7 @@ import FormClosedNotice from '../../../components/FormClosedNotice';
 import WebsiteRequestForm from './WebsiteRequestForm';
 
 export const metadata = {
-  title: 'K710 Website Requests',
+  title: 'Website Requests',
 };
 
 export default async function WebsiteRequestsPage() {
