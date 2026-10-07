@@ -25,7 +25,7 @@ const DEFAULT_HOME = [
 async function main() {
   const client = new MongoClient(uri);
   await client.connect();
-  const db = client.db();
+  const db = client.db(process.env.MONGODB_DB_NAME || 'k710hub');
   const report = {};
 
   const alliances = db.collection('alliances');

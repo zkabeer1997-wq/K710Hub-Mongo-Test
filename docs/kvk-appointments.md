@@ -52,7 +52,7 @@ Open/close the form in Admin > Form Gates ("KvK Appointments"). `cycle_id` comes
 | `kvk_appointment_assignments` | `cycle_id, day, buff, slot` **and** `cycle_id, day, buff, member_id` | no double booking, one slot per member; `manual` flag marks admin picks |
 | `kvk_appointment_cycles` | `cycle_id` | `published`, `published_at` |
 
-Registered in `lib/mongoCollections.js`; apply with `node scripts/ensure-indexes.mjs`.
+Registered in `lib/mongoCollections.js`; apply with `npm run db:indexes`.
 
 ## Routes
 

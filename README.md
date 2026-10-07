@@ -58,7 +58,7 @@ This stack no longer uses Supabase for anything — all `NEXT_PUBLIC_SUPABASE_*`
 
 Collections live in the database named by `MONGODB_DB_NAME` (default `k710hub`).
 
-See `lib/mongoCollections.js` for the canonical list of collections and the indexes that must exist.
+See `lib/mongoCollections.js` for the canonical list of collections and the indexes that must exist. Apply the indexes with `MONGODB_URI=... MONGODB_DB_NAME=... npm run db:indexes` (safe to re-run).
 
 Auth:
 - Kingshot Player ID + in-game verification code (`lib/kingshotLogin.js`, `lib/memberAuthKingshot.js`)
