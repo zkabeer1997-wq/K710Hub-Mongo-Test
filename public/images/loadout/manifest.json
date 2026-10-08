@@ -209,6 +209,22 @@
       "gold-t2-s1": "/images/loadout/governor-gear/cavalry-2/gold-t2-s1.webp",
       "gold-t2-s2": "/images/loadout/governor-gear/cavalry-2/gold-t2-s2.webp",
       "gold-t2-s3": "/images/loadout/governor-gear/cavalry-2/gold-t2-s3.webp",
+      "gold-t3-s0": "/images/loadout/governor-gear/cavalry-2/gold-t3-s0.webp",
+      "gold-t3-s1": "/images/loadout/governor-gear/cavalry-2/gold-t3-s1.webp",
+      "gold-t3-s2": "/images/loadout/governor-gear/cavalry-2/gold-t3-s2.webp",
+      "gold-t3-s3": "/images/loadout/governor-gear/cavalry-2/gold-t3-s3.webp",
+      "red-t0-s0": "/images/loadout/governor-gear/cavalry-2/red-t0-s0.webp",
+      "red-t0-s1": "/images/loadout/governor-gear/cavalry-2/red-t0-s1.webp",
+      "red-t0-s2": "/images/loadout/governor-gear/cavalry-2/red-t0-s2.webp",
+      "red-t0-s3": "/images/loadout/governor-gear/cavalry-2/red-t0-s3.webp",
+      "red-t1-s0": "/images/loadout/governor-gear/cavalry-2/red-t1-s0.webp",
+      "red-t1-s1": "/images/loadout/governor-gear/cavalry-2/red-t1-s1.webp",
+      "red-t1-s2": "/images/loadout/governor-gear/cavalry-2/red-t1-s2.webp",
+      "red-t1-s3": "/images/loadout/governor-gear/cavalry-2/red-t1-s3.webp",
+      "red-t2-s0": "/images/loadout/governor-gear/cavalry-2/red-t2-s0.webp",
+      "red-t2-s1": "/images/loadout/governor-gear/cavalry-2/red-t2-s1.webp",
+      "red-t2-s2": "/images/loadout/governor-gear/cavalry-2/red-t2-s2.webp",
+      "red-t2-s3": "/images/loadout/governor-gear/cavalry-2/red-t2-s3.webp",
       "red-t3-s0": "/images/loadout/governor-gear/cavalry-2/red-t3-s0.webp",
       "red-t3-s1": "/images/loadout/governor-gear/cavalry-2/red-t3-s1.webp",
       "red-t3-s2": "/images/loadout/governor-gear/cavalry-2/red-t3-s2.webp",
@@ -448,8 +464,7 @@
     }
   },
   "sources": {
-    "owner-art": "owner-supplied 384px art: hat/shirt/ring (cavalry, infantry, archer) and Red T3..T6 of pendant/pants/baton",
-    "gear-guide-screenshot": "cropped from the in-game Gear Guide screenshots (226px); brightness lifted, padlock-free (see composited)"
+    "owner-art": "owner-supplied 384px in-game tiles, background removed; the only source of gear art"
   },
   "governorGearEntries": {
     "cavalry": {
@@ -1331,132 +1346,212 @@
     "cavalry-2": {
       "green-t0-s0": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "green-t0-s1": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s0": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s1": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s2": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s3": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s0": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s1": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s2": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s3": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s0": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s1": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s2": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s3": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s0": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s1": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s2": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s3": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s0": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s1": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s2": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s3": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s0": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s1": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s2": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s3": {
         "piece": "pendant",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "gold-t3-s0": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "gold-t3-s1": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "gold-t3-s2": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "gold-t3-s3": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t0-s0": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t0-s1": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t0-s2": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t0-s3": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t1-s0": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t1-s1": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t1-s2": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t1-s3": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t2-s0": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t2-s1": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t2-s2": {
+        "piece": "pendant",
+        "source": "owner-art",
+        "usableAsTemplate": true
+      },
+      "red-t2-s3": {
+        "piece": "pendant",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t3-s0": {
@@ -1543,221 +1638,213 @@
     "infantry-2": {
       "green-t0-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "green-t0-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t1-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t1-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t1-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t1-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s0": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s1": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s2": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s3": {
         "piece": "pants",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t3-s0": {
         "piece": "pants",
@@ -1843,221 +1930,213 @@
     "archer-2": {
       "green-t0-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "green-t0-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "blue-t0-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t0-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "purple-t1-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t0-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t1-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t2-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "gold-t3-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t0-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
+        "source": "owner-art",
         "usableAsTemplate": true
       },
       "red-t1-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t1-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t1-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t1-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s0": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s1": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s2": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t2-s3": {
         "piece": "baton",
-        "source": "gear-guide-screenshot",
-        "usableAsTemplate": false,
-        "composited": "padlock/highlight removed: base Red + label corner and star strip of this tile"
+        "source": "owner-art",
+        "usableAsTemplate": true
       },
       "red-t3-s0": {
         "piece": "baton",

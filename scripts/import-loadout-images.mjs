@@ -5,24 +5,34 @@
 //            Governor Gear/{Archer,Cavalry,Infantry}/<Quality> <stars>.jpg | <Quality> T<tier><stars>.jpg  (58 each, 384x384)
 //            Charms/{Archer,Cavalry,Infantry}/Level <n>.jpg                                                (22 each, 384x384)
 //          Each troop folder holds ONE gear piece: Cavalry = hat, Infantry = shirt, Archer = ring.
+//          ~/Downloads/Green_to_RedT2/{Cavalry2 (Pendant),Infantry2 (Pants),Archer2 (Baton)}/  Green 0-1 .. Red T2   (42 each, 384x384)
+//          ~/Downloads/Red_T3_to_T6/{same three folders}/                                       Red T30 .. Red T63  (16 each, 384x384)
+//          Together = 58 states per piece, same file naming as above.
 // Purpose: shown on the loadout board now; kept at full 384px so they can be the OCR templates later.
 // Output:  public/images/loadout/governor-gear/<troop>/<quality>-t<tier>-s<stars>.webp
+//          public/images/loadout/governor-gear/{cavalry-2,infantry-2,archer-2}/<quality>-t<tier>-s<stars>.webp   (pendant, pants, baton)
 //          public/images/loadout/charms/<troop>/level-<n>.webp
 //          public/images/loadout/manifest.json
 // Background: the white/light area outside the art is removed by a flood fill from the image border over near-white
 //          pixels (so white INSIDE the art, e.g. gem highlights, is kept), then a 2px feathered edge un-mixes the white.
-// Usage:   node scripts/import-loadout-images.mjs [sourceDir]      (idempotent and deterministic; no timestamps in the images)
+// Usage:   node scripts/import-loadout-images.mjs [sourceDir] [slot2Dir] [redT3Dir]
+//          ONE command rebuilds every image and the whole manifest (idempotent and deterministic; no timestamps in the images).
+//          Defaults: ~/Downloads/Kingshot_Gear_Charms, ~/Downloads/Green_to_RedT2, ~/Downloads/Red_T3_to_T6.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { CHARM_LEVELS, GOVERNOR_GEAR_STATES, QUALITIES } from '../lib/scan/kinds/governorProfile/gameData.mjs';
-import { LOADOUT_TROOPS, charmImageFor, gearImageKey, sourceGearFileName } from '../lib/loadoutImages.mjs';
+import { GEAR_SLOT_ART, LOADOUT_TROOPS, charmImageFor, gearImageKey, sourceGearFileName } from '../lib/loadoutImages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public/images/loadout');
-const SRC = path.resolve((process.argv[2] || '~/Downloads/Kingshot_Gear_Charms').replace(/^~/, os.homedir()));
+const dirArg = (i, dflt) => path.resolve((process.argv[i] || dflt).replace(/^~/, os.homedir()));
+const SRC = dirArg(2, '~/Downloads/Kingshot_Gear_Charms');
+const SLOT2_DIR = dirArg(3, '~/Downloads/Green_to_RedT2');
+const RED_DIR = dirArg(4, '~/Downloads/Red_T3_to_T6');
+const SLOT2_FOLDERS = { 'cavalry-2': 'Cavalry2 (Pendant)', 'infantry-2': 'Infantry2 (Pants)', 'archer-2': 'Archer2 (Baton)' };
 const SIZE = 384;
 const QUALITY = Number(process.env.LOADOUT_WEBP_QUALITY || 85);
 const WHITE_MIN = 232; // min(R,G,B) at or above this counts as background
@@ -99,11 +109,15 @@ async function convert(src, dest, problems) {
 async function main() {
   if (!fs.existsSync(SRC)) { console.error(`Source folder not found: ${SRC}`); process.exit(1); }
   const problems = [];
-  const manifest = { version: 1, generated_at: null, governorGear: {}, charms: {} };
+  const manifest = { version: 2, generated_at: null, governorGear: {}, charms: {}, pieces: {}, sources: {}, governorGearEntries: {} };
+  manifest.sources['owner-art'] = 'owner-supplied 384px in-game tiles, background removed; the only source of gear art';
+  for (const [slot, v] of Object.entries(GEAR_SLOT_ART)) manifest.pieces[v.folder] = { piece: v.piece, slot };
+  const entry = (folder) => ({ piece: GEAR_SLOT_ART[Object.keys(GEAR_SLOT_ART).find((k) => GEAR_SLOT_ART[k].folder === folder)].piece, source: 'owner-art', usableAsTemplate: true });
   let total = 0; let count = 0;
   const used = new Set();
   for (const troop of LOADOUT_TROOPS) {
     manifest.governorGear[troop] = {};
+    manifest.governorGearEntries[troop] = {};
     manifest.charms[troop] = {};
     for (const state of GOVERNOR_GEAR_STATES) {
       const key = gearImageKey(state);
@@ -111,6 +125,7 @@ async function main() {
       const src = path.join(SRC, 'Governor Gear', cap(troop), sourceGearFileName(state, NAME.get(state.quality)));
       total += await convert(src, path.join(OUT, rel), problems); count++;
       manifest.governorGear[troop][key] = `/images/loadout/${rel}`;
+      manifest.governorGearEntries[troop][key] = entry(troop);
       used.add(path.join('Governor Gear', cap(troop), path.basename(src)));
     }
     for (const level of CHARM_LEVELS) {
@@ -119,6 +134,28 @@ async function main() {
       total += await convert(src, path.join(OUT, rel), problems); count++;
       manifest.charms[troop][level] = `/images/loadout/${rel}`;
       used.add(path.join('Charms', cap(troop), path.basename(src)));
+    }
+  }
+  // pendant, pants, baton: Green..Red T2 from slot2Dir, Red T3..T6 from redT3Dir
+  const used2 = new Set();
+  for (const [folder, srcName] of Object.entries(SLOT2_FOLDERS)) {
+    manifest.governorGear[folder] = {};
+    manifest.governorGearEntries[folder] = {};
+    fs.rmSync(path.join(OUT, 'governor-gear', folder), { recursive: true, force: true });
+    for (const state of GOVERNOR_GEAR_STATES) {
+      const key = gearImageKey(state);
+      const rel = `governor-gear/${folder}/${key}.webp`;
+      const base = state.quality === 'red' && state.tier >= 3 ? RED_DIR : SLOT2_DIR;
+      const src = path.join(base, srcName, sourceGearFileName(state, NAME.get(state.quality)));
+      total += await convert(src, path.join(OUT, rel), problems); count++;
+      manifest.governorGear[folder][key] = `/images/loadout/${rel}`;
+      manifest.governorGearEntries[folder][key] = entry(folder);
+      used2.add(src);
+    }
+    for (const base of [SLOT2_DIR, RED_DIR]) {
+      const dir = path.join(base, srcName);
+      if (!fs.existsSync(dir)) { problems.push(`missing folder: ${dir}`); continue; }
+      for (const f of fs.readdirSync(dir)) if (/\.jpe?g$/i.test(f) && !used2.has(path.join(dir, f))) problems.push(`surplus source file: ${path.join(dir, f)}`);
     }
   }
   // surplus source files nobody maps to
