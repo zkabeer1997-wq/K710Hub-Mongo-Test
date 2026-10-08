@@ -15,7 +15,7 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
 
 function payload(def, data) {
   return {
-    page: { id: def.id, label: def.label, path: def.path },
+    page: { id: def.id, label: def.label, path: def.path, description: def.description, notEditable: def.notEditable },
     pages: pageList(),
     sections: def.sections,
     fields: def.fields,
@@ -27,7 +27,7 @@ function payload(def, data) {
   };
 }
 
-// GET ?page=about: field registry, defaults and the current values.
+// GET ?page=home|about|glossary|guides: field registry, defaults and the current values.
 export async function GET(request) {
   if (!(await isAdminRequest(request))) return deny();
   const page = new URL(request.url).searchParams.get('page') || 'about';

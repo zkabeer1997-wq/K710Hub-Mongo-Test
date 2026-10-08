@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { discoverWikiCodes } from '../../../../lib/giftCodes.mjs';
+import { refreshGiftCodes } from '../../../../lib/giftCodeDiscovery.mjs';
 
 function noStoreJson(body, init = {}) {
   const response = NextResponse.json(body, init);
@@ -8,10 +8,10 @@ function noStoreJson(body, init = {}) {
 }
 
 /**
- * Daily wiki check. When a new code is found, it's queued (status 'pending')
- * for every enrolled member - see discoverWikiCodes(). There is no automated
- * redemption step: members complete and self-report redemption themselves.
- * Secure with CRON_SECRET (Vercel Cron Authorization header) or admin password Bearer.
+ * Daily gift code check against kingshot.net (primary) and, if the owner enabled it,
+ * kingshotmastery.com - see lib/giftCodeDiscovery.mjs. Each source is attempted at most
+ * once per 30 minutes; failures never remove codes. There is no automated redemption step.
+ * Secured with CRON_SECRET (Vercel Cron sends it as a Bearer token).
  */
 export async function GET(request) {
   const authHeader = request.headers.get('authorization') || '';
@@ -27,7 +27,7 @@ export async function GET(request) {
   }
 
   try {
-    const discovery = await discoverWikiCodes();
+    const discovery = await refreshGiftCodes();
     return noStoreJson({ ok: true, discovery });
   } catch (error) {
     console.error('gift-codes cron failed', error);

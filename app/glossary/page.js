@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import PageHero from '../../components/ui/PageHero';
-import { GLOSSARY_GROUPS, GLOSSARY_TERMS } from '../../lib/glossary';
+import { getPageText } from '../../lib/pageText.server';
+import { groupGlossaryTerms } from '../../lib/pageText.mjs';
 
 export const metadata = {
   title: 'Glossary',
@@ -9,17 +10,21 @@ export const metadata = {
   alternates: { canonical: '/glossary' },
 };
 
-export default function GlossaryPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function GlossaryPage() {
+  const t = await getPageText('glossary');
+  const groups = groupGlossaryTerms(t.glossary_terms);
   return (
     <main className="theme-realm glossary-page">
       <PageHero
-        eyebrow="Kingdom 710"
-        title="Glossary"
-        lede="New to Kingshot or just not sure what a term means? Here is what the words on this site stand for, in plain language."
+        eyebrow={t.hero_eyebrow}
+        title={t.hero_title}
+        lede={t.hero_lede}
       />
 
       <div className="glossary-inner">
-        {GLOSSARY_GROUPS.map((group) => (
+        {groups.map((group) => (
           <section key={group.heading} className="glossary-group" aria-labelledby={`g-${group.heading}`}>
             <h2 id={`g-${group.heading}`} className="glossary-group-title">
               {group.heading}
@@ -36,10 +41,10 @@ export default function GlossaryPage() {
         ))}
 
         <footer className="glossary-footer">
-          <p>{GLOSSARY_TERMS.length} terms · Missing one? Ask on the transfer form and we will add it.</p>
+          <p>{t.glossary_terms.length} terms · {t.footer_note}</p>
           <nav>
-            <Link href="/events">Events &amp; schedule →</Link>
-            <Link href="/guides">Read the guides →</Link>
+            <Link href="/events">{t.footer_events_label} →</Link>
+            <Link href="/guides">{t.footer_guides_label} →</Link>
           </nav>
         </footer>
       </div>

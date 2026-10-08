@@ -40,6 +40,8 @@ export default function AdminHeroesPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [heroes, setHeroes] = useState(null);
+  const [removed, setRemoved] = useState([]);
+  const [duplicates, setDuplicates] = useState(0);
   const [error, setError] = useState('');
   const [drive, setDrive] = useState(null);
   const [newName, setNewName] = useState('');
@@ -50,10 +52,14 @@ export default function AdminHeroesPage() {
   const [removeTarget, setRemoveTarget] = useState(null);
   const [bulk, setBulk] = useState(null);
 
-  const load = useCallback(async () => {
-    try { setHeroes((await api('GET')).heroes); setError(''); }
-    catch (e) { setError(e.message); }
+  const applyPayload = useCallback((json) => {
+    setHeroes(json.heroes); setRemoved(json.removed || []); setDuplicates(json.duplicates || 0);
   }, []);
+
+  const load = useCallback(async () => {
+    try { applyPayload(await api('GET')); setError(''); }
+    catch (e) { setError(e.message); }
+  }, [applyPayload]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     fetch('/api/admin-drive/status', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then(setDrive).catch(() => setDrive(null));
@@ -66,7 +72,7 @@ export default function AdminHeroesPage() {
     if (optimistic) setHeroes((list) => optimistic(list));
     try {
       const json = await call();
-      setHeroes(json.heroes);
+      applyPayload(json);
       toast(okMessage, { type: 'success', duration: 2500 });
       return true;
     } catch (e) {
@@ -111,8 +117,11 @@ export default function AdminHeroesPage() {
   async function confirmRemove() {
     const hero = removeTarget;
     setRemoveTarget(null);
-    await run(hero.key, (l) => l.filter((h) => h.key !== hero.key), () => api('DELETE', null, `?key=${encodeURIComponent(hero.key)}`), `${hero.name} deleted`);
+    await run(hero.key, (l) => l.filter((h) => h.key !== hero.key), () => api('DELETE', null, `?key=${encodeURIComponent(hero.key)}`), `${hero.name} removed`);
   }
+
+  const restoreHero = (item) => run(`restore-${item.key}`, null, () => api('POST', { action: 'restore', key: item.key }), `${item.name} restored`);
+  const removeDuplicates = () => run('_dupes', null, () => api('POST', { action: 'dedupe' }), 'Duplicate heroes removed');
 
   // Many images at once: a file named after a hero ("chenko.png", "Long Fei.webp") attaches to that hero.
   async function bulkAttach(items) {
@@ -136,7 +145,8 @@ export default function AdminHeroesPage() {
         }
         const upJson = await up.json().catch(() => ({}));
         if (!up.ok) throw new Error(upJson.error || 'upload failed');
-        latest = (await api('PATCH', { key: hero.key, image_id: upJson.image.id })).heroes;
+        const patched = await api('PATCH', { key: hero.key, image_id: upJson.image.id });
+        latest = patched.heroes; setRemoved(patched.removed || []);
         results.done.push(hero.name);
       } catch (e) { results.skipped.push(`${item.name} (${e.message})`); }
     }
@@ -188,6 +198,13 @@ export default function AdminHeroesPage() {
       </form>
 
       {!heroes && !error ? <p>Loading heroes...</p> : null}
+      {duplicates > 0 ? (
+        <div className={styles.notice} role="status">
+          <p>The list contains {duplicates} duplicate row{duplicates === 1 ? '' : 's'} (the same hero saved twice). Members only see each hero once; you can clean the extra rows up.</p>
+          <button type="button" className={styles.secondary} onClick={removeDuplicates}>Remove duplicates</button>
+          {rowError._dupes ? <p className={styles.error} role="alert">{rowError._dupes}</p> : null}
+        </div>
+      ) : null}
       <ol className={styles.list} aria-label="Heroes">
         {(heroes || []).map((hero, index) => (
           <li key={hero.key} className={`${styles.card} ${hero.active ? '' : styles.off}`}>
@@ -220,11 +237,11 @@ export default function AdminHeroesPage() {
               </div>
               <button type="button" className={styles.secondary} aria-expanded={imageFor === hero.key} onClick={() => setImageFor(imageFor === hero.key ? null : hero.key)}>{imageFor === hero.key ? 'Close picture' : hero.image_url ? 'Change picture' : 'Add picture'}</button>
               <button type="button" className={styles.secondary} onClick={() => setRenaming({ key: hero.key, value: hero.name })} disabled={hero.saved_count > 0} aria-describedby={hero.saved_count > 0 ? `why-${hero.key}` : undefined}>Rename</button>
-              {hero.saved_count === 0 ? <button type="button" className={`${styles.secondary} ${styles.danger}`} onClick={() => setRemoveTarget(hero)}>Delete</button> : null}
+              <button type="button" className={`${styles.secondary} ${styles.danger}`} onClick={() => setRemoveTarget(hero)}>Remove</button>
             </div>
             {hero.saved_count > 0 ? (
               <p className={styles.hint} id={`why-${hero.key}`}>
-                {hero.name} can&apos;t be renamed or deleted because members saved it and forms remember the name. To change it, add the new name as a new hero and switch this one off.
+                {hero.name} can&apos;t be renamed because members saved it and forms remember the name. To change it, add the new name as a new hero and remove or hide this one.
               </p>
             ) : null}
             {rowError[hero.key] ? <p className={styles.error} role="alert">{rowError[hero.key]}</p> : null}
@@ -242,10 +259,25 @@ export default function AdminHeroesPage() {
         ))}
       </ol>
 
+      {removed.length ? (
+        <details className={styles.restore}>
+          <summary>Restore removed heroes ({removed.length})</summary>
+          <ul>
+            {removed.map((item) => (
+              <li key={item.key}>
+                <span>{item.name}</span>
+                <button type="button" className={styles.secondary} onClick={() => restoreHero(item)} aria-label={`Restore ${item.name}`}>Restore</button>
+                {rowError[`restore-${item.key}`] ? <p className={styles.error} role="alert">{rowError[`restore-${item.key}`]}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
       <ConfirmDialog
-        open={Boolean(removeTarget)} title="Delete this hero?"
-        message={removeTarget ? `${removeTarget.name} will be removed from the list. Nobody has saved this hero. If you only want to hide it from the forms, switch it off instead.` : ''}
-        confirmLabel="Delete hero" onConfirm={confirmRemove} onCancel={() => setRemoveTarget(null)}
+        open={Boolean(removeTarget)} title={removeTarget ? `Remove ${removeTarget.name}?` : 'Remove this hero?'}
+        message={removeTarget ? `Remove ${removeTarget.name}? ${removeTarget.name} will disappear from the KvK and Flamedragon forms. Members who already chose ${removeTarget.name} keep it in their past answers; nothing else is deleted. You can restore it below.` : ''}
+        confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoveTarget(null)}
       />
     </AdminShell>
   );

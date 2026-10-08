@@ -16,6 +16,16 @@ const STATUS_LABEL = {
   temporary_failure: 'Retrying',
 };
 
+function formatAgo(iso) {
+  const ms = Date.now() - Date.parse(iso);
+  if (!Number.isFinite(ms) || ms < 0) return 'recently';
+  const min = Math.round(ms / 60000);
+  if (min < 2) return 'just now';
+  if (min < 90) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  return h < 36 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
+}
+
 function statusLabel(status) {
   return STATUS_LABEL[status] || status || '—';
 }
@@ -32,6 +42,7 @@ export default function GiftCodeRewards({ className = '' }) {
   const [error, setError] = useState('');
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState('');
+  const [codeSource, setCodeSource] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,6 +57,7 @@ export default function GiftCodeRewards({ className = '' }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Unable to load gift codes.');
       setData(json);
+      setCodeSource(json.codeSource || null);
     } catch (err) {
       setError(err.message || 'Unable to load gift codes.');
     } finally {
@@ -108,7 +120,7 @@ export default function GiftCodeRewards({ className = '' }) {
         <span className="ledger-block-kicker">Kingdom 710</span>
         <h3 id="gift-code-rewards-title">Gift Code Rewards</h3>
         <p>
-          New codes are discovered automatically from the wiki every day. When one appears, redeem
+          New codes are picked up automatically from public gift code lists every day. When one appears, redeem
           it yourself at{' '}
           <a href={REDEMPTION_SITE_URL} target="_blank" rel="noreferrer">
             ks-giftcode.centurygame.com
@@ -148,6 +160,14 @@ export default function GiftCodeRewards({ className = '' }) {
                   : 'Turn on code alerts'}
             </button>
           </div>
+
+          {codeSource ? (
+            <p className="hint" style={{ margin: '0 0 0.75rem' }}>
+              Found on{' '}
+              <a href={codeSource.url} target="_blank" rel="noreferrer">{codeSource.source}</a>
+              , checked {formatAgo(codeSource.checked_at)}.
+            </p>
+          ) : null}
 
           {readyToRedeem.length > 0 ? (
             <div className="gift-code-ready-list">

@@ -6,7 +6,6 @@ import { splitParagraphs } from '../../lib/pageText.mjs';
 import EditableSection from '../../components/EditableSection';
 import './about.css';
 import { getBlocks } from '../../lib/contentBlocks';
-import { getHomeContent } from '../../lib/homeContent';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
 import { Tag, PageHero } from '../../components/ui';
@@ -28,7 +27,7 @@ function Paras({ text, className }) {
   return splitParagraphs(text).map((p, i) => <p key={i} className={className}>{p}</p>);
 }
 
-// Leader line lives in the editable home copy as "R5: Name". Only shown if present.
+// Leader line lives in the Home page text as "R5: Name". Only shown if present.
 function leaderOf(text) {
   const m = /R5\s*:\s*([^\n]+)/i.exec(text || '');
   return m ? m[1].trim() : '';
@@ -64,17 +63,17 @@ async function loadAlliances() {
 }
 
 export default async function AboutPage() {
-  const [recordBlocks, sourcesBlocks, homeContent, alliances, kvkRecord, t] = await Promise.all([
+  const [recordBlocks, sourcesBlocks, alliances, kvkRecord, t, home] = await Promise.all([
     getBlocks('about-record'),
     getBlocks('about-sources'),
-    getHomeContent(),
     loadAlliances(),
     getKvkRecord(),
     getPageText('about'),
+    getPageText('home'), // shared: the extra story paragraphs and R5 leader lines live in the Home page text
   ]);
   const steps = [1, 2, 3].map((n) => ({ n, title: t[`step${n}_title`], body: t[`step${n}_body`], href: STEP_HREFS[n], link: t[`step${n}_link`] }));
 
-  const leaders = { '710': leaderOf(homeContent['wb-1-desc']?.text), RED: leaderOf(homeContent['wb-2-desc']?.text), SKY: leaderOf(homeContent['wb-3-desc']?.text) };
+  const leaders = { '710': leaderOf(home.wb_1_desc), RED: leaderOf(home.wb_2_desc), SKY: leaderOf(home.wb_3_desc) };
   const hasSources = sourcesBlocks.length > 0;
 
   return (
@@ -100,8 +99,8 @@ export default async function AboutPage() {
         <div className="about-story-body">
           <Paras className="about-story-lead" text={t.story_lead} />
           <Paras text={t.story_second} />
-          {homeContent['why-2-body']?.text && <p>{homeContent['why-2-body'].text}</p>}
-          {homeContent['why-3-body']?.text && <p>{homeContent['why-3-body'].text}</p>}
+          <Paras text={home.why_2_body} />
+          <Paras text={home.why_3_body} />
         </div>
       </section>
 

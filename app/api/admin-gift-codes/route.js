@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { addManualCodes, getGiftSourceStatuses, parseCodeList, refreshGiftCodes } from '../../../lib/giftCodeDiscovery.mjs';
 
 function noStoreJson(body, init = {}) {
   const response = NextResponse.json(body, init);
@@ -22,6 +23,7 @@ export async function GET(request) {
       codes: codes.map(({ _id, ...c }) => ({ ...c, id: c.id || String(_id) })),
       activeCount: active.length,
       totalCount: codes.length,
+      sources: await getGiftSourceStatuses(),
       enrollments: [],
       history: [],
     });
@@ -48,32 +50,22 @@ export async function POST(request) {
   try {
     const coll = await getCollection(COLLECTIONS.GIFT_CODES);
 
-    if (action === 'check_wiki') {
-      return noStoreJson({ ok: true, discovery: { found: [], note: 'Wiki discovery not wired on Mongo test stack yet.' } });
+    if (action === 'check_sources' || action === 'check_wiki') {
+      // Respects the 30 minute per-source claim unless the admin explicitly forces it.
+      const discovery = await refreshGiftCodes({ force: body?.force === true, coll });
+      return noStoreJson({ ok: true, discovery, sources: await getGiftSourceStatuses() });
     }
 
-    if (action === 'add_code') {
-      const code = String(body?.code || '').trim();
-      if (!code || code.length < 4 || code.length > 32) {
-        return noStoreJson({ error: 'Invalid code.' }, { status: 400 });
+    if (action === 'add_code' || action === 'add_codes') {
+      const { valid, rejected } = parseCodeList(action === 'add_code' ? body?.code : body?.text);
+      if (!valid.length) {
+        return noStoreJson({ error: 'No valid codes found. Codes are letters and digits only, 4 to 32 characters.', rejected }, { status: 400 });
       }
-      const now = new Date();
-      await coll.updateOne(
-        { code },
-        {
-          $set: {
-            code,
-            source: body?.source || 'manual',
-            active: true,
-            discovered_at: now,
-            updated_at: now,
-            notes: body?.notes || null,
-          },
-          $setOnInsert: { created_at: now },
-        },
-        { upsert: true }
-      );
-      return noStoreJson({ ok: true, code });
+      if (action === 'add_code' && (valid.length !== 1 || rejected.length)) {
+        return noStoreJson({ error: 'Invalid code. Use letters and digits only, 4 to 32 characters.' }, { status: 400 });
+      }
+      const result = await addManualCodes(coll, valid, { notes: typeof body?.notes === 'string' ? body.notes.slice(0, 200) : null });
+      return noStoreJson({ ok: true, code: valid[0], ...result, rejected });
     }
 
     if (action === 'set_code_active') {
@@ -85,6 +77,7 @@ export async function POST(request) {
           $set: {
             active,
             expired_at: active ? null : new Date(),
+            expired_reason: active ? null : 'manual',
             updated_at: new Date(),
           },
         }

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { lookupDefinition } from '../../lib/glossaryLookup.mjs';
+import { useGlossaryTerms } from '../GlossaryProvider';
 
 // Small jargon-tooltip trigger. Renders `children` (or the looked-up term's
 // own label, if no children are given) with a dotted underline; hover,
@@ -29,7 +30,7 @@ export default function Term({ term, children, className = '' }) {
     }
   }, []);
 
-  const entry = lookupDefinition(term);
+  const entry = lookupDefinition(term, useGlossaryTerms());
 
   useEffect(() => {
     if (!open) return undefined;

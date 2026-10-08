@@ -152,12 +152,11 @@ test('admin-heroes API: create, rename, toggle, reorder, delete; forms follow im
   assert.equal((await adminRoute.PATCH(req({ body: { key: 'nova-star', name: 'Nova' } }))).status, 200);
   assert.ok(names((await (await publicRoute.GET()).json()).heroes).includes('Nova'));
 
-  // hero a member saved cannot be renamed or deleted: deactivate instead
+  // hero a member saved cannot be renamed (forms remember the name); removal is always allowed (see below)
   state.tables.submissions = [{ member_id: 'm9', heroes: ['Saul'] }];
   const blocked = await adminRoute.PATCH(req({ body: { key: 'saul', name: 'Saul II' } }));
   assert.equal(blocked.status, 409);
   assert.match((await blocked.json()).error, /add Saul II as a new hero/);
-  assert.equal((await adminRoute.DELETE(req({ url: 'http://l/api/admin-heroes?key=saul' }))).status, 409);
   const off = await adminRoute.PATCH(req({ body: { key: 'saul', active: false } }));
   assert.equal(off.status, 200);
   assert.ok(!names((await (await publicRoute.GET()).json()).heroes).includes('Saul'));
@@ -244,4 +243,146 @@ test('public /api/heroes fails open to the built-in list when MongoDB is down', 
   assert.ok(body.heroes.every((h) => h.default_url && h.image_url === null));
   const res = await adminRoute.GET(req());
   assert.equal(res.status, 503, 'admin read reports the outage instead of showing defaults as if editable');
+});
+
+const fakeColl = async (name) => (await import('./helpers/fakeMongo.mjs')).createFakeMongo(state.tables).getCollection(name);
+const newCatalog = () => cat.createHeroCatalog({ getColl: () => fakeColl('hero_catalog'), getRemovedColl: () => fakeColl('hero_catalog_removed'), ttlMs: 0 });
+
+test('seed is idempotent and race-proof: 10 simultaneous cold catalogs and 10 GETs create each hero once', async () => {
+  reset();
+  const lists = await Promise.all(Array.from({ length: 10 }, () => newCatalog().list()));
+  assert.ok(lists.every((l) => l.length === 20));
+  assert.equal(state.tables.hero_catalog.length, 20);
+  assert.equal(new Set(state.tables.hero_catalog.map((d) => d.name_norm)).size, 20);
+  reset();
+  const gets = await Promise.all(Array.from({ length: 10 }, () => adminRoute.GET(req())));
+  assert.ok(gets.every((r) => r.status === 200));
+  assert.equal(state.tables.hero_catalog.length, 20);
+});
+
+test('names are unique by normalised name (case, accents, spaces, punctuation) at the API', async () => {
+  reset();
+  assert.equal(cat.heroNameNorm('Long Fei'), 'longfei');
+  assert.equal(cat.heroNameNorm('LÓNG-fei'), 'longfei');
+  assert.equal((await adminRoute.POST(req({ body: { name: 'Longfei' } }))).status, 409);
+  assert.equal((await adminRoute.POST(req({ body: { name: 'SAUL' } }))).status, 409);
+  assert.equal((await adminRoute.POST(req({ body: { name: 'S a u l' } }))).status, 409);
+  assert.equal((await adminRoute.PATCH(req({ body: { key: 'chenko', name: 'Sául' } }))).status, 409);
+  assert.equal((await adminRoute.POST(req({ body: { name: 'Brand New' } }))).status, 201);
+  assert.equal(state.tables.hero_catalog.find((d) => d.key === 'brand-new').name_norm, 'brandnew');
+});
+
+test('live scenario: every hero stored twice (racing seed) is shown once, pickers and validators see no duplicates', async () => {
+  reset();
+  await server.getHeroCatalog().list();
+  const base = state.tables.hero_catalog.map((d, i) => ({ ...d }));
+  const copies = base.map((d, i) => ({ ...d, _id: `dup${i}`, key: `${d.key}-2`, name_norm: undefined, created_at: new Date(Date.now() + 1000), order: d.order + 100 }));
+  copies.forEach((c) => { delete c.name_norm; });
+  state.tables.hero_catalog = [...copies, ...base]; // duplicates first: order of rows must not matter
+  server.invalidateHeroCatalog();
+  const pub = (await (await publicRoute.GET()).json()).heroes;
+  assert.deepEqual(names(pub), HEROES);
+  assert.equal(new Set(pub.map((h) => h.key)).size, pub.length);
+  const adminList = (await (await adminRoute.GET(req())).json());
+  assert.equal(adminList.heroes.length, 20);
+  assert.equal(adminList.duplicates, 20);
+  assert.deepEqual(await server.getActiveHeroNames(), HEROES);
+  // an image on only the duplicate row wins over a bare original
+  state.tables.hero_catalog.find((d) => d._id === 'dup0').image = { site_image_id: 'img-x' };
+  server.invalidateHeroCatalog();
+  assert.equal((await server.getHeroCatalog().list()).find((h) => h.name === base[0].name).image.site_image_id, 'img-x');
+  // admin "Remove duplicates" cleans the collection, keeps the image, backfills name_norm
+  const res = await adminRoute.POST(req({ body: { action: 'dedupe' } }));
+  assert.equal(res.status, 200);
+  assert.equal(state.tables.hero_catalog.length, 20);
+  assert.equal((await res.json()).duplicates, 0);
+  assert.equal(state.tables.hero_catalog.find((d) => d.name === base[0].name).image.site_image_id, 'img-x');
+  assert.ok(state.tables.hero_catalog.every((d) => d.name_norm));
+  assert.equal((await adminRoute.POST(req({ admin: false, body: { action: 'dedupe' } }))).status, 401);
+});
+
+test('planHeroDedupe / dedupeHeroCollection: dry run changes nothing, --yes keeps best row and merges image + active', async () => {
+  reset();
+  const old = new Date('2026-01-01'); const young = new Date('2026-06-01');
+  state.tables.hero_catalog = [
+    { _id: 'a', key: 'saul', name: 'Saul', active: false, order: 3, created_at: young, image: null },
+    { _id: 'b', key: 'saul-2', name: 'saul', active: true, order: 9, created_at: young, image: null },
+    { _id: 'c', key: 'longfei', name: 'LongFei', active: true, order: 1, created_at: old, image: { site_image_id: 'img-1' } },
+    { _id: 'd', key: 'long-fei', name: 'Long Fei', active: true, order: 2, created_at: old, image: null },
+    { _id: 'e', key: 'nova', name: 'Nova', active: true, order: 4, created_at: old, image: null },
+  ];
+  const coll = await fakeColl('hero_catalog');
+  const dry = await cat.dedupeHeroCollection(coll);
+  assert.equal(dry.applied, false);
+  assert.equal(dry.duplicateGroups, 2);
+  assert.equal(state.tables.hero_catalog.length, 5, 'dry run writes nothing');
+  assert.ok(state.tables.hero_catalog.every((d) => !d.name_norm));
+  const done = await cat.dedupeHeroCollection(coll, { apply: true });
+  assert.equal(done.applied, true);
+  const rows = state.tables.hero_catalog;
+  assert.deepEqual(rows.map((d) => d._id).sort(), ['b', 'c', 'e'], 'active beats inactive; image beats bare');
+  assert.equal(rows.find((d) => d._id === 'c').image.site_image_id, 'img-1');
+  assert.ok(rows.every((d) => d.name_norm));
+  assert.equal((await cat.dedupeHeroCollection(coll, { apply: true })).removed.length, 0, 'idempotent');
+});
+
+test('remove: always allowed (even when members saved it), tombstone stops re-seeding, image trashed, member answers untouched', async () => {
+  reset();
+  state.tables.submissions = [{ member_id: 'm9', heroes: ['Saul', 'Nova'] }];
+  state.tables.flamedragon_forms = [{ member_id: 'm9', heroes: ['Saul'] }];
+  const img = await upload('s.png');
+  await adminRoute.PATCH(req({ body: { key: 'saul', image_id: img.id } }));
+  let res = await adminRoute.DELETE(req({ url: 'http://l/api/admin-heroes?key=saul' }));
+  assert.equal(res.status, 200);
+  let body = await res.json();
+  assert.ok(!names(body.heroes).includes('Saul'));
+  assert.deepEqual(body.removed.map((r) => r.name), ['Saul']);
+  assert.equal(state.tables.site_images.some((d) => String(d._id) === img.id), false, 'uploaded image moved to trash');
+  assert.deepEqual(state.tables.submissions[0].heroes, ['Saul', 'Nova'], 'saved answers untouched');
+  assert.deepEqual(state.tables.flamedragon_forms[0].heroes, ['Saul']);
+  assert.ok(!names((await (await publicRoute.GET()).json()).heroes).includes('Saul'));
+  assert.equal((await adminRoute.DELETE(req({ url: 'http://l/api/admin-heroes?key=saul' }))).status, 404);
+  assert.equal((await adminRoute.DELETE(req({ admin: false, url: 'http://l/api/admin-heroes?key=chenko' }))).status, 401);
+
+  // a cold start with an emptied catalog (every hero removed) never brings removed heroes back
+  for (const h of [...body.heroes]) await adminRoute.DELETE(req({ url: `http://l/api/admin-heroes?key=${h.key}` }));
+  assert.equal(state.tables.hero_catalog.length, 0);
+  server.invalidateHeroCatalog();
+  assert.deepEqual(await newCatalog().list(), [], 'seed skips tombstoned names');
+  assert.equal(state.tables.hero_catalog.length, 0);
+});
+
+test('removed heroes are dropped on load and never a 400 on re-save; restore and re-add bring them back', async () => {
+  reset();
+  state.tables.submissions = [{ member_id: 'm1', name: 'Ann', current_alliance: '710', availability: 'Full battle (12-17 UTC)', heroes: ['Saul', 'Chenko'] }];
+  await adminRoute.DELETE(req({ url: 'http://l/api/admin-heroes?key=saul' }));
+  const memberReq = (body) => ({ ...req({ admin: false, member: true, body }), headers: new Headers() });
+  const loaded = await (await kvkRoute.GET(memberReq())).json();
+  assert.deepEqual(loaded.prefill.heroes, ['Chenko']);
+  const base = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)' };
+  const saved = await kvkRoute.POST(memberReq({ ...base, heroes: ['Saul', 'Chenko'] }));
+  assert.equal(saved.status, 200, await saved.clone().text());
+  assert.equal((await kvkRoute.POST(memberReq({ ...base, heroes: ['Saul'] }))).status, 400, 'a removed hero chosen fresh is rejected like an inactive one');
+
+  assert.equal((await adminRoute.POST(req({ admin: false, body: { action: 'restore', key: 'saul' } }))).status, 401);
+  assert.equal((await adminRoute.POST(req({ body: { action: 'restore', key: 'ghost' } }))).status, 404);
+  const res = await adminRoute.POST(req({ body: { action: 'restore', key: 'saul' } }));
+  assert.equal(res.status, 200);
+  const back = await res.json();
+  assert.deepEqual(back.removed, []);
+  assert.ok(names(back.heroes).includes('Saul'));
+  assert.ok(names((await (await publicRoute.GET()).json()).heroes).includes('Saul'));
+  assert.equal(state.tables.hero_catalog.filter((d) => d.name === 'Saul').length, 1);
+
+  // removing again, then adding the same name clears the tombstone
+  await adminRoute.DELETE(req({ url: 'http://l/api/admin-heroes?key=saul' }));
+  assert.equal((await adminRoute.POST(req({ body: { name: 'saul' } }))).status, 201);
+  assert.deepEqual((await (await adminRoute.GET(req())).json()).removed, []);
+});
+
+test('picker output never contains duplicates even if defaults and DB rows overlap', async () => {
+  reset();
+  const dup = cat.publicHeroes([...cat.defaultCatalogDocs(), ...cat.defaultCatalogDocs().map((d) => ({ ...d, key: `${d.key}-x`, name: d.name.toUpperCase() }))]);
+  assert.deepEqual(names(dup), HEROES);
+  assert.deepEqual(cat.activeHeroNames([...cat.defaultCatalogDocs(), ...cat.defaultCatalogDocs()]), HEROES);
 });

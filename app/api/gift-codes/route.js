@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
+import { getGiftSourceStatuses } from '../../../lib/giftCodeDiscovery.mjs';
 import {
   getMemberGiftStatus,
   enrollMemberForGiftCodes,
@@ -13,6 +14,18 @@ function noStoreJson(body, init = {}) {
   return response;
 }
 
+/** Cheap, read-only hint ("kingshot.net, checked <iso>"). Never fetches; null on any problem. */
+async function memberSourceHint() {
+  try {
+    const ok = (await getGiftSourceStatuses())
+      .filter((s) => s.enabled && s.last_ok_at)
+      .sort((a, b) => b.last_ok_at.localeCompare(a.last_ok_at))[0];
+    return ok ? { source: ok.label, url: ok.url, checked_at: ok.last_ok_at } : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request) {
   try {
     const session = await readMemberSession(request);
@@ -21,7 +34,7 @@ export async function GET(request) {
       return noStoreJson({ error: 'Sign in required.' }, { status: 401 });
     }
     const status = await getMemberGiftStatus(memberId);
-    return noStoreJson({ ok: true, ...status });
+    return noStoreJson({ ok: true, ...status, codeSource: await memberSourceHint() });
   } catch (error) {
     console.error('gift-codes GET failed', error);
     return noStoreJson({ error: 'Unable to load gift code status.' }, { status: 500 });

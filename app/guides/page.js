@@ -6,6 +6,7 @@ import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
 import Link from 'next/link';
 import { PageHero, SectionHeader } from '../../components/ui';
+import { getPageText } from '../../lib/pageText.server';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import GuidesDirectory from './GuidesDirectory';
 import { guideCategories, guideSummary } from '../../lib/guideValidation.mjs';
@@ -59,6 +60,7 @@ export default async function GuidesPage({ searchParams }) {
   const query = memberId ? `?member_id=${encodeURIComponent(memberId)}` : '';
   const backHref = memberId ? `/dashboard?member_id=${encodeURIComponent(memberId)}` : '/dashboard';
 
+  const t = await getPageText('guides');
   let guides = [];
   let loadError = '';
   let categories = [];
@@ -69,7 +71,7 @@ export default async function GuidesPage({ searchParams }) {
     categories = guideCategories(guides, catRows || []);
   } catch (error) {
     console.error('guides page load failed', error);
-    loadError = 'Guides could not be loaded. Please try again.';
+    loadError = t.load_error;
   }
 
   const categoryCount = categories.length;
@@ -77,28 +79,30 @@ export default async function GuidesPage({ searchParams }) {
     .filter((guide) => guide.updated_at)
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
 
+  const directoryCopy = Object.fromEntries(['search_label', 'search_placeholder', 'filter_label', 'filter_all', 'empty_search', 'empty_category', 'badge_start', 'entry_read_suffix', 'entry_updated_prefix', 'entry_open'].map((k) => [k, t[k]]));
+
   return (
     <main className="theme-realm guides-page">
       <PageHero
         before={<Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Guides" />}
-        eyebrow="Kingdom 710"
-        title="Guides"
-        lede="Read kingdom instructions, event strategies, and game information maintained by the K710 team."
-        actions={<><a href="#archive">Browse guides</a><Link href="/events">View events</Link></>}
+        eyebrow={t.hero_eyebrow}
+        title={t.hero_title}
+        lede={t.hero_lede}
+        actions={<><a href="#archive">{t.hero_browse_label}</a><Link href="/events">{t.hero_events_label}</Link></>}
         aside={
           <aside className="guides-index" aria-label="Guide summary">
             <div>
-              <span>Published guides</span>
+              <span>{t.summary_guides_label}</span>
               <strong>{guides.length || '—'}</strong>
             </div>
             <div>
-              <span>Categories</span>
+              <span>{t.summary_categories_label}</span>
               <strong>{categoryCount || '—'}</strong>
             </div>
             <div>
-              <span>Latest revision</span>
+              <span>{t.summary_latest_label}</span>
               <strong className="guides-index-small">
-                {latest?.updated_at ? formatGuideDate(guideUpdatedAt(latest)) : 'No revisions yet'}
+                {latest?.updated_at ? formatGuideDate(guideUpdatedAt(latest)) : t.summary_latest_empty}
               </strong>
             </div>
           </aside>
@@ -106,30 +110,22 @@ export default async function GuidesPage({ searchParams }) {
       />
 
       <section className="guides-intro-band">
-        <div>
-          <span className="k-mark">Kingdom</span>
-          <strong>Kingdom information</strong>
-          <p>How K710 handles players, rallies, transfers, and preparation.</p>
-        </div>
-        <div>
-          <span className="k-mark">Events</span>
-          <strong>Event instructions</strong>
-          <p>What to do before and during major events.</p>
-        </div>
-        <div>
-          <span className="k-mark">Search</span>
-          <strong>Find a guide</strong>
-          <p>Search by title or filter the list by category.</p>
-        </div>
+        {[1, 2, 3].map((n) => (
+          <div key={n}>
+            <span className="k-mark">{t[`band_${n}_kicker`]}</span>
+            <strong>{t[`band_${n}_title`]}</strong>
+            <p>{t[`band_${n}_text`]}</p>
+          </div>
+        ))}
       </section>
 
       <section className="guides-archive" id="archive">
-        <SectionHeader eyebrow="All guides" title="Find a guide" lede="Search the published guides below or choose a category." className="guides-archive-head" />
+        <SectionHeader eyebrow={t.archive_eyebrow} title={t.archive_title} lede={t.archive_lede} className="guides-archive-head" />
 
         {loadError ? (
           <div className="guides-error">{loadError}</div>
         ) : (
-          <GuidesDirectory categories={categories} guides={guides} query={query} backHref={backHref} />
+          <GuidesDirectory copy={directoryCopy} categories={categories} guides={guides} query={query} backHref={backHref} />
         )}
       </section>
 

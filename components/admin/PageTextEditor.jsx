@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ConfirmDialog from './ConfirmDialog';
-import { FAQ_ANSWER_MAX, FAQ_MAX_ITEMS, FAQ_QUESTION_MAX, changedKeys, faqAdd, faqMove, faqRemove, splitParagraphs, valuesEqual } from '../../lib/pageText.mjs';
+import { changedKeys, listAdd, listMove, listRemove, splitParagraphs, valuesEqual } from '../../lib/pageText.mjs';
 import styles from './PageTextEditor.module.css';
 
 async function api(method, body, query = '') {
@@ -54,50 +54,62 @@ function TextField({ field, value, base, def, error, onChange, onReset }) {
   );
 }
 
-function FaqEditor({ field, value, base, def, error, onChange, onAskRemove }) {
+function ListEditor({ field, value, base, def, error, onChange, onAskRemove }) {
   const edited = !valuesEqual(value, base);
   const isDefault = valuesEqual(value, def);
+  const noun = field.itemLabel || 'Item';
+  const suggest = field.suggestFrom ? [...new Set(value.map((x) => x[field.suggestFrom]).filter(Boolean))] : [];
+  const listId = `pt-${field.key}-suggest`;
   return (
     <div className={`${styles.field} ${edited ? styles.fieldEdited : ''}`}>
       <div className={styles.fieldHead}>
-        <span className={styles.fieldTitle}>{field.label}{edited ? <span className={styles.dot}> (changed)</span> : null}</span>
+        <span className={styles.fieldTitle}>{field.label} ({value.length}){edited ? <span className={styles.dot}> (changed)</span> : null}</span>
         <button type="button" className={styles.linkBtn} disabled={isDefault} onClick={() => onChange(def.map((x) => ({ ...x })))}>Reset to default</button>
       </div>
-      <p className={styles.help}>{field.help} Questions up to {FAQ_QUESTION_MAX} characters, answers up to {FAQ_ANSWER_MAX}. Removing every question brings back the default list.</p>
+      <p className={styles.help}>{field.help}</p>
       {error ? <p className={styles.error} role="alert">{error}</p> : null}
+      {suggest.length ? <datalist id={listId}>{suggest.map((g) => <option key={g} value={g} />)}</datalist> : null}
       <ol className={styles.faqList}>
         {value.map((item, i) => (
           <li key={i} className={styles.faqItem}>
             <fieldset>
-              <legend>Question {i + 1}</legend>
-              <label htmlFor={`pt-faq-q-${i}`}>Question</label>
-              <input id={`pt-faq-q-${i}`} type="text" value={item.q} maxLength={FAQ_QUESTION_MAX} autoComplete="off"
-                aria-describedby={`pt-faq-q-${i}-count`}
-                onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, q: e.target.value } : x)))} />
-              <div className={styles.meta}><Counter id={`pt-faq-q-${i}-count`} length={item.q.length} max={FAQ_QUESTION_MAX} /></div>
-              <label htmlFor={`pt-faq-a-${i}`}>Answer</label>
-              <textarea id={`pt-faq-a-${i}`} rows={4} value={item.a} maxLength={FAQ_ANSWER_MAX}
-                aria-describedby={`pt-faq-a-${i}-count`}
-                onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, a: e.target.value } : x)))} />
-              <div className={styles.meta}><Counter id={`pt-faq-a-${i}-count`} length={item.a.length} max={FAQ_ANSWER_MAX} /></div>
+              <legend>{noun} {i + 1}{item[field.itemFields[field.itemFields.length > 2 ? 1 : 0].name] ? `: ${item[field.itemFields[field.itemFields.length > 2 ? 1 : 0].name].slice(0, 40)}` : ''}</legend>
+              {field.itemFields.map((it) => {
+                const id = `pt-${field.key}-${it.name}-${i}`;
+                const text = item[it.name] || '';
+                return (
+                  <div key={it.name} className={styles.itemRow}>
+                    <label htmlFor={id}>{it.label}</label>
+                    {it.kind === 'paragraph' ? (
+                      <textarea id={id} rows={3} value={text} maxLength={it.maxLength} aria-describedby={`${id}-count`}
+                        onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, [it.name]: e.target.value } : x)))} />
+                    ) : (
+                      <input id={id} type="text" value={text} maxLength={it.maxLength} autoComplete="off" aria-describedby={`${id}-count`}
+                        {...(suggest.length && it.name === field.suggestFrom ? { list: listId } : {})}
+                        onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, [it.name]: e.target.value } : x)))} />
+                    )}
+                    <div className={styles.meta}><Counter id={`${id}-count`} length={text.length} max={it.maxLength} /></div>
+                  </div>
+                );
+              })}
               <div className={styles.faqActions}>
-                <button type="button" className={styles.secondary} disabled={i === 0} onClick={() => onChange(faqMove(value, i, -1))} aria-label={`Move question ${i + 1} up`}>Move up</button>
-                <button type="button" className={styles.secondary} disabled={i === value.length - 1} onClick={() => onChange(faqMove(value, i, 1))} aria-label={`Move question ${i + 1} down`}>Move down</button>
-                <button type="button" className={`${styles.secondary} ${styles.danger}`} onClick={() => onAskRemove(i)} aria-label={`Remove question ${i + 1}`}>Remove</button>
+                <button type="button" className={styles.secondary} disabled={i === 0} onClick={() => onChange(listMove(value, i, -1))} aria-label={`Move ${noun.toLowerCase()} ${i + 1} up`}>Move up</button>
+                <button type="button" className={styles.secondary} disabled={i === value.length - 1} onClick={() => onChange(listMove(value, i, 1))} aria-label={`Move ${noun.toLowerCase()} ${i + 1} down`}>Move down</button>
+                <button type="button" className={`${styles.secondary} ${styles.danger}`} onClick={() => onAskRemove({ key: field.key, index: i })} aria-label={`Remove ${noun.toLowerCase()} ${i + 1}`}>Remove</button>
               </div>
             </fieldset>
           </li>
         ))}
       </ol>
-      <button type="button" className={styles.secondary} disabled={value.length >= FAQ_MAX_ITEMS} onClick={() => onChange(faqAdd(value))}>
-        Add question{value.length >= FAQ_MAX_ITEMS ? ` (limit of ${FAQ_MAX_ITEMS} reached)` : ''}
+      <button type="button" className={styles.secondary} disabled={value.length >= field.maxItems} onClick={() => onChange(listAdd(value, field))}>
+        Add {noun.toLowerCase()}{value.length >= field.maxItems ? ` (limit of ${field.maxItems} reached)` : ''}
       </button>
     </div>
   );
 }
 
 export default function PageTextEditor() {
-  const [pageId, setPageId] = useState('about');
+  const [pageId, setPageId] = useState('home');
   const [data, setData] = useState(null);
   const [base, setBase] = useState(null);
   const [current, setCurrent] = useState(null);
@@ -106,7 +118,7 @@ export default function PageTextEditor() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
-  const [removeIndex, setRemoveIndex] = useState(null);
+  const [removeItem, setRemoveItem] = useState(null);
   const [pendingPage, setPendingPage] = useState(null);
   const savedTimer = useRef(null);
 
@@ -141,9 +153,14 @@ export default function PageTextEditor() {
 
   async function save() {
     setSaveError('');
-    const faqBad = Array.isArray(current.faq) && current.faq.findIndex((it) => !it.q.trim() || !it.a.trim());
-    if (dirtyKeys.includes('faq') && faqBad >= 0) {
-      setFieldErrors({ faq: `Question ${faqBad + 1} needs both a question and an answer. Fill it in or remove it.` });
+    const listErrors = {};
+    for (const field of data.fields) {
+      if (field.kind !== 'list' || !dirtyKeys.includes(field.key) || !Array.isArray(current[field.key])) continue;
+      const bad = current[field.key].findIndex((it) => field.itemFields.some((x) => !String(it[x.name] || '').trim()));
+      if (bad >= 0 && current[field.key].length) listErrors[field.key] = `${field.itemLabel} ${bad + 1} needs ${field.itemFields.map((x) => x.label.toLowerCase()).join(', ')}. Fill it in or remove it.`;
+    }
+    if (Object.keys(listErrors).length) {
+      setFieldErrors(listErrors);
       setSaveError('Some text could not be saved. Check the highlighted fields.');
       return;
     }
@@ -185,6 +202,19 @@ export default function PageTextEditor() {
         </div>
         <a className={styles.secondary} href={data.page.path} target="_blank" rel="noopener noreferrer">Open {data.page.label} (new tab)</a>
       </div>
+      <div className={styles.scope}>
+        <p><strong>{data.page.label}:</strong> {data.page.description}</p>
+        {data.page.notEditable?.length ? (
+          <>
+            <p className={styles.scopeHead}>Not edited here:</p>
+            <ul>
+              {data.page.notEditable.map((n, i) => (
+                <li key={i}>{n.text}{n.href && !/[.!?]$/.test(n.text) ? '.' : ''}{n.href ? <> Edit it in <a href={n.href}>{n.linkLabel}</a>.</> : null}</li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </div>
       <p className={styles.intro}>
         Change the words on this page. Plain text only: leave a blank line to start a new paragraph. If you clear a box, or press Reset to default, the original wording comes back.
         Changes appear on the page within about half a minute of saving.
@@ -201,8 +231,8 @@ export default function PageTextEditor() {
           <p className={styles.sectionHelp}>{section.help}</p>
           {data.fields.filter((fl) => fl.section === section.id).map((field) => (
             field.kind === 'list' ? (
-              <FaqEditor key={field.key} field={field} value={current[field.key]} base={base[field.key]} def={data.defaults[field.key]}
-                error={fieldErrors[field.key]} onChange={(v) => setValue(field.key, v)} onAskRemove={setRemoveIndex} />
+              <ListEditor key={field.key} field={field} value={current[field.key]} base={base[field.key]} def={data.defaults[field.key]}
+                error={fieldErrors[field.key]} onChange={(v) => setValue(field.key, v)} onAskRemove={setRemoveItem} />
             ) : (
               <TextField key={field.key} field={field} value={current[field.key]} base={base[field.key]} def={data.defaults[field.key]}
                 error={fieldErrors[field.key]} onChange={(v) => setValue(field.key, v)} onReset={() => setValue(field.key, data.defaults[field.key])} />
@@ -223,11 +253,11 @@ export default function PageTextEditor() {
       </div>
 
       <ConfirmDialog
-        open={removeIndex !== null} title="Remove this question?"
-        message={removeIndex !== null && current.faq[removeIndex] ? `"${current.faq[removeIndex].q || `Question ${removeIndex + 1}`}" will be removed from the list. It only disappears from the page after you press Save changes.` : ''}
-        confirmLabel="Remove question"
-        onConfirm={() => { setValue('faq', faqRemove(current.faq, removeIndex)); setRemoveIndex(null); }}
-        onCancel={() => setRemoveIndex(null)}
+        open={removeItem !== null} title="Remove this item?"
+        message={removeItem && current[removeItem.key]?.[removeItem.index] ? `"${Object.values(current[removeItem.key][removeItem.index]).find((v) => v && v.trim()) || `Item ${removeItem.index + 1}`}" will be removed from the list. It only disappears from the page after you press Save changes.` : ''}
+        confirmLabel="Remove"
+        onConfirm={() => { setValue(removeItem.key, listRemove(current[removeItem.key], removeItem.index)); setRemoveItem(null); }}
+        onCancel={() => setRemoveItem(null)}
       />
       <ConfirmDialog
         open={pendingPage !== null} title="Discard unsaved changes?"

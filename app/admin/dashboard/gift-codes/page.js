@@ -3,7 +3,38 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
-import { Button, Callout, Field, Input, Panel, Table, Tag } from '../../../../components/ui';
+import { Button, Callout, Field, Input, Panel, Table, Tag, Textarea } from '../../../../components/ui';
+
+const RESULT_TEXT = {
+  ok: ['OK', 'success'],
+  blocked: ['Blocked: the site refused automated access', 'danger'],
+  changed_shape: ['Page layout changed: codes could not be read', 'accent'],
+  failed: ['Failed: could not reach the page', 'accent'],
+  not_used: ['Not read automatically', 'neutral'],
+  never_checked: ['Not checked yet', 'neutral'],
+};
+
+function ago(iso) {
+  if (!iso) return 'never';
+  const min = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (min < 2) return 'just now';
+  if (min < 90) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  return h < 36 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
+}
+
+function describeResult(action, json) {
+  if (action === 'check_sources') {
+    const d = json.discovery || {};
+    if (!d.refreshed) return 'Nothing was fetched: each source is checked at most once every 30 minutes (or the site is paused).';
+    return `Checked ${d.refreshed} source(s). New codes: ${d.new_codes}. No longer listed: ${d.delisted}.`;
+  }
+  if (action === 'add_codes' || action === 'add_code') {
+    const bad = json.rejected?.length ? ` Skipped ${json.rejected.length} that were not valid codes.` : '';
+    return `Added ${json.added}, re-enabled ${json.reactivated}, already had ${json.already}.${bad}`;
+  }
+  return 'Done.';
+}
 
 export default function AdminGiftCodesPage() {
   const router = useRouter();
@@ -16,6 +47,7 @@ export default function AdminGiftCodesPage() {
   const [newCode, setNewCode] = useState('');
   const [enrollId, setEnrollId] = useState('');
   const [busy, setBusy] = useState('');
+  const [pasteText, setPasteText] = useState('');
 
   const load = useCallback(async (q = '') => {
     setLoading(true);
@@ -50,7 +82,7 @@ export default function AdminGiftCodesPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Action failed');
-      setStatus(`${action} completed.`);
+      setStatus(describeResult(action, json));
       await load(query);
       return json;
     } catch (err) {
@@ -68,7 +100,6 @@ export default function AdminGiftCodesPage() {
 
   const totals = data?.totals || {};
   const codes = data?.codes || [];
-  const lastCheck = data?.lastCheck;
 
   return (
     <AdminShell
@@ -85,32 +116,74 @@ export default function AdminGiftCodesPage() {
       {error ? <Callout tone="danger">{error}</Callout> : null}
       {status ? <Callout tone="success">{status}</Callout> : null}
 
-      <Panel title="Automation status">
+      <Panel title="Code sources">
         <p style={{ marginBottom: '0.75rem' }}>
-          Discovery and per-member queueing are automatic (daily wiki check). Submission to
-          Century Games (ks-giftcode.centurygame.com) is not automated — their redemption API
-          requires a signed request we cannot forge without their authorization. Each enrolled
-          member sees new codes in their own Gift Code Rewards panel and redeems themselves,
-          then confirms the result there.
+          Codes are read from public lists once a day (and on request below). Each site is contacted at most once
+          every 30 minutes, and if a site fails or refuses, your existing codes stay exactly as they are. Members
+          redeem themselves at Century Games and confirm the result in their own panel.
         </p>
-        <p style={{ marginBottom: '0.75rem', opacity: 0.85 }}>
-          Last wiki check:{' '}
-          {lastCheck
-            ? `${lastCheck.success ? 'OK' : 'FAILED'} at ${new Date(lastCheck.checked_at).toLocaleString()} · found ${lastCheck.codes_found} · new ${lastCheck.new_codes}`
-            : 'None yet'}
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <Button disabled={!!busy} onClick={() => runAction('check_wiki')}>
-            {busy === 'check_wiki' ? 'Checking…' : 'Check for codes'}
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.75rem' }}>
+          {(data?.sources || []).map((src, i) => {
+            const [label, tone] = RESULT_TEXT[src.result] || RESULT_TEXT.failed;
+            return (
+              <li key={src.id} style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: '0.75rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1rem', alignItems: 'center' }}>
+                  <a href={src.url} target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>{src.label}</a>
+                  <Tag>{i === 0 ? 'Primary' : 'Backup'}</Tag>
+                  <Tag tone={tone}>{label}</Tag>
+                  <span>Last checked: {ago(src.last_checked_at)}</span>
+                  <span>Codes found: {src.codes_found ?? '—'}</span>
+                </div>
+                {!src.enabled ? <p className="hint" style={{ margin: '0.35rem 0 0' }}>{src.note} Use the link to copy codes by hand.</p> : null}
+                {src.paused_until && src.result === 'blocked' ? <p className="hint" style={{ margin: '0.35rem 0 0' }}>Paused until {new Date(src.paused_until).toLocaleString()}.</p> : null}
+              </li>
+            );
+          })}
+        </ul>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem' }}>
+          <Button disabled={!!busy} onClick={() => runAction('check_sources')}>
+            {busy === 'check_sources' ? 'Checking…' : 'Check now'}
           </Button>
+          <Button
+            variant="quiet"
+            disabled={!!busy}
+            onClick={() => {
+              if (window.confirm('Force check? This ignores the 30 minute wait and contacts the gift code sites again right now. Use it sparingly; a site that refuses access is never forced.')) {
+                runAction('check_sources', { force: true });
+              }
+            }}
+          >
+            Force check
+          </Button>
+          <Button variant="quiet" href="https://kingshot.net/gift-codes" target="_blank" rel="noreferrer">Open kingshot.net/gift-codes</Button>
+          <Button variant="quiet" href="https://kingshotmastery.com/gift-codes" target="_blank" rel="noreferrer">Open kingshotmastery.com/gift-codes</Button>
         </div>
+      </Panel>
+
+      <Panel title="Paste codes">
+        <p style={{ marginBottom: '0.5rem' }}>
+          Copy codes from either site and paste them here, one per line or separated by spaces or commas. Spelling and
+          capital letters are kept exactly as typed. Only letters and digits (4 to 32 characters) are accepted.
+        </p>
+        <Field label="Codes to add">
+          <Textarea rows={4} value={pasteText} onChange={(e) => setPasteText(e.target.value)} aria-label="Codes to add" placeholder={'Kingshot888\nVIP777'} />
+        </Field>
+        <Button
+          disabled={!!busy || !pasteText.trim()}
+          onClick={async () => {
+            const r = await runAction('add_codes', { text: pasteText });
+            if (r) setPasteText('');
+          }}
+        >
+          {busy === 'add_codes' ? 'Adding…' : 'Add these codes'}
+        </Button>
       </Panel>
 
       <Panel title="Active codes">
         {loading && !codes.length ? (
           <p>Loading…</p>
         ) : codes.length === 0 ? (
-          <p>No codes stored yet. Run “Check for codes” or add one manually.</p>
+          <p>No codes stored yet. Use “Check now” or paste codes above.</p>
         ) : (
           <Table className="stack-table">
             <thead>

@@ -38,7 +38,9 @@ async function payload() {
   const metaColl = ids.length ? await getCollection(COLLECTIONS.SITE_IMAGES).catch(() => null) : null;
   const metas = metaColl ? await metaColl.find({ _id: { $in: ids } }).toArray().catch(() => []) : [];
   const metaById = new Map(metas.map((m) => [String(m._id), publicSiteImage(m)]));
+  const [removed, dupes] = await Promise.all([catalog.removed().catch(() => []), catalog.duplicateReport().catch(() => ({ groups: 0, extra_rows: 0 }))]);
   return {
+    removed, duplicates: dupes.extra_rows,
     heroes: docs.map((d) => ({ ...adminHero(d), saved_count: counts.get(d.name) || 0, image: metaById.get(d.image?.site_image_id) || null })),
   };
 }
@@ -53,6 +55,15 @@ export async function POST(request) {
   const body = await readBody(request);
   if (!body) return json({ error: 'Invalid request.' }, 400);
   try {
+    // POST { action: 'restore', key } brings a removed hero back; { action: 'dedupe' } deletes duplicate rows.
+    if (body.action === 'restore') {
+      await getHeroCatalog().restore(String(body.key || ''));
+      return json(await payload());
+    }
+    if (body.action === 'dedupe') {
+      await getHeroCatalog().dedupe();
+      return json(await payload());
+    }
     const image = await checkImage(body.image_id ?? null);
     await getHeroCatalog().create({ name: body.name, image, active: body.active !== false });
     return json(await payload(), 201);
@@ -87,8 +98,9 @@ export async function DELETE(request) {
   const key = new URL(request.url).searchParams.get('key') || '';
   if (!key) return json({ error: 'Choose a hero.' }, 400);
   try {
-    const { hero } = await getHeroCatalog().remove(key);
-    if (hero.image?.site_image_id) await dropUnusedImage(hero.image.site_image_id);
+    // Always allowed: members' saved hero names stay as they are; a tombstone stops lazy seeding from re-adding it.
+    const { imageIds } = await getHeroCatalog().remove(key);
+    for (const id of imageIds) await dropUnusedImage(id);
     return json(await payload());
   } catch (error) { return fail(error); }
 }

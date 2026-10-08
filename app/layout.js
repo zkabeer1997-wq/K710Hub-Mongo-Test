@@ -17,6 +17,8 @@ import FilipinoTagalogOptions from '../components/i18n/FilipinoTagalogOptions';
 import { headers } from 'next/headers';
 import { SITE_URL } from '../lib/siteUrl';
 import { ToastProvider } from '../components/ui/Toast';
+import GlossaryProvider from '../components/GlossaryProvider';
+import { getGlossaryOverride } from '../lib/pageText.server';
 
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['600', '800', '900'], display: 'swap', variable: '--font-display-loaded' });
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap', variable: '--font-body-loaded' });
@@ -41,13 +43,16 @@ export default async function RootLayout({ children }) {
   // Reading request headers opts every page into dynamic rendering so Next can
   // stamp the per-request CSP nonce (set in proxy.js) onto its inline scripts.
   await headers();
+  const glossaryTerms = await getGlossaryOverride();
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
       <body className="theme-console">
         <ToastProvider>
           <LanguageProvider>
             <FilipinoTagalogOptions />
-            <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
+            <GlossaryProvider terms={glossaryTerms}>
+              <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
+            </GlossaryProvider>
           </LanguageProvider>
         </ToastProvider>
       </body>

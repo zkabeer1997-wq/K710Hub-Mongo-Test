@@ -37,6 +37,13 @@
 .faqList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .faqItem fieldset { margin: 0; padding: 12px; border: 1px solid #2a2f38; border-radius: 6px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .faqItem legend { font-size: 13px; font-weight: 700; color: #e2ad68; padding: 0 6px; }
+.itemRow { display: flex; flex-direction: column; gap: 4px; }
+.itemRow label { font-size: 13px; font-weight: 600; }
+.scope { padding: 12px 14px; border: 1px solid #2a2f38; border-left: 3px solid #e2ad68; border-radius: 6px; font-size: 14px; line-height: 1.55; color: #c3c9d1; }
+.scope p { margin: 0 0 6px; }
+.scope ul { margin: 0; padding-left: 20px; }
+.scope a { color: #e2ad68; }
+.scopeHead { color: #9aa3ad; font-size: 13px; }
 .faqActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .bar { position: sticky; bottom: 0; z-index: 30; margin-top: 8px; border-radius: 8px 8px 0 0; padding-right: 72px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; padding: 10px 16px; background: #10141b; border-top: 1px solid #2a2f38; }
 .status { margin: 0 auto 0 0; font-size: 14px; }

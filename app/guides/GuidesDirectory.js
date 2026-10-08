@@ -16,7 +16,7 @@ const DIFFICULTY_TONE = {
   Advanced: 'guide-tag-advanced',
 };
 
-export default function GuidesDirectory({ guides, categories: savedCategories = [], query, backHref }) {
+export default function GuidesDirectory({ copy, guides, categories: savedCategories = [], query, backHref }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState(null);
 
@@ -43,16 +43,16 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
   return (
     <>
       <div className="guides-toolbar">
-        <Field label="Search guides" htmlFor="guide-search" className="guides-search">
+        <Field label={copy.search_label} htmlFor="guide-search" className="guides-search">
           <Input
             id="guide-search"
             type="search"
-            placeholder="Search by title or description…"
+            placeholder={copy.search_placeholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </Field>
-        <div className="guides-categories" role="group" aria-label="Filter by category">
+        <div className="guides-categories" role="group" aria-label={copy.filter_label}>
           {[null, ...categories].map((c) => (
             <button
               key={c ?? "all-guides"}
@@ -61,14 +61,14 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
               className={`guides-category-tab ${category === c ? 'is-active' : ''}`}
               onClick={() => setCategory(c)}
             >
-              {c ?? 'All'}
+              {c ?? copy.filter_all}
             </button>
           ))}
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="guides-error k-narrative">{search.trim() ? 'No guides match your search.' : 'No published guides in this category yet.'}</div>
+        <div className="guides-error k-narrative">{search.trim() ? copy.empty_search : copy.empty_category}</div>
       ) : (
         <div className="guides-directory" role="list">
           {filtered.map((guide, index) => {
@@ -82,7 +82,7 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
                     <span className="k-mark guide-category">{guide.category}</span>
                     {isStartHere && (
                       <span className="guide-tag guide-tag-start" title="Recommended first guide">
-                        ★ Start here
+                        ★ {copy.badge_start}
                       </span>
                     )}
                     {difficulty && (
@@ -92,12 +92,12 @@ export default function GuidesDirectory({ guides, categories: savedCategories = 
                   <strong className="guide-entry-title">{guide.title}</strong>
                   {guideSubtitle(guide.title, guide.description) && <span className="guide-description">{guide.description}</span>}
                   <span className="guide-entry-sub">
-                    {guide.reading_minutes || 1} min read
-                    {updatedLabel(guide) ? ` · Updated ${updatedLabel(guide)}` : ''}
+                    {guide.reading_minutes || 1} {copy.entry_read_suffix}
+                    {updatedLabel(guide) ? ` · ${copy.entry_updated_prefix} ${updatedLabel(guide)}` : ''}
                   </span>
                 </span>
                 <span className="guide-entry-meta">
-                  <span>Open guide</span>
+                  <span>{copy.entry_open}</span>
                   <b aria-hidden="true">→</b>
                 </span>
               </a>

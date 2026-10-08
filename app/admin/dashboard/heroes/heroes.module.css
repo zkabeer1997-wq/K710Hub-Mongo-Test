@@ -28,10 +28,18 @@
 .bulk { padding: 10px 12px; border-radius: 6px; background: #1b2230; font-size: 14px; }
 .bulk ul { margin: 6px 0 0; padding-left: 20px; }
 .imagePanel { padding-top: 10px; border-top: 1px solid #2a2f38; display: flex; flex-direction: column; gap: 10px; }
+.notice { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid #6b5326; border-radius: 8px; background: rgba(226, 173, 104, .08); font-size: 14px; }
+.notice p { margin: 0; }
+.restore { margin-top: 20px; padding: 10px 14px; border: 1px solid #2a2f38; border-radius: 8px; }
+.restore summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-weight: 600; font-size: 14px; }
+.restore summary:focus-visible { outline: 2px solid #e2ad68; outline-offset: 2px; }
+.restore ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.restore li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 @media (max-width: 640px) {
   .main { grid-template-columns: 72px minmax(0, 1fr); }
   .toggle { grid-column: 1 / -1; }
   .actions > *, .order { flex: 1 1 calc(50% - 8px); }
   .order > * { flex: 1; }
   .addControls > button { flex: 1 1 100%; }
+  .restore li > button, .notice > button { flex: 1 1 100%; }
 }

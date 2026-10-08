@@ -11,7 +11,8 @@ Required:
 - Kingshot login secrets used by `lib/kingshotLogin.js` (public key / signing material as already configured on Mongo-Test)
 
 Optional / feature-specific:
-- Gift code wiki fetch settings if used
+- `GIFT_ENABLE_KINGSHOTMASTERY=1` (optional, default off): also read kingshotmastery.com/gift-codes automatically. Its Terms of Service forbid robots/data gathering, so only set it with the owner's explicit decision.
+- `CRON_SECRET` — the daily `/api/cron/gift-codes` job reads kingshot.net/gift-codes (robots.txt obeyed, 1 attempt per 30 min, snapshots in `external_snapshots` as `giftcodes:<host>`); a 401/403/429 pauses that source for 24h. Admin > Gift codes shows source status, Check now / Force check and a Paste codes box.
 - Any OCR / charm vision keys if those tools are enabled
 
 Verify: Vercel project for `k710-hub-mongo-test` and future production domain share the same variable *names*; values may differ per environment.
@@ -289,12 +290,14 @@ Admin > Tools > Tool images lets an admin replace the icon on each /tools tile w
 ### Hero catalog (KvK Availability + Flamedragon forms)
 
 - Mongo `hero_catalog` `{ key (unique slug), name, image: {site_image_id}|null, active, order, created_at, updated_at, updated_by }`, seeded lazily from `lib/playerCombatOptions.mjs` (the ten retired heroes are seeded `active: false`). Default portrait when no Drive image: `public/heroes/<key>.webp`, else an initial-letter placeholder.
-- Admin: Admin > Content > Heroes (`/admin/dashboard/heroes`, API `/api/admin-heroes` GET/POST/PATCH/DELETE): add, show/hide, reorder, picture (shared `ImageUploadField`, Drive folder `Hero images`), bulk "Upload many images" (file name = hero name/key). Heroes that members saved cannot be renamed or deleted (forms store the name): add a new hero and switch the old one off.
+- Admin: Admin > Content > Heroes (`/admin/dashboard/heroes`, API `/api/admin-heroes` GET/POST/PATCH/DELETE): add, show/hide, reorder, picture (shared `ImageUploadField`, Drive folder `Hero images`), bulk "Upload many images" (file name = hero name/key). Heroes that members saved cannot be renamed (forms store the name): add a new hero and hide/remove the old one.
+- Remove is always allowed: it deletes the row (uploaded image goes to the Drive trash) and writes a tombstone in `hero_catalog_removed` (`_id` = normalised name) so lazy seeding never re-adds it; members' saved names are untouched and removed heroes are dropped like inactive ones. "Restore removed heroes" (POST `{action:'restore',key}`) brings one back; adding the same name again clears the tombstone.
+- Uniqueness is by normalised name (`name_norm`: case/accents/spaces/punctuation-insensitive; unique partial index `name_norm_unique`). Seeding is per-hero upserts (`$setOnInsert`), reads de-duplicate in memory (best row: has image, active, oldest). `ensureIndexes()` dedupes `hero_catalog` before creating its unique indexes. Cleanup of existing duplicate rows: admin "Remove duplicates" button (shown when any exist), a redeploy/restart (boot ensureIndexes), or `MONGODB_URI=... node scripts/dedupe-hero-catalog.mjs [--yes]` (dry run by default).
 - Public: `GET /api/heroes` (no Drive ids; images are `/api/site-image/<id>`); the member form pages also receive the list as server props. Reads are cached 30 s per server process, invalidated on admin writes, and fall back to the code defaults when MongoDB is unavailable.
 - Validation uses the active heroes; saved heroes that are now inactive are dropped silently on load/prefill and on re-save (never a 400). Stored values remain hero names.
 
-### Page text (About page words)
+### Page text (Home, About, Glossary, Guides list words)
 
-- Admin > Content > Page text (`/admin/dashboard/page-text`, API `/api/admin-page-text` GET/PUT, admin only). Mongo `page_text`: one document per page `{ page (unique), values: { key: text | faq list }, updated_at, updated_by }`. Defaults and field limits live in `lib/pageText.mjs` (add another page by registering it in `PAGE_TEXT_PAGES`).
+- Admin > Content > Page text (`/admin/dashboard/page-text`, API `/api/admin-page-text` GET/PUT, admin only). Mongo `page_text`: one document per page `{ page (unique), values: { key: text | faq list }, updated_at, updated_by }`. Defaults and field limits live in `lib/pageText.mjs` (add another page by registering it in `PAGE_TEXT_PAGES`). Pages: home, about, glossary, guides. Home reads old `content_blocks` (page 'home') values once into `page_text` (`legacy_imported: true`), then ignores them; About reads its shared story paragraphs and R5 leaders from `getPageText('home')`. Glossary terms (`glossary_terms` list) also feed the tooltips via `GlossaryProvider` in the root layout.
 - A blank or whitespace-only value, or a value equal to the default, is not stored: the page shows the default. "Reset to default" in the screen does exactly that. FAQ: max 12 items, question <= 140, answer <= 800 characters; saving an empty list restores the default list.
 - The About page reads it server-side (`lib/pageText.server.js`), cached 30 s, invalidated on admin writes, and falls back to the code defaults if MongoDB is unavailable. Plain text only (blank line = new paragraph). Alliances, KvK numbers and the two home-page paragraphs are not editable here.
