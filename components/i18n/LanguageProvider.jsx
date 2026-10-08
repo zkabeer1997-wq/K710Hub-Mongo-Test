@@ -546,7 +546,7 @@ export default function LanguageProvider({ children }) {
               اختر لغتك · Choisissez votre langue · Dilinizi seçin · 언어 선택 · Elige tu idioma
             </p>
             <p className="k710-language-copy">
-              On supported desktop browsers, translation runs on your device. Your player-entered information is not sent for translation.
+              Pick the language you want to read. You can change it later from the top of any page.
             </p>
 
             <label className="k710-language-label" htmlFor="k710-language-input">Language</label>
@@ -591,14 +591,14 @@ export default function LanguageProvider({ children }) {
             </div>
 
             <button type="button" className="k710-language-enter" onClick={() => applyLanguage(inputLanguage)}>
-              {hasChosenLanguage ? 'Apply language' : 'Enter the Kingdom'}
+              {hasChosenLanguage ? 'Apply language' : 'Continue'}
             </button>
             {hasChosenLanguage && (
               <button type="button" className="k710-language-cancel" onClick={closeLanguageChooser}>
                 Cancel
               </button>
             )}
-            <p className="k710-language-footnote">Chrome 138+ desktop supports 38 on-device translation languages.</p>
+            
           </div>
         </div>
       )}

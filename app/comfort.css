@@ -1,0 +1,86 @@
+/* Comfort layer: larger tap targets, a visible "Menu" label, the Help page,
+   and "Easy view" (:root[data-easy="true"]) for readers who want bigger text
+   and fewer moving parts. Tokens only; no new palette. */
+
+/* ---- Mobile menu button shows the word "Menu" ---- */
+.site-nav-toggle { width: auto; min-width: 44px; flex-direction: row; gap: 8px; padding: 0 12px; }
+.site-nav-toggle .site-nav-toggle-bars { display: flex; flex-direction: column; gap: 4px; width: auto; height: auto; background: none; }
+.site-nav-toggle .site-nav-toggle-bars span { display: block; width: 16px; height: 1.5px; background: var(--parchment); }
+.site-nav-toggle .site-nav-toggle-label { width: auto; height: auto; background: none; color: var(--parchment); font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+
+/* ---- Easy view button ---- */
+.easy-view-toggle {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 8px; background: transparent;
+  color: var(--parchment); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.easy-view-toggle:hover { background: rgba(217, 169, 78, 0.1); }
+.easy-view-toggle:focus-visible { outline: 2px solid var(--gold-hot); outline-offset: 2px; }
+.easy-view-toggle[aria-pressed="true"] { border-color: var(--gold); color: var(--gold-bright); }
+.easy-view-aa { text-transform: none; font-family: var(--font-display, serif); font-size: 17px; line-height: 1; }
+.easy-view-toggle--mobile { margin: 8px 0; width: 100%; justify-content: flex-start; }
+@media (max-width: 1180px) {
+  .easy-view-toggle--header .easy-view-label { display: none; }
+}
+@media (max-width: 759px) {
+  .easy-view-toggle--header { padding: 0 10px; }
+}
+
+/* ---- Touch devices: comfortable hit areas ---- */
+@media (pointer: coarse) {
+  .site-footer a, .site-footer-nav a { display: inline-flex; align-items: center; min-height: 44px; }
+  .deadline-ticker a { min-height: 44px; display: inline-flex; align-items: center; }
+  .k-skip:focus { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+/* ---- Help page ---- */
+.help-page { background: var(--color-bg); color: var(--color-ink); min-height: 100vh; padding-bottom: 112px; }
+.help-inner { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+.help-toc { margin-top: 32px; padding: 20px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+.help-toc h2 { margin: 0 0 12px; font-size: 16px; color: var(--color-ink-muted); font-weight: 700; }
+.help-toc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.help-toc a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-link); font-size: 18px; font-weight: 600; }
+.help-section { margin-top: clamp(40px, 6vw, 56px); scroll-margin-top: 96px; }
+.help-section h2 { margin: 0 0 14px; font-family: var(--font-display); font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.01em; color: var(--color-ink); }
+.help-section p, .help-section li { font-size: 18px; line-height: 1.7; color: var(--color-ink); max-width: 65ch; }
+.help-section li { margin-bottom: 10px; }
+.help-section a, .help-back a { color: var(--color-link); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.help-back { margin-top: 56px; font-size: 18px; }
+
+/* ---- Easy view ---- */
+:root[data-easy="true"] body { line-height: 1.65; }
+:root[data-easy="true"] p,
+:root[data-easy="true"] li,
+:root[data-easy="true"] label,
+:root[data-easy="true"] td,
+:root[data-easy="true"] th,
+:root[data-easy="true"] dd,
+:root[data-easy="true"] dt,
+:root[data-easy="true"] small,
+:root[data-easy="true"] span,
+:root[data-easy="true"] input,
+:root[data-easy="true"] select,
+:root[data-easy="true"] textarea,
+:root[data-easy="true"] button,
+:root[data-easy="true"] a { font-size: max(1.125rem, 1em); }
+:root[data-easy="true"] * { letter-spacing: normal !important; text-transform: none !important; }
+:root[data-easy="true"] input,
+:root[data-easy="true"] select,
+:root[data-easy="true"] textarea { min-height: 52px; }
+:root[data-easy="true"] button,
+:root[data-easy="true"] .btn,
+:root[data-easy="true"] [type="submit"] { min-height: 52px; font-weight: 700; }
+:root[data-easy="true"] a { text-decoration: underline; text-underline-offset: 3px; }
+:root[data-easy="true"] :focus-visible { outline: 3px solid var(--gold-hot); outline-offset: 3px; }
+:root[data-easy="true"] { --t-secondary: #d3d8e6; --t-muted: #c2c8d8; --text-muted: #d3d8e6; --text-dim: #c2c8d8; --t-faint: #b3bace; }
+/* No moving or decorative parts */
+:root[data-easy="true"] .deadline-ticker,
+:root[data-easy="true"] .utc-clock,
+:root[data-easy="true"] canvas { display: none !important; }
+:root[data-easy="true"] *, :root[data-easy="true"] *::before, :root[data-easy="true"] *::after {
+  animation: none !important; transition: none !important; scroll-behavior: auto !important;
+}
+
+/* Interest form: readable step counter and saved note */
+.petition-step-count { font-size: 16px; font-weight: 700; letter-spacing: normal; text-transform: none; display: flex; flex-direction: column; gap: 4px; }
+.petition-saved-note { display: block; font-size: 14px; font-weight: 400; color: var(--color-ink-muted); max-width: 34ch; }

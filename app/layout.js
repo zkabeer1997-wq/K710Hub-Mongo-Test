@@ -8,6 +8,7 @@ import './sitewide-parallax.css';
 import './sitewide-audit-fixes.css';
 import './home-gallery.css';
 import './member-center.css';
+import './comfort.css';
 import { Cinzel, Inter, JetBrains_Mono, Cormorant_Garamond, Fraunces } from 'next/font/google';
 import LanguageProvider from '../components/i18n/LanguageProvider';
 import BearScheduleProvider from '../components/BearScheduleProvider';

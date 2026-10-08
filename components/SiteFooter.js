@@ -11,6 +11,7 @@ const FOOTER_GROUPS = [
       { href: '/', label: 'Home' },
       { href: '/guides', label: 'Guides' },
       { href: '/interest', label: 'Apply' },
+      { href: '/help', label: 'Help' },
     ],
   },
   {
@@ -71,7 +72,7 @@ export default function SiteFooter() {
           title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
           aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
         >
-          ☕ Support K710 Hub <span aria-hidden="true">(donate)</span>
+          ☕ Donate to K710 Hub
         </Link>
       </div>
     </footer>

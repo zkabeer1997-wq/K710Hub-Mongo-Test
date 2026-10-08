@@ -287,10 +287,10 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               tone="console"
               className={styles.hero}
               eyebrow="Secure player access · Kingdom 710"
-              title="Dashboard"
+              title={view === 'profile' ? 'Dashboard' : 'Sign in'}
               lede={view === 'profile'
                 ? `Welcome back, ${displayName}. Your account is connected. Choose where to go next.`
-                : 'Sign in with your Player ID. We send a login code directly to your game.'}
+                : 'Type your Player ID. We will send a short code to your Kingshot game. Type that code here and you are in. You stay signed in for 30 days.'}
             />
 
             <div className={styles.assurance}>
@@ -300,15 +300,15 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                   {view === 'profile'
                     ? 'Signed in with Kingshot'
                     : view === 'personalCode'
-                      ? 'Secure fallback verification'
-                      : 'Official in-game verification'}
+                      ? 'Personal code sign-in'
+                      : 'Checked by the game itself'}
                 </strong>
                 <span>
                   {view === 'profile'
                     ? 'Session stays active for 30 days unless you log out.'
                     : view === 'personalCode'
-                      ? 'Your personal code is stored only as a protected one-way hash.'
-                      : 'Your code is checked by Kingshot and is never stored.'}
+                      ? 'Your personal code is kept private and safe.'
+                      : 'The code goes to your Kingshot game. We never keep it.'}
                 </span>
               </div>
             </div>
@@ -330,15 +330,15 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
           {(view === 'player' || view === 'game' || view === 'code' || view === 'personalCode') && (
             <>
               <div className={styles.stepRow}>
-                <span>Step {step} / 02</span>
+                <span>Step {Number(step)} of 2</span>
                 <span className={styles.stepLine}><i style={{ width: view === 'player' ? '50%' : '100%' }} /></span>
               </div>
 
               {view === 'player' && (
                 <form onSubmit={submitPlayer} className={styles.form}>
                   <header>
-                    <h2>Connect your account</h2>
-                    <p>Enter the Player ID shown in your Kingshot profile.</p>
+                    <h2>Your Player ID</h2>
+                    <p>You can find it in Kingshot: tap your picture in the top-left corner, then look for “Player ID” (a number).</p>
                   </header>
                   <label htmlFor="kingshot-player-id">Player ID</label>
                   <div className={styles.inputWrap}>
@@ -365,17 +365,17 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               {view === 'game' && (
                 <div className={styles.form}>
                   <header>
-                    <h2>Ready your game</h2>
-                    <p>Open Kingshot on your device so it can receive the verification code.</p>
+                    <h2>Open your game</h2>
+                    <p>Open Kingshot on your phone first. Then press the button below and we will send the code to the game.</p>
                   </header>
                   <div className={styles.gameCheck} aria-hidden="true">
                     <span>KS</span><i />
                   </div>
                   <button className={styles.primary} type="button" onClick={requestCode} disabled={busy}>
-                    <span>{busy ? 'Requesting code…' : 'Yes, the game is open'}</span><b aria-hidden="true">→</b>
+                    <span>{busy ? 'Requesting code…' : 'The game is open — send my code'}</span><b aria-hidden="true">→</b>
                   </button>
                   <button className={styles.textButton} type="button" onClick={startOver} disabled={busy}>
-                    Use a different Player ID
+                    Start again with a different Player ID
                   </button>
                 </div>
               )}
@@ -383,10 +383,10 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               {view === 'code' && (
                 <form onSubmit={submitCode} className={styles.form}>
                   <header>
-                    <h2>Check your game</h2>
-                    <p>Enter the one-time verification code sent to Kingshot.</p>
+                    <h2>Type your code</h2>
+                    <p>Look in Kingshot for a message with a short code. Type it here. The code stops working after a few minutes.</p>
                   </header>
-                  <label htmlFor="kingshot-code">Verification code</label>
+                  <label htmlFor="kingshot-code">Code from the game</label>
                   <input
                     id="kingshot-code"
                     className={styles.codeInput}
@@ -403,7 +403,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                     <span>{busy ? 'Verifying…' : 'Log in'}</span><b aria-hidden="true">→</b>
                   </button>
                   <button className={styles.textButton} type="button" onClick={startOver} disabled={busy}>
-                    Use a different Player ID
+                    Start again with a different Player ID
                   </button>
                 </form>
               )}
@@ -413,8 +413,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                   <header>
                     <h2>Use your personal code</h2>
                     <p>
-                      The game could not receive a verification code. Enter the private
-                      6-digit code a superadmin assigned to your account.
+                      The game did not receive a code. Ask your alliance leader for your personal code (6 numbers) and type it here.
                     </p>
                   </header>
                   <label htmlFor="kingshot-personal-code">Personal code</label>
@@ -436,7 +435,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                     <span>{busy ? 'Verifying…' : 'Log in with personal code'}</span><b aria-hidden="true">→</b>
                   </button>
                   <button className={styles.textButton} type="button" onClick={startOver} disabled={busy}>
-                    Use a different Player ID
+                    Start again with a different Player ID
                   </button>
                 </form>
               )}

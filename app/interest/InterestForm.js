@@ -35,11 +35,11 @@ const SPENDING_OPTIONS = [
 // on screen at once, matching the "5-6 fields, no account" feel of a short
 // funnel without dropping the vetting data behind it.
 const ACTS = [
-  { id: 'identity', num: 'I', label: 'Who Approaches', sub: 'Step 1 · Your account', required: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
-  { id: 'intake', num: 'II', label: 'The Crossing', sub: 'Step 2 · Transfer details', required: ['migrateAlliance'] },
-  { id: 'troops', num: 'III', label: 'Strength of Arms', sub: 'Step 3 · Your power and troops', required: ['highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower'], requiresT11: true },
-  { id: 'commitment', num: 'IV', label: 'The Oath', sub: 'Step 4 · Your commitment', required: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'] },
-  { id: 'battle-report', num: 'V', label: 'Proof', sub: 'Step 5 · Screenshots and submit', requiresScreenshot: true },
+  { id: 'identity', num: 'I', label: 'Your account', sub: 'Step 1 · Your account', required: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
+  { id: 'intake', num: 'II', label: 'Your move', sub: 'Step 2 · Transfer details', required: ['migrateAlliance'] },
+  { id: 'troops', num: 'III', label: 'Your power', sub: 'Step 3 · Your power and troops', required: ['highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower'], requiresT11: true },
+  { id: 'commitment', num: 'IV', label: 'Your promise', sub: 'Step 4 · Your commitment', required: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'] },
+  { id: 'battle-report', num: 'V', label: 'Screenshots', sub: 'Step 5 · Screenshots and submit', requiresScreenshot: true },
 ];
 
 function Chapter({ id, title, children }) {
@@ -112,16 +112,16 @@ function computeErrors(index, form, screenshots, label) {
   const act = ACTS[index];
   const found = [];
   for (const key of act.required || []) {
-    if (!String(form[key] || '').trim()) found.push({ id: `f-${key}`, key, message: `${label(key)} is required.` });
+    if (!String(form[key] || '').trim()) found.push({ id: `f-${key}`, key, message: `Please fill in “${label(key)}”. It is needed to continue.` });
   }
   for (const key of NUMERIC_FIELDS) {
     const inAct = (index === 2 && ['currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'].includes(key));
     if (inAct && form[key] && !isNumericValue(form[key]) && !found.some((f) => f.key === key)) {
-      found.push({ id: `f-${key}`, key, message: `${label(key)} should be numbers only.` });
+      found.push({ id: `f-${key}`, key, message: `Please use numbers only for “${label(key)}”, for example 12345. Do not type letters or commas.` });
     }
   }
   if (act.id === 'intake' && form.migrateAlliance === 'Other' && !form.migrateAllianceOther.trim()) {
-    found.push({ id: 'f-migrateAllianceOther', key: 'migrateAllianceOther', message: 'Please specify which alliance you want to migrate to.' });
+    found.push({ id: 'f-migrateAllianceOther', key: 'migrateAllianceOther', message: 'Please type the name of the alliance you want to join.' });
   }
   if (act.id === 'commitment' && form.mainLanguage === 'Other' && !form.mainLanguageOther.trim()) {
     found.push({ id: 'f-mainLanguageOther', key: 'mainLanguageOther', message: 'Please specify your main language.' });
@@ -352,7 +352,7 @@ try {
 } catch {
   setLoading(false);
   setIsError(true);
-  setStatus('The upload was interrupted. Check your connection and try submitting again.');
+  setStatus('The upload stopped, probably because of the internet connection. Your answers are saved on this device. Press Submit again to retry.');
   return;
 }
 setLoading(false);
@@ -696,7 +696,10 @@ return (
 )}
 
 <div className="petition-step-nav">
-  <span className="petition-step-count k-mark">Step {step + 1} of {ACTS.length}</span>
+  <span className="petition-step-count k-mark">
+    Step {step + 1} of {ACTS.length}
+    <small className="petition-saved-note">Your answers are saved on this device. You can close this page and come back.</small>
+  </span>
   <div className="petition-step-actions">
     {step > 0 && (
       <button type="button" className="k-btn k-btn-quiet" onClick={goBack}>Back</button>

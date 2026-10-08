@@ -8,6 +8,7 @@ import { useMemberFormStatus } from '../lib/useMemberFormStatus';
 import UtcClock from './member/UtcClock';
 import FormStatusMark from './member/FormStatusMark';
 import LanguageSwitcher from './i18n/LanguageSwitcher';
+import EasyViewToggle from './EasyViewToggle';
 
 const NAV_ITEMS = [
   { type: 'link', href: '/', label: 'Home' },
@@ -16,13 +17,14 @@ const NAV_ITEMS = [
     id: 'about',
     label: 'About',
     children: [
-      { href: '/about', label: 'About' },
+      { href: '/about', label: 'About Kingdom 710' },
       { href: '/timeline', label: 'Release Timeline' },
       { href: '/gallery', label: 'Gallery' },
       { href: '/glossary', label: 'Glossary' },
     ],
   },
   { type: 'link', href: '/guides', label: 'Guides' },
+  { type: 'link', href: '/help', label: 'Help' },
   {
     type: 'group',
     id: 'members',
@@ -311,11 +313,12 @@ export default function SiteHeader() {
             title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
             aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
           >
-            ☕ Support Us <span aria-hidden="true">(donate)</span>
+            ☕ Donate
           </Link>
         </nav>
 
         <UtcClock />
+        <EasyViewToggle className="easy-view-toggle--header" />
         <LanguageSwitcher className="lang-switch--header" />
 
         <button
@@ -327,9 +330,12 @@ export default function SiteHeader() {
           aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
           onClick={() => setOpen((v) => !v)}
         >
-          <span />
-          <span />
-          <span />
+          <span className="site-nav-toggle-bars" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className="site-nav-toggle-label">Menu</span>
         </button>
       </div>
 
@@ -338,6 +344,7 @@ export default function SiteHeader() {
         <div className="site-nav-backdrop" aria-hidden="true" onClick={() => setOpen(false)} />
         <nav className="site-nav-mobile" id="site-nav-mobile" ref={mobileRef} aria-label="Mobile site">
           <LanguageSwitcher className="lang-switch--mobile" showLabel onOpen={() => setOpen(false)} />
+          <EasyViewToggle className="easy-view-toggle--mobile" />
           {NAV_ITEMS.map((item) => {
             if (item.type === 'group') {
               const kids = item.id === 'members' ? membersChildren(item.children, memberStatus) : item.children;
@@ -382,7 +389,7 @@ export default function SiteHeader() {
             title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
             aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
           >
-            ☕ Support Us <span aria-hidden="true">(donate)</span>
+            ☕ Donate
           </Link>
         </nav>
         </>
