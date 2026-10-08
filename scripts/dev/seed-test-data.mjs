@@ -200,13 +200,20 @@ for (let i = 0; i < 25; i++) {
   // KvK availability (members 1-22; 23-25 intentionally skip so "Needs your input" has a case)
   if (i < 22) must('kvk-availability', await m('POST', '/api/kvk-availability', { name, member_id: id, current_alliance: ALLIANCE_OF(i), availability: AVAIL_KVK[i % 4] }));
 
-  // Prep backpack (1-18)
-  if (i < 18) must('prep-backpack', await m('POST', '/api/prep-backpack', {
-    in_game_name: name, want_construction: i % 4 ? 'Yes' : 'No', construction_upgrades: ['Barracks', 'Academy'].slice(0, 1 + (i % 2)), ttg_used: String(120 + i * 10), tg_used: String(300 + i * 25),
-    want_research: 'Yes', t11_troops: ['Infantry', 'Archer'].slice(0, 1 + (i % 2)), tg_dust: String(900 + i * 50), research_speedup_days: String(20 + i), want_troop_training: i % 3 ? 'Yes' : 'No',
-    is_transfer: i % 5 === 0 ? 'Yes' : 'No', troop_speedup_days: String(15 + i), promoting_t11: i % 2 ? 'Yes' : 'No',
-    avail_day1: ['12:00', '13:00'].slice(0, 1 + (i % 2)), avail_day2: ['14:00'], avail_day4: ['16:00', '17:00'], avail_day5: i % 4 === 0 ? ['18:00'] : [], notes: i % 5 === 0 ? 'Can only play after 20:00 UTC' : '',
-  }));
+  // KvK Prep & Appointments (members 1-20): the ONE source for ranking inputs and 30-minute availability.
+  // Contested half-hours (12:00-14:30) so the scheduler has real conflicts and some overflow to Day 5.
+  if (i < 20) {
+    // A run of 8 half-hours starting at a member-specific time: overlaps create conflicts without starving everyone.
+    const run = (startHalf) => Array.from({ length: 8 }, (_, k) => { const n = (startHalf + k) % 48; return `${String(Math.floor(n / 2)).padStart(2, '0')}:${n % 2 ? '30' : '00'}`; });
+    must('prep-backpack', await m('POST', '/api/prep-backpack', {
+      in_game_name: name,
+      want_construction: i % 4 ? 'Yes' : 'No', construction_upgrades: [['TG5'], ['TG6'], ['TG7', 'TG6'], ['TG8']][i % 4], ttg_used: String(120 + (i * 37) % 200), tg_used: String(300 + i * 25),
+      want_research: i < 16 ? 'Yes' : 'No', t11_troops: i % 3 === 0 ? ['Infantry'] : [], tg_dust: String(900 + i * 50), research_speedup_days: String(20 + i * 7),
+      want_troop_training: i % 3 ? 'Yes' : 'No', is_transfer: i % 5 === 0 ? 'Yes' : 'No', troop_speedup_days: String(15 + i * 40), promoting_t11: i % 2 ? 'Yes' : 'No',
+      avail_day1: run(24 + (i % 5) * 3), avail_day2: run(28 + (i % 4) * 3), avail_day4: run(40 + (i % 6) * 2),
+      avail_day5: run(34 + (i % 3) * 2), notes: i % 5 === 0 ? 'Can only play after 20:00 UTC' : '',
+    }));
+  }
 
   // Flamedragon (1-16)
   if (i < 16) must('flamedragon', await m('POST', '/api/flamedragon', {
@@ -223,15 +230,7 @@ for (let i = 0; i < 25; i++) {
       : { in_game_name: name, want_troop_training: 'No', is_transfer: '', troop_speedup_days: '', promoting_t11: '', avail_day4: [] }));
   }
 
-  // KvK appointments: all three day/buff types, contested hours 12-14
-  const hoursSet = [['12:00', '13:00', '14:00'], ['13:00', '14:00', '15:00'], ['12:00', '18:00', '19:00'], ['03:00', '04:00', '05:00']];
-  const types = [[1, 'construction', i < 20], [2, 'research', i < 15], [4, 'training', i < 12]];
-  for (const [day, buff, on] of types) {
-    if (!on) continue;
-    must('appointment-application', await m('POST', '/api/kvk-appointments', {
-      day, buff, in_game_name: name, tg: String(200 + i * 40 + day * 10), ttg: String(100 + i * 15), speedup_days: String(5 + i * 3.5), preferred_hours: hoursSet[(i + day) % 4],
-    }));
-  }
+  // (The old separate KvK Appointments application is retired: Prep & Appointments above is the only source.)
 
   // Vote forms
   const votes = ['legion_time', 'flexible', 'absent'];
@@ -260,8 +259,9 @@ if (rosterIds.length) {
   if (ids.length) must('flamedragon-rallies-saved', await admin('PUT', '/api/admin-flamedragon-rallies', { rallies: [mk(1, ids.slice(0, 8), ids[0]), mk(2, ids.slice(8), ids[8])] }));
 }
 {
-  const r = await admin('POST', '/api/admin-kvk-appointments', { action: 'auto_allocate' });
-  if (must('appointments-auto-allocate', r)) counts['appointments-summary'] = JSON.stringify(r.json.summary);
+  // Build the schedule through the admin API (ranks the Prep & Appointments answers, max 1 slot per member per day).
+  const r = await admin('POST', '/api/admin-kvk-appointments', { action: 'build_schedule' });
+  if (must('appointments-build-schedule', r)) counts['appointments-summary'] = JSON.stringify(r.json.summary);
   must('appointments-published', await admin('POST', '/api/admin-event-control', { type: 'kvk', action: 'publish' }));
 }
 

@@ -19,9 +19,9 @@ const build = (gates = voteGates, submissions = {}) => computeFormStatuses({ gat
 
 test('KvK ongoing: KvK forms, Power Profile, votes, then other open forms', () => {
   const out = orderMemberForms(build(), { kvk, flamedragon: { ...dragon, status: 'ended' } }, NOW);
-  assert.deepEqual(keys(out), ['prep', 'joiner', 'appointments', 'lead', 'tri-alliance', 'swordland', 'dragon', 'noble']);
+  assert.deepEqual(keys(out), ['prep', 'joiner', 'lead', 'tri-alliance', 'swordland', 'dragon', 'noble']);
   assert.equal(out[0].group, 'cycle');
-  assert.equal(out[3].group, 'profile');
+  assert.equal(out[2].group, 'profile');
 });
 
 test('Flamedragon ongoing puts Tyrant and Noble Advisor first', () => {
@@ -30,7 +30,7 @@ test('Flamedragon ongoing puts Tyrant and Noble Advisor first', () => {
 });
 
 test('both ongoing: soonest-ending cycle first; ties go to KvK; dates outside now are not ongoing', () => {
-  assert.deepEqual(keys(orderMemberForms(build(), { kvk, flamedragon: dragon }, NOW)).slice(0, 5), ['prep', 'joiner', 'appointments', 'dragon', 'noble']);
+  assert.deepEqual(keys(orderMemberForms(build(), { kvk, flamedragon: dragon }, NOW)).slice(0, 4), ['prep', 'joiner', 'dragon', 'noble']);
   const kvkLate = { ...kvk, end: '2026-11-30' };
   assert.deepEqual(keys(orderMemberForms(build(), { kvk: kvkLate, flamedragon: dragon }, NOW)).slice(0, 2), ['dragon', 'noble']);
   assert.deepEqual(keys(orderMemberForms(build(), { kvk: { ...kvk, end: null }, flamedragon: { ...dragon, end: null } }, NOW)).slice(0, 1), ['prep']);
@@ -56,7 +56,7 @@ test('closed and not-yet-open forms sit at the very bottom, opening soon before 
 
 test('forms that still need input come before finished ones within a group', () => {
   const out = orderMemberForms(build(voteGates, { prep: iso(NOW - H), 'tri-alliance': iso(NOW - H) }), { kvk }, NOW);
-  assert.deepEqual(keys(out).slice(0, 3), ['joiner', 'appointments', 'prep']);
+  assert.deepEqual(keys(out).slice(0, 2), ['joiner', 'prep']);
   const votes = keys(out).filter((k) => k === 'swordland' || k === 'tri-alliance');
   assert.deepEqual(votes, ['swordland', 'tri-alliance']);
 });
@@ -94,7 +94,7 @@ test('deadline entries include every form deadline and the cycle end', () => {
   const entries = buildDeadlineEntries({ events: [], forms, cycles }, NOW);
   const labels = entries.map((e) => e.label);
   assert.ok(labels.includes('Swordland vote closes'));
-  assert.ok(labels.includes('KvK Prep closes'));
+  assert.ok(labels.includes('KvK Prep & Appointments closes'));
   assert.ok(labels.includes('Noble Advisor opens'));
   assert.ok(labels.includes('KvK cycle ends'));
   assert.deepEqual(entries.map((e) => e.at), [...entries.map((e) => e.at)].sort((a, b) => a - b));

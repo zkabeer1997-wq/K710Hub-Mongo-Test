@@ -24,7 +24,7 @@ registerHooks({
 process.env.MEMBER_SESSION_SECRET = 'member-fixes-test-only';
 const availability = await import('../app/api/kvk-availability/route.js');
 const { COLLECTIONS } = await import('../lib/mongoCollections.js');
-const { withAppointmentProgress } = await import('../lib/memberForms.mjs');
+const { withAppointmentsSummary } = await import('../lib/memberForms.mjs');
 const token = await createMemberToken('920000777');
 const req = (body) => ({
   url: 'http://x/api/kvk-availability',
@@ -53,14 +53,12 @@ test('KvK availability: cannot save for another member id', async () => {
   assert.equal(res.status, 403);
 });
 
-test('withAppointmentProgress: saving the one form is Done, never "partial"; it lists the buffs', () => {
-  const base = [{ key: 'appointments', submitted: true }, { key: 'prep', submitted: true }];
-  const one = withAppointmentProgress(base, 2, 3, 'Day 1 Construction, Day 2 Research');
-  assert.deepEqual([one[0].appliedCount, one[0].appliedTotal, one[0].partial], [2, 3, false]);
-  assert.equal(one[0].appliedTitles, 'Day 1 Construction, Day 2 Research');
-  assert.equal(one[1].partial, undefined);
-  assert.equal(withAppointmentProgress(base, 3, 3)[0].partial, false);
-  assert.equal(withAppointmentProgress(base, 0, 3)[0].partial, false);
+test('withAppointmentsSummary adds the published lines to the Prep entry only', () => {
+  const base = [{ key: 'prep', submitted: true }, { key: 'joiner', submitted: true }];
+  const out = withAppointmentsSummary(base, ['Day 1 Construction: Oct 21, 14:30 UTC']);
+  assert.deepEqual(out[0].appointmentsSummary, ['Day 1 Construction: Oct 21, 14:30 UTC']);
+  assert.equal(out[1].appointmentsSummary, undefined);
+  assert.equal(withAppointmentsSummary(base, [])[0].appointmentsSummary, undefined);
 });
 
 const interest = await import('../app/api/interest/route.js');

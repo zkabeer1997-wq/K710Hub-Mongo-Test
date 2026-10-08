@@ -4,115 +4,68 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 /**
- * THE SEALED PETITION
- *
- * Submission reward sequence. Runs after the interest form POSTs
- * successfully, so it never gates or delays the actual write.
- *
- * Beats: parchment settles -> seal descends and presses -> gold flash
- * through the crest -> document rolls -> courier carries it toward the
- * fortress. Skippable throughout; reduced motion jumps to the result.
+ * Success screen after the transfer application is stored. A calm in-page
+ * card (no animation): says what happens next in plain words and shows the
+ * reference code with a Copy button.
  */
-export default function SealedPetition({ onClose, reducedMotion = false, intakePeriod, discordUsername, reference }) {
-  const [beat, setBeat] = useState(reducedMotion ? 4 : 0);
-  const timers = useRef([]);
+export default function SealedPetition({ intakePeriod, discordUsername, reference }) {
+  const headingRef = useRef(null);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (reducedMotion) return undefined;
-    const at = (ms, b) => timers.current.push(setTimeout(() => setBeat(b), ms));
-    at(500, 1);
-    at(1250, 2);
-    at(2100, 3);
-    at(3500, 4);
-    return () => timers.current.forEach(clearTimeout);
-  }, [reducedMotion]);
+  useEffect(() => { headingRef.current?.focus(); }, []);
 
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') setBeat(4);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(reference);
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = reference;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch { /* ignore */ }
+      area.remove();
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+
+  const statusHref = reference ? `/interest/status?reference=${encodeURIComponent(reference)}` : '/interest/status';
 
   return (
-    <div className="sealed" role="dialog" aria-modal="true" aria-labelledby="sealed-title">
-      <div className="sealed-stage" data-beat={beat}>
-        <div className="sealed-doc" aria-hidden="true">
-          <div className="sealed-doc-lines">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <span key={i} style={{ width: `${52 + ((i * 37) % 44)}%` }} />
-            ))}
-          </div>
-          <div className="sealed-wax">
-            <svg viewBox="0 0 40 40" aria-hidden="true">
-              <circle cx="20" cy="20" r="18" fill="#7d1f2a" />
-              <circle cx="20" cy="20" r="14" fill="none" stroke="#a83a45" strokeWidth="1" />
-              <path
-                d="M20 8 L30 12 V21 C30 26 25.5 29.5 20 31 C14.5 29.5 10 26 10 21 V12 Z"
-                fill="none"
-                stroke="#e8c9a0"
-                strokeWidth="1.4"
-              />
-              <text
-                x="20" y="24" textAnchor="middle"
-                fontFamily="var(--font-display-loaded), Georgia, serif"
-                fontWeight="900" fontSize="9" fill="#e8c9a0"
-              >
-                710
-              </text>
-            </svg>
-          </div>
-          <div className="sealed-flash" />
-        </div>
-        <div className="sealed-courier" aria-hidden="true">
-          <span className="sealed-courier-body" />
-          <span className="sealed-fortress" />
-        </div>
-      </div>
+    <section className="apply-done" aria-labelledby="apply-done-title">
+      <p className="apply-done-tick" aria-hidden="true">✓</p>
+      <h2 id="apply-done-title" ref={headingRef} tabIndex={-1}>Your application was sent</h2>
+      <p className="apply-done-lede">
+        Thank you. Our officers received it{intakePeriod ? <> for the <strong>{intakePeriod}</strong> transfer window</> : ''}.
+      </p>
 
-      <div className={`sealed-copy ${beat >= 4 ? 'is-in' : ''}`}>
-        <span className="k-mark">Petition Received</span>
-        <h2 id="sealed-title" className="k-display sealed-title">The Council Has Your Name</h2>
-        <p className="k-narrative sealed-note">
-          Your petition is sealed and carried to the inner kingdom for the{' '}
-          {intakePeriod ? <strong>{intakePeriod}</strong> : 'next'} intake window.
-          Leadership reviews every application before that window opens
-          {discordUsername ? <> and will reach you on Discord as <strong>{discordUsername}</strong></> : ''}.
-        </p>
-        {reference && (
-          <p className="sealed-reference">
-            Reference <strong>{reference}</strong> — keep this for your records.{' '}
-            <Link href={`/interest/status?reference=${encodeURIComponent(reference)}`}>
-              Check status anytime →
-            </Link>
-          </p>
-        )}
-        <p className="k-narrative sealed-wink">We&rsquo;ll see you at the gates.</p>
-        <div className="sealed-actions">
-          <button type="button" className="k-btn" onClick={onClose}>
-            Continue
-          </button>
-          {reference ? (
-            <Link
-              href={`/interest/status?reference=${encodeURIComponent(reference)}`}
-              className="k-btn k-btn-quiet"
-            >
-              Check transfer status
-            </Link>
-          ) : (
-            <Link href="/about" className="k-btn k-btn-quiet">
-              Back to About
-            </Link>
-          )}
+      {reference && (
+        <div className="apply-ref">
+          <p className="apply-ref-label">Your reference code</p>
+          <p className="apply-ref-code" aria-label={`Reference code ${reference.split('').join(' ')}`}>{reference}</p>
+          <button type="button" className="k-btn" onClick={copy}>{copied ? 'Copied' : 'Copy code'}</button>
+          <p className="apply-hint">Save it: copy it, or take a screenshot of this screen. You need it to check your application later.</p>
         </div>
-      </div>
-
-      {beat < 4 && (
-        <button type="button" className="sealed-skip k-ui" onClick={() => setBeat(4)}>
-          Skip
-        </button>
       )}
-    </div>
+
+      <h3>What happens next</h3>
+      <ol className="apply-next">
+        <li>An officer reads your answers and screenshots.</li>
+        <li>
+          We contact you on Discord{discordUsername ? <> as <strong>{discordUsername}</strong></> : ''}.
+          Check your Discord messages, and the “Message requests” folder too.
+        </li>
+        <li>We cannot promise a date. You do not need to send the form again.</li>
+      </ol>
+
+      <div className="apply-done-actions">
+        <Link href={statusHref} className="k-btn">Check my application</Link>
+        <Link href="/help" className="k-btn k-btn-quiet">Help</Link>
+        <Link href="/" className="k-btn k-btn-quiet">Back to home</Link>
+      </div>
+    </section>
   );
 }

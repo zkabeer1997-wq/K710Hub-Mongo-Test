@@ -1,0 +1,413 @@
+{
+ "rows": [
+  {
+   "id": "r1",
+   "member_id": "920000001",
+   "in_game_name": "P1",
+   "created_at": "2026-10-01T00:01:00.000Z",
+   "want_construction": "Yes",
+   "want_research": "No",
+   "want_troop_training": "No",
+   "construction_upgrades": [
+    "TG8 x2"
+   ],
+   "t11_troops": [],
+   "ttg_used": "50",
+   "tg_used": "10",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "0",
+   "is_transfer": "No",
+   "promoting_t11": "No",
+   "avail_day1": [
+    "00:00",
+    "00:30"
+   ],
+   "avail_day2": [],
+   "avail_day4": [],
+   "avail_day5": [
+    "10:00"
+   ]
+  },
+  {
+   "id": "r2",
+   "member_id": "920000002",
+   "in_game_name": "P2",
+   "created_at": "2026-10-01T00:02:00.000Z",
+   "want_construction": "Yes",
+   "want_research": "No",
+   "want_troop_training": "No",
+   "construction_upgrades": [
+    "TG7"
+   ],
+   "t11_troops": [],
+   "ttg_used": "90",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "0",
+   "is_transfer": "No",
+   "promoting_t11": "No",
+   "avail_day1": [
+    "00:00",
+    "00:30"
+   ],
+   "avail_day2": [],
+   "avail_day4": [],
+   "avail_day5": [
+    "10:00",
+    "10:30"
+   ]
+  },
+  {
+   "id": "r3",
+   "member_id": "920000003",
+   "in_game_name": "P3",
+   "created_at": "2026-10-01T00:03:00.000Z",
+   "want_construction": "Yes",
+   "want_research": "Yes",
+   "want_troop_training": "No",
+   "construction_upgrades": [
+    "TG8"
+   ],
+   "t11_troops": [],
+   "ttg_used": "10",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "0",
+   "is_transfer": "No",
+   "promoting_t11": "No",
+   "avail_day1": [
+    "00:00"
+   ],
+   "avail_day2": [
+    "01:00",
+    "01:30"
+   ],
+   "avail_day4": [],
+   "avail_day5": [
+    "11:00"
+   ]
+  },
+  {
+   "id": "r4",
+   "member_id": "920000004",
+   "in_game_name": "P4",
+   "created_at": "2026-10-01T00:04:00.000Z",
+   "want_construction": "No",
+   "want_research": "Yes",
+   "want_troop_training": "No",
+   "construction_upgrades": [],
+   "t11_troops": [
+    "Infantry"
+   ],
+   "ttg_used": "0",
+   "tg_used": "0",
+   "tg_dust": "5",
+   "research_speedup_days": "30",
+   "troop_speedup_days": "0",
+   "is_transfer": "No",
+   "promoting_t11": "No",
+   "avail_day1": [],
+   "avail_day2": [
+    "01:00"
+   ],
+   "avail_day4": [],
+   "avail_day5": [
+    "11:00"
+   ]
+  },
+  {
+   "id": "r5",
+   "member_id": "920000005",
+   "in_game_name": "P5",
+   "created_at": "2026-10-01T00:05:00.000Z",
+   "want_construction": "No",
+   "want_research": "Yes",
+   "want_troop_training": "No",
+   "construction_upgrades": [],
+   "t11_troops": [],
+   "ttg_used": "0",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "900",
+   "troop_speedup_days": "0",
+   "is_transfer": "No",
+   "promoting_t11": "No",
+   "avail_day1": [],
+   "avail_day2": [
+    "01:00",
+    "01:30"
+   ],
+   "avail_day4": [],
+   "avail_day5": [
+    "11:00",
+    "11:30"
+   ]
+  },
+  {
+   "id": "r6",
+   "member_id": "920000006",
+   "in_game_name": "P6",
+   "created_at": "2026-10-01T00:06:00.000Z",
+   "want_construction": "No",
+   "want_research": "No",
+   "want_troop_training": "Yes",
+   "construction_upgrades": [],
+   "t11_troops": [],
+   "ttg_used": "0",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "10",
+   "is_transfer": "Yes",
+   "promoting_t11": "No",
+   "avail_day1": [],
+   "avail_day2": [],
+   "avail_day4": [
+    "20:00",
+    "20:30",
+    "23:00",
+    "23:30"
+   ],
+   "avail_day5": []
+  },
+  {
+   "id": "r7",
+   "member_id": "920000007",
+   "in_game_name": "P7",
+   "created_at": "2026-10-01T00:07:00.000Z",
+   "want_construction": "No",
+   "want_research": "No",
+   "want_troop_training": "Yes",
+   "construction_upgrades": [],
+   "t11_troops": [],
+   "ttg_used": "0",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "50",
+   "is_transfer": "No",
+   "promoting_t11": "Yes",
+   "avail_day1": [],
+   "avail_day2": [],
+   "avail_day4": [
+    "20:00",
+    "20:30",
+    "21:00"
+   ],
+   "avail_day5": []
+  },
+  {
+   "id": "r8",
+   "member_id": "920000008",
+   "in_game_name": "P8",
+   "created_at": "2026-10-01T00:08:00.000Z",
+   "want_construction": "No",
+   "want_research": "No",
+   "want_troop_training": "Yes",
+   "construction_upgrades": [],
+   "t11_troops": [],
+   "ttg_used": "0",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "100",
+   "is_transfer": "No",
+   "promoting_t11": "No",
+   "avail_day1": [],
+   "avail_day2": [],
+   "avail_day4": [
+    "20:00",
+    "21:00"
+   ],
+   "avail_day5": []
+  },
+  {
+   "id": "r9",
+   "member_id": "920000009",
+   "in_game_name": "P9",
+   "created_at": "2026-10-01T00:09:00.000Z",
+   "want_construction": "Yes",
+   "want_research": "No",
+   "want_troop_training": "Yes",
+   "construction_upgrades": [],
+   "t11_troops": [],
+   "ttg_used": "0",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "100",
+   "is_transfer": "No",
+   "promoting_t11": "No",
+   "avail_day1": [],
+   "avail_day2": [],
+   "avail_day4": [
+    "22:00"
+   ],
+   "avail_day5": [
+    "12:00"
+   ]
+  },
+  {
+   "id": "r10",
+   "member_id": "920000010",
+   "in_game_name": "P10",
+   "created_at": "2026-10-01T00:10:00.000Z",
+   "want_construction": "No",
+   "want_research": "No",
+   "want_troop_training": "Yes",
+   "construction_upgrades": [],
+   "t11_troops": [],
+   "ttg_used": "0",
+   "tg_used": "0",
+   "tg_dust": "0",
+   "research_speedup_days": "0",
+   "troop_speedup_days": "10",
+   "is_transfer": "Yes",
+   "promoting_t11": "Yes",
+   "avail_day1": [],
+   "avail_day2": [],
+   "avail_day4": [
+    "20:00",
+    "20:30",
+    "23:00",
+    "23:30"
+   ],
+   "avail_day5": []
+  }
+ ],
+ "legacyLow": [
+  {
+   "day": 1,
+   "rows": [
+    [
+     "00:00",
+     "P1"
+    ],
+    [
+     "00:30",
+     "P2"
+    ]
+   ]
+  },
+  {
+   "day": 2,
+   "rows": [
+    [
+     "01:00",
+     "P4"
+    ],
+    [
+     "01:30",
+     "P5"
+    ]
+   ]
+  },
+  {
+   "day": 4,
+   "rows": [
+    [
+     "20:00",
+     "P10"
+    ],
+    [
+     "20:30",
+     "P6"
+    ],
+    [
+     "21:00",
+     "P7"
+    ],
+    [
+     "22:00",
+     "P9"
+    ]
+   ]
+  },
+  {
+   "day": 5,
+   "rows": [
+    [
+     "11:00",
+     "P3"
+    ],
+    [
+     "12:00",
+     "P9"
+    ]
+   ]
+  }
+ ],
+ "legacyHighSpeedup": [
+  {
+   "day": 1,
+   "rows": [
+    [
+     "00:00",
+     "P1"
+    ],
+    [
+     "00:30",
+     "P2"
+    ]
+   ]
+  },
+  {
+   "day": 2,
+   "rows": [
+    [
+     "01:00",
+     "P4"
+    ],
+    [
+     "01:30",
+     "P5"
+    ]
+   ]
+  },
+  {
+   "day": 4,
+   "rows": [
+    [
+     "20:00",
+     "P10"
+    ],
+    [
+     "20:30",
+     "P6"
+    ],
+    [
+     "21:00",
+     "P7"
+    ],
+    [
+     "22:00",
+     "P9"
+    ],
+    [
+     "23:00",
+     "P6"
+    ],
+    [
+     "23:30",
+     "P6"
+    ]
+   ]
+  },
+  {
+   "day": 5,
+   "rows": [
+    [
+     "11:00",
+     "P3"
+    ],
+    [
+     "12:00",
+     "P9"
+    ]
+   ]
+  }
+ ]
+}

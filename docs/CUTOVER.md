@@ -88,7 +88,7 @@ Admin (after login):
 - [ ] Alliances Bear times → public Bear schedule updates
 - [ ] Interest accept → kingshot user, no PIN returned
 - [ ] KvK Members rally cutoff control visible
-- [ ] Prep Ministers schedule cutoff control visible
+- [ ] KvK > Appointments tab: Review answers, Build schedule, Adjust, Publish, Share all reachable (one tab replaces Prep ministers + Appointments; old /prep-ministers and /kvk-appointments addresses redirect)
 
 Auth:
 - [ ] PIN `/api/member-login` returns 410
@@ -164,7 +164,7 @@ scripts; `/api/google-drive/callback` is excluded from that header and sets its
 own nonce-based CSP and escapes the message it renders.
 
 ## Per-cycle member forms (2026-10)
-Every member form except Power Profile is saved per event cycle (KvK: Availability, Prep, Appointments;
+Every member form except Power Profile is saved per event cycle (KvK: Availability, Prep & Appointments - the separate Appointments form is retired;
 Flamedragon: Dragon, Noble Advisor). Prep and Noble are one row per (member_id, event_cycle_id); Availability
 and Dragon keep one roster row per member plus `event_cycle_snapshots` for earlier cycles.
 

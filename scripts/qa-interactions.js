@@ -143,32 +143,17 @@ async function memberCookie(ctx) {
   await ctx.addCookies([{ name: 'k710_member_session', value: `${payload}.${sig}`, url: B }]);
 }
 
-// KvK appointments: the hour picker must render real options and allow exactly 3.
+// My appointment: read-only tabs; the old Apply tab URL lands on the KvK Prep & Appointments form.
 async function kvkAppointments(browser) {
   const { ctx, page } = await newPage(browser, 1280, 900);
   await memberCookie(ctx);
   await page.goto(B + '/forms/kvk-appointments?tab=apply', { waitUntil: 'networkidle' });
-  const boxes = page.locator('.hour-option input[type=checkbox]');
-  const n = await boxes.count();
-  ok('appointments: hour picker renders options (>0, 24 UTC hours)', n === 24, `count=${n}`);
-  ok('appointments: options show UTC time', /00:00 UTC/.test(await page.locator('.hour-option').first().innerText()));
-  await page.waitForFunction(() => /local/.test(document.querySelector('.hour-option')?.textContent || ''));
-  ok('appointments: options also show viewer local time', true);
-  for (const i of [0, 5, 9]) await boxes.nth(i).check();
-  ok('appointments: 3 selected', (await page.locator('.hour-option input:checked').count()) === 3);
-  ok('appointments: 4th option disabled once 3 chosen', await boxes.nth(12).isDisabled());
-  ok('appointments: counter says 3 of 3', /3 of 3 selected/.test(await page.locator('.hour-picker-count').innerText()));
-  await boxes.nth(5).uncheck();
-  ok('appointments: unchecking re-enables the rest', !(await boxes.nth(12).isDisabled()) && (await page.locator('.hour-option input:checked').count()) === 2);
-  await page.getByRole('button', { name: /Submit my application|Update my application/ }).click();
-  ok('appointments: submit with 2 hours shows an error', (await page.locator('[role=alert]', { hasText: 'exactly 3' }).count()) === 1);
-  const cur = page.locator('.appt-tabs a[aria-current=page]');
-  ok('appointments: current tab marked (Apply)', (await cur.innerText()) === 'Apply');
-  await page.getByRole('link', { name: 'My Appointments' }).click();
-  await page.waitForURL('**tab=mine');
-  ok('appointments: tabs have their own URL (?tab=mine)', (await page.locator('.appt-tabs a[aria-current=page]').innerText()) === 'My Appointments');
-  await page.goto(B + '/forms/kvk-appointments?tab=schedule', { waitUntil: 'networkidle' });
-  ok('appointments: ?tab=schedule deep link', (await page.locator('.appt-tabs a[aria-current=page]').innerText()) === 'View Schedule');
+  ok('appointments: ?tab=apply redirects to the Prep form', /\/prep-phase-backpack/.test(page.url()));
+  await page.goto(B + '/forms/kvk-appointments', { waitUntil: 'networkidle' });
+  ok('appointments: default tab is My appointment', (await page.locator('.appt-tabs a[aria-current=page]').innerText()) === 'My appointment');
+  await page.getByRole('link', { name: 'Schedule' }).click();
+  await page.waitForURL('**tab=schedule');
+  ok('appointments: tabs have their own URL (?tab=schedule)', (await page.locator('.appt-tabs a[aria-current=page]').innerText()) === 'Schedule');
   await ctx.close();
 }
 

@@ -25,13 +25,13 @@ export default function ScheduleTab() {
   if (state.loading) return <p role="status">Loading…</p>;
   if (state.error) return <p className="event-form-error" role="alert">{state.error}</p>;
   if (!state.body.published) {
-    return <div className="event-form-card appt-card"><p>The schedule has not been published yet. Check back after leadership allocates the slots.</p></div>;
+    return <div className="event-form-card appt-card"><p>Leadership has not published the schedule yet. Check back soon.</p></div>;
   }
   const day = state.body.days.find((d) => `${d.day}:${d.buff}` === dayKey) || state.body.days[0];
   const ref = new Date();
   return (
     <div className="event-form-card appt-card">
-      <div className="appt-daytabs" role="group" aria-label="Day">
+      <div className="appt-daytabs" role="group" aria-label="Choose a day">
         {state.body.days.map((d) => {
           const key = `${d.day}:${d.buff}`;
           return (
@@ -41,12 +41,12 @@ export default function ScheduleTab() {
           );
         })}
       </div>
-      <p className="appt-lede">{day.title} with the {day.role}. {day.filled} of {day.slots.length} slots booked.</p>
+      <p className="appt-lede">{day.title} with the {day.role}. {day.filled} of {day.slots.length} times are taken. Your own time is highlighted.</p>
       <div className="appt-table-wrap">
         <table className="appt-table stack-table">
           <caption className="sr-only">{day.title} schedule</caption>
           <thead>
-            <tr><th scope="col">Slot (UTC)</th><th scope="col">Your local time</th><th scope="col">Member</th></tr>
+            <tr><th scope="col">Time (UTC)</th><th scope="col">Your local time</th><th scope="col">Who</th></tr>
           </thead>
           <tbody>
             {day.slots.map((s) => (

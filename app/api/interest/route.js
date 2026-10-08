@@ -10,6 +10,7 @@ import {
   isAcceptedInterestImage,
   validateProcessedInterestFiles,
 } from '../../../lib/interestUploadLimits.mjs';
+import { normalizeDiscordUsername, normalizeNumericAnswer } from '../../../lib/interestForm.mjs';
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
@@ -87,18 +88,18 @@ export async function POST(request) {
       intake_period_id: activePeriod.id,
       in_game_name: cap(formData.get('in_game_name')),
       player_id: cap(formData.get('player_id')),
-      discord_username: cap(formData.get('discord_username')),
+      discord_username: cap(normalizeDiscordUsername(formData.get('discord_username'))),
       current_server: cap(formData.get('current_server')),
       current_alliance: cap(formData.get('current_alliance')),
       migrate_alliance: cap(formData.get('migrate_alliance')),
       highest_troop_level: cap(formData.get('highest_troop_level')),
-      current_tg: cap(formData.get('current_tg')),
+      current_tg: cap(normalizeNumericAnswer(formData.get('current_tg'))),
       t11_units: formData.getAll('t11_units').slice(0, 20).map((v) => cap(v, 100)),
-      mystic_trial_stages: cap(formData.get('mystic_trial_stages')),
-      total_power: cap(formData.get('total_power')),
+      mystic_trial_stages: cap(normalizeNumericAnswer(formData.get('mystic_trial_stages'))),
+      total_power: cap(normalizeNumericAnswer(formData.get('total_power'))),
       willing_reduce_power: cap(formData.get('willing_reduce_power')),
-      passes_required: cap(formData.get('passes_required')),
-      current_passes: cap(formData.get('current_passes')),
+      passes_required: cap(normalizeNumericAnswer(formData.get('passes_required'))),
+      current_passes: cap(normalizeNumericAnswer(formData.get('current_passes'))),
       active_commit: cap(formData.get('active_commit')),
       willing_save_resources: cap(formData.get('willing_save_resources')),
       participates_battles: cap(formData.get('participates_battles')),
@@ -175,11 +176,23 @@ export async function POST(request) {
       screenshotUrls.push(`data:${file.type};base64,${buffer.toString('base64')}`);
     }
 
-    const id = randomUUID();
     const coll = await getCollection(COLLECTIONS.INTEREST_SUBMISSIONS);
+    // Idempotent retry: the form sends one random id per application. If the
+    // first attempt was stored but the reply was lost (bad connection), the
+    // retry gets the same reference instead of creating a duplicate row.
+    const clientRequestId = cap(formData.get('client_request_id'), 64);
+    if (clientRequestId) {
+      const existing = await coll.findOne({ client_request_id: clientRequestId });
+      if (existing?.id) {
+        return NextResponse.json({ ok: true, reference: 'K710-' + String(existing.id).replace(/-/g, '').slice(0, 8).toUpperCase() });
+      }
+    }
+
+    const id = randomUUID();
     await coll.insertOne({
       id,
       ...fields,
+      ...(clientRequestId ? { client_request_id: clientRequestId } : {}),
       screenshot_urls: screenshotUrls,
       status: 'pending',
       created_at: new Date(),

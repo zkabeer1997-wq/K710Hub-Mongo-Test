@@ -12,7 +12,9 @@ function localSlotTime(slot) {
 
 // slots: the grid to show (defaults to the legacy prep grid, so KvK Prep Backpack is unchanged).
 // showLocal: also print the viewer's local time under each UTC slot (Noble Advisor).
-export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_SLOTS, showLocal = false }) {
+// onSelectAll / onClear (optional): show "Select all" and "Clear" buttons. helper (optional): replaces the
+// default one-line hint under the label (used by the KvK Prep & Appointments form).
+export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_SLOTS, showLocal = false, onSelectAll, onClear, helper }) {
   const [zone, setZone] = useState('');
   useEffect(() => {
     if (!showLocal) return;
@@ -22,9 +24,19 @@ export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_S
     <div className="prep-slot-group">
       <div className="prep-slot-head">
         <strong>{label}</strong>
-        <span className="prep-slot-count">{selected.length} selected</span>
-        {sublabel ? <span className="prep-slot-sub">{sublabel} &middot; UTC</span> : null}
-        {showLocal && zone ? <span className="prep-slot-sub">Big times are UTC. Small times are your local time ({zone}).</span> : null}
+        <span className="prep-slot-count" aria-live="polite">{selected.length} selected</span>
+        {helper ? <span className="prep-slot-sub">{helper}{showLocal && zone ? ` Your time zone: ${zone}.` : ''}</span> : (
+          <>
+            {sublabel ? <span className="prep-slot-sub">{sublabel} &middot; UTC</span> : null}
+            {showLocal && zone ? <span className="prep-slot-sub">Big times are UTC. Small times are your local time ({zone}).</span> : null}
+          </>
+        )}
+        {onSelectAll || onClear ? (
+          <span className="prep-slot-bulk">
+            {onSelectAll ? <button type="button" className="prep-slot-bulkbtn" onClick={onSelectAll}>Select all</button> : null}
+            {onClear ? <button type="button" className="prep-slot-bulkbtn" onClick={onClear} disabled={selected.length === 0}>Clear</button> : null}
+          </span>
+        ) : null}
       </div>
       <div className={showLocal ? 'prep-slot-grid prep-slot-grid--local' : 'prep-slot-grid'}>
         {slots.map((slot) => {

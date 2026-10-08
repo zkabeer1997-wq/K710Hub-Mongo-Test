@@ -1,55 +1,158 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import './apply.css';
 import SealedPetition from '../../components/kingdom/world/SealedPetition';
+import Term from '../../components/ui/Term';
 import { processInterestImages } from './processInterestImages';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import FormErrorSummary from '../../components/FormErrorSummary';
 import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
 import { draftKey, firstInvalidStep, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
+import { INTEREST_UPLOAD_LIMITS, isHeicFile, validateProcessedInterestFiles } from '../../lib/interestUploadLimits.mjs';
+import {
+  describeAge,
+  draftFilledCount,
+  formatFileSize,
+  normalizeDiscordUsername,
+  normalizeNumericAnswer,
+  normalizePlayerId,
+  numberPreview,
+  parseNumberInput,
+  playerIdHint,
+  readDraftSavedAt,
+  shouldOfferResume,
+} from '../../lib/interestForm.mjs';
 
+// Values are what leadership receives in the Inbox - keep the strings stable.
+// `label`/`hint` are only what the applicant reads.
 const MIGRATE_OPTIONS = [
-'710 (Bear 0200UTC and 1300UTC)',
-'RED (Bear 1105UTC, 1900UTC and 2320UTC)',
-'SKY (Bear 1200UTC and 2000UTC)',
-'Other',
+  { value: '710 (Bear 0200UTC and 1300UTC)', label: '710', hint: 'Bear Hunt at 02:00 and 13:00 UTC' },
+  { value: 'RED (Bear 1105UTC, 1900UTC and 2320UTC)', label: 'RED', hint: 'Bear Hunt at 11:05, 19:00 and 23:20 UTC' },
+  { value: 'SKY (Bear 1200UTC and 2000UTC)', label: 'SKY', hint: 'Bear Hunt at 12:00 and 20:00 UTC' },
+  { value: 'Other', label: 'Another alliance', hint: 'You will type its name' },
 ];
-const TROOP_LEVEL_OPTIONS = ['TG8', 'TG7', 'TG6', 'TG5', 'Below TG5'];
-const T11_OPTIONS = ['Infantry', 'Cavalry', 'Archer', 'No T11'];
-const YES_NO = ['Yes', 'No'];
+const TROOP_LEVEL_OPTIONS = ['TG8', 'TG7', 'TG6', 'TG5', 'Below TG5'].map((v) => ({ value: v, label: v }));
+const T11_OPTIONS = [
+  { value: 'Infantry', label: 'Infantry' },
+  { value: 'Cavalry', label: 'Cavalry' },
+  { value: 'Archer', label: 'Archer' },
+  { value: 'No T11', label: 'I do not have T11' },
+];
+const YES_NO = [{ value: 'Yes', label: 'Yes' }, { value: 'No', label: 'No' }];
 const SPENDING_OPTIONS = [
-'P2W Whale (spending like a KS shareholder)',
-'P2W Dolphin (between $1000-$2000 monthly)',
-'P2W Tadpole (upto $1000 monthly)',
-'Occasional spending (less than $100 monthly)',
-'F2P (pure skills, always on)',
+  { value: 'P2W Whale (spending like a KS shareholder)', label: 'Very high spender', hint: 'P2W Whale: spends like a KS shareholder' },
+  { value: 'P2W Dolphin (between $1000-$2000 monthly)', label: 'High spender', hint: 'P2W Dolphin: about $1000 to $2000 a month' },
+  { value: 'P2W Tadpole (upto $1000 monthly)', label: 'Medium spender', hint: 'P2W Tadpole: up to $1000 a month' },
+  { value: 'Occasional spending (less than $100 monthly)', label: 'Small spender', hint: 'Less than $100 a month' },
+  { value: 'F2P (pure skills, always on)', label: 'Free to play', hint: 'F2P: no spending, always online' },
 ];
+const LANGUAGE_OPTIONS = [{ value: 'English', label: 'English' }, { value: 'Other', label: 'Another language', hint: 'You will type it' }];
 
-// One screen per Act instead of one long scroll - the same ~20 fields and
-// screenshot upload the admin review queue already relies on (see
-// app/api/admin-interest-status/route.js and the review UI at
-// /admin/dashboard/interest, both of which screen applicants on troop
-// level, TG, spending archetype, and commitment answers collected here).
-// Shortening what's COLLECTED would blind that review, which is a
-// recruiting-policy call, not a UI one - so this only changes how much is
-// on screen at once, matching the "5-6 fields, no account" feel of a short
-// funnel without dropping the vetting data behind it.
+// One question group per screen, same data leadership already screens on.
+// `fields` lists every key validated on that step.
 const ACTS = [
-  { id: 'identity', num: 'I', label: 'Your account', sub: 'Step 1 · Your account', required: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
-  { id: 'intake', num: 'II', label: 'Your move', sub: 'Step 2 · Transfer details', required: ['migrateAlliance'] },
-  { id: 'troops', num: 'III', label: 'Your power', sub: 'Step 3 · Your power and troops', required: ['highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower'], requiresT11: true },
-  { id: 'commitment', num: 'IV', label: 'Your promise', sub: 'Step 4 · Your commitment', required: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'] },
-  { id: 'battle-report', num: 'V', label: 'Screenshots', sub: 'Step 5 · Screenshots', requiresScreenshot: true },
-  { id: 'review', num: 'VI', label: 'Check and send', sub: 'Step 6 · Check your answers' },
+  { id: 'identity', label: 'Your account', short: 'Account', fields: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
+  { id: 'intake', label: 'Your move', short: 'Move', fields: ['migrateAlliance', 'migrateAllianceOther'] },
+  { id: 'troops', label: 'Your power', short: 'Power', fields: ['highestTroopLevel', 'currentTg', 't11', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'] },
+  { id: 'commitment', label: 'Your play style', short: 'Play style', fields: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage', 'mainLanguageOther'] },
+  { id: 'battle-report', label: 'Screenshots', short: 'Pictures', fields: ['screenshots'] },
+  { id: 'review', label: 'Check and send', short: 'Send', fields: [] },
 ];
 
-function Where({ children }) {
-  return (
-    <details className="where-help">
-      <summary>Where do I find this?</summary>
-      <p>{children}</p>
-    </details>
-  );
+const initialForm = {
+  inGameName: '',
+  playerId: '',
+  discordUsername: '',
+  currentServer: '',
+  currentAlliance: '',
+  migrateAlliance: '',
+  migrateAllianceOther: '',
+  highestTroopLevel: '',
+  currentTg: '',
+  t11: [],
+  mysticTrialStages: '',
+  totalPower: '',
+  willingReducePower: '',
+  passesRequired: '',
+  currentPasses: '',
+  activeCommit: '',
+  willingSaveResources: '',
+  participatesBattles: '',
+  spendingArchetype: '',
+  mainLanguage: '',
+  mainLanguageOther: '',
+  // Honeypot - a real applicant never sees or fills this field.
+  website: '',
+};
+
+const DEFAULT_LABELS = {
+  inGameName: 'Your in-game name',
+  playerId: 'Player ID',
+  discordUsername: 'Discord username',
+  currentServer: 'Your current server number',
+  currentAlliance: 'Your current alliance',
+  currentTg: 'How much TrueGold (TG) do you have now?',
+  mysticTrialStages: 'Mystic Trial: total stages cleared',
+  totalPower: 'Total power',
+  passesRequired: 'Transfer passes you need (optional)',
+  currentPasses: 'Transfer passes you have now (optional)',
+};
+
+const REQUIRED_MESSAGES = {
+  inGameName: 'Please type your in-game name.',
+  playerId: 'Please type your Player ID. It is a number.',
+  discordUsername: 'Please type your Discord username so we can reach you.',
+  currentServer: 'Please type the number of your current server.',
+  currentAlliance: 'Please type your current alliance. If you have none, type “None”.',
+  migrateAlliance: 'Please choose the alliance you want to join.',
+  highestTroopLevel: 'Please choose your highest troop level.',
+  currentTg: 'Please type how much TrueGold you have. If none, type 0.',
+  mysticTrialStages: 'Please type your Mystic Trial stages. If none, type 0.',
+  totalPower: 'Please type your total power, for example 12,345,678.',
+  activeCommit: 'Please answer Yes or No.',
+  willingSaveResources: 'Please answer Yes or No.',
+  participatesBattles: 'Please answer Yes or No.',
+  spendingArchetype: 'Please choose the answer closest to you.',
+  mainLanguage: 'Please choose your main language.',
+};
+const NUMERIC_KEYS = ['currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'];
+const REQUIRED_TEXT = ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance', 'migrateAlliance', 'highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower', 'activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'];
+
+// Pure per-field validation: returns a message or ''.
+function fieldError(key, form, screenshots) {
+  const value = String(form[key] ?? '').trim();
+  if (key === 't11') return form.t11.length === 0 ? 'Please pick at least one, or “I do not have T11”.' : '';
+  if (key === 'screenshots') return screenshots.length === 0 ? 'Please add at least one screenshot.' : '';
+  if (key === 'migrateAllianceOther') return form.migrateAlliance === 'Other' && !value ? 'Please type the name of the alliance you want to join.' : '';
+  if (key === 'mainLanguageOther') return form.mainLanguage === 'Other' && !value ? 'Please type your main language.' : '';
+  if (key === 'playerId') {
+    if (!value) return REQUIRED_MESSAGES.playerId;
+    return normalizePlayerId(value) ? '' : 'A Player ID only has numbers. Please check it.';
+  }
+  if (REQUIRED_TEXT.includes(key) && !value) return REQUIRED_MESSAGES[key];
+  if (NUMERIC_KEYS.includes(key) && value && !parseNumberInput(value).ok) {
+    return key === 'totalPower' || key === 'currentTg'
+      ? 'Please type a number, for example 12,345,678 or 12.3M.'
+      : 'Please type a number, for example 120.';
+  }
+  return '';
+}
+
+function computeErrors(index, form, screenshots) {
+  const found = [];
+  for (const key of ACTS[index].fields) {
+    const message = fieldError(key, form, screenshots);
+    if (message) found.push({ id: `f-${key}`, key, message });
+  }
+  return found;
+}
+
+const DRAFT_KEY = draftKey('interest');
+const REF_KEY = 'k710-interest-last-ref';
+
+function newRequestId() {
+  try { return crypto.randomUUID(); } catch { return `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`; }
 }
 
 function Thumb({ file, index, onRemove }) {
@@ -62,739 +165,784 @@ function Thumb({ file, index, onRemove }) {
   return (
     <li className="shot-item">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {url && <img src={url} alt={`Screenshot ${index + 1} preview`} />}
-      <span>Screenshot {index + 1}</span>
-      <button type="button" className="k-btn k-btn-quiet" onClick={() => onRemove(index)}>Remove</button>
+      {url && <img src={url} alt={`Preview of screenshot ${index + 1}`} />}
+      <span><strong>Screenshot {index + 1}</strong><small>{formatFileSize(file.size)}</small></span>
+      <button type="button" className="k-btn k-btn-quiet" onClick={() => onRemove(index)} aria-label={`Remove screenshot ${index + 1}`}>Remove</button>
     </li>
   );
 }
 
-function Chapter({ id, title, children }) {
+function Where({ children }) {
   return (
-    <section id={id} className="petition-group">
-      <h3 className="petition-group-title k-mark">{title}</h3>
-      <div className="petition-group-body">{children}</div>
-    </section>
+    <details className="where-help">
+      <summary>Where do I find this?</summary>
+      <p>{children}</p>
+    </details>
   );
 }
 
-const initialForm = {
-inGameName: '',
-playerId: '',
-discordUsername: '',
-currentServer: '',
-currentAlliance: '',
-migrateAlliance: '',
-migrateAllianceOther: '',
-highestTroopLevel: '',
-currentTg: '',
-t11: [],
-mysticTrialStages: '',
-totalPower: '',
-willingReducePower: '',
-passesRequired: '',
-currentPasses: '',
-activeCommit: '',
-willingSaveResources: '',
-participatesBattles: '',
-spendingArchetype: '',
-mainLanguage: '',
-mainLanguageOther: '',
-// Honeypot - a real applicant never sees or fills this field (hidden via
-// CSS, not `type="hidden"`, since some bots skip inputs they detect as
-// hidden by type). Filled in => treat the submission as spam.
-website: '',
-};
-
-const FIELD_LABELS = {
-  inGameName: 'In-game name',
-  playerId: 'Player ID',
-  discordUsername: 'Discord username',
-  currentServer: 'Your current server',
-  currentAlliance: 'Your current alliance',
-  migrateAlliance: 'Which alliance are you looking to migrate to',
-  highestTroopLevel: 'Current highest troop level',
-  currentTg: 'Current amount of TG',
-  mysticTrialStages: 'Current Mystic Trial total stages',
-  totalPower: 'Total Power',
-  passesRequired: 'Number of passes required to transfer',
-  currentPasses: 'Your current number of transfer passes',
-  activeCommit: 'Active commitment',
-  willingSaveResources: 'Willing to save resources',
-  participatesBattles: 'Participation in battles',
-  spendingArchetype: 'Spending archetype',
-  mainLanguage: 'Main language',
-};
-// Digits only, with optional thousands commas (e.g. "245,000,000") - loose
-// enough for power/TG figures pasted straight from in-game, strict enough
-// to catch stray letters or negative numbers before they reach admin review.
-const NUMERIC_FIELDS = ['currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'];
-function isNumericValue(value) {
-  return /^[0-9][0-9,]*$/.test(String(value || '').trim());
+// A group of big tappable choice cards (radio or checkbox).
+function Choices({ legend, hint, name, options, value, onChange, multiple = false, id, error, errorId, children }) {
+  const isOn = (v) => (multiple ? value.includes(v) : value === v);
+  return (
+    <fieldset className="apply-group" id={id} aria-describedby={error ? errorId : undefined}>
+      <legend>{legend}</legend>
+      {hint && <p className="apply-hint">{hint}</p>}
+      <div className={`apply-choices ${options.length <= 2 ? 'is-pair' : ''}`}>
+        {options.map((option) => (
+          <label key={option.value} className={`apply-choice ${isOn(option.value) ? 'is-on' : ''}`}>
+            <input
+              type={multiple ? 'checkbox' : 'radio'}
+              name={name}
+              checked={isOn(option.value)}
+              onChange={() => onChange(option.value)}
+            />
+            <span className="apply-choice-text">
+              <strong>{option.label}</strong>
+              {option.hint && <small>{option.hint}</small>}
+            </span>
+          </label>
+        ))}
+      </div>
+      {children}
+      {error && <p id={errorId} className="field-error">{error}</p>}
+    </fieldset>
+  );
 }
 
-// Pure per-step validation: returns [{ id, key, message }] (ids are the DOM
-// anchors of the offending field, see gp() in the component).
-function computeErrors(index, form, screenshots, label) {
-  const act = ACTS[index];
-  const found = [];
-  for (const key of act.required || []) {
-    if (!String(form[key] || '').trim()) found.push({ id: `f-${key}`, key, message: `Please fill in “${label(key)}”. It is needed to continue.` });
-  }
-  for (const key of NUMERIC_FIELDS) {
-    const inAct = (index === 2 && ['currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'].includes(key));
-    if (inAct && form[key] && !isNumericValue(form[key]) && !found.some((f) => f.key === key)) {
-      found.push({ id: `f-${key}`, key, message: `Please use numbers only for “${label(key)}”, for example 12345. Do not type letters or commas.` });
+// Text/number field with persistent label, hint and live feedback. Module
+// level so React keeps the same input mounted while typing.
+function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, autoComplete = 'off', live, children }) {
+  const { form, updateField, gp, errMsg, fe } = ctx;
+  return (
+    <div className="wizard-field apply-field">
+      <label htmlFor={`f-${k}`}>{label}</label>
+      <p id={`f-${k}-hint`} className="apply-hint">{hint}</p>
+      <input
+        {...gp(k)}
+        type={type}
+        inputMode={mode}
+        enterKeyHint="next"
+        autoComplete={autoComplete}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        placeholder={placeholder}
+        value={form[k]}
+        onChange={(e) => updateField(k, e.target.value)}
+      />
+      {live && !errMsg(k) && <p className="apply-live" aria-live="polite">{live}</p>}
+      {fe(k)}
+      {children}
+    </div>
+  );
+}
+
+function StepProgress({ step, onJump }) {
+  const pct = Math.round(((step + 1) / ACTS.length) * 100);
+  return (
+    <nav className="apply-progress" aria-label="Application steps">
+      <p className="apply-progress-label">
+        <span>Step {step + 1} of {ACTS.length}</span>
+        <strong>{ACTS[step].label}</strong>
+      </p>
+      <div className="apply-bar" role="progressbar" aria-valuemin={1} aria-valuemax={ACTS.length} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${ACTS.length}: ${ACTS[step].label}`}>
+        <span style={{ width: `${pct}%` }} />
+      </div>
+      <ol className="apply-steps">
+        {ACTS.map((a, i) => (
+          <li key={a.id}>
+            <button
+              type="button"
+              className={`apply-step ${i === step ? 'is-current' : ''} ${i < step ? 'is-done' : ''}`}
+              aria-current={i === step ? 'step' : undefined}
+              aria-label={`Step ${i + 1}: ${a.label}${i < step ? ' (done)' : ''}`}
+              onClick={() => onJump(i)}
+            >
+              <span className="apply-step-num" aria-hidden="true">{i < step ? '✓' : i + 1}</span>
+              <span className="apply-step-name">{a.short}</span>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+function buildSummary(form, screenshots) {
+  const other = (v, o) => (v === 'Other' ? `Other: ${o}` : v);
+  const rows = [
+    ['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord', form.discordUsername],
+    ['Current server', form.currentServer], ['Current alliance', form.currentAlliance],
+    ['Alliance I want to join', other(form.migrateAlliance, form.migrateAllianceOther)],
+    ['Highest troop level', form.highestTroopLevel], ['TrueGold (TG)', form.currentTg], ['T11', form.t11.join(', ')],
+    ['Mystic Trial stages', form.mysticTrialStages], ['Total power', form.totalPower],
+    ['Willing to lower power', form.willingReducePower], ['Passes needed', form.passesRequired], ['Passes I have', form.currentPasses],
+    ['Active in events', form.activeCommit], ['Saves resources for KvK prep', form.willingSaveResources],
+    ['Joins Sanctuary, Castle and KvK battles', form.participatesBattles], ['Spending', form.spendingArchetype],
+    ['Main language', other(form.mainLanguage, form.mainLanguageOther)], ['Screenshots', String(screenshots.length)],
+  ];
+  return `Kingdom 710 transfer application\n${rows.map(([k, v]) => `${k}: ${String(v || '').trim() || '-'}`).join('\n')}`;
+}
+
+export default function InterestForm({ initialPeriod }) {
+  const [form, setForm] = useState(initialForm);
+  const [screenshots, setScreenshots] = useState([]);
+  const [processingImages, setProcessingImages] = useState(false);
+  const [status, setStatus] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [errors, setErrors] = useState([]);
+  const [errorSignal, setErrorSignal] = useState(0);
+  const [pendingDraft, setPendingDraft] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const formRef = useRef(initialForm);
+  const screenshotsRef = useRef([]);
+  const submittingRef = useRef(false);
+  const requestId = useRef(null);
+  const { step, setStep, initFromUrl } = useWizardUrlStep(ACTS.length, () => {
+    const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, formRef.current, screenshotsRef.current));
+    return bad < 0 ? ACTS.length - 1 : bad;
+  });
+  const draftReady = useRef(false);
+  const suppressFocus = useRef(false);
+  const [confirmedInfo, setConfirmedInfo] = useState({});
+  const hasInitial = initialPeriod !== undefined;
+  const [activePeriod, setActivePeriod] = useState(hasInitial ? initialPeriod : null);
+  const [activePeriodLoaded, setActivePeriodLoaded] = useState(hasInitial);
+  const { fields: editableFields } = useFormFieldMeta('interest');
+  const editableLabel = (key, fallback) => editableFields.find((f) => f.key === key)?.label || fallback;
+  const L = (key) => editableLabel(key, DEFAULT_LABELS[key] || key);
+  useEffect(() => {
+    formRef.current = form;
+    screenshotsRef.current = screenshots;
+  });
+  const renderedAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (hasInitial) return undefined;
+    let cancelled = false;
+    fetch('/api/intake-periods/active')
+      .then((r) => r.json())
+      .then((data) => { if (!cancelled) setActivePeriod(data.label || null); })
+      .catch(() => { if (!cancelled) setActivePeriod(null); })
+      .finally(() => { if (!cancelled) setActivePeriodLoaded(true); });
+    return () => { cancelled = true; };
+  }, [hasInitial]);
+
+  // Look for a saved draft, but do NOT apply it silently: ask first.
+  useEffect(() => {
+    let offered = false;
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      const data = parseDraft(raw);
+      if (data && shouldOfferResume(data)) {
+        setPendingDraft({ data, savedAt: readDraftSavedAt(raw), count: draftFilledCount(data) });
+        offered = true;
+      }
+    } catch { /* storage unavailable */ }
+    if (!offered) {
+      if (initFromUrl() > 0) suppressFocus.current = true;
+      draftReady.current = true;
     }
-  }
-  if (act.id === 'intake' && form.migrateAlliance === 'Other' && !form.migrateAllianceOther.trim()) {
-    found.push({ id: 'f-migrateAllianceOther', key: 'migrateAllianceOther', message: 'Please type the name of the alliance you want to join.' });
-  }
-  if (act.id === 'commitment' && form.mainLanguage === 'Other' && !form.mainLanguageOther.trim()) {
-    found.push({ id: 'f-mainLanguageOther', key: 'mainLanguageOther', message: 'Please specify your main language.' });
-  }
-  if (act.requiresT11 && form.t11.length === 0) {
-    found.push({ id: 'f-t11', key: 't11', message: 'Select at least one T11 option.' });
-  }
-  if (act.requiresScreenshot && screenshots.length === 0) {
-    found.push({ id: 'f-screenshots', key: 'screenshots', message: 'Upload at least one screenshot.' });
-  }
-  return found;
-}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-const DRAFT_KEY = draftKey('interest');
-
-export default function InterestForm() {
-const [form, setForm] = useState(initialForm);
-const [screenshots, setScreenshots] = useState([]);
-const [processingImages, setProcessingImages] = useState(false);
-const [status, setStatus] = useState('');
-const [isError, setIsError] = useState(false);
-const [loading, setLoading] = useState(false);
-const [sealed, setSealed] = useState(false);
-const [reducedMotion, setReducedMotion] = useState(false);
-const [errors, setErrors] = useState([]);
-const [errorSignal, setErrorSignal] = useState(0);
-const formRef = useRef(initialForm);
-const screenshotsRef = useRef([]);
-const labelRef = useRef((key) => FIELD_LABELS[key] || key);
-const { step, setStep, initFromUrl } = useWizardUrlStep(ACTS.length, () => {
-  const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, formRef.current, screenshotsRef.current, labelRef.current));
-  return bad < 0 ? ACTS.length - 1 : bad;
-});
-const draftReady = useRef(false);
-const suppressFocus = useRef(false);
-const [confirmedInfo, setConfirmedInfo] = useState({});
-const [activePeriod, setActivePeriod] = useState(null);
-const [activePeriodLoaded, setActivePeriodLoaded] = useState(false);
-const { fields: editableFields } = useFormFieldMeta('interest');
-const editableLabel = (key, fallback) => editableFields.find((f) => f.key === key)?.label || fallback;
-const labelFor = (key) => editableLabel(key, FIELD_LABELS[key] || key);
-useEffect(() => {
-  labelRef.current = labelFor;
-  formRef.current = form;
-  screenshotsRef.current = screenshots;
-});
-const editablePlaceholder = (key, fallback) => editableFields.find((f) => f.key === key)?.placeholder || fallback;
-const renderedAt = useRef(Date.now());
-const screenshotInput = useRef(null);
-
-useEffect(() => {
-  if (typeof window === 'undefined') return;
-  setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-}, []);
-
-useEffect(() => {
-  let cancelled = false;
-  fetch('/api/intake-periods/active')
-    .then((r) => r.json())
-    .then((data) => { if (!cancelled) setActivePeriod(data.label || null); })
-    .catch(() => { if (!cancelled) setActivePeriod(null); })
-    .finally(() => { if (!cancelled) setActivePeriodLoaded(true); });
-  return () => { cancelled = true; };
-}, []);
-
-// Restore the local draft (never PINs/passwords/files - see lib/wizardState)
-// and then the ?step= value, limited to the first step that fails validation.
-useEffect(() => {
-  try {
-    const restored = mergeDraft(initialForm, parseDraft(window.localStorage.getItem(DRAFT_KEY)));
+  function resumeDraft() {
+    if (!pendingDraft) return;
+    const restored = mergeDraft(initialForm, pendingDraft.data);
     restored.website = '';
     formRef.current = restored;
     setForm(restored);
-  } catch { /* storage unavailable */ }
-  // A deep-linked step shouldn't steal focus on first paint.
-  if (initFromUrl() > 0) suppressFocus.current = true;
-  draftReady.current = true;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
-
-// Save the draft (debounced) once the initial restore has happened.
-useEffect(() => {
-  if (!draftReady.current || sealed) return undefined;
-  const t = setTimeout(() => {
-    try {
-      const { website, ...rest } = form; // honeypot is never stored
-      void website;
-      window.localStorage.setItem(DRAFT_KEY, serializeDraft(rest));
-    } catch { /* ignore */ }
-  }, 400);
-  return () => clearTimeout(t);
-}, [form, sealed]);
-
-const prevStep = useRef(step);
-useEffect(() => {
-  // Don't hijack scroll/focus on first paint - only when the step changes.
-  if (prevStep.current === step) return;
-  prevStep.current = step;
-  if (suppressFocus.current) { suppressFocus.current = false; return; }
-  // Move focus to the new step's heading so keyboard/screen-reader users
-  // perceive the step change. preventScroll + a manual scroll only when the
-  // heading is out of view, so the page never jumps past the hero.
-  const heading = document.getElementById(ACTS[step].id)?.querySelector('.petition-act-title');
-  if (!heading) return;
-  heading.focus({ preventScroll: true });
-  const top = heading.getBoundingClientRect().top;
-  if (top < 80 || top > window.innerHeight * 0.7) {
-    window.scrollTo({ top: Math.max(0, window.scrollY + top - 96), behavior: reducedMotion ? 'auto' : 'smooth' });
+    setPendingDraft(null);
+    draftReady.current = true;
+    const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, restored, []));
+    // Pictures are never saved, so a finished draft resumes at the pictures step.
+    setStep(bad < 0 ? ACTS.length - 2 : bad, { replace: true });
   }
-}, [step, reducedMotion]);
 
-function updateField(key, value) {
-setForm((current) => ({ ...current, [key]: value }));
-setErrors((current) => (current.some((e) => e.key === key) ? current.filter((e) => e.key !== key) : current));
-}
+  function startOver() {
+    try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    setPendingDraft(null);
+    draftReady.current = true;
+    setStep(0, { replace: true });
+  }
 
-// Field a11y wiring: id doubles as the error-summary anchor; aria-invalid and
-// aria-describedby point at the inline message rendered by fe().
-const errorFor = (key) => errors.find((e) => e.key === key);
-const gp = (key) => {
-  const err = errorFor(key);
-  return { id: `f-${key}`, 'aria-invalid': err ? 'true' : undefined, 'aria-describedby': err ? `f-${key}-error` : undefined };
-};
-const fe = (key) => {
-  const err = errorFor(key);
-  return err ? <p id={`f-${key}-error`} className="field-error">{err.message}</p> : null;
-};
+  // Save the draft (debounced) once the resume question has been answered.
+  useEffect(() => {
+    if (!draftReady.current || done) return undefined;
+    const t = setTimeout(() => {
+      try {
+        const { website, ...rest } = form; // honeypot is never stored
+        void website;
+        if (draftFilledCount(rest) === 0) return;
+        window.localStorage.setItem(DRAFT_KEY, serializeDraft(rest));
+      } catch { /* ignore */ }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [form, done, pendingDraft]);
 
-function toggleT11(option) {
-setForm((current) => {
-const has = current.t11.includes(option);
-return { ...current, t11: has ? current.t11.filter((o) => o !== option) : [...current.t11, option] };
-});
-setErrors((current) => current.filter((e) => e.key !== 't11'));
-}
+  // Warn before leaving while the upload is in flight.
+  useEffect(() => {
+    if (!loading) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [loading]);
 
+  const prevStep = useRef(step);
+  useEffect(() => {
+    if (prevStep.current === step) return;
+    prevStep.current = step;
+    if (suppressFocus.current) { suppressFocus.current = false; return; }
+    const heading = document.getElementById(ACTS[step].id)?.querySelector('.apply-title');
+    if (!heading) return;
+    heading.focus({ preventScroll: true });
+    const top = heading.getBoundingClientRect().top;
+    if (top < 80 || top > window.innerHeight * 0.7) {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: Math.max(0, window.scrollY + top - 140), behavior: reduce ? 'auto' : 'smooth' });
+    }
+  }, [step]);
 
+  function updateField(key, value) {
+    setForm((current) => ({ ...current, [key]: value }));
+    setErrors((current) => (current.some((e) => e.key === key) ? current.filter((e) => e.key !== key) : current));
+  }
 
-function validateStep(index) {
-  const found = computeErrors(index, form, screenshots, (key) => editableLabel(key, FIELD_LABELS[key] || key));
-  setErrors(found);
-  if (found.length) {
+  // Validate one field when the person leaves it (not only on Continue), and
+  // tidy what they typed (strip @, spaces, "12.3M" -> 12300000).
+  function blurField(key) {
+    let value = form[key];
+    if (key === 'discordUsername') value = normalizeDiscordUsername(value);
+    else if (key === 'playerId') value = normalizePlayerId(value);
+    else if (NUMERIC_KEYS.includes(key)) value = normalizeNumericAnswer(value);
+    else if (typeof value === 'string') value = value.trim();
+    const next = { ...form, [key]: value };
+    if (value !== form[key]) setForm(next);
+    const message = fieldError(key, next, screenshots);
+    setErrors((current) => {
+      const rest = current.filter((e) => e.key !== key);
+      return message ? [...rest, { id: `f-${key}`, key, message }] : rest;
+    });
+  }
+
+  const errorFor = (key) => errors.find((e) => e.key === key);
+  const errMsg = (key) => errorFor(key)?.message || '';
+  const gp = (key) => {
+    const err = errorFor(key);
+    return { id: `f-${key}`, 'aria-invalid': err ? 'true' : undefined, 'aria-describedby': [err ? `f-${key}-error` : '', `f-${key}-hint`].filter(Boolean).join(' '), onBlur: () => blurField(key) };
+  };
+  const fe = (key) => {
+    const err = errorFor(key);
+    return err ? <p id={`f-${key}-error`} className="field-error">{err.message}</p> : null;
+  };
+
+  function toggleT11(option) {
+    setForm((current) => {
+      const has = current.t11.includes(option);
+      let next;
+      if (has) next = current.t11.filter((o) => o !== option);
+      else if (option === 'No T11') next = ['No T11'];
+      else next = [...current.t11.filter((o) => o !== 'No T11'), option];
+      return { ...current, t11: next };
+    });
+    setErrors((current) => current.filter((e) => e.key !== 't11'));
+  }
+
+  function validateStep(index) {
+    const found = computeErrors(index, form, screenshots);
+    setErrors(found);
     setIsError(false);
     setStatus('');
-    setErrorSignal((n) => n + 1);
-    return false;
+    if (found.length) { setErrorSignal((n) => n + 1); return false; }
+    return true;
   }
-  setIsError(false);
-  setStatus('');
-  return true;
-}
 
-function goNext() {
-  if (!validateStep(step)) return;
-  setStep(step + 1);
-}
+  function goNext() {
+    if (processingImages) return;
+    if (!validateStep(step)) return;
+    setStep(step + 1);
+  }
 
-function goBack() {
-  setIsError(false);
-  setStatus('');
-  setErrors([]);
-  setStep(step - 1);
-}
+  function goBack() {
+    setIsError(false);
+    setStatus('');
+    setErrors([]);
+    setStep(step - 1);
+  }
 
-async function handleScreenshotChange(event) {
-  const input = event.currentTarget;
-  const files = input.files;
-  if (!files || files.length === 0) return;
-  setProcessingImages(true);
-  setIsError(false);
-  setStatus('Preparing your screenshot…');
+  function jumpTo(i) {
+    if (i <= step) { setErrors([]); setStep(i); return; }
+    const bad = firstInvalidStep(ACTS.length, (n) => computeErrors(n, form, screenshots));
+    if (bad === -1 || bad >= i) { setErrors([]); setStep(i); return; }
+    if (bad === step) { validateStep(step); return; }
+    setStep(bad);
+    setErrors(computeErrors(bad, form, screenshots));
+    setErrorSignal((n) => n + 1);
+  }
 
-  try {
-    const processed = await processInterestImages(files);
-    const merged = [...screenshots, ...processed];
-    if (merged.length > 4) {
+  async function addFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length || processingImages) return;
+    const room = INTEREST_UPLOAD_LIMITS.maxFiles - screenshots.length;
+    if (room <= 0) {
       setIsError(true);
-      setStatus('You can add up to 4 screenshots. Remove one first if you want to add another.');
-    } else {
+      setStatus('You already added 4 screenshots. Remove one first to add another.');
+      return;
+    }
+    setProcessingImages(true);
+    setIsError(false);
+    setStatus(files.some(isHeicFile)
+      ? 'Converting your iPhone picture (HEIC). This can take a few seconds…'
+      : 'Getting your picture ready…');
+    const accepted = [];
+    const problems = [];
+    const take = files.slice(0, room);
+    for (const file of take) {
+      try {
+        const [processed] = await processInterestImages([file]);
+        accepted.push(processed);
+      } catch (error) {
+        problems.push(error instanceof Error ? error.message : `${file.name} could not be prepared.`);
+      }
+    }
+    if (files.length > room) problems.push(`Only ${INTEREST_UPLOAD_LIMITS.maxFiles} screenshots fit, so ${files.length - room} picture${files.length - room === 1 ? ' was' : 's were'} skipped.`);
+    let merged = [...screenshots, ...accepted];
+    const sizeError = validateProcessedInterestFiles(merged);
+    if (sizeError) { problems.push(sizeError); merged = screenshots; }
+    if (merged.length !== screenshots.length) {
       setScreenshots(merged);
       setErrors((current) => current.filter((e) => e.key !== 'screenshots'));
-      setStatus(`${merged.length} screenshot${merged.length === 1 ? '' : 's'} added.`);
     }
-  } catch (error) {
-    setIsError(true);
-    setStatus(error instanceof Error ? error.message : 'That screenshot could not be prepared. Please try a different picture.');
-  } finally {
-    input.value = '';
+    setIsError(problems.length > 0);
+    const addedText = merged.length > screenshots.length ? `${merged.length} screenshot${merged.length === 1 ? '' : 's'} ready. ` : '';
+    setStatus(`${addedText}${problems.join(' ')}`.trim());
     setProcessingImages(false);
   }
-}
 
-function removeScreenshot(index) {
-  setScreenshots((current) => current.filter((_, i) => i !== index));
-  setIsError(false);
-  setStatus('Screenshot removed.');
-}
+  function removeScreenshot(index) {
+    setScreenshots((current) => current.filter((_, i) => i !== index));
+    setIsError(false);
+    setStatus('Screenshot removed.');
+  }
 
-async function handleSubmit(e) {
-e.preventDefault();
-// Only the last step ("Check and send") may submit. Anything else (Enter in a
-// text field, a re-used DOM button) just moves to the next step.
-if (step !== ACTS.length - 1) { goNext(); return; }
-if (loading) return;
-const bad = firstInvalidStep(ACTS.length + 1, (i) => computeErrors(Math.min(i, ACTS.length - 1), form, screenshots, labelRef.current));
-if (bad !== -1 && bad < step) { setStep(bad); setErrors(computeErrors(bad, form, screenshots, labelRef.current)); setErrorSignal((n) => n + 1); return; }
-if (!validateStep(step)) return;
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch { /* ignore */ }
+      area.remove();
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
 
-setLoading(true);
-const body = new FormData();
-body.append('in_game_name', form.inGameName);
-body.append('player_id', form.playerId);
-body.append('discord_username', form.discordUsername);
-body.append('current_server', form.currentServer);
-body.append('current_alliance', form.currentAlliance);
-body.append(
-'migrate_alliance',
-form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance
-);
-body.append('highest_troop_level', form.highestTroopLevel);
-body.append('current_tg', form.currentTg);
-form.t11.forEach((option) => body.append('t11_units', option));
-body.append('mystic_trial_stages', form.mysticTrialStages);
-body.append('total_power', form.totalPower);
-body.append('willing_reduce_power', form.willingReducePower);
-body.append('passes_required', form.passesRequired);
-body.append('current_passes', form.currentPasses);
-body.append('active_commit', form.activeCommit);
-body.append('willing_save_resources', form.willingSaveResources);
-body.append('participates_battles', form.participatesBattles);
-body.append('spending_archetype', form.spendingArchetype);
-body.append(
-'main_language',
-form.mainLanguage === 'Other' ? `Other: ${form.mainLanguageOther}` : form.mainLanguage
-);
-screenshots.forEach((file) => body.append('screenshots', file));
-body.append('website', form.website);
-body.append('rendered_at', String(renderedAt.current));
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (step !== ACTS.length - 1) { goNext(); return; }
+    if (loading || submittingRef.current) return;
+    const bad = firstInvalidStep(ACTS.length + 1, (i) => computeErrors(Math.min(i, ACTS.length - 1), form, screenshots));
+    if (bad !== -1 && bad < step) { setStep(bad); setErrors(computeErrors(bad, form, screenshots)); setErrorSignal((n) => n + 1); return; }
+    if (!validateStep(step)) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setIsError(true);
+      setStatus('You are offline. Your answers are saved on this device. Connect to the internet, then press “Send my application” again.');
+      return;
+    }
 
-let response;
-let result = {};
-try {
-  response = await fetch('/api/interest', { method: 'POST', body });
-  result = await response.json().catch(() => ({}));
-} catch {
-  setLoading(false);
-  setIsError(true);
-  setStatus('The upload stopped, probably because of the internet connection. Your answers are saved on this device. Press Submit again to retry.');
-  return;
-}
-setLoading(false);
+    submittingRef.current = true;
+    setLoading(true);
+    setIsError(false);
+    setStatus('Sending… please keep this page open.');
+    if (!requestId.current) requestId.current = newRequestId();
+    const body = new FormData();
+    body.append('client_request_id', requestId.current);
+    body.append('in_game_name', form.inGameName.trim());
+    body.append('player_id', normalizePlayerId(form.playerId));
+    body.append('discord_username', normalizeDiscordUsername(form.discordUsername));
+    body.append('current_server', form.currentServer.trim());
+    body.append('current_alliance', form.currentAlliance.trim());
+    body.append('migrate_alliance', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther.trim()}` : form.migrateAlliance);
+    body.append('highest_troop_level', form.highestTroopLevel);
+    body.append('current_tg', normalizeNumericAnswer(form.currentTg));
+    form.t11.forEach((option) => body.append('t11_units', option));
+    body.append('mystic_trial_stages', normalizeNumericAnswer(form.mysticTrialStages));
+    body.append('total_power', normalizeNumericAnswer(form.totalPower));
+    body.append('willing_reduce_power', form.willingReducePower);
+    body.append('passes_required', normalizeNumericAnswer(form.passesRequired));
+    body.append('current_passes', normalizeNumericAnswer(form.currentPasses));
+    body.append('active_commit', form.activeCommit);
+    body.append('willing_save_resources', form.willingSaveResources);
+    body.append('participates_battles', form.participatesBattles);
+    body.append('spending_archetype', form.spendingArchetype);
+    body.append('main_language', form.mainLanguage === 'Other' ? `Other: ${form.mainLanguageOther.trim()}` : form.mainLanguage);
+    screenshots.forEach((file) => body.append('screenshots', file));
+    body.append('website', form.website);
+    body.append('rendered_at', String(renderedAt.current));
 
-if (!response.ok) {
-setIsError(true);
-setStatus(result.error || 'Something went wrong. Please try again.');
-return;
-}
-setIsError(false);
-setStatus('');
-setConfirmedInfo({ intakePeriod: activePeriod, discordUsername: form.discordUsername, reference: result.reference || null });
-setForm(initialForm);
-setScreenshots([]);
-setErrors([]);
-try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-if (screenshotInput.current) screenshotInput.current.value = '';
-setStep(0, { replace: true });
-renderedAt.current = Date.now();
-setSealed(true);
-}
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 120000);
+    let response;
+    let result = {};
+    try {
+      response = await fetch('/api/interest', { method: 'POST', body, signal: controller.signal });
+      result = await response.json().catch(() => ({}));
+    } catch {
+      clearTimeout(timer);
+      submittingRef.current = false;
+      setLoading(false);
+      setIsError(true);
+      setStatus('The connection stopped before we could confirm. Nothing is lost: your answers and pictures are still here. Press “Send my application” to try again. It is safe to press it again.');
+      return;
+    }
+    clearTimeout(timer);
+    submittingRef.current = false;
+    setLoading(false);
 
-const isFinalStep = step === ACTS.length - 1;
+    if (!response.ok) {
+      setIsError(true);
+      setStatus(result.error || 'Something went wrong on our side. Please try again in a minute.');
+      return;
+    }
+    setIsError(false);
+    setStatus('');
+    try { if (result.reference) window.localStorage.setItem(REF_KEY, result.reference); } catch { /* ignore */ }
+    setConfirmedInfo({ intakePeriod: activePeriod, discordUsername: normalizeDiscordUsername(form.discordUsername), reference: result.reference || null });
+    setForm(initialForm);
+    setScreenshots([]);
+    setErrors([]);
+    try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    setStep(0, { replace: true });
+    renderedAt.current = Date.now();
+    requestId.current = null;
+    setDone(true);
+    window.scrollTo({ top: 0 });
+  }
 
-return (
-<>
-{sealed && (
-  <SealedPetition
-    reducedMotion={reducedMotion}
-    onClose={() => setSealed(false)}
-    intakePeriod={confirmedInfo.intakePeriod}
-    discordUsername={confirmedInfo.discordUsername}
-    reference={confirmedInfo.reference}
-  />
-)}
-<form className="public-form-card interest-petition" onSubmit={handleSubmit}>
-<nav className="petition-index" aria-label="Petition sections">
-  {ACTS.map((a, i) => (
-    <button
-      key={a.id}
-      type="button"
-      className={`petition-index-item ${i === step ? 'is-current' : ''} ${i < step ? 'is-done' : ''}`}
-      aria-current={i === step ? 'step' : undefined}
-      title={a.sub}
-      onClick={() => {
-        if (i <= step) { setErrors([]); setStep(i); return; }
-        const bad = firstInvalidStep(ACTS.length, (n) => computeErrors(n, form, screenshots, labelRef.current));
-        if (bad === -1 || bad >= i) { setErrors([]); setStep(i); return; }
-        if (bad === step) { validateStep(step); return; }
-        setStep(bad);
-        setErrors(computeErrors(bad, form, screenshots, labelRef.current));
-        setErrorSignal((n) => n + 1);
+  if (done) {
+    return (
+      <SealedPetition
+        intakePeriod={confirmedInfo.intakePeriod}
+        discordUsername={confirmedInfo.discordUsername}
+        reference={confirmedInfo.reference}
+        onAnother={() => setDone(false)}
+      />
+    );
+  }
+
+  if (activePeriodLoaded && !activePeriod) {
+    return (
+      <section className="apply-closed" aria-labelledby="apply-closed-title">
+        <h2 id="apply-closed-title">Applications are closed right now</h2>
+        <p>We open a new transfer window from time to time. Nothing is wrong with your device, and there is nothing you can do on this page today.</p>
+        <ul>
+          <li>Watch the Kingdom 710 Discord. Leadership announces the next window there.</li>
+          <li>Already applied? <a href="/interest/status">Check your application</a>.</li>
+          <li>Questions? Read the <a href="/help">Help page</a>.</li>
+          <li>Not sure which alliance fits you? <a href="/about#alliances">See the alliance schedules</a>.</li>
+        </ul>
+      </section>
+    );
+  }
+
+  const ctx = { form, updateField, gp, errMsg, fe };
+  const isFinalStep = step === ACTS.length - 1;
+  const act = ACTS[step];
+  const actHead = (title, lede) => (
+    <header className="apply-head">
+      <h2 className="apply-title" tabIndex={-1}>{title}</h2>
+      {lede && <p className="apply-lede">{lede}</p>}
+    </header>
+  );
+  const reviewGroups = [
+    { stepIndex: 0, title: 'Your account', rows: [['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord username', form.discordUsername], ['Current server', form.currentServer], ['Current alliance', form.currentAlliance]] },
+    { stepIndex: 1, title: 'Your move', rows: [['Alliance you want to join', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance]] },
+    { stepIndex: 2, title: 'Your power', rows: [['Highest troop level', form.highestTroopLevel], ['TrueGold (TG)', form.currentTg ? formatNum(form.currentTg) : ''], ['T11 troops', form.t11.join(', ')], ['Mystic Trial stages', formatNum(form.mysticTrialStages)], ['Total power', formatNum(form.totalPower)], ['Would lower power if needed', form.willingReducePower, true], ['Passes needed', formatNum(form.passesRequired), true], ['Passes you have', formatNum(form.currentPasses), true]] },
+    { stepIndex: 3, title: 'Your play style', rows: [['Active in alliance events', form.activeCommit], ['Saves resources for KvK prep', form.willingSaveResources], ['Joins Sanctuary, Castle and KvK battles', form.participatesBattles], ['Spending', form.spendingArchetype], ['Main language', form.mainLanguage === 'Other' ? `Other: ${form.mainLanguageOther}` : form.mainLanguage]] },
+    { stepIndex: 4, title: 'Screenshots', rows: [['Screenshots added', String(screenshots.length)]] },
+  ];
+
+  return (
+    <form className="public-form-card interest-petition apply-form" onSubmit={handleSubmit}
+      onKeyDown={(e) => {
+        // Enter in a text box = Next (a form with no submit button does nothing on Enter).
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'text' && !isFinalStep) { e.preventDefault(); goNext(); }
       }}
-    >
-      <span className="petition-index-num">{a.num}</span>
-      {a.label}
-    </button>
-  ))}
-</nav>
+      noValidate>
+      {pendingDraft && (
+        <section className="apply-resume" aria-labelledby="apply-resume-title">
+          <h2 id="apply-resume-title">Continue where you left off?</h2>
+          <p>You started this application {describeAge(pendingDraft.savedAt) || 'before'} and we saved your answers on this device. Your pictures are not saved, you will add them again.</p>
+          <div className="apply-resume-actions">
+            <button type="button" className="k-btn" onClick={resumeDraft}>Continue my application</button>
+            <button type="button" className="k-btn k-btn-quiet" onClick={startOver}>Start over</button>
+          </div>
+        </section>
+      )}
 
-{/* Honeypot: visually hidden (not type="hidden" - some bots skip those),
-    off-screen, unreachable by tab order. A real applicant never sees or
-    fills it; the server treats a non-empty value as spam. */}
-<div className="petition-honeypot" aria-hidden="true">
-  <label htmlFor="website">Leave this field blank</label>
-  <input
-    id="website"
-    name="website"
-    type="text"
-    tabIndex={-1}
-    autoComplete="off"
-    value={form.website}
-    onChange={(e) => updateField('website', e.target.value)}
-  />
-</div>
+      <StepProgress step={step} onJump={jumpTo} />
 
-{step === 0 && (
-<section id="identity" className="petition-act">
-<header className="petition-act-head">
-<span className="petition-act-num k-display">I</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Your account</h2>
-<span className="petition-act-rule" aria-hidden="true" />
-</header>
-<p className="petition-act-sub">Step 1 · Your account</p>
-<div className="petition-act-body">
-<Chapter id="identity-fields" title="Identity">
-<div className="identity-grid">
-<div className="wizard-field"><label>{editableLabel('inGameName', 'In-game name')}<input {...gp('inGameName')} value={form.inGameName} onChange={(e) => updateField('inGameName', e.target.value)} /></label>{fe('inGameName')}</div>
-<div className="wizard-field"><label>{editableLabel('playerId', 'Player ID')}<input {...gp('playerId')} value={form.playerId} onChange={(e) => updateField('playerId', e.target.value)} /></label>{fe('playerId')}<Where>Open Kingshot and tap your picture in the top-left corner. Your Player ID is the number shown there.</Where></div>
-<div className="wizard-field"><label>{editableLabel('discordUsername', 'Discord username')}<input {...gp('discordUsername')} value={form.discordUsername} onChange={(e) => updateField('discordUsername', e.target.value)} /></label>{fe('discordUsername')}<Where>Open Discord and look under your picture at the bottom-left. Your username is the name written there, for example name or name#1234.</Where></div>
-<div className="wizard-field"><label>{editableLabel('currentServer', 'Your current server (prior to transfer)')}<input {...gp('currentServer')} value={form.currentServer} onChange={(e) => updateField('currentServer', e.target.value)} /></label>{fe('currentServer')}</div>
-<div className="wizard-field"><label>{editableLabel('currentAlliance', 'Your current alliance (prior to transfer)')}<input {...gp('currentAlliance')} value={form.currentAlliance} onChange={(e) => updateField('currentAlliance', e.target.value)} /></label>{fe('currentAlliance')}</div>
-</div>
-</Chapter>
-</div>
-</section>
-)}
+      {/* Honeypot: off-screen, not reachable by Tab; a real applicant never sees it. */}
+      <div className="petition-honeypot" aria-hidden="true">
+        <label htmlFor="website">Leave this field blank</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" value={form.website} onChange={(e) => updateField('website', e.target.value)} />
+      </div>
 
-{step === 1 && (
-<section id="intake" className="petition-act">
-<header className="petition-act-head">
-<span className="petition-act-num k-display">II</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Your move</h2>
-<span className="petition-act-rule" aria-hidden="true" />
-</header>
-<p className="petition-act-sub">Step 2 · Transfer details</p>
-<div className="petition-act-body">
-<Chapter id="intake-fields" title="Intake window">
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Intake</span><h3>Intake window</h3></div>
-{!activePeriodLoaded && <p>Checking the current intake window…</p>}
-{activePeriodLoaded && activePeriod && (
-<p>You&apos;re applying for the <strong>{activePeriod}</strong> intake window. Leadership sets this window; it isn&apos;t something you choose.</p>
-)}
-{activePeriodLoaded && !activePeriod && (
-<p className="status error" role="alert">Transfer intake is currently closed. Check back soon.</p>
-)}
-</div>
-</Chapter>
+      <section id={act.id} className="apply-step-body" aria-labelledby={`${act.id}-title`}>
+        {step === 0 && (
+          <>
+            {actHead('Your account', 'So we can find you in the game and message you.')}
+            <aside className="apply-ready" aria-label="Before you start">
+              <h3>Before you start</h3>
+              <p><strong>About 5 minutes.</strong> You can stop and come back: your answers are saved on this device.</p>
+              <ul>
+                <li>Your <strong>Player ID</strong> and <strong>Discord username</strong></li>
+                <li>Your <strong>power</strong> and troop numbers (open your profile in Kingshot)</li>
+                <li><strong>1 to 4 screenshots</strong> from your phone</li>
+              </ul>
+            </aside>
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} />
+            <div className="apply-fields">
+              <TextField ctx={ctx} k="inGameName" label={L('inGameName')} hint="The name other players see in Kingshot." autoComplete="off" />
+              <TextField ctx={ctx} k="playerId" label={L('playerId')} hint="Numbers only." mode="numeric" live={playerIdHint(form.playerId)}>
+                <Where>Open Kingshot and tap your picture in the top-left corner. Your Player ID is the number shown there.</Where>
+              </TextField>
+              <TextField ctx={ctx} k="discordUsername" label={L('discordUsername')} hint="We message you here. You can leave out the @." placeholder="yourname">
+                <Where>Open Discord and tap your picture. Your username is the short name without spaces, for example name or name#1234.</Where>
+              </TextField>
+              <TextField ctx={ctx} k="currentServer" label={L('currentServer')} hint="The kingdom you play in today, before moving." mode="numeric" placeholder="for example 512" />
+              <TextField ctx={ctx} k="currentAlliance" label={L('currentAlliance')} hint="The alliance you are in today. Type “None” if you have none." />
+            </div>
+          </>
+        )}
 
-<Chapter id="migration-fields" title="Migration">
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Migration</span><h3>Which alliance are you looking to migrate to?</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('migrateAlliance')} {...gp('migrateAlliance')}>
-{MIGRATE_OPTIONS.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="migrateAlliance" checked={form.migrateAlliance === option} onChange={() => updateField('migrateAlliance', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('migrateAlliance')}
-{form.migrateAlliance === 'Other' && (
-<><input {...gp('migrateAllianceOther')} aria-label="Please specify" placeholder="Please specify" value={form.migrateAllianceOther} onChange={(e) => updateField('migrateAllianceOther', e.target.value)} />{fe('migrateAllianceOther')}</>
-)}
-</div>
-</Chapter>
-</div>
-</section>
-)}
+        {step === 1 && (
+          <>
+            {actHead('Your move', activePeriod ? <>You are applying for the <strong>{activePeriod}</strong> transfer window. Leadership sets it, you do not choose it.</> : null)}
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} />
+            <Choices
+              legend="Which alliance do you want to join?"
+              hint="You can check the schedules first. Your answers stay saved if you leave."
+              name="migrateAlliance"
+              id="f-migrateAlliance"
+              options={MIGRATE_OPTIONS}
+              value={form.migrateAlliance}
+              onChange={(v) => updateField('migrateAlliance', v)}
+              error={errMsg('migrateAlliance')}
+              errorId="f-migrateAlliance-error"
+            >
+              {form.migrateAlliance === 'Other' && (
+                <div className="apply-reveal">
+                  <label htmlFor="f-migrateAllianceOther">Name of the alliance</label>
+                  <input {...gp('migrateAllianceOther')} enterKeyHint="next" autoComplete="off" value={form.migrateAllianceOther} onChange={(e) => updateField('migrateAllianceOther', e.target.value)} />
+                  <span id="f-migrateAllianceOther-hint" hidden />
+                  {fe('migrateAllianceOther')}
+                </div>
+              )}
+            </Choices>
+            <p className="apply-hint"><a href="/about#alliances">See alliance schedules</a> (opens the About page).</p>
+          </>
+        )}
 
-{step === 2 && (
-<section id="troops" className="petition-act">
-<header className="petition-act-head">
-<span className="petition-act-num k-display">III</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Your power</h2>
-<span className="petition-act-rule" aria-hidden="true" />
-</header>
-<p className="petition-act-sub">Step 3 · Your power and troops</p>
-<div className="petition-act-body">
-<Chapter id="troops-fields" title="Troops">
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Troops</span><h3>Current highest troop level (not TC)</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('highestTroopLevel')} {...gp('highestTroopLevel')}>
-{TROOP_LEVEL_OPTIONS.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="highestTroopLevel" checked={form.highestTroopLevel === option} onChange={() => updateField('highestTroopLevel', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('highestTroopLevel')}
-</div>
+        {step === 2 && (
+          <>
+            {actHead('Your power', 'Open your profile in Kingshot and copy the numbers. Rough numbers are fine if you are unsure.')}
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} />
+            <Choices
+              legend="What is your highest troop level?"
+              hint={<><Term term="TrueGold">TG</Term> is the troop level (TG8 is higher than TG7). Look at your troop camps, not your castle level.</>}
+              name="highestTroopLevel"
+              id="f-highestTroopLevel"
+              options={TROOP_LEVEL_OPTIONS}
+              value={form.highestTroopLevel}
+              onChange={(v) => updateField('highestTroopLevel', v)}
+              error={errMsg('highestTroopLevel')}
+              errorId="f-highestTroopLevel-error"
+            />
+            <Choices
+              legend="Do you have T11 troops?"
+              hint="T11 is the very top troop tier. Pick every type you have."
+              name="t11"
+              id="f-t11"
+              multiple
+              options={T11_OPTIONS}
+              value={form.t11}
+              onChange={toggleT11}
+              error={errMsg('t11')}
+              errorId="f-t11-error"
+            />
+            <div className="apply-fields">
+              <TextField ctx={ctx} k="totalPower" label={L('totalPower')} hint="The big number on your profile. Type it like 12,345,678." mode="decimal" placeholder="12,345,678" live={numberPreview(form.totalPower)}>
+                <Where>In Kingshot tap your picture in the top-left corner. Your power is the big number on your profile.</Where>
+              </TextField>
+              <TextField ctx={ctx} k="currentTg" label={L('currentTg')} hint="TrueGold is a late-game upgrade material. We want to know how far you can push your troops. Type 0 if none." mode="decimal" live={numberPreview(form.currentTg)} />
+              <TextField ctx={ctx} k="mysticTrialStages" label={L('mysticTrialStages')} hint="Add up all the stages you have cleared in Mystic Trial. Type 0 if none." mode="numeric" live={numberPreview(form.mysticTrialStages)} />
+            </div>
+            <fieldset className="apply-group apply-optional">
+              <legend>Optional questions</legend>
+              <p className="apply-hint">You can skip these. They help us plan your move.</p>
+              <Choices
+                legend="Would you lower your power if needed to join?"
+                hint="Some invites have a power limit."
+                name="willingReducePower"
+                id="f-willingReducePower"
+                options={YES_NO}
+                value={form.willingReducePower}
+                onChange={(v) => updateField('willingReducePower', form.willingReducePower === v ? '' : v)}
+              />
+              <div className="apply-fields">
+                <TextField ctx={ctx} k="passesRequired" label={L('passesRequired')} hint="How many transfer passes the move needs. Leave empty if you do not know." mode="numeric" />
+                <TextField ctx={ctx} k="currentPasses" label={L('currentPasses')} hint="How many transfer passes you hold today." mode="numeric" />
+              </div>
+            </fieldset>
+          </>
+        )}
 
-<div className="identity-grid">
-<div className="wizard-field"><label>{editableLabel('currentTg', 'Current amount of TG')}<input {...gp('currentTg')} inputMode="numeric" value={form.currentTg} onChange={(e) => updateField('currentTg', e.target.value)} placeholder={editablePlaceholder('currentTg', 'We need to understand how far you can push your TG level')} /></label>{fe('currentTg')}<Where>TG means Troop Grade, the upgrade level of your troops. Look at your troop camps in the game, or ask your alliance leader.</Where></div>
-</div>
+        {step === 3 && (
+          <>
+            {actHead('Your play style', 'Honest answers help us put you in the right alliance.')}
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} />
+            <Choices legend="Can you play often and join alliance events?" name="activeCommit" id="f-activeCommit" options={YES_NO} value={form.activeCommit} onChange={(v) => updateField('activeCommit', v)} error={errMsg('activeCommit')} errorId="f-activeCommit-error" />
+            <Choices legend="Will you save resources before KvK, and only do minimal rewards in side events?" hint="KvK is the big kingdom-versus-kingdom war." name="willingSaveResources" id="f-willingSaveResources" options={YES_NO} value={form.willingSaveResources} onChange={(v) => updateField('willingSaveResources', v)} error={errMsg('willingSaveResources')} errorId="f-willingSaveResources-error" />
+            <Choices legend="Do you join Sanctuary, Castle and KvK battles?" name="participatesBattles" id="f-participatesBattles" options={YES_NO} value={form.participatesBattles} onChange={(v) => updateField('participatesBattles', v)} error={errMsg('participatesBattles')} errorId="f-participatesBattles-error" />
+            <Choices legend="How much do you spend on the game?" hint="Pick the one closest to you." name="spendingArchetype" id="f-spendingArchetype" options={SPENDING_OPTIONS} value={form.spendingArchetype} onChange={(v) => updateField('spendingArchetype', v)} error={errMsg('spendingArchetype')} errorId="f-spendingArchetype-error" />
+            <Choices legend="Main language you use in the game" name="mainLanguage" id="f-mainLanguage" options={LANGUAGE_OPTIONS} value={form.mainLanguage} onChange={(v) => updateField('mainLanguage', v)} error={errMsg('mainLanguage')} errorId="f-mainLanguage-error">
+              {form.mainLanguage === 'Other' && (
+                <div className="apply-reveal">
+                  <label htmlFor="f-mainLanguageOther">Which language?</label>
+                  <input {...gp('mainLanguageOther')} enterKeyHint="next" autoComplete="off" value={form.mainLanguageOther} onChange={(e) => updateField('mainLanguageOther', e.target.value)} />
+                  <span id="f-mainLanguageOther-hint" hidden />
+                  {fe('mainLanguageOther')}
+                </div>
+              )}
+            </Choices>
+          </>
+        )}
 
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Troops</span><h3>Do you have T11?</h3></div>
-<div className="checkbox-grid" role="group" aria-label="T11 troop types" {...gp('t11')}>
-{T11_OPTIONS.map((option) => (
-<label key={option} className="checkbox-item">
-<input type="checkbox" checked={form.t11.includes(option)} onChange={() => toggleT11(option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('t11')}
-</div>
-</Chapter>
+        {step === 4 && (
+          <>
+            {actHead('Screenshots', 'Add 1 to 4 pictures from your phone gallery. They help officers check your account.')}
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} />
+            <div className="apply-capture">
+              <h3>What to take a picture of</h3>
+              <svg viewBox="0 0 330 150" role="img" aria-label="Diagram: three phone screens. 1: a battle report that shows your name. 2: your Governor Gear and charms. 3: your hero gear and Masters." className="apply-capture-svg">
+                {[0, 1, 2].map((i) => (
+                  <g key={i} transform={`translate(${10 + i * 112} 6)`}>
+                    <rect x="0" y="0" width="96" height="138" rx="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                    <rect x="8" y="16" width="80" height="14" rx="3" fill="currentColor" opacity={i === 0 ? 0.55 : 0.18} />
+                    <rect x="8" y="38" width="38" height="38" rx="4" fill="currentColor" opacity={i === 1 ? 0.55 : 0.18} />
+                    <rect x="50" y="38" width="38" height="38" rx="4" fill="currentColor" opacity={i === 1 ? 0.55 : 0.18} />
+                    <rect x="8" y="82" width="80" height="22" rx="4" fill="currentColor" opacity={i === 2 ? 0.55 : 0.18} />
+                    <circle cx="48" cy="123" r="5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </g>
+                ))}
+              </svg>
+              <p className="apply-hint">Schematic only, not a real game screen.</p>
+              <ol className="apply-capture-list">
+                <li><strong>Your most recent battle report.</strong> Your in-game name must be visible.</li>
+                <li><strong>Governor Gear and charms.</strong></li>
+                <li><strong>Hero gear and Masters.</strong></li>
+              </ol>
+              <p className="apply-hint">One picture is enough to continue. More pictures help us decide faster. Take them with your phone screenshot button.</p>
+            </div>
 
-<Chapter id="power-fields" title="Power">
-<div className="identity-grid">
-<div className="wizard-field"><label>{editableLabel('mysticTrialStages', 'Current Mystic Trial TOTAL STAGES')}<input {...gp('mysticTrialStages')} inputMode="numeric" value={form.mysticTrialStages} onChange={(e) => updateField('mysticTrialStages', e.target.value)} /></label>{fe('mysticTrialStages')}</div>
-<div className="wizard-field"><label>{editableLabel('totalPower', 'Total Power')}<input {...gp('totalPower')} inputMode="numeric" value={form.totalPower} onChange={(e) => updateField('totalPower', e.target.value)} /></label>{fe('totalPower')}<Where>In Kingshot tap your picture in the top-left corner. Your Power is the big number on your profile. Type it with digits only, for example 12345678.</Where></div>
-</div>
+            <div
+              className={`apply-drop ${dragOver ? 'is-over' : ''}`}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer?.files); }}
+            >
+              <input
+                {...gp('screenshots')}
+                onBlur={undefined}
+                type="file"
+                multiple
+                accept="image/*,.heic,.heif"
+                className="apply-file-input"
+                disabled={processingImages || loading || screenshots.length >= INTEREST_UPLOAD_LIMITS.maxFiles}
+                onChange={(e) => { const input = e.currentTarget; const files = Array.from(input.files || []); input.value = ''; addFiles(files); }}
+              />
+              <label htmlFor="f-screenshots" className="k-btn apply-drop-btn">{screenshots.length ? 'Add another picture' : 'Choose pictures'}</label>
+              <p className="apply-hint" id="f-screenshots-hint">Choose from your gallery or camera, or drag pictures here. Photos from iPhone (HEIC) are fine. Up to 4 pictures.</p>
+            </div>
+            {fe('screenshots')}
+            {screenshots.length > 0 && (
+              <ul className="shot-list" aria-label="Your screenshots">
+                {screenshots.map((file, i) => (
+                  <Thumb key={`${file.name}-${file.size}-${file.lastModified}-${i}`} file={file} index={i} onRemove={removeScreenshot} />
+                ))}
+              </ul>
+            )}
+          </>
+        )}
 
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Power</span><h3>Are you willing to reduce your power? (for normal invite power cap)</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('willingReducePower')} {...gp('willingReducePower')}>
-{YES_NO.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="willingReducePower" checked={form.willingReducePower === option} onChange={() => updateField('willingReducePower', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('willingReducePower')}
-</div>
+        {step === 5 && (
+          <>
+            {actHead('Check your answers', 'Look everything over. Use Change to fix anything, then send.')}
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} />
+            <p className="review-once-note"><strong>Send this only once.</strong> If you already applied, do not send again. Use <a href="/interest/status">Check my application</a> instead.</p>
+            <div className="review-groups">
+              {reviewGroups.map((group) => (
+                <section key={group.title} className="review-group" aria-labelledby={`review-${group.stepIndex}`}>
+                  <div className="review-group-head">
+                    <h3 id={`review-${group.stepIndex}`}>{group.title}</h3>
+                    <button type="button" className="k-btn k-btn-quiet" onClick={() => { setErrors([]); setStep(group.stepIndex); }} aria-label={`Change ${group.title}`}>Change</button>
+                  </div>
+                  <dl>
+                    {group.rows.map(([k, v, optional]) => (
+                      <div key={k}><dt>{k}</dt><dd>{String(v || '').trim() || (optional ? 'Skipped' : 'Not answered')}</dd></div>
+                    ))}
+                  </dl>
+                </section>
+              ))}
+            </div>
+            <div className="apply-copy">
+              <button type="button" className="k-btn k-btn-quiet" onClick={() => copyText(buildSummary(form, screenshots))}>{copied ? 'Copied' : 'Copy a summary of my answers'}</button>
+            </div>
+          </>
+        )}
+      </section>
 
-<div className="identity-grid">
-<div className="wizard-field"><label>{editableLabel('passesRequired', 'Number of passes required for you to transfer to 710')}<input {...gp('passesRequired')} inputMode="numeric" value={form.passesRequired} onChange={(e) => updateField('passesRequired', e.target.value)} /></label>{fe('passesRequired')}</div>
-<div className="wizard-field"><label>{editableLabel('currentPasses', 'Your current number of transfer passes')}<input {...gp('currentPasses')} inputMode="numeric" value={form.currentPasses} onChange={(e) => updateField('currentPasses', e.target.value)} /></label>{fe('currentPasses')}</div>
-</div>
-</Chapter>
-</div>
-</section>
-)}
+      <div className="apply-status" aria-live="polite">
+        {status && (
+          <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>
+            {loading && <span className="apply-spinner" aria-hidden="true" />}
+            {status}
+          </div>
+        )}
+        {processingImages && !status && <p className="status">Getting your picture ready…</p>}
+      </div>
 
-{step === 3 && (
-<section id="commitment" className="petition-act">
-<header className="petition-act-head">
-<span className="petition-act-num k-display">IV</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Your promise</h2>
-<span className="petition-act-rule" aria-hidden="true" />
-</header>
-<p className="petition-act-sub">Step 4 · Your commitment</p>
-<div className="petition-act-body">
-<Chapter id="commitment-fields" title="Commitment">
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Commitment</span><h3>Are you able to actively commit to game, and participate in alliance events?</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('activeCommit')} {...gp('activeCommit')}>
-{YES_NO.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="activeCommit" checked={form.activeCommit === option} onChange={() => updateField('activeCommit', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('activeCommit')}
-</div>
+      {!pendingDraft && (
+      <div className="petition-step-nav apply-bar-nav">
+        <p className="apply-saved">{isFinalStep ? 'Nothing is sent until you press the button.' : 'Your answers are saved on this device.'}</p>
+        <div className="petition-step-actions">
+          {step > 0 && (
+            <button type="button" className="k-btn k-btn-quiet" onClick={goBack} disabled={loading}>Back</button>
+          )}
+          {isFinalStep ? (
+            <button key="send" type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages} aria-busy={loading || undefined}>{loading ? 'Sending… keep this page open' : 'Send my application'}</button>
+          ) : (
+            <button key="continue" type="button" className="k-btn" disabled={processingImages} onClick={(e) => { e.preventDefault(); goNext(); }}>{processingImages ? 'Please wait…' : 'Continue'}</button>
+          )}
+        </div>
+      </div>
+      )}
+    </form>
+  );
+}
 
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Commitment</span><h3>Are you willing to save resources for kvk prep, doing only minimal rewards on sub-events?</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('willingSaveResources')} {...gp('willingSaveResources')}>
-{YES_NO.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="willingSaveResources" checked={form.willingSaveResources === option} onChange={() => updateField('willingSaveResources', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('willingSaveResources')}
-</div>
-
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Commitment</span><h3>Do you participate in Sanctuaries, Castle and KVK battles?</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('participatesBattles')} {...gp('participatesBattles')}>
-{YES_NO.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="participatesBattles" checked={form.participatesBattles === option} onChange={() => updateField('participatesBattles', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('participatesBattles')}
-</div>
-</Chapter>
-
-<Chapter id="spending-fields" title="Spending">
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Spending</span><h3>Your spending archetype</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('spendingArchetype')} {...gp('spendingArchetype')}>
-{SPENDING_OPTIONS.map((option) => (
-<label key={option} className="radio-option">
-<input type="radio" name="spendingArchetype" checked={form.spendingArchetype === option} onChange={() => updateField('spendingArchetype', option)} />
-<span>{option}</span>
-</label>
-))}
-</div>
-{fe('spendingArchetype')}
-</div>
-</Chapter>
-
-<Chapter id="language-fields" title="Language">
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Language</span><h3>Main language of communication in-game</h3></div>
-<div className="radio-group" role="radiogroup" aria-label={labelFor('mainLanguage')} {...gp('mainLanguage')}>
-<label className="radio-option">
-<input type="radio" name="mainLanguage" checked={form.mainLanguage === 'English'} onChange={() => updateField('mainLanguage', 'English')} />
-<span>English</span>
-</label>
-<label className="radio-option">
-<input type="radio" name="mainLanguage" checked={form.mainLanguage === 'Other'} onChange={() => updateField('mainLanguage', 'Other')} />
-<span>Other</span>
-</label>
-</div>
-{fe('mainLanguage')}
-{form.mainLanguage === 'Other' && (
-<><input {...gp('mainLanguageOther')} aria-label="Please specify" placeholder="Please specify" value={form.mainLanguageOther} onChange={(e) => updateField('mainLanguageOther', e.target.value)} />{fe('mainLanguageOther')}</>
-)}
-</div>
-</Chapter>
-</div>
-</section>
-)}
-
-{step === 4 && (
-<section id="battle-report" className="petition-act">
-<header className="petition-act-head">
-<span className="petition-act-num k-display">V</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Screenshots</h2>
-<span className="petition-act-rule" aria-hidden="true" />
-</header>
-<p className="petition-act-sub">Step 5 · Screenshots</p>
-<div className="petition-act-body">
-<Chapter id="proof-fields" title="Battle report">
-<div className="troop-section public-section">
-<div className="section-title-row"><span>Screenshots</span><h3>Upload your most recent battle report</h3><p>Should show your in-game name, Gov Gears/charms, Hero Gears and Masters.</p></div>
-<input
-  {...gp('screenshots')}
-  ref={screenshotInput}
-  type="file"
-  accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-  aria-label="Add a screenshot"
-  aria-describedby={errorFor('screenshots') ? 'f-screenshots-error battle-report-upload-help' : 'battle-report-upload-help'}
-  disabled={processingImages || loading}
-  onChange={handleScreenshotChange}
-/>
-<p id="battle-report-upload-help" className="file-hint">
-  {processingImages
-    ? 'Compressing images…'
-    : screenshots.length > 0
-      ? 'Added. You can add another one (up to 4), or press Continue.'
-      : 'Add one screenshot at a time, up to 4. Pictures from your phone gallery work.'}
-</p>
-{screenshots.length > 0 && (
-  <ul className="shot-list" aria-label="Your screenshots">
-    {screenshots.map((file, i) => (
-      <Thumb key={`${file.name}-${file.size}-${i}`} file={file} index={i} onRemove={removeScreenshot} />
-    ))}
-  </ul>
-)}
-{fe('screenshots')}
-</div>
-</Chapter>
-</div>
-</section>
-)}
-
-{step === 5 && (
-<section id="review" className="petition-act">
-<header className="petition-act-head">
-<span className="petition-act-num k-display">VI</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Check your answers</h2>
-<span className="petition-act-rule" aria-hidden="true" />
-</header>
-<p className="petition-act-sub">Step 6 · Look everything over, then press “Send my application”.</p>
-<div className="petition-act-body review-groups">
-<p className="review-once-note"><strong>Send this only once.</strong> If you already applied, do not send it again. Use “Check my application” instead.</p>
-{[
-  { stepIndex: 0, title: 'Your account', rows: [['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord username', form.discordUsername], ['Current server', form.currentServer], ['Current alliance', form.currentAlliance]] },
-  { stepIndex: 1, title: 'Your move', rows: [['Alliance you want to join', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance]] },
-  { stepIndex: 2, title: 'Your power', rows: [['Highest troop level', form.highestTroopLevel], ['Current TG', form.currentTg], ['Mystic Trial stages', form.mysticTrialStages], ['Total power', form.totalPower]] },
-  { stepIndex: 3, title: 'Your promise', rows: [['Active commitment', form.activeCommit], ['Willing to save resources', form.willingSaveResources], ['Takes part in battles', form.participatesBattles], ['Spending style', form.spendingArchetype], ['Main language', form.mainLanguage === 'Other' ? `Other: ${form.mainLanguageOther}` : form.mainLanguage]] },
-  { stepIndex: 4, title: 'Screenshots', rows: [['Screenshots added', String(screenshots.length)]] },
-].map((group) => (
-  <section key={group.title} className="review-group" aria-labelledby={`review-${group.stepIndex}`}>
-    <div className="review-group-head">
-      <h3 id={`review-${group.stepIndex}`}>{group.title}</h3>
-      <button type="button" className="k-btn k-btn-quiet" onClick={() => { setErrors([]); setStep(group.stepIndex); }}>Change</button>
-    </div>
-    <dl>
-      {group.rows.map(([k, v]) => (
-        <div key={k}><dt>{k}</dt><dd>{String(v || '').trim() || 'Not answered'}</dd></div>
-      ))}
-    </dl>
-  </section>
-))}
-</div>
-</section>
-)}
-
-<FormErrorSummary errors={errors} focusSignal={errorSignal} />
-{status && (
-  <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'} aria-live={isError ? 'assertive' : 'polite'}>
-    {status}
-  </div>
-)}
-
-<div className="petition-step-nav">
-  <span className="petition-step-count k-mark">
-    Step {step + 1} of {ACTS.length}
-    <small className="petition-saved-note">Your answers are saved on this device. You can close this page and come back.</small>
-  </span>
-  <div className="petition-step-actions">
-    {step > 0 && (
-      <button type="button" className="k-btn k-btn-quiet" onClick={goBack}>Back</button>
-    )}
-    {isFinalStep ? (
-      <button key="send" type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages || (activePeriodLoaded && !activePeriod)}>{processingImages ? 'Preparing images…' : loading ? 'Sending…' : 'Send my application'}</button>
-    ) : (
-      <button key="continue" type="button" className="k-btn" onClick={(e) => { e.preventDefault(); goNext(); }}>Continue</button>
-    )}
-  </div>
-</div>
-</form>
-</>
-);
+function formatNum(value) {
+  const parsed = parseNumberInput(value);
+  return parsed.ok ? parsed.digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : String(value || '');
 }

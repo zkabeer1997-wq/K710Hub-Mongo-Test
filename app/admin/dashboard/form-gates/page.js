@@ -16,7 +16,7 @@ import { FORM_META_KEYS, FORM_META_TITLES, FORM_FIELDS_REORDERABLE, DEFAULT_FORM
 
 // Forms grouped by the event they belong to.
 const GROUPS = [
-  { id: 'kvk', title: 'KvK', keys: ['joiner', 'prep', 'appointments'] },
+  { id: 'kvk', title: 'KvK', keys: ['joiner', 'prep'] },
   { id: 'flamedragon', title: 'Flamedragon Tyrant', keys: ['dragon', 'noble'] },
   { id: 'standing', title: 'Standing', keys: ['lead', 'requests'] },
   { id: 'other', title: 'Other', keys: ['swordland', 'tri-alliance'] },

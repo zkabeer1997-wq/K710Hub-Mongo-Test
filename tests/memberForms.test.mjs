@@ -47,10 +47,10 @@ test('event forms never need input before an admin schedules a window', () => {
 });
 
 test('summary lists pending event votes; Get started targets an event vote first', () => {
-  const statuses = computeFormStatuses({ gates, submissions: { lead: 'x', joiner: 'x', dragon: 'x', noble: 'x', appointments: 'x', 'tri-alliance': 'x' }, now: NOW });
+  const statuses = computeFormStatuses({ gates, submissions: { lead: 'x', joiner: 'x', dragon: 'x', noble: 'x', 'tri-alliance': 'x' }, now: NOW });
   assert.equal(stillNeedsSummary(statuses), 'Still needs your input: Swordland');
   assert.equal(firstIncomplete(statuses).href, '/forms/swordland-showdown');
-  const all = computeFormStatuses({ gates, submissions: { lead: 'x', joiner: 'x', dragon: 'x', noble: 'x', appointments: 'x', swordland: 'x', 'tri-alliance': 'x' }, now: NOW });
+  const all = computeFormStatuses({ gates, submissions: { lead: 'x', joiner: 'x', dragon: 'x', noble: 'x', swordland: 'x', 'tri-alliance': 'x' }, now: NOW });
   assert.equal(firstIncomplete(all), null);
   assert.equal(stillNeedsSummary(all), null);
 });

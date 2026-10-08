@@ -12,8 +12,8 @@ import { ACTION_LABELS, fetchEventState, runEventAction } from './eventControlCl
 import { formatLocal } from './adminDates';
 import { formatUtc } from '../../lib/deadlines.mjs';
 import { Button } from '../ui';
-import KvkAppointmentsPage from '../../app/admin/dashboard/kvk-appointments/page';
-import PrepMinistersPage from '../../app/admin/dashboard/prep-ministers/page';
+import AppointmentsFlow from '../../app/admin/dashboard/kvk-appointments/AppointmentsFlow';
+import PrepMinistersTable from '../../app/admin/dashboard/prep-ministers/PrepMinistersTable';
 
 const EVENTS = {
   kvk: {
@@ -33,7 +33,6 @@ const EVENTS = {
       { id: 'participants', label: 'Participants' },
       { id: 'rallies', label: 'Rallies' },
       { id: 'appointments', label: 'Appointments' },
-      { id: 'prep', label: 'Prep ministers' },
       { id: 'history', label: 'History' },
     ],
   },
@@ -87,7 +86,7 @@ function confirmCopy(action, state, eventName) {
         confirm: 'Publish schedule',
         danger: false,
         body: [
-          `${c.assigned ?? 0} of ${c.applicants ?? 0} applicants are assigned. ${c.unassigned ?? 0} unassigned applicants will not get a slot.`,
+          `${state?.appointments?.slots_booked ?? 0} appointment slots for ${state?.appointments?.people_booked ?? 0} people are ready (${state?.appointments?.prep_answers ?? 0} Prep & Appointments answers this cycle).`,
           'Members can see the published schedule straight away.',
         ],
       };
@@ -155,7 +154,8 @@ export default function EventControl({ type }) {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    const wanted = new URLSearchParams(window.location.search).get('tab');
+    let wanted = new URLSearchParams(window.location.search).get('tab');
+    if (wanted === 'prep') wanted = 'appointments'; // old "Prep ministers" tab links
     if (wanted && config.tabs.some((t) => t.id === wanted)) setTab(wanted);
   }, [config]);
 
@@ -406,19 +406,7 @@ export default function EventControl({ type }) {
 
         {tab === 'appointments' && type === 'kvk' ? (
           <div role="tabpanel" id="ec-panel-appointments" aria-labelledby="ec-tab-appointments">
-            {state?.appointments ? (
-              <p className="ec-panel-note">
-                <StatusChip kind={state.appointments.published ? 'published' : 'warn'}>
-                  {state.appointments.published ? 'Published to members' : 'Not published yet'}
-                </StatusChip>
-              </p>
-            ) : null}
-            <AdminEmbedContext.Provider value><KvkAppointmentsPage /></AdminEmbedContext.Provider>
-          </div>
-        ) : null}
-        {tab === 'prep' && type === 'kvk' ? (
-          <div role="tabpanel" id="ec-panel-prep" aria-labelledby="ec-tab-prep">
-            <AdminEmbedContext.Provider value><PrepMinistersPage /></AdminEmbedContext.Provider>
+            <AdminEmbedContext.Provider value><AppointmentsFlow onChanged={load} /></AdminEmbedContext.Provider>
           </div>
         ) : null}
         {tab === 'noble' && type === 'flamedragon' ? (
@@ -430,7 +418,7 @@ export default function EventControl({ type }) {
                 </StatusChip>
               </p>
             ) : null}
-            <AdminEmbedContext.Provider value><PrepMinistersPage noble /></AdminEmbedContext.Provider>
+            <AdminEmbedContext.Provider value><PrepMinistersTable noble /></AdminEmbedContext.Provider>
           </div>
         ) : null}
 

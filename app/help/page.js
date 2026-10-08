@@ -75,7 +75,7 @@ const SECTIONS = [
       <>
         <p>
           <strong>KvK</strong> is the big kingdom-versus-kingdom battle event. <strong>Bear Hunt</strong> is a team
-          event where alliances fight a bear. <strong>TG</strong> is a troop upgrade level. <strong>Power</strong> is
+          event where alliances fight a bear. <strong>TG</strong> (TrueGold) is a high upgrade tier, from TG1 up to TG10. Higher is stronger. <strong>Power</strong> is
           the number that shows how strong your account is.
         </p>
         <p>

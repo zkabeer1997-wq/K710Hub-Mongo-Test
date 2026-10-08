@@ -129,12 +129,12 @@ test('GET shape for a fresh kvk and flamedragon cycle', async () => {
   assert.equal(kvk.title, 'KvK');
   assert.equal(kvk.cycle.label, 'First cycle');
   assert.equal(kvk.cycle.status, 'collecting');
-  assert.deepEqual(kvk.forms.map((f) => f.form_key), ['lead', 'joiner', 'prep', 'appointments']);
-  assert.deepEqual(kvk.forms.map((f) => f.label), ['Power Profile', 'KvK Availability', 'KvK Prep', 'KvK Appointments']);
+  assert.deepEqual(kvk.forms.map((f) => f.form_key), ['lead', 'joiner', 'prep']); // KvK Appointments is no longer a separate member form
+  assert.deepEqual(kvk.forms.map((f) => f.label), ['Power Profile', 'KvK Availability', 'KvK Prep & Appointments']);
   assert.ok(kvk.forms.every((f) => f.state === 'open' && f.is_open));
-  assert.deepEqual(kvk.appointments, { published: false, cycle_id: 'current' });
+  assert.deepEqual(kvk.appointments, { published: false, cycle_id: 'current', prep_answers: 0, slots_booked: 0, people_booked: 0 });
   assert.equal(kvk.next_actions[0], 'close_forms');
-  assert.deepEqual(kvk.counts, { applicants: 0, assigned: 0, unassigned: 0, forms_open: 4, forms_total: 4, forms_submitted: { joiner: 0, prep: 0 } });
+  assert.deepEqual(kvk.counts, { applicants: 0, assigned: 0, unassigned: 0, forms_open: 3, forms_total: 3, forms_submitted: { joiner: 0, prep: 0 } });
   const fd = await get('flamedragon');
   assert.equal(fd.title, 'Flamedragon Tyrant');
   assert.equal(fd.appointments, null);

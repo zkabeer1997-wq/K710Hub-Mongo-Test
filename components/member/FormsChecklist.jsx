@@ -15,7 +15,7 @@ import styles from './FormsChecklist.module.css';
 export const PLAIN = FORM_PLAIN;
 
 const GROUPS = [
-  { id: 'kvk', title: 'KvK', intro: 'The kingdom-versus-kingdom battle.', keys: ['joiner', 'prep', 'appointments'], cycle: true },
+  { id: 'kvk', title: 'KvK', intro: 'The kingdom-versus-kingdom battle.', keys: ['joiner', 'prep'], cycle: true },
   { id: 'dragon', title: 'Flamedragon Tyrant', intro: 'The Flamedragon Tyrant event.', keys: ['dragon', 'noble'], cycle: true },
   { id: 'votes', title: 'Event votes', intro: 'Short votes. They only open on certain days.', keys: ['swordland', 'tri-alliance'] },
   { id: 'always', title: 'Any time', intro: 'You do not need to redo these for every event.', keys: ['lead'] },
@@ -44,7 +44,7 @@ function Row({ form }) {
   const todo = st.id === 'todo' || st.id === 'carry';
   let hint = null;
   if (st.id === 'carry') hint = `We filled this in from your answers last time${form.previousLabel ? ` (${form.previousLabel})` : ''}. Please check them and press Save.`;
-  else if (st.id === 'done' && form.updatedAt) hint = <>Saved <DualTime value={form.updatedAt} />.{form.appliedTitles ? ` Applied for: ${form.appliedTitles}.` : ''}</>;
+  else if (st.id === 'done' && form.updatedAt) hint = <>Saved <DualTime value={form.updatedAt} />.</>;
   else if (st.id === 'soon' && form.opensAt) hint = <>Opens <DualTime value={new Date(form.opensAt).toISOString()} />.</>;
   else if (st.id === 'closed') hint = 'This form is not taking answers right now.';
   else if (form.closesAt && form.state === 'open') hint = <>Closes <DualTime value={new Date(form.closesAt).toISOString()} />.</>;
@@ -57,6 +57,9 @@ function Row({ form }) {
         </div>
         <p className={styles.desc}>{PLAIN[form.key] || ''}</p>
         {hint && <p className={styles.hint}>{hint}</p>}
+        {form.appointmentsSummary?.length > 0 && (
+          <p className={styles.hint}>Your appointment: {form.appointmentsSummary.join('; ')}. <Link href="/forms/kvk-appointments">See My appointment</Link></p>
+        )}
       </div>
       {btn.disabled ? (
         <span className={`${styles.bigBtn} ${styles.disabledBtn}`} aria-disabled="true">{btn.text}</span>

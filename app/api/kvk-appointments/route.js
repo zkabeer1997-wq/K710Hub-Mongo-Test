@@ -5,7 +5,7 @@ import { readMemberSession } from '../../../lib/memberAuth';
 import { validateApplication, validateApplicationBatch, listTypeTitles, APPOINTMENT_TYPES, PREFERRED_HOUR_COUNT } from '../../../lib/kvkAppointments.mjs';
 import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
 import { ObjectId } from 'mongodb';
-import { getCurrentEventCycle } from '../../../lib/eventCycles.server.js';
+import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
 import { loadAppointmentGate, isCyclePublished, publicApplication } from '../../../lib/kvkAppointments.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +40,8 @@ async function loadPreviousApplications(memberId, currentCycleId) {
   }
 }
 
-// GET -> this member's applications, and their assignments once published.
+// GET -> this member's assignments once published, plus what they asked for in the Prep form (`prep`).
+// The old per-buff applications stay in the payload for older clients; the UI no longer uses them.
 export async function GET(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401, headers: HEADERS });
@@ -61,7 +62,17 @@ export async function GET(request) {
       const rows = await coll.find({ member_id: session.memberId, cycle_id: g.cycleId }).toArray();
       assignments = rows.map((r) => ({ day: r.day, buff: r.buff, slot: r.slot }));
     }
+    // What the member asked for in the KvK Prep & Appointments form this cycle (the single source of requests).
+    const prepLoaded = await loadMemberCycleRecord('prep', session.memberId).catch(() => null);
+    const pr = prepLoaded?.record || null;
+    const prep = pr ? {
+      saved: true,
+      want_construction: pr.want_construction || '', want_research: pr.want_research || '', want_troop_training: pr.want_troop_training || '',
+      avail_counts: { 1: (pr.avail_day1 || []).length, 2: (pr.avail_day2 || []).length, 4: (pr.avail_day4 || []).length },
+    } : { saved: false };
     return NextResponse.json({
+      prep,
+      cycleStart: cycle?.start_date || null,
       types: APPOINTMENT_TYPES,
       preferredHourCount: PREFERRED_HOUR_COUNT,
       cycle_id: g.cycleId,
@@ -97,6 +108,7 @@ async function upsertApplication(coll, memberId, cycleId, value, now) {
 }
 
 // POST, two body shapes:
+//  RETIRED from the UI (the KvK Prep & Appointments form replaced it); still accepted for older clients.
 //  - one form with every buff: { in_game_name, applications: [{ day, buff, tg, ttg, speedup_days,
 //    preferred_hours }], withdraw: [{ day, buff }] }. Validated all-or-nothing, then saved.
 //    A withdrawn buff removes the member's application AND any slot leadership gave them for it,

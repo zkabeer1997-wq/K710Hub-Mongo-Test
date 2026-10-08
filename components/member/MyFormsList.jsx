@@ -19,6 +19,9 @@ function Row({ form }) {
       <div className={styles.formMain}>
         <h3>{form.label}</h3>
         <p>{FORM_PLAIN[form.key] || ''}</p>
+        {form.appointmentsSummary?.length > 0 && (
+          <p>Your appointment: {form.appointmentsSummary.join('; ')}. <Link href="/forms/kvk-appointments" prefetch={false}>My appointment</Link></p>
+        )}
       </div>
       <div className={styles.formMeta}>
         <span className={styles.formStatus} data-state={st.id}><span aria-hidden="true">{GLYPH[st.id]}</span>{st.label}</span>

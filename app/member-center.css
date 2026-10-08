@@ -128,3 +128,15 @@
 .appt-open{color:var(--t-secondary)}
 .appt-you{color:var(--brass)}
 @media(max-width:560px){.appt-numbers{grid-template-columns:1fr}.hour-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* My appointment page (read-only) */
+.appt-notice{margin:0 0 14px;padding:12px 14px;border:1px solid var(--brass);border-radius:8px;background:rgba(217,169,78,.08);font-size:15px}
+.appt-status{align-items:flex-start;flex-direction:column;gap:6px}
+.appt-status-text{flex:none;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.appt-role{font-size:13px;font-weight:400;color:var(--t-secondary)}
+.appt-when{margin:0;font-size:18px}
+.appt-time{font-family:var(--font-mono,monospace);font-weight:700;font-variant-numeric:tabular-nums}
+.appt-explain{margin:0;font-size:15px}
+.appt-explain--quiet{color:var(--t-secondary)}
+.appt-status--placed{border-color:#6fb77c}
+.appt-status--waiting,.appt-status--not_placed{border-color:var(--brass)}
+.appt-status{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.appt-status p{max-width:100%}

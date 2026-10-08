@@ -1,8 +1,53 @@
 # KvK appointments (minister / advisor buffs)
 
+## Current flow (single source: KvK Prep & Appointments)
+
+There is ONE member form, **KvK Prep & Appointments** (gate key `prep`, `/prep-phase-backpack`). It carries the ranking inputs (TG tier, TTG, TG, T11, TG dust, speedup days, transfer, promoting T11) and the availability on the **30-minute UTC grid** (`avail_day1/2/4/5`). The old separate Appointments apply form is retired; its `appointments` gate key remains only to hold the schedule cycle id and old data (it is not a form with open/close controls).
+
+Bookable buffs: in KvK Prep the Chief Minister (Day 1 Construction, Day 2 Research) and the Noble Advisor (Day 4 Training); in Flamedragon Tyrant only the Noble Advisor.
+
+### Admin: KvK event page > Appointments tab (`/admin/dashboard/events/kvk?tab=appointments`)
+
+1. **Review answers**: this cycle's answers with each member's rank per day, filters, cycle selector for past cycles.
+2. **Build schedule**: `POST /api/admin-kvk-appointments {action:'build_schedule'}` runs `prepScheduler.schedule()` (ranking rules unchanged) and saves automatic assignments (`replaceAutoAssignments`, atomic). Hand-placed (locked) rows are never touched.
+3. **Adjust**: place, move or remove (`assign` / `unassign`); a hand placement is locked. Members without a slot are listed with a reason.
+4. **Publish**: publish / unpublish with a confirmation; members see it in My appointment.
+5. **Share**: Download Excel, Export to Google Drive, Copy as text for Discord (UTC).
+
+`/admin/dashboard/prep-ministers` and `/admin/dashboard/kvk-appointments` redirect to that tab; `/admin/dashboard/noble-advisor` redirects to the Flamedragon `noble` tab (same scheduler, Day 4 only, same exports).
+
+### Slot cap
+
+`MAX_SLOTS_PER_DAY = 1` (`app/admin/dashboard/prepScheduler.mjs`, owner decision): nobody gets more than one slot per day, on Days 1, 2, 4 and 5 and in the Noble schedule. The old Day 4 rule "1 extra slot per 600 troop speedup days (max 8)" no longer grants anything; it never affected rank order, so ranking is unchanged. Duplicate answers from one member id are collapsed.
+
+### Stored assignment shape (`kvk_appointment_assignments`)
+
+`{cycle_id, day, buff, slot:'HH:MM', member_id, name, manual, score?}`; unique on `(cycle_id, day, buff, slot)` and `(cycle_id, day, buff, member_id)`.
+
+| Scheduler day | day | buff |
+|---|---|---|
+| Day 1 | 1 | `construction` |
+| Day 2 | 2 | `research` |
+| Day 4 | 4 | `training` |
+| Day 5 overflow (missed Day 1 and/or Day 2) | 5 | `overflow` |
+
+`lib/kvkScheduleBridge.mjs` holds the mapping, text/Excel sheets and the "not placed" reasons; `lib/kvkSchedule.server.js` the server build. `allocateSlots()` / contribution score below are kept only for cycles that used the old Appointments form (view-only in the admin; the legacy `auto_allocate` action never touches days without old applications).
+
+---
+
+## Legacy (old separate Appointments form, kept for older cycles)
+
 Members apply for a Chief Minister or Noble Advisor buff, leadership allocates 30-minute UTC slots, and members see their slot once the schedule is published.
 
-## Member side: `/forms/kvk-appointments?tab=...`
+> **Update (member side):** the separate Apply form is retired. Members ask for buffs in the single
+> **KvK Prep & Appointments** form (`/prep-phase-backpack`, key `prep`): Day 1 Construction and Day 2 Research (Chief
+> Minister), Day 4 Troop Training (Noble Advisor), Day 5 overflow, each with a Yes/No and a 30-minute UTC time grid.
+> `/forms/kvk-appointments` is now the read-only **My appointment** page (tabs `mine`, `schedule`; `?tab=apply`
+> redirects to the Prep form). `GET /api/kvk-appointments` adds `prep` (what the member asked for) and `cycleStart`;
+> `/api/member-form-status` adds `appointmentsSummary` on the `prep` entry once published. The batch POST is still
+> accepted for old clients but no UI calls it. The tab table below describes the retired Apply flow.
+
+## Member side (legacy description): `/forms/kvk-appointments?tab=...`
 
 Each tab is a real link, so it can be shared and works with the Back button.
 
