@@ -12,6 +12,7 @@
     "test": "node --test 'tests/**/*.test.mjs'",
     "lint": "eslint .",
     "qa": "node scripts/qa-routes.js",
+    "scan:eval": "node scripts/scan-eval.mjs",
     "qa:smoke": "node scripts/qa-smoke.js",
     "qa:visual": "node scripts/qa-visual-diff.js",
     "qa:visual:baseline": "node scripts/qa-visual-diff.js --baseline",
@@ -35,7 +36,8 @@
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.3.3",

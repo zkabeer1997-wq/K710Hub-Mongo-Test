@@ -175,3 +175,21 @@ Still blocking phases 2-4 (need owner): full-resolution labelled screenshots (pr
 element, tier-label look on screen, the exact on-screen word for "Forgery".
 Phase 1 (foundations: image check, coordinate maths, colour maths, Otsu, zod schemas, game data, kind registry)
 does not need fixtures and can start now.
+
+## Phase 1 status (foundations built, no fixtures needed)
+Built under `lib/scan/` (pure ES modules, no fs/DOM): `imageCheck` (PNG/JPEG/WebP/HEIC byte checks, 12 MB cap,
+`STANDARD_WIDTH = 1080` provisional), `normalize` (resize/grey/crop/scaleUp), `coords` (anchor frame maths),
+`color` (HSV, trimmed mean, palette match with confidence), `otsu` (threshold, auto-invert, `prepareForOcr`),
+`schemas` (zod: profile, readings, `LoadoutPayload`, `FixtureLabels`), `validate` (lower confidence, flags, never
+changes values), `kinds/` registry (`governor_profile`, `backpack_gear` game data + validators) and an
+`engine.mjs` skeleton (`ENGINE_VERSION 0.1.0-phase1`, returns `not_implemented`, fakes no readings).
+`npm run scan:eval` and `tests/fixtures/scan/README.md` (labels.json format) exist; `zod` is now declared.
+Tests: `tests/scan*.test.mjs`. The 58 Governor Gear labels are checked 1:1 against `GOVERNOR_GEAR_OPTIONS`.
+
+Explicitly still UNKNOWN / blocking phases 2-4:
+- Quality frame colour palette (`QUALITY_PALETTE_STATUS = 'unmeasured'`, empty): measure from labelled screenshots.
+- The anchor element (type, template or text, expected rect) for both screens.
+- Charm level shape templates (`CHARM_SHAPE_TEMPLATES_STATUS = 'unknown'`).
+- The on-screen word for Forgery (`FORGERY_ON_SCREEN_WORD_STATUS = 'unknown'`; reference site says "Mastery").
+- Tier label look (including tier 0), star row look, hero gear rarities below gold/red on the backpack tab.
+- Full-resolution labelled screenshots from several devices; the best `STANDARD_WIDTH`.
