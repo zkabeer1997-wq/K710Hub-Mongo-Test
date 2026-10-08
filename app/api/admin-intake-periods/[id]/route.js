@@ -24,6 +24,7 @@ export async function PATCH(request, { params: paramsPromise }) {
     if (!period) return NextResponse.json({ error: 'Intake period not found.' }, { status: 404 });
     return NextResponse.json({ period });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to update intake period.' }, { status: 500 });
+    console.error('admin-intake-periods/[id]' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to update intake period.' }, { status: 500 });
   }
 }

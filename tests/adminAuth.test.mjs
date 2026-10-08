@@ -46,7 +46,8 @@ assert.equal(await isAdminRequest(requestWithCookie()), false, 'missing cookie s
 {
   const enc = new TextEncoder();
   const expiredPayload = Buffer.from(JSON.stringify({ nonce: 'x', exp: Date.now() - 1000 }), 'utf8').toString('base64url');
-  const sigBuffer = await crypto.subtle.digest('SHA-256', enc.encode(`tff-admin-session-v2:${expiredPayload}:${process.env.ADMIN_PASSWORD}`));
+  const key = await crypto.subtle.importKey('raw', enc.encode(process.env.ADMIN_PASSWORD), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sigBuffer = await crypto.subtle.sign('HMAC', key, enc.encode(`tff-admin-session-v3:${expiredPayload}`));
   const signature = Array.from(new Uint8Array(sigBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
   assert.equal(await isValidAdminToken(`${expiredPayload}.${signature}`), false, 'expired token should be rejected');
 }

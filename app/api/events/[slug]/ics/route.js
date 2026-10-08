@@ -53,6 +53,7 @@ export async function GET(_request, { params: paramsPromise }) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('events/[slug]/ics' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

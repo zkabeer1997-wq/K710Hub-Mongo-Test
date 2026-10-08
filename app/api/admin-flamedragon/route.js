@@ -67,7 +67,8 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('admin-flamedragon GET failed', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-flamedragon' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }
 
@@ -95,7 +96,8 @@ export async function DELETE(request) {
     await coll.deleteMany({ member_id: { $in: deletedMemberIds } });
     return NextResponse.json({ deletedMemberIds });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-flamedragon' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }
 
@@ -138,6 +140,7 @@ export async function POST(request) {
     const [row] = mergePowerProfilesIntoRows([safe], []);
     return NextResponse.json({ row });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-flamedragon' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

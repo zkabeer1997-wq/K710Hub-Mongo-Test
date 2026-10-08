@@ -15,7 +15,8 @@ export async function GET(request) {
     const meta = await getFormFieldMeta(formKey);
     return NextResponse.json(meta);
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to load form.' }, { status: 500 });
+    console.error('admin-form-field-meta' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to load form.' }, { status: 500 });
   }
 }
 
@@ -37,6 +38,7 @@ export async function PUT(request) {
     const meta = await saveFormFieldMeta(formKey, { intro: body.intro, fields: body.fields });
     return NextResponse.json(meta);
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to save form.' }, { status: 500 });
+    console.error('admin-form-field-meta' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to save form.' }, { status: 500 });
   }
 }

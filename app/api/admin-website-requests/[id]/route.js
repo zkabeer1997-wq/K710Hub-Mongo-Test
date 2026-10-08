@@ -48,6 +48,7 @@ export async function PATCH(request, { params: paramsPromise }) {
     const { _id, ...rest } = data;
     return NextResponse.json({ row: { ...rest, id: rest.id || String(_id) } });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-website-requests/[id]' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

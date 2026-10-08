@@ -22,6 +22,7 @@ export async function DELETE(request, { params: paramsPromise }) {
     await profiles.deleteMany({ member_id: String(memberId) });
     return NextResponse.json({ deletedMemberIds: [String(memberId)] });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-submissions/[memberId]' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

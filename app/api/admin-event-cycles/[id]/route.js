@@ -34,6 +34,7 @@ export async function PATCH(request, { params: paramsPromise }) {
     }
     return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to update season.' }, { status: 500 });
+    console.error('admin-event-cycles/[id]' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to update season.' }, { status: 500 });
   }
 }

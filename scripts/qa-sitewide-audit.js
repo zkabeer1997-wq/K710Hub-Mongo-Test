@@ -26,7 +26,7 @@ const ADMIN_PREFIX = '/admin/dashboard';
 function b64(v){return Buffer.from(v,'utf8').toString('base64url')}
 function sha(v){return crypto.createHash('sha256').update(v).digest('hex')}
 function mintMember(){const secret=process.env.MEMBER_SESSION_SECRET||process.env.ADMIN_PASSWORD||'';if(!secret)return null;const payload=b64(JSON.stringify({memberId:MEMBER_ID,nonce:crypto.randomUUID(),exp:Date.now()+12*60*60*1000}));return `${payload}.${sha(`k710-member-v2:${payload}:${secret}`)}`}
-function mintAdmin(){const secret=process.env.ADMIN_PASSWORD||'';if(!secret)return null;const payload=b64(JSON.stringify({nonce:crypto.randomUUID(),exp:Date.now()+8*60*60*1000}));return `${payload}.${sha(`tff-admin-session-v2:${payload}:${secret}`)}`}
+function mintAdmin(){const secret=process.env.ADMIN_PASSWORD||'';if(!secret)return null;const payload=b64(JSON.stringify({nonce:crypto.randomUUID(),exp:Date.now()+8*60*60*1000}));return `${payload}.${crypto.createHmac('sha256',secret).update(`tff-admin-session-v3:${payload}`).digest('hex')}`}
 function safeName(route,width){return `${(route.replace(/^\//,'').replace(/\//g,'-')||'home')}@${width}.png`}
 function needsMember(route){return MEMBER_PREFIXES.some(p=>route===p||route.startsWith(p+'/'))}
 function needsAdmin(route){return route===ADMIN_PREFIX||route.startsWith(ADMIN_PREFIX+'/')}

@@ -48,6 +48,7 @@ export async function POST(request) {
     );
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('prep-backpack' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

@@ -9,6 +9,9 @@ on:
       - design/sitewide-parallax-ui
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   audit:
     runs-on: ubuntu-latest

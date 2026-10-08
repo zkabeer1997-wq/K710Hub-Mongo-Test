@@ -5,7 +5,8 @@
 Required:
 - `MONGODB_URI` — MongoDB Atlas connection string
 - `MEMBER_SESSION_SECRET` — long random secret for member cookies
-- `ADMIN_PASSWORD` — admin password login fallback
+- `ADMIN_PASSWORD` — admin password login
+- `ADMIN_SESSION_SECRET` — (recommended) separate secret that signs admin session tokens; falls back to `ADMIN_PASSWORD`
 - `ADMIN_SESSION_SECRET` or reuse admin auth secret if used
 - Kingshot login secrets used by `lib/kingshotLogin.js` (public key / signing material as already configured on Mongo-Test)
 

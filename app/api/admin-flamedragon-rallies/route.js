@@ -35,7 +35,8 @@ export async function GET(request) {
       .toArray();
     return NextResponse.json({ rallies: formatRallyRows(data || []) });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-flamedragon-rallies' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }
 
@@ -55,6 +56,7 @@ export async function PUT(request) {
     }
     return NextResponse.json({ rallies: formatRallyRows(rows) });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-flamedragon-rallies' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

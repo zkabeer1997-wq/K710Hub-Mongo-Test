@@ -22,9 +22,7 @@ export async function GET(request) {
   // when CRON_SECRET is configured on the project).
   const isCron = Boolean(cronSecret) && authHeader === `Bearer ${cronSecret}`;
 
-  const adminBearer = process.env.ADMIN_PASSWORD && authHeader === `Bearer ${process.env.ADMIN_PASSWORD}`;
-
-  if (!isCron && !adminBearer) {
+  if (!isCron) {
     return noStoreJson({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -33,7 +31,7 @@ export async function GET(request) {
     return noStoreJson({ ok: true, discovery });
   } catch (error) {
     console.error('gift-codes cron failed', error);
-    return noStoreJson({ error: 'Cron failed', detail: error?.message }, { status: 500 });
+    return noStoreJson({ error: 'Cron failed' }, { status: 500 });
   }
 }
 

@@ -73,7 +73,7 @@ function mintAdminCookie() {
   const nonce = crypto.randomUUID();
   const exp = Date.now() + 8 * 60 * 60 * 1000;
   const payload = toBase64Url(JSON.stringify({ nonce, exp }));
-  const signature = sha256Hex(`tff-admin-session-v2:${payload}:${secret}`);
+  const signature = crypto.createHmac('sha256', secret).update(`tff-admin-session-v3:${payload}`).digest('hex');
   return `${payload}.${signature}`;
 }
 

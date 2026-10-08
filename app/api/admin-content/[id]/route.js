@@ -32,7 +32,8 @@ export async function PATCH(request, { params: paramsPromise }) {
     const { _id, ...rest } = data;
     return NextResponse.json({ block: { ...rest, id: rest.id || String(_id) } });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-content/[id]' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }
 
@@ -48,6 +49,7 @@ export async function DELETE(request, { params: paramsPromise }) {
     await coll.deleteOne({ _id: existing._id });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin-content/[id]' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

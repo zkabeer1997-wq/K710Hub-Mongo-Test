@@ -88,7 +88,8 @@ export async function PUT(request, { params: paramsPromise }) {
     revalidateAlliancePages(tag);
     return NextResponse.json({ alliance: data });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Update failed.' }, { status: 500 });
+    console.error('admin-alliances/[tag]' + ' failed', error);
+    return NextResponse.json({ error: 'Update failed.' }, { status: 500 });
   }
 }
 
@@ -109,6 +110,7 @@ export async function DELETE(request, { params: paramsPromise }) {
     revalidateAlliancePages(tag);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Delete failed.' }, { status: 500 });
+    console.error('admin-alliances/[tag]' + ' failed', error);
+    return NextResponse.json({ error: 'Delete failed.' }, { status: 500 });
   }
 }

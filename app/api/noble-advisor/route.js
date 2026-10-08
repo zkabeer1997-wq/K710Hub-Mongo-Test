@@ -35,8 +35,12 @@ export async function GET(request) {
 export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401, headers });
-  if ((await getFormGate('noble')).is_open === false) {
-    return NextResponse.json({ error: 'Noble Advisor bookings are closed.' }, { status: 403, headers });
+  try {
+    if ((await getFormGate('noble')).is_open === false) {
+      return NextResponse.json({ error: 'Noble Advisor bookings are closed.' }, { status: 403, headers });
+    }
+  } catch {
+    return NextResponse.json({ error: 'Unable to save your booking. Please try again.' }, { status: 500, headers });
   }
   let body;
   try {

@@ -13,6 +13,12 @@ const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
 const rateLimitHits = new Map();
 const MIN_FILL_TIME_MS = 3000;
+const MAX_TEXT_FIELD_LENGTH = 300;
+
+/** Text answers are short; cap them so a hostile body cannot store huge strings. */
+function cap(value, max = MAX_TEXT_FIELD_LENGTH) {
+  return String(value || '').trim().slice(0, max);
+}
 
 function isRateLimited(ip) {
   const now = Date.now();
@@ -87,25 +93,25 @@ export async function POST(request) {
     const fields = {
       intake_period: activePeriod.label,
       intake_period_id: activePeriod.id,
-      in_game_name: String(formData.get('in_game_name') || ''),
-      player_id: String(formData.get('player_id') || ''),
-      discord_username: String(formData.get('discord_username') || ''),
-      current_server: String(formData.get('current_server') || ''),
-      current_alliance: String(formData.get('current_alliance') || ''),
-      migrate_alliance: String(formData.get('migrate_alliance') || ''),
-      highest_troop_level: String(formData.get('highest_troop_level') || ''),
-      current_tg: String(formData.get('current_tg') || ''),
-      t11_units: formData.getAll('t11_units').map(String),
-      mystic_trial_stages: String(formData.get('mystic_trial_stages') || ''),
-      total_power: String(formData.get('total_power') || ''),
-      willing_reduce_power: String(formData.get('willing_reduce_power') || ''),
-      passes_required: String(formData.get('passes_required') || ''),
-      current_passes: String(formData.get('current_passes') || ''),
-      active_commit: String(formData.get('active_commit') || ''),
-      willing_save_resources: String(formData.get('willing_save_resources') || ''),
-      participates_battles: String(formData.get('participates_battles') || ''),
-      spending_archetype: String(formData.get('spending_archetype') || ''),
-      main_language: String(formData.get('main_language') || ''),
+      in_game_name: cap(formData.get('in_game_name')),
+      player_id: cap(formData.get('player_id')),
+      discord_username: cap(formData.get('discord_username')),
+      current_server: cap(formData.get('current_server')),
+      current_alliance: cap(formData.get('current_alliance')),
+      migrate_alliance: cap(formData.get('migrate_alliance')),
+      highest_troop_level: cap(formData.get('highest_troop_level')),
+      current_tg: cap(formData.get('current_tg')),
+      t11_units: formData.getAll('t11_units').slice(0, 20).map((v) => cap(v, 100)),
+      mystic_trial_stages: cap(formData.get('mystic_trial_stages')),
+      total_power: cap(formData.get('total_power')),
+      willing_reduce_power: cap(formData.get('willing_reduce_power')),
+      passes_required: cap(formData.get('passes_required')),
+      current_passes: cap(formData.get('current_passes')),
+      active_commit: cap(formData.get('active_commit')),
+      willing_save_resources: cap(formData.get('willing_save_resources')),
+      participates_battles: cap(formData.get('participates_battles')),
+      spending_archetype: cap(formData.get('spending_archetype')),
+      main_language: cap(formData.get('main_language')),
     };
 
     const REQUIRED_FIELDS = [

@@ -41,7 +41,8 @@ export async function GET(request) {
     const data = await coll.findOne({ member_id: memberId }, { projection: PUBLIC_PROJECT });
     return NextResponse.json({ profile: publicPowerProfile(data) });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('power-profile' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }
 
@@ -93,6 +94,7 @@ export async function POST(request) {
       status: existing ? 'updated' : 'created',
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('power-profile' + ' failed', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

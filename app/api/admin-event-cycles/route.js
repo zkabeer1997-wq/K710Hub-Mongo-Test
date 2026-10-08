@@ -14,7 +14,8 @@ export async function GET(request) {
     const cycles = await listEventCycles(type);
     return NextResponse.json({ cycles });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to load seasons.' }, { status: 500 });
+    console.error('admin-event-cycles' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to load seasons.' }, { status: 500 });
   }
 }
 
@@ -45,6 +46,7 @@ export async function POST(request) {
     });
     return NextResponse.json({ cycle });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to create season.' }, { status: 500 });
+    console.error('admin-event-cycles' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to create season.' }, { status: 500 });
   }
 }

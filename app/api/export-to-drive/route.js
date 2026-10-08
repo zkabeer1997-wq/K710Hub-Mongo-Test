@@ -72,7 +72,7 @@ export async function POST(request) {
       requestBody: {
         valueInputOption: 'RAW',
         data: sheets.map((sheet) => ({
-          range: `'${sheet.name}'!A1`,
+          range: `'${String(sheet.name).replace(/'/g, "''")}'!A1`,
           values: sheet.rows,
         })),
       },

@@ -10,7 +10,8 @@ export async function GET(request) {
     const periods = await listIntakePeriods();
     return NextResponse.json({ periods });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to load intake periods.' }, { status: 500 });
+    console.error('admin-intake-periods' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to load intake periods.' }, { status: 500 });
   }
 }
 
@@ -35,6 +36,7 @@ export async function POST(request) {
     const period = await createIntakePeriod(label, { activate: !!body?.activate });
     return NextResponse.json({ period });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Unable to create intake period.' }, { status: 500 });
+    console.error('admin-intake-periods' + ' failed', error);
+    return NextResponse.json({ error: 'Unable to create intake period.' }, { status: 500 });
   }
 }

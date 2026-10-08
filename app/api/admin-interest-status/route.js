@@ -154,6 +154,7 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('admin-interest-status failed', error);
-    return NextResponse.json({ error: error.message || 'Update failed.' }, { status: 500 });
+    console.error('admin-interest-status' + ' failed', error);
+    return NextResponse.json({ error: 'Update failed.' }, { status: 500 });
   }
 }

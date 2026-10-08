@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
+import { clientIp, isRateLimited } from '../../../../lib/rateLimit.mjs';
 
 /**
  * Public status check for transfer applicants.
@@ -9,6 +10,9 @@ import { COLLECTIONS } from '../../../../lib/mongoCollections';
  */
 export async function GET(request) {
   const headers = { 'Cache-Control': 'no-store' };
+  if (isRateLimited(`interest-status:${clientIp(request)}`, { windowMs: 10 * 60 * 1000, max: 20 })) {
+    return NextResponse.json({ error: 'Too many lookups. Please wait a few minutes and try again.' }, { status: 429, headers });
+  }
   try {
     const { searchParams } = new URL(request.url);
     const reference = String(searchParams.get('reference') || '').trim().toUpperCase();
@@ -29,25 +33,10 @@ export async function GET(request) {
     }
     if (!doc && reference) {
       const hex = reference.replace(/^K710-/, '').toLowerCase();
-      if (hex.length >= 6) {
-        const all = await coll
-          .find({})
-          .project({
-            id: 1,
-            status: 1,
-            in_game_name: 1,
-            created_at: 1,
-            decided_at: 1,
-            migrate_alliance: 1,
-            _id: 0,
-          })
-          .limit(500)
-          .toArray();
-        doc =
-          all.find((r) => {
-            const ref = 'K710-' + String(r.id || '').replace(/-/g, '').slice(0, 8).toUpperCase();
-            return ref === reference;
-          }) || null;
+      // The reference is the first 8 hex chars of the submission id, so an anchored
+      // prefix match on the indexed `id` field finds it without scanning the collection.
+      if (/^[0-9a-f]{8}$/.test(hex)) {
+        doc = await coll.findOne({ id: { $regex: `^${hex}` } });
       }
     }
 
