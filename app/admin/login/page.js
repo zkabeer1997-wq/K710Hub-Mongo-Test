@@ -23,8 +23,11 @@ export default function AdminLoginPage() {
           (data.profile?.role === 'admin' || data.profile?.role === 'superadmin')
         ) {
           setKingshotAdmin(data.profile);
-          router.replace('/admin/dashboard/interest');
+          router.replace('/admin/dashboard/overview');
           router.refresh();
+          // If the admin pages send us straight back (session not accepted there), do not
+          // sit on "Checking session" forever: show the password form after a moment.
+          setTimeout(() => { if (active) setCheckingSession(false); }, 4000);
           return;
         }
         setCheckingSession(false);
@@ -48,7 +51,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ password }),
       });
       if (res.ok) {
-        router.push('/admin/dashboard/interest');
+        router.push('/admin/dashboard/overview');
         router.refresh();
       } else {
         setError('Incorrect password.');
