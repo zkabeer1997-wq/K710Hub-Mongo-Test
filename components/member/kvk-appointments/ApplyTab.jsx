@@ -23,22 +23,25 @@ export default function ApplyTab({ appts }) {
 
   const type = APPOINTMENT_TYPES.find((t) => typeKey(t) === selected);
   const existing = data?.applications?.find((a) => a.day === type.day && a.buff === type.buff) || null;
+  // Not applied this cycle: start from the same day/buff's earlier-cycle answer (nothing is saved until Save).
+  const carried = existing ? null : data?.previousApplications?.find((a) => a.day === type.day && a.buff === type.buff) || null;
   const selectedTitle = typeTitle(type);
   const closed = data ? !data.window.open : false;
 
   // Load the saved entry into the form whenever the type (or the data) changes.
   useEffect(() => {
     setMessage({ type: '', text: '' });
-    if (existing) {
-      setTg(String(existing.tg ?? ''));
-      setTtg(String(existing.ttg ?? ''));
-      setSpeedup(String(existing.speedup_days ?? ''));
-      setHours(existing.preferred_hours || []);
+    const source = existing || carried;
+    if (source) {
+      setTg(String(source.tg ?? ''));
+      setTtg(String(source.ttg ?? ''));
+      setSpeedup(String(source.speedup_days ?? ''));
+      setHours(source.preferred_hours || []);
     } else {
       setTg(''); setTtg(''); setSpeedup(''); setHours([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, existing?.updated_at]);
+  }, [selected, existing?.updated_at, Boolean(carried), data?.previousApplications]);
 
   useEffect(() => { if (data?.defaultName && !name) setName(data.defaultName); }, [data?.defaultName, name]);
 
@@ -76,7 +79,7 @@ export default function ApplyTab({ appts }) {
           <span>{closed ? (data.window.note || data.window.message || 'Applications are closed.') : 'Applications are open.'}</span>
         </p>
       )}
-      <UpsertNotice known={Boolean(data)} updatedAt={existing?.updated_at || null} cycleLabel={data?.cycleLabel || null} subject={selectedTitle} />
+      <UpsertNotice known={Boolean(data)} updatedAt={existing?.updated_at || null} cycleLabel={data?.cycleLabel || null} previousLabel={carried ? data.previousLabel : null} subject={selectedTitle} />
       <form onSubmit={submit} noValidate aria-describedby={`${uid}-status`}>
         <div className="event-form-field">
           <label htmlFor={`${uid}-type`}>Day and buff</label>

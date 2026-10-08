@@ -367,7 +367,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                       autoFocus
                     />
                   </div>
-                  {status && <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div>}
+                  {status?.trim() ? <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div> : null}
                   <button className={styles.primary} type="submit" disabled={busy}>
                     <span>{busy ? 'Connecting…' : 'Continue'}</span><b aria-hidden="true">→</b>
                   </button>
@@ -452,7 +452,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                 </form>
               )}
 
-              {status && view !== 'player' && <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div>}
+              {status?.trim() && view !== 'player' ? <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div> : null}
             </>
           )}
 
@@ -511,7 +511,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               </div>
 
               <p className={styles.nextHint}>
-                Start with your power profile so leadership has current gear and troop data, then open any form that is currently active.
+                Start with your power profile so leadership has current gear and charm data, then open any form that is currently active.
               </p>
 
               <nav className={styles.destinations} aria-label="Member destinations">

@@ -175,7 +175,7 @@ export default function AlliancesPanel() {
       {loading ? (
         <TableSkeleton rows={3} columns={4} />
       ) : (
-        <Table>
+        <Table className="stack-table">
           <thead><tr><th>Tag</th><th>Name</th><th>Bear Hunts (UTC)</th><th>Event dates</th><th>Status</th><th>Active</th><th /></tr></thead>
           <tbody>
             {rows.map((row) => (

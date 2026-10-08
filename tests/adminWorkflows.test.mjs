@@ -9,7 +9,7 @@ import {optimizeEssencePacks} from '../lib/flamedragonShop.mjs';
 import {createPetPackOptimizer} from '../lib/petPackOptimizer.mjs';
 import {searchRow,compareValues} from '../lib/adminTable.mjs';
 import {profileSummary} from '../lib/memberProfiles.mjs';
-import {TIME_SLOTS,validateNobleAdvisor} from '../lib/nobleAdvisor.mjs';
+import {NOBLE_TIME_SLOTS,TIME_SLOTS,validateNobleAdvisor,normalizeNobleSlots,snapNobleSlot} from '../lib/nobleAdvisor.mjs';
 import {schedule} from '../app/admin/dashboard/prepScheduler.mjs';
 
 const state={tables:{},paths:[]};globalThis.__workflowTest=state;
@@ -43,7 +43,7 @@ process.env.ADMIN_PASSWORD='workflow-test-only';process.env.MEMBER_SESSION_SECRE
 const adminToken=await mintAdminToken(),memberToken=await createMemberToken('member-a');
 const req=(body={},role='anonymous')=>({json:async()=>body,cookies:{get:key=>key==='tff_admin_session'&&role==='admin'?{value:adminToken}:key==='k710_member_session'&&role==='member'?{value:memberToken}:undefined}});
 const params=slug=>({params:Promise.resolve({slug})});
-const booking={in_game_name:'Test member',want_troop_training:'Yes',is_transfer:'No',promoting_t11:'Yes',troop_speedup_days:'650',avail_day4:['00:15','00:45']};
+const booking={in_game_name:'Test member',want_troop_training:'Yes',is_transfer:'No',promoting_t11:'Yes',troop_speedup_days:'650',avail_day4:['00:00','00:30']};
 
 test('new admin endpoints require signed admin access before reading or changing data',async()=>{
  for(const handler of [badges.GET,settings.GET,settings.PUT,adminNoble.GET,adminNoble.PATCH,profiles.GET])for(const role of ['anonymous','member'])assert.equal((await handler(req({},role))).status,401);
@@ -92,12 +92,19 @@ test('member bookings are session-owned, persist, update, and honor form closure
  assert.equal((await adminNoble.PATCH(req({id:bookingId,key:'troop_speedup_days',value:'1200'},'admin'))).status,200);
  const rows=(await (await adminNoble.GET(req({},'admin'))).json()).rows;
  assert.equal(rows[0].troop_speedup_days,'1200');assert.deepEqual(rows[0].avail_day4,booking.avail_day4);
- const day4=schedule(rows).days.find(day=>day.day===4);assert.ok(day4.rows.some(r=>r.member.includes('Test member')));
+ const day4=schedule(rows,{day4Slots:NOBLE_TIME_SLOTS}).days.find(day=>day.day===4);assert.equal(day4.rows.length,48);assert.deepEqual(day4.rows.slice(0,2).map(r=>r.time),['00:00','00:30']);assert.ok(day4.rows.some(r=>r.member.includes('Test member')));
 });
 test('Noble validation rejects invalid slots, missing answers, negative days; accepts zero and deduplicates',()=>{
- assert.equal(TIME_SLOTS.length,48);
- for(const bad of [{avail_day4:['12:00']},{troop_speedup_days:'-1'},{promoting_t11:''},{avail_day4:[]}])assert.ok(validateNobleAdvisor({...booking,...bad}).error);
- assert.deepEqual(validateNobleAdvisor({...booking,troop_speedup_days:'0',avail_day4:['00:15','00:15']}).record.avail_day4,['00:15']);
+ assert.equal(NOBLE_TIME_SLOTS.length,48);assert.equal(NOBLE_TIME_SLOTS[0],'00:00');assert.equal(NOBLE_TIME_SLOTS[1],'00:30');assert.equal(NOBLE_TIME_SLOTS[47],'23:30');
+ assert.ok(NOBLE_TIME_SLOTS.every(t=>/^\d\d:(00|30)$/.test(t)));assert.equal(TIME_SLOTS.length,48);
+ for(const legacy of ['00:15','00:45','23:45','01:15'])assert.ok(validateNobleAdvisor({...booking,avail_day4:[legacy]}).error,legacy);
+ for(const bad of [{avail_day4:['12:10']},{troop_speedup_days:'-1'},{promoting_t11:''},{avail_day4:[]}])assert.ok(validateNobleAdvisor({...booking,...bad}).error);
+ assert.deepEqual(validateNobleAdvisor({...booking,troop_speedup_days:'0',avail_day4:['00:30','00:30']}).record.avail_day4,['00:30']);
+});
+test('legacy quarter-hour Noble slots snap to the earlier :00/:30 without dropping data',()=>{
+ assert.equal(snapNobleSlot('00:15'),'00:00');assert.equal(snapNobleSlot('00:45'),'00:30');assert.equal(snapNobleSlot('23:45'),'23:30');assert.equal(snapNobleSlot('14:30'),'14:30');assert.equal(snapNobleSlot('nope'),'');
+ assert.deepEqual(normalizeNobleSlots(['23:45','00:15','00:45','00:00','01:15']),['23:30','00:00','00:30','01:00']);
+ assert.deepEqual(normalizeNobleSlots(undefined),[]);
 });
 test('tool settings preserve fixed rules, validate bounds and apply to optimizer inputs',async()=>{
  for(const key of Object.keys(TOOL_CATALOG))assert.ok(validateToolQuantities(key,defaultQuantities(key)).quantities,key);

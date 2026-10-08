@@ -9,11 +9,7 @@ CHARM_LEVEL_OPTIONS,
 CHARM_SLOTS,
 GOVERNOR_GEAR_OPTIONS,
 GOVERNOR_GEAR_SLOTS,
-HEROES,
 POWER_PROFILE_FIELDS,
-PROFILE_UNIT_FIELDS,
-TROOP_TGS,
-TROOP_TIERS,
 blankCharmSelections,
 blankGovernorGearSelections,
 parseCharmSelections,
@@ -22,13 +18,22 @@ serializeCharmSelections,
 serializeGovernorGearSelections,
 } from '../../lib/powerProfiles.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
-import { heroSlug, saveStatusLabel } from '../../lib/powerProfileWizard.mjs';
+import { saveStatusLabel } from '../../lib/powerProfileWizard.mjs';
 import { LoadingRow } from '../../components/ui';
 import FormErrorSummary from '../../components/FormErrorSummary';
 import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
 import { draftKey, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
 
 const DRAFT_KEY = draftKey('power-profile');
+
+// Draft selections (slot -> value) over the saved ones: only non-blank draft values replace them.
+function mergeNonBlank(saved, draft) {
+  const out = { ...saved };
+  if (draft && typeof draft === 'object') {
+    for (const [key, value] of Object.entries(draft)) if (key in out && String(value || '')) out[key] = String(value);
+  }
+  return out;
+}
 
 // Per-step validation (only step 1 has required fields; the API rejects a
 // profile without a name and Member ID). Returns [{ id, key, message }].
@@ -45,9 +50,7 @@ function stepErrors(index, form) {
 // reads/writes the same lifted `form` / `governorGear` / `charms` state as
 // before, so moving between steps can never drop an input.
 const STEPS = [
-  { id: 'power', kicker: 'Power & Gift Codes', label: 'Power & Gift Codes' },
-  { id: 'troops', kicker: 'Army Strength', label: 'Troop Levels' },
-  { id: 'heroes', kicker: 'Hero Roster', label: 'Hero Roster' },
+  { id: 'power', kicker: 'You', label: 'Your details' },
   { id: 'gear', kicker: 'Power Data', label: 'Gear & Charms' },
   { id: 'review', kicker: 'Final Check', label: 'Review & Submit' },
 ];
@@ -75,13 +78,6 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
     pet_power: '',
     masters_power: '',
     mystic_trial_score: '',
-    infantry_tier: '',
-    infantry_tg: '',
-    cavalry_tier: '',
-    cavalry_tg: '',
-    archer_tier: '',
-    archer_tg: '',
-    heroes: [],
   });
   const [governorGear, setGovernorGear] = useState(blankGovernorGearSelections());
   const [charms, setCharms] = useState(blankCharmSelections());
@@ -101,6 +97,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
   const prevStepRef = useRef(0);
   const formRef = useRef(form);
   const draftReady = useRef(false);
+  const draftRef = useRef(null);
   const { step, setStep, initFromUrl } = useWizardUrlStep(STEPS.length, () => {
     // A deep link can't skip past step 1 while its required fields are empty.
     return stepErrors(0, formRef.current).length ? 0 : STEPS.length - 1;
@@ -134,6 +131,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
         const restored = mergeDraft(form, draft.form || {});
         if (initialMemberId) restored.member_id = initialMemberId;
         formRef.current = restored;
+        draftRef.current = draft;
         setForm(restored);
         if (draft.governorGear && typeof draft.governorGear === 'object') setGovernorGear((cur) => mergeDraft(cur, draft.governorGear));
         if (draft.charms && typeof draft.charms === 'object') setCharms((cur) => mergeDraft(cur, draft.charms));
@@ -229,16 +227,9 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
     setDirty(true);
   }
 
-  function toggleHero(hero) {
-    setForm((current) => ({
-      ...current,
-      heroes: current.heroes.includes(hero)
-        ? current.heroes.filter((currentHero) => currentHero !== hero)
-        : [...current.heroes, hero],
-    }));
-    setDirty(true);
-  }
-
+  // Always load the saved profile. A leftover local draft means unsaved edits (it is deleted after a
+  // successful save), so a non-empty draft value wins; anything the draft left blank comes from the
+  // saved profile, so the form never shows a blank where an answer is on file.
   async function lookup(overrideMemberId) {
     const memberId = (overrideMemberId !== undefined ? overrideMemberId : form.member_id).trim();
     if (!memberId) return;
@@ -246,8 +237,10 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
     let response;
     let result;
     try {
-      response = await fetch(`/api/power-profile?member_id=${encodeURIComponent(memberId)}`);
+      response = await fetch(`/api/power-profile?member_id=${encodeURIComponent(memberId)}`, { cache: 'no-store' });
       result = await response.json();
+    } catch {
+      return;
     } finally {
       setLookingUp(false);
     }
@@ -256,32 +249,28 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
       return;
     }
     if (result.profile) {
-      const gearSelections = parseGovernorGearSelections(result.profile.governor_gear);
-      const gearSummary = serializeGovernorGearSelections(gearSelections);
-      const charmSelections = parseCharmSelections(result.profile.charms);
-      const charmSummary = serializeCharmSelections(charmSelections);
+      const draft = draftRef.current || {};
+      const draftForm = draft.form && typeof draft.form === 'object' ? draft.form : {};
+      const pick = (key) => String(draftForm[key] || '') || result.profile[key] || '';
+      const gearSelections = mergeNonBlank(parseGovernorGearSelections(result.profile.governor_gear), draft.governorGear);
+      const charmSelections = mergeNonBlank(parseCharmSelections(result.profile.charms), draft.charms);
       setGovernorGear(gearSelections);
       setCharms(charmSelections);
       setOnFile(result.profile);
       setForm((current) => ({
         ...current,
         name: current.name || result.profile.name || '',
-        governor_gear: gearSummary || result.profile.governor_gear || '',
-        charms: charmSummary || result.profile.charms || '',
-        hero_gear: result.profile.hero_gear || '',
-        pet_power: result.profile.pet_power || '',
-        masters_power: result.profile.masters_power || '',
-        mystic_trial_score: result.profile.mystic_trial_score || '',
-        infantry_tier: result.profile.infantry_tier || '',
-        infantry_tg: result.profile.infantry_tg || '',
-        cavalry_tier: result.profile.cavalry_tier || '',
-        cavalry_tg: result.profile.cavalry_tg || '',
-        archer_tier: result.profile.archer_tier || '',
-        archer_tg: result.profile.archer_tg || '',
-        heroes: Array.isArray(result.profile.heroes) ? result.profile.heroes : [],
+        governor_gear: serializeGovernorGearSelections(gearSelections) || result.profile.governor_gear || '',
+        charms: serializeCharmSelections(charmSelections) || result.profile.charms || '',
+        hero_gear: pick('hero_gear'),
+        pet_power: pick('pet_power'),
+        masters_power: pick('masters_power'),
+        mystic_trial_score: pick('mystic_trial_score'),
       }));
     } else {
       setOnFile(null);
+      // No saved profile yet: start from the name we already know (KvK answers, Kingshot nickname).
+      if (result.base?.name) setForm((current) => ({ ...current, name: current.name || result.base.name }));
     }
   }
 
@@ -402,7 +391,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
           <section className="ledger-block wizard-step" hidden={step !== 0}>
             <div className="ledger-block-head">
               <span className="ledger-block-kicker">{STEPS[0].kicker}</span>
-              <h2 ref={(el) => { headingRefs.current[0] = el; }} tabIndex={-1}>Power &amp; Gift Codes</h2>
+              <h2 ref={(el) => { headingRefs.current[0] = el; }} tabIndex={-1}>Your details</h2>
               <p>{signedInId ? 'We filled in your name and Member ID from your sign-in. Check that your name is right. Your Member ID is your login, so it cannot be changed here.' : 'Your name and Member ID look you up and prefill anything already on file.'}</p>
             </div>
             <div className="identity-grid">
@@ -419,89 +408,21 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
             <div className="lookup-slot" aria-live="polite">{lookingUp && <LoadingRow>Looking up your profile…</LoadingRow>}</div>
             {onFile && (
               <div className="on-file">
-                Player profile on file - Governor Gear: {onFile.governor_gear || '-'} / Charms: {onFile.charms || '-'} / Heroes: {onFile.heroes?.length ? onFile.heroes.join(', ') : '-'}
+                Saved profile - Governor Gear: {onFile.governor_gear || '-'} / Charms: {onFile.charms || '-'}
               </div>
             )}
             <FormErrorSummary errors={errors} focusSignal={errorSignal} />
             <div className="wizard-nav">
               <span />
-              <button type="button" className="wizard-next" onClick={() => goToStep(1)}>Next: Troop Levels</button>
-            </div>
-          </section>
-
-          {/* ---------- Step 2: Troop Levels ---------- */}
-          <section className="ledger-block wizard-step" hidden={step !== 1}>
-            <div className="ledger-block-head">
-              <span className="ledger-block-kicker">{STEPS[1].kicker}</span>
-              <h2 ref={(el) => { headingRefs.current[1] = el; }} tabIndex={-1}>Troop Levels</h2>
-              <p>Choose the best tier and TG for each troop type.</p>
-            </div>
-            <div className="unit-card-grid">
-              {PROFILE_UNIT_FIELDS.map((unit) => (
-                <div key={unit.key} className={`unit-card ${unit.key}`}>
-                  <h4>{unit.label}</h4>
-                  <div className="row">
-                    <label>Tier<select value={form[unit.tier]} onChange={(event) => updateField(unit.tier, event.target.value)}><option value="">Tier</option>{TROOP_TIERS.map((tier) => <option key={tier} value={tier}>{tier}</option>)}</select></label>
-                    <label>TG<select value={form[unit.tg]} onChange={(event) => updateField(unit.tg, event.target.value)}><option value="">TG</option>{TROOP_TGS.map((tg) => <option key={tg} value={tg}>{tg}</option>)}</select></label>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="wizard-nav">
-              <button type="button" className="wizard-back" onClick={() => goToStep(0)}>Back</button>
-              <button type="button" className="wizard-next" onClick={() => goToStep(2)}>Next: Hero Roster</button>
-            </div>
-          </section>
-
-          {/* ---------- Step 3: Hero Roster ---------- */}
-          <section className="ledger-block wizard-step" hidden={step !== 2}>
-            <div className="ledger-block-head">
-              <span className="ledger-block-kicker">{STEPS[2].kicker}</span>
-              <h2 ref={(el) => { headingRefs.current[2] = el; }} tabIndex={-1}>Heroes</h2>
-              <p>Select the heroes available on your account.</p>
-            </div>
-            <div className="hero-chip-grid">
-              {HEROES.map((hero) => (
-                <label key={hero} className={form.heroes.includes(hero) ? 'hero-chip selected' : 'hero-chip'}>
-                  <input type="checkbox" checked={form.heroes.includes(hero)} onChange={() => toggleHero(hero)} />
-                  <img
-                    className="hero-chip-portrait"
-                    src={`/heroes/${heroSlug(hero)}.webp`}
-                    alt=""
-                    ref={(el) => {
-                      if (!el) return;
-                      const markLoaded = () => {
-                        el.classList.add('loaded');
-                        el.closest('.hero-chip')?.classList.add('has-portrait');
-                      };
-                      // If the image resolved from cache before this ref attached,
-                      // the native `load` event already fired and a React onLoad
-                      // handler would miss it - check `.complete` first.
-                      if (el.complete && el.naturalWidth > 0) {
-                        markLoaded();
-                      } else {
-                        el.addEventListener('load', markLoaded, { once: true });
-                      }
-                    }}
-                    onError={(event) => {
-                      event.currentTarget.style.display = 'none';
-                    }}
-                  />
-                  <span>{hero}</span>
-                </label>
-              ))}
-            </div>
-            <div className="wizard-nav">
-              <button type="button" className="wizard-back" onClick={() => goToStep(1)}>Back</button>
-              <button type="button" className="wizard-next" onClick={() => goToStep(3)}>Next: Gear &amp; Charms</button>
+              <button type="button" className="wizard-next" onClick={() => goToStep(1)}>Next: Gear &amp; Charms</button>
             </div>
           </section>
 
           {/* ---------- Step 4: Gear & Charms ---------- */}
-          <section className="ledger-block wizard-step" hidden={step !== 3}>
+          <section className="ledger-block wizard-step" hidden={step !== 1}>
             <div className="ledger-block-head">
-              <span className="ledger-block-kicker">{STEPS[3].kicker}</span>
-              <h2 ref={(el) => { headingRefs.current[3] = el; }} tabIndex={-1}>Governor Gear &amp; Charms</h2>
+              <span className="ledger-block-kicker">{STEPS[1].kicker}</span>
+              <h2 ref={(el) => { headingRefs.current[1] = el; }} tabIndex={-1}>Governor Gear &amp; Charms</h2>
               <p>Upload a screenshot to auto-fill gear pieces and charm levels, then verify the dropdowns.</p>
             </div>
             {statusLine && <p className="save-status-line" aria-live="polite">{statusLine}</p>}
@@ -547,46 +468,27 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
               </div>
             ))}
             <div className="wizard-nav">
-              <button type="button" className="wizard-back" onClick={() => goToStep(2)}>Back</button>
-              <button type="button" className="wizard-next" onClick={() => goToStep(4)}>Next: Review &amp; Submit</button>
+              <button type="button" className="wizard-back" onClick={() => goToStep(0)}>Back</button>
+              <button type="button" className="wizard-next" onClick={() => goToStep(2)}>Next: Review &amp; Submit</button>
             </div>
           </section>
 
           {/* ---------- Step 5: Review & Submit ---------- */}
-          <section className="ledger-block wizard-step" hidden={step !== 4}>
+          <section className="ledger-block wizard-step" hidden={step !== 2}>
             <div className="ledger-block-head">
-              <span className="ledger-block-kicker">{STEPS[4].kicker}</span>
-              <h2 ref={(el) => { headingRefs.current[4] = el; }} tabIndex={-1}>Review &amp; Submit</h2>
+              <span className="ledger-block-kicker">{STEPS[2].kicker}</span>
+              <h2 ref={(el) => { headingRefs.current[2] = el; }} tabIndex={-1}>Review &amp; Submit</h2>
               <p>Confirm everything below, then save your Power Profile.</p>
             </div>
 
             <div className="wizard-review-grid">
               <div className="wizard-review-card">
-                <h4>Power &amp; Gift Codes</h4>
+                <h4>Your details</h4>
                 <dl>
                   <div><dt>Name</dt><dd>{form.name || '-'}</dd></div>
                   <div><dt>Member ID</dt><dd>{form.member_id || '-'}</dd></div>
                 </dl>
                 <button type="button" className="wizard-review-edit" onClick={() => goToStep(0)}>Edit</button>
-              </div>
-
-              <div className="wizard-review-card">
-                <h4>Troop Levels</h4>
-                <dl>
-                  {PROFILE_UNIT_FIELDS.map((unit) => (
-                    <div key={unit.key}>
-                      <dt>{unit.label}</dt>
-                      <dd>{[form[unit.tier], form[unit.tg]].filter(Boolean).join(' / ') || '-'}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <button type="button" className="wizard-review-edit" onClick={() => goToStep(1)}>Edit</button>
-              </div>
-
-              <div className="wizard-review-card">
-                <h4>Hero Roster</h4>
-                <p className="wizard-review-text">{form.heroes.length ? form.heroes.join(', ') : 'No heroes selected.'}</p>
-                <button type="button" className="wizard-review-edit" onClick={() => goToStep(2)}>Edit</button>
               </div>
 
               <div className="wizard-review-card">
@@ -597,7 +499,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
               <div className="wizard-review-card">
                 <h4>Charms</h4>
                 <p className="wizard-review-text">{form.charms || 'No charms selected.'}</p>
-                <button type="button" className="wizard-review-edit" onClick={() => goToStep(3)}>Edit</button>
+                <button type="button" className="wizard-review-edit" onClick={() => goToStep(1)}>Edit</button>
               </div>
 
               <div className="wizard-review-card">
@@ -614,7 +516,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
             <FormErrorSummary errors={errors} focusSignal={errorSignal} id="form-error-summary-review" />
             {status && <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>{status}</div>}
             <div className="wizard-nav">
-              <button type="button" className="wizard-back" onClick={() => goToStep(3)}>Back</button>
+              <button type="button" className="wizard-back" onClick={() => goToStep(1)}>Back</button>
               <button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Power Profile'}</button>
             </div>
           </section>

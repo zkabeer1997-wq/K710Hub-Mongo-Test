@@ -3,6 +3,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
+import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,12 @@ export async function GET(request) {
   if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401, headers: HEADERS });
   try {
     const { cycle, record, previous } = await loadMemberCycleRecord('prep', session.memberId);
-    return NextResponse.json({ member_id: session.memberId, record, previous, cycle }, { headers: HEADERS });
+    // With no answer in any cycle, `base` has the name we already know (Power Profile / Kingshot).
+    const base = record || previous ? null : await loadMemberBase(session.memberId);
+    return NextResponse.json(
+      { member_id: session.memberId, record, previous, cycle, ...(base ? { base: { name: base.name, from: base.from } } : {}) },
+      { headers: HEADERS }
+    );
   } catch (error) {
     console.error('prep-backpack GET failed', error);
     return NextResponse.json({ error: 'Could not load your booking. Please try again.' }, { status: 500, headers: HEADERS });

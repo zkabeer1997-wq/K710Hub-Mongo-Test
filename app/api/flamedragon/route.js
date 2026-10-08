@@ -4,6 +4,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayload } from '../../../lib/flamedragonForm.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
+import { loadDragonFallback } from '../../../lib/memberPrefill.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
 const PUBLIC_PROJECT = {
@@ -39,7 +40,9 @@ export async function GET(request) {
     // earlier-cycle answer, offered as a pre-filled starting point.
     const { cycle, record, previous } = await loadMemberCycleRecord('dragon', session.memberId);
     const strip = (row) => (row ? publicFlamedragonRecord(Object.fromEntries(Object.entries(row).filter(([k]) => k in PUBLIC_PROJECT || k === 'event_cycle_label'))) : null);
-    return NextResponse.json({ member_id: session.memberId, record: strip(record), previous: strip(previous), cycle });
+    // No answer in any cycle yet: offer what is already known (Power Profile, KvK Availability, Kingshot name).
+    const fallback = record || previous ? null : await loadDragonFallback(session.memberId);
+    return NextResponse.json({ member_id: session.memberId, record: strip(record), previous: strip(previous), cycle, fallback });
   } catch (error) {
     console.error('flamedragon GET failed', error);
     return NextResponse.json({ error: 'Could not load your form. Please try again.' }, { status: 500 });

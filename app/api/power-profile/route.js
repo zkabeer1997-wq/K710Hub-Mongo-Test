@@ -3,6 +3,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
+import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
 import { publicPowerProfile, sanitizePowerProfileInput } from '../../../lib/powerProfiles.mjs';
 
 const PUBLIC_PROJECT = {
@@ -40,7 +41,12 @@ export async function GET(request) {
   try {
     const coll = await getCollection(COLLECTIONS.POWER_PROFILES);
     const data = await coll.findOne({ member_id: memberId }, { projection: PUBLIC_PROJECT });
-    return NextResponse.json({ profile: publicPowerProfile(data) });
+    // `base`: name already known from other forms / the Kingshot profile, for a first-time profile.
+    const base = data ? null : await loadMemberBase(memberId);
+    return NextResponse.json(
+      { profile: publicPowerProfile(data), ...(base ? { base: { name: base.name, from: base.from } } : {}) },
+      { headers: { 'Cache-Control': 'private, no-store' } }
+    );
   } catch (error) {
     console.error('power-profile' + ' failed', error);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
@@ -88,13 +94,8 @@ export async function POST(request) {
       pet_power: profile.pet_power || null,
       masters_power: profile.masters_power || null,
       mystic_trial_score: profile.mystic_trial_score || null,
-      infantry_tier: profile.infantry_tier || null,
-      infantry_tg: profile.infantry_tg || null,
-      cavalry_tier: profile.cavalry_tier || null,
-      cavalry_tg: profile.cavalry_tg || null,
-      archer_tier: profile.archer_tier || null,
-      archer_tg: profile.archer_tg || null,
-      heroes: profile.heroes,
+      // Troop levels and heroes moved to the per-cycle KvK Availability form. Old values stay in the
+      // document untouched (they prefill that form and back the admin views); they are not written here.
       updated_at: new Date(),
     };
     await coll.updateOne({ member_id: profile.member_id }, { $set: payload }, { upsert: true });

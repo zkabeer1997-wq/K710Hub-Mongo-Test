@@ -602,7 +602,7 @@ export default function AdminInterestPage() {
           {error && <div className="status error">{error}</div>}
           {!loading && !error && (
             <>
-              <Table className="admin-compact-table">
+              <Table className="admin-compact-table stack-table">
                 <thead>
                   <tr>
                     <th>Status</th>

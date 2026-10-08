@@ -32,7 +32,18 @@ export async function GET(request) {
       { member_id: session.memberId, form_id: form.slug, cycle_id: gate.cycle_id || 'current' },
       { projection: { vote: 1, power: 1, updated_at: 1, _id: 0 } },
     );
-    return NextResponse.json({ window: windowPayload(gate, now), entry: publicEntry(row), cycle_id: gate.cycle_id || 'current' }, { headers: HEADERS });
+    // Nothing saved for this round yet: offer the latest earlier round's vote and power as a starting
+    // point (the form shows a notice and never submits it by itself).
+    let previous = null;
+    if (!row) {
+      const earlier = await coll
+        .find({ member_id: session.memberId, form_id: form.slug, cycle_id: { $ne: gate.cycle_id || 'current' } })
+        .sort({ updated_at: -1 })
+        .limit(1)
+        .toArray();
+      previous = earlier[0] ? { ...publicEntry(earlier[0]), label: 'previous round' } : null;
+    }
+    return NextResponse.json({ window: windowPayload(gate, now), entry: publicEntry(row), previous, cycle_id: gate.cycle_id || 'current' }, { headers: HEADERS });
   } catch (error) {
     console.error('event-participation GET failed', error);
     return NextResponse.json({ error: 'Could not load this form. Please try again.' }, { status: 500, headers: HEADERS });

@@ -364,7 +364,7 @@ export default function AdminGuidesPage() {
       ) : guides.length === 0 ? (
         <div className="k-plate" style={{ padding: 24 }}>No guides yet. Create the first guide above.</div>
       ) : (
-        <Table>
+        <Table className="stack-table">
           <thead>
             <tr><th>Position</th><th>Title</th><th>Category</th><th>Status</th><th>Updated</th><th>Actions</th></tr>
           </thead>

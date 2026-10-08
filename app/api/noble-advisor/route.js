@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
-import { validateNobleAdvisor } from '../../../lib/nobleAdvisor.mjs';
+import { validateNobleAdvisor, normalizeNobleSlots } from '../../../lib/nobleAdvisor.mjs';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
+import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,11 @@ export async function GET(request) {
       loadMemberCycleRecord('noble', session.memberId),
       profiles.findOne({ member_id: session.memberId }, { projection: { name: 1 } }),
     ]);
-    const { cycle, record, previous } = loaded;
+    const { cycle } = loaded;
+    // Legacy quarter-hour times (:15/:45) are snapped to the earlier :00/:30 so nothing is dropped.
+    const snap = (r) => (r ? { ...r, avail_day4: normalizeNobleSlots(r.avail_day4) } : r);
+    const record = snap(loaded.record);
+    const previous = snap(loaded.previous);
     return NextResponse.json(
       { record, previous, cycle, member_id: session.memberId, profile_name: profile?.name || '' },
       { headers }

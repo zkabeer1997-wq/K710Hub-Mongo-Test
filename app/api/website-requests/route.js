@@ -1,3 +1,4 @@
+import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
@@ -18,12 +19,15 @@ export async function GET(request) {
       { member_id: session.memberId },
       { projection: { name: 1, member_id: 1, current_alliance: 1, _id: 0 } }
     );
+    // Only the member's name is prefilled (their suggestion text always starts empty). When the roster
+    // row has no name, use the one we know from their Power Profile / other forms / Kingshot profile.
+    const known = data?.name ? null : await loadMemberBase(session.memberId);
     return NextResponse.json(
       {
-        profile: data || {
-          name: '',
+        profile: {
+          name: data?.name || known?.name || '',
           member_id: session.memberId,
-          current_alliance: '',
+          current_alliance: data?.current_alliance || known?.current_alliance || '',
         },
       },
       { headers: { 'Cache-Control': 'no-store' } }

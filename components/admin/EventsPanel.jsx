@@ -262,7 +262,7 @@ export default function EventsPanel() {
       {loading ? (
         <TableSkeleton rows={4} columns={4} />
       ) : (
-        <Table>
+        <Table className="stack-table">
           <thead>
             <tr><th>Title</th><th>Kind</th><th>First start</th><th>Repeats</th><th>Status</th><th /></tr>
           </thead>
@@ -286,7 +286,7 @@ export default function EventsPanel() {
 
       <h3 style={{ marginTop: 28 }}>Built-in recurring events</h3>
       <p className="admin-page-lead">These appear on the public Events page without being stored. Daily Bear Hunts per alliance come from each alliance&apos;s Bear Hunt times. To change or hide one of the series below, customize it: that saves an event with the same slug, which replaces the built-in one (save it as Draft to hide it). Starting dates are defaults; confirm them with leadership.</p>
-      <Table>
+      <Table className="stack-table">
         <thead><tr><th>Title</th><th>Slug</th><th>Repeats</th><th /></tr></thead>
         <tbody>
           {DEFAULT_KINGDOM_EVENTS.map((def) => {

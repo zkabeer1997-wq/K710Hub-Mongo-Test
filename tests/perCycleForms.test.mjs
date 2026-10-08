@@ -51,7 +51,7 @@ const reset = () => { for (const k of Object.keys(state.tables)) delete state.ta
 const startCycle = async (type, label) => control.POST(req({ as: 'admin', body: { type, action: 'start_cycle', label } }));
 const statuses = async () => Object.fromEntries((await (await statusRoute.GET(req())).json()).forms.map((f) => [f.key, f]));
 const PREP = { in_game_name: 'Ann', want_construction: 'Yes', avail_day1: ['12:00'] };
-const NOBLE = { in_game_name: 'Ann', want_troop_training: 'Yes', is_transfer: 'No', troop_speedup_days: '5', promoting_t11: 'No', avail_day4: ['00:15'] };
+const NOBLE = { in_game_name: 'Ann', want_troop_training: 'Yes', is_transfer: 'No', troop_speedup_days: '5', promoting_t11: 'No', avail_day4: ['00:00'] };
 
 test('computeFormStatuses: carriedOver only when not done this cycle and an earlier answer exists', () => {
   const by = Object.fromEntries(computeFormStatuses({

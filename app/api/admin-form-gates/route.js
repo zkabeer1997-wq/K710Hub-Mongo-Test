@@ -17,7 +17,6 @@ const ROUTE_BY_KEY = {
   requests: '/forms/requests',
   swordland: '/forms/swordland-showdown',
   'tri-alliance': '/forms/tri-alliance-clash',
-  'castle-battle': '/forms/castle-battle',
 };
 
 async function requireAdmin(request) {

@@ -388,3 +388,31 @@
 .ec-form label.ec-check input { flex-shrink: 0; margin: 0; }
 .ec-hist-date { display: block; font-size: 11px; font-weight: 500; color: var(--text-dim); }
 .ec-form-name .ff-message-none { display: block; margin-top: 2px; font-weight: 400; }
+
+/* stack tables: at phone width a table marked .stack-table renders every row as a stacked card
+   (label: value pairs). Labels come from data-label, filled by components/ui/StackTableLabels.
+   Scrolling is vertical only. Desktop tables are untouched. */
+@media (max-width: 640px) {
+  .admin-table-wrap:has(.stack-table), .ui-table-scroll:has(> .stack-table), .tool-db-table-wrap:has(.stack-table) { overflow-x: visible; border: 0; background: none; }
+  table.stack-table, table.stack-table tbody { display: block; width: 100%; min-width: 0; }
+  table.stack-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  table.stack-table tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 0 0 10px; padding: 12px; border: 1px solid var(--border-soft, var(--line)); border-radius: 10px; background: rgba(255, 255, 255, 0.03); }
+  table.stack-table td, table.stack-table th { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; max-width: none !important; padding: 0 !important; border: 0 !important; white-space: normal !important; text-align: left; background: none; overflow-wrap: anywhere; }
+  table.stack-table td[data-label]::before { content: attr(data-label); flex: 0 0 38%; max-width: 38%; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-dim); overflow-wrap: normal; }
+  table.stack-table td[data-label] > * { min-width: 0; }
+  table.stack-table td[data-label] > input, table.stack-table td[data-label] > select, table.stack-table td[data-label] > .ui-select, table.stack-table td[data-label] > .ui-field { flex: 1 1 auto; min-width: 0; width: auto; max-width: 62%; }
+  table.stack-table td[colspan] { display: block; }
+  /* action cells: buttons fill the row, 44px tall */
+  table.stack-table td:has(> button, > a.ui-btn, > .ui-btn, > .admin-table-actions, > .admin-row-actions) { flex-wrap: wrap; justify-content: flex-start; }
+  table.stack-table td:has(> button, > .ui-btn, > .admin-table-actions, > .admin-row-actions)::before { flex: 0 0 100%; max-width: 100%; }
+  table.stack-table td > button, table.stack-table td > .ui-btn, table.stack-table td > a.ui-btn, table.stack-table td .admin-table-actions > *, table.stack-table td .admin-row-actions > * { flex: 1 1 100%; width: 100%; min-height: 44px; justify-content: center; }
+  table.stack-table td .admin-table-actions, table.stack-table td .admin-row-actions { position: static; flex: 1 1 100%; flex-wrap: wrap; background: none; }
+  table.stack-table td select, table.stack-table td input:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
+  table.stack-table td input[type="checkbox"], table.stack-table td input[type="radio"] { min-width: 24px; min-height: 24px; }
+  /* multi-line cells (e.g. troop / gear / charm lists): label on top, lines below */
+  table.stack-table td:has(> div + div) { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 4px; }
+  table.stack-table td:has(> div + div)::before { flex: none; max-width: none; }
+  table.stack-table td:has(> div + div) > div { text-align: left; }
+  table.stack-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+  table.stack-table tr.open-spot { opacity: 0.8; }
+}

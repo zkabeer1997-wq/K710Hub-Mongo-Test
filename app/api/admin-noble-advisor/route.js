@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { listEventCycles, loadCycleFormRows } from '../../../lib/eventCycles.server.js';
-import { NOBLE_FIELDS, validateNobleAdvisor } from '../../../lib/nobleAdvisor.mjs';
+import { NOBLE_FIELDS, validateNobleAdvisor, normalizeNobleSlots } from '../../../lib/nobleAdvisor.mjs';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
@@ -30,7 +30,8 @@ export async function GET(request) {
     const cycles = (await listEventCycles('flamedragon')).map((c) => ({ id: c.id, label: c.label, is_current: c.is_current === true }));
     return NextResponse.json(
       {
-        rows: loaded.rows.map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id) })),
+        // Legacy :15/:45 slots are snapped to :00/:30 on read (stored rows are not rewritten until edited).
+        rows: loaded.rows.map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id), avail_day4: normalizeNobleSlots(r.avail_day4) })),
         cycle: { id: loaded.cycle.id, label: loaded.cycle.label, is_current: loaded.cycle.is_current === true },
         cycles,
       },
@@ -61,7 +62,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Booking not found.' }, { status: 404, headers });
     }
     const { _id, ...rest } = existing;
-    const { record, error } = validateNobleAdvisor({ ...rest, [body.key]: body.value });
+    const { record, error } = validateNobleAdvisor({ ...rest, avail_day4: normalizeNobleSlots(rest.avail_day4), [body.key]: body.value });
     if (error) return NextResponse.json({ error }, { status: 400, headers });
     await coll.updateOne(
       idFilter(body.id),

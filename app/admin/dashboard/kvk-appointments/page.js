@@ -118,7 +118,7 @@ export default function AdminKvkAppointmentsPage() {
             <p>No applications for {typeTitle(type)} yet.</p>
           ) : (
             <div className="admin-table-wrap">
-            <Table>
+            <Table className="stack-table">
               <thead>
                 <tr><th scope="col">#</th><th scope="col">Member</th><th scope="col">TG</th><th scope="col">TTG</th><th scope="col">Speedup days</th><th scope="col">Score</th><th scope="col">Preferred hours (UTC)</th><th scope="col">Slot</th></tr>
               </thead>

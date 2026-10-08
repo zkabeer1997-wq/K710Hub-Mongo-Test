@@ -67,7 +67,7 @@ function placeGreedy(ranked, availKey) {
   return slots;
 }
 
-export function schedule(rows) {
+export function schedule(rows, { day4Slots = APPOINTMENTS } = {}) {
   const clean = (rows || []).filter((r) => r && (r.member_id || r.in_game_name));
 
   const consEligible = clean.filter((r) => isYes(r.want_construction));
@@ -112,14 +112,14 @@ export function schedule(rows) {
     (r) => toNumber(r.troop_speedup_days),
   ], 'avail_day4'));
   const slotsFor = (days) => Math.min(8, 1 + Math.floor(toNumber(days) / 600));
-  const day4 = APPOINTMENTS.map(() => null);
+  const day4 = day4Slots.map(() => null);
   const multiSlot = new Set();
   for (const player of ttRanked) {
     const want = slotsFor(player.troop_speedup_days);
     const avail = new Set(player.avail_day4 || []);
     let placed = 0;
-    for (let i = 0; i < APPOINTMENTS.length && placed < want; i += 1) {
-      if (day4[i] === null && avail.has(APPOINTMENTS[i])) { day4[i] = player; placed += 1; }
+    for (let i = 0; i < day4Slots.length && placed < want; i += 1) {
+      if (day4[i] === null && avail.has(day4Slots[i])) { day4[i] = player; placed += 1; }
     }
     if (placed > 1) multiSlot.add(player.id);
   }
@@ -135,13 +135,13 @@ export function schedule(rows) {
   const day5 = placeGreedy(overflowRanked, 'avail_day5');
 
   const toName = (p) => (p ? (p.in_game_name || p.member_id || '') : OPEN_SPOT);
-  const buildRows = (slots) => APPOINTMENTS.map((t, i) => ({ time: t, member: toName(slots[i]), multi: slots[i] ? multiSlot.has(slots[i].id) : false }));
+  const buildRows = (slots, grid = APPOINTMENTS) => grid.map((t, i) => ({ time: t, member: toName(slots[i]), multi: slots[i] ? multiSlot.has(slots[i].id) : false }));
 
   return {
     days: [
       { day: 1, position: 'Construction (Chief Minister)', rows: buildRows(day1) },
       { day: 2, position: 'Research (Chief Minister)', rows: buildRows(day2) },
-      { day: 4, position: 'Troop Training (Noble Advisor)', rows: buildRows(day4) },
+      { day: 4, position: 'Troop Training (Noble Advisor)', rows: buildRows(day4, day4Slots) },
       { day: 5, position: 'Construction & Research overflow (Chief Minister)', rows: buildRows(day5) },
     ],
     crossoverId,

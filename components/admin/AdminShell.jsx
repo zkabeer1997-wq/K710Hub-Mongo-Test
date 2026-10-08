@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ADMIN_NAV, isNavActive, navBadge } from './adminNav';
 import { useAdminEmbedded } from './adminEmbed';
+import StackTableLabels from '../ui/StackTableLabels';
 
 const SIDEBAR_KEY = 'k710-admin-sidebar-collapsed';
 const SECTIONS_KEY = 'k710-admin-nav-groups';
@@ -73,12 +74,18 @@ export default function AdminShell(props) {
   if (embedded) {
     return (
       <>
+        <StackTableLabels />
         {props.actions ? <div className="admin-embed-actions">{props.actions}</div> : null}
         {props.children}
       </>
     );
   }
-  return <FullShell {...props} />;
+  return (
+    <>
+      <StackTableLabels />
+      <FullShell {...props} />
+    </>
+  );
 }
 
 function FullShell({ title, subtitle, actions, meta, counters = [], onLogout, children }) {

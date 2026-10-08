@@ -112,7 +112,7 @@ export default function AdminGiftCodesPage() {
         ) : codes.length === 0 ? (
           <p>No codes stored yet. Run “Check for codes” or add one manually.</p>
         ) : (
-          <Table>
+          <Table className="stack-table">
             <thead>
               <tr>
                 <th>Code</th>
@@ -202,7 +202,7 @@ export default function AdminGiftCodesPage() {
         {history.length === 0 ? (
           <p style={{ opacity: 0.8 }}>No matching history. Search by player ID or code.</p>
         ) : (
-          <Table>
+          <Table className="stack-table">
             <thead>
               <tr>
                 <th>Player</th>

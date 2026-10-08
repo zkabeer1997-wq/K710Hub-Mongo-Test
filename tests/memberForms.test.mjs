@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { computeFormStatuses, firstIncomplete, stillNeedsSummary, MEMBER_FORMS } from '../lib/memberForms.mjs';
-import { validateParticipation, parsePower, EVENT_FORMS, EVENT_FORM_GATE_KEYS } from '../lib/eventForms.mjs';
+import { validateParticipation, parsePower, EVENT_FORMS, EVENT_FORM_GATE_KEYS, findEventForm } from '../lib/eventForms.mjs';
 import { EVENT_GATE_KEYS, FORM_GATE_KEYS, DEFAULT_GATES } from '../lib/formGates.mjs';
 import { parseGateWindow, toUtcInput, fromUtcInput } from '../lib/formGateWindow.mjs';
 
@@ -10,7 +10,7 @@ const H = 3600e3;
 const gates = {
   swordland: { is_open: true, opens_at: new Date(NOW - H).toISOString(), closes_at: new Date(NOW + 5 * H).toISOString() },
   'tri-alliance': { is_open: true, opens_at: new Date(NOW - H).toISOString(), closes_at: null },
-  'castle-battle': { is_open: true, opens_at: new Date(NOW + 24 * H).toISOString(), closes_at: null },
+  'castle-battle': { is_open: true, opens_at: new Date(NOW + 24 * H).toISOString(), closes_at: null }, // legacy gate row: must be ignored
   prep: { is_open: false },
 };
 
@@ -18,6 +18,10 @@ test('event gate keys line up between formGates and eventForms', () => {
   assert.deepEqual(EVENT_GATE_KEYS, EVENT_FORM_GATE_KEYS);
   for (const key of EVENT_GATE_KEYS) assert.ok(FORM_GATE_KEYS.includes(key) && DEFAULT_GATES[key]);
   assert.equal(new Set(EVENT_FORMS.map((f) => f.slug)).size, EVENT_FORMS.length);
+  assert.deepEqual(EVENT_GATE_KEYS, ['swordland', 'tri-alliance']);
+  assert.equal(FORM_GATE_KEYS.includes('castle-battle'), false);
+  assert.equal(EVENT_FORMS.find((f) => f.gateKey === 'swordland').slug, 'swordland-showdown');
+  assert.equal(findEventForm('castle-battle'), null);
 });
 
 test('computeFormStatuses: dots only for open + unsubmitted, badges for windows', () => {
@@ -30,8 +34,8 @@ test('computeFormStatuses: dots only for open + unsubmitted, badges for windows'
   assert.equal(by.prep.badge, 'Closed');
   assert.equal(by.swordland.needsInput, true);
   assert.equal(by['tri-alliance'].submitted, true);
-  assert.equal(by['castle-battle'].badge, 'Opens Oct 2');
-  assert.equal(by['castle-battle'].needsInput, false);
+  assert.equal(by['castle-battle'], undefined);
+  assert.equal(by.swordland.label, 'Swordland Summit vote');
   assert.equal(statuses.length, MEMBER_FORMS.length);
 });
 

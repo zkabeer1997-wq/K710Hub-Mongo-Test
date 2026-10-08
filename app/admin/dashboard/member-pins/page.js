@@ -208,7 +208,7 @@ export default function AdminMembersPage() {
         <TableSkeleton columns={9} rows={8} />
       ) : (
         <div style={{ overflowX: 'auto' }}>
-        <Table>
+        <Table className="stack-table">
           <thead>
             <tr>
               <th>Member</th>

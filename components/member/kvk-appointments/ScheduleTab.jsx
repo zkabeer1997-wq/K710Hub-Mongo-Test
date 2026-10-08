@@ -43,7 +43,7 @@ export default function ScheduleTab() {
       </div>
       <p className="appt-lede">{day.title} with the {day.role}. {day.filled} of {day.slots.length} slots booked.</p>
       <div className="appt-table-wrap">
-        <table className="appt-table">
+        <table className="appt-table stack-table">
           <caption className="sr-only">{day.title} schedule</caption>
           <thead>
             <tr><th scope="col">Slot (UTC)</th><th scope="col">Your local time</th><th scope="col">Member</th></tr>

@@ -18,7 +18,7 @@ test('newRound gives a fresh id and a readable label', () => {
   assert.notEqual(newRound(1).cycle_id, newRound(2).cycle_id);
 });
 
-test('vote forms are the three event gates and default to an empty round label', () => {
-  assert.deepEqual(VOTE_FORM_KEYS, ['swordland', 'tri-alliance', 'castle-battle']);
+test('vote forms are the two event gates and default to an empty round label', () => {
+  assert.deepEqual(VOTE_FORM_KEYS, ['swordland', 'tri-alliance']);
   assert.equal(DEFAULT_GATES.swordland.round_label, '');
 });

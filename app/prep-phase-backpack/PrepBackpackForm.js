@@ -44,7 +44,11 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         const r = data?.record || data?.previous;
-        if (!r) return;
+        if (!r) {
+          // Never filled in: at least start with the name we already know.
+          if (data?.base?.name) setForm((prev) => ({ ...prev, inGameName: prev.inGameName || data.base.name }));
+          return;
+        }
         setForm({
           inGameName: r.in_game_name || '',
           wantConstruction: r.want_construction || '',

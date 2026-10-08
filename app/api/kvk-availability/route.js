@@ -6,6 +6,8 @@ import { readMemberSession } from '../../../lib/memberAuth';
 import { readKingshotSession } from '../../../lib/memberAuthKingshot';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
+import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { resolveTroopPrefill, sanitizeKvkTroops, troopFieldsOf } from '../../../lib/kvkAvailability.mjs';
 
 const ALLIANCES = ['710', 'RED', 'SKY'];
 const AVAILABILITY = [
@@ -18,7 +20,7 @@ const AVAILABILITY = [
 function pickJoiner(row) {
   if (!row) return null;
   const { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label } = row;
-  return { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label };
+  return { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label, ...troopFieldsOf(row) };
 }
 
 async function resolveSession(request) {
@@ -48,6 +50,8 @@ export async function GET(request) {
           member_id: 1,
           current_alliance: 1,
           availability: 1,
+          infantry_tier: 1, infantry_tg: 1, cavalry_tier: 1, cavalry_tg: 1, archer_tier: 1, archer_tg: 1,
+          heroes: 1,
           updated_at: 1,
           _id: 0,
         },
@@ -56,8 +60,20 @@ export async function GET(request) {
     // `row` is the member's roster row (name, ID, last values) as before. `record` is the answer
     // for THIS KvK cycle (null until saved) and `previous` the latest earlier-cycle answer.
     const { cycle, record, previous } = await loadMemberCycleRecord('joiner', session.memberId);
+    const base = await loadMemberBase(session.memberId);
+    // Troop levels + heroes are per KvK cycle. Prefill: this cycle's answer, else the latest earlier
+    // cycle's, else the old Power Profile values (where they used to be entered).
+    const prefill = resolveTroopPrefill([
+      { row: record, from: 'record' },
+      { row: previous, from: 'previous' },
+      { row: base.profile, from: 'profile' },
+    ]);
     return NextResponse.json(
-      { row: data, auth: session.via, record: pickJoiner(record), previous: pickJoiner(previous), cycle },
+      {
+        row: data, auth: session.via, record: pickJoiner(record), previous: pickJoiner(previous), cycle,
+        prefill,
+        base: { name: base.name, current_alliance: base.current_alliance, from: base.from },
+      },
       { headers: { 'Cache-Control': 'no-store' } }
     );
   } catch {
@@ -84,6 +100,8 @@ export async function POST(request) {
   const alliance = String(body?.current_alliance || '').trim();
   const availability = String(body?.availability || '').trim();
   const pin = String(body?.pin || '');
+  const troops = sanitizeKvkTroops(body);
+  if (troops.error) return NextResponse.json({ error: troops.error }, { status: 400 });
   if (memberId !== session.memberId) {
     return NextResponse.json(
       { error: 'Sign in with this Player ID to update its availability.' },
@@ -134,6 +152,7 @@ export async function POST(request) {
           name,
           current_alliance: alliance,
           availability,
+          ...troops.fields,
           updated_at: now,
           event_updated_at: now,
           ...(cycle ? { event_cycle_id: cycle.id, event_cycle_label: cycle.label } : {}),
@@ -149,6 +168,8 @@ export async function POST(request) {
           member_id: 1,
           current_alliance: 1,
           availability: 1,
+          infantry_tier: 1, infantry_tg: 1, cavalry_tier: 1, cavalry_tg: 1, archer_tier: 1, archer_tg: 1,
+          heroes: 1,
           updated_at: 1,
           _id: 0,
         },

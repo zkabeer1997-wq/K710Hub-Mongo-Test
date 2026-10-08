@@ -84,11 +84,11 @@ test('buildDeadlineEntries: events, running events, bear hunts excluded, form wi
     ],
     forms: [
       { key: 'swordland', shortLabel: 'Swordland', href: '/forms/swordland-showdown', state: 'open', closesAt: NOW + 5 * HOUR, opensAt: NOW - DAY },
-      { key: 'castle-battle', shortLabel: 'Castle Battle', href: '/forms/castle-battle', state: 'upcoming', closesAt: null, opensAt: NOW + 3 * DAY },
-      { key: 'tri-alliance', shortLabel: 'Tri-Alliance', href: '/x', state: 'closed', closesAt: NOW - 1, opensAt: null },
+      { key: 'tri-alliance', shortLabel: 'Tri-Alliance', href: '/forms/tri-alliance-clash', state: 'upcoming', closesAt: null, opensAt: NOW + 3 * DAY },
+      { key: 'noble', shortLabel: 'Noble Advisor', href: '/x', state: 'closed', closesAt: NOW - 1, opensAt: null },
     ],
   }, NOW);
-  assert.deepEqual(entries.map((e) => e.id), ['event:run', 'deadline:swordland', 'opens:castle-battle', 'event:kvk']);
+  assert.deepEqual(entries.map((e) => e.id), ['event:run', 'deadline:swordland', 'opens:tri-alliance', 'event:kvk']);
   assert.equal(entries[0].label, 'Run ends');
   assert.equal(entries[3].estimated, true);
   assert.equal(entries[1].label, 'Swordland vote closes');

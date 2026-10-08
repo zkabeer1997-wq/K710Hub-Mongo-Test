@@ -1,15 +1,33 @@
 'use client';
-import { TIME_SLOTS } from '../lib/nobleAdvisor.mjs';
-export function SlotPicker({ label, sublabel, selected, onToggle }) {
+import { useEffect, useState } from 'react';
+import { TIME_SLOTS, NOBLE_TIME_SLOTS } from '../lib/nobleAdvisor.mjs';
+
+// "13:30" UTC -> the viewer's local clock time for today (UTC-only on the server / before mount).
+function localSlotTime(slot) {
+  const [h, m] = slot.split(':').map(Number);
+  const now = new Date();
+  const ms = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), h, m);
+  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ms));
+}
+
+// slots: the grid to show (defaults to the legacy prep grid, so KvK Prep Backpack is unchanged).
+// showLocal: also print the viewer's local time under each UTC slot (Noble Advisor).
+export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_SLOTS, showLocal = false }) {
+  const [zone, setZone] = useState('');
+  useEffect(() => {
+    if (!showLocal) return;
+    try { setZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'local'); } catch { setZone('local'); }
+  }, [showLocal]);
   return (
     <div className="prep-slot-group">
       <div className="prep-slot-head">
         <strong>{label}</strong>
         <span className="prep-slot-count">{selected.length} selected</span>
         {sublabel ? <span className="prep-slot-sub">{sublabel} &middot; UTC</span> : null}
+        {showLocal && zone ? <span className="prep-slot-sub">Big times are UTC. Small times are your local time ({zone}).</span> : null}
       </div>
-      <div className="prep-slot-grid">
-        {TIME_SLOTS.map((slot) => {
+      <div className={showLocal ? 'prep-slot-grid prep-slot-grid--local' : 'prep-slot-grid'}>
+        {slots.map((slot) => {
           const on = selected.includes(slot);
           return (
             <button
@@ -19,7 +37,8 @@ export function SlotPicker({ label, sublabel, selected, onToggle }) {
               onClick={() => onToggle(slot)}
               aria-pressed={on}
             >
-              {slot}
+              {slot}{showLocal ? <span className="prep-slot-utc"> UTC</span> : null}
+              {showLocal && zone ? <small className="prep-slot-local">{localSlotTime(slot)} local</small> : null}
             </button>
           );
         })}
@@ -29,7 +48,8 @@ export function SlotPicker({ label, sublabel, selected, onToggle }) {
 }
 
 
-export default function NobleAdvisorFields({ form, updateField, availDay4, onToggle }) {
+// slots / showLocal: Noble Advisor passes NOBLE_TIME_SLOTS + showLocal; KvK Prep Backpack passes nothing.
+export default function NobleAdvisorFields({ form, updateField, availDay4, onToggle, slots = TIME_SLOTS, showLocal = false }) {
  return (
       <section className="form-block">
         <span className="minister-day-badge">Day 4</span>
@@ -56,7 +76,7 @@ export default function NobleAdvisorFields({ form, updateField, availDay4, onTog
             <option value="No">No</option>
           </select>
         </label>
-        <SlotPicker label="Available Times &mdash; Day 4 (Troop Training)" sublabel="30-minute start times, UTC" selected={availDay4} onToggle={onToggle} />
+        <SlotPicker label="Available Times &mdash; Day 4 (Troop Training)" sublabel="Every 30 minutes, starting 00:00 UTC" selected={availDay4} onToggle={onToggle} slots={slots} showLocal={showLocal} />
       </section>
 
  );

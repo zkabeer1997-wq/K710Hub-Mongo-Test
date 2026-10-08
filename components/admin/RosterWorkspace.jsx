@@ -528,7 +528,7 @@ export default function RosterWorkspace({
           {toolbar}
           <div className="admin-workspace">
           <div className="admin-table-wrap">
-            <Table className="admin-table">
+            <Table className="admin-table stack-table">
               <thead>
                 <tr>
                   <th><span className="sr-only">Drag</span></th>

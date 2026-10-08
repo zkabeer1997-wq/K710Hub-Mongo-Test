@@ -11,21 +11,20 @@ import styles from './FormsChecklist.module.css';
 // lives or whether they already filled it in for THIS cycle.
 
 const PLAIN = {
-  lead: 'Your gear, pets and power. Update it whenever something changes. It does not reset between events.',
-  joiner: 'Tell us when you can play during KvK.',
+  lead: 'Your gear, charms, pets and power. Update it whenever something changes. It does not reset between events.',
+  joiner: 'When you can play during KvK, plus your troop levels and heroes for this KvK.',
   prep: 'What you can use during the KvK preparation days.',
   appointments: 'Ask for a minister or advisor buff time slot.',
   dragon: 'Your troops and heroes for Flamedragon Tyrant.',
   noble: 'Book a time for troop training with the Noble Advisor.',
-  swordland: 'Vote on how you will take part in Swordland Showdown.',
+  swordland: 'Vote on how you will take part in Swordland Summit.',
   'tri-alliance': 'Vote on how you will take part in Tri-Alliance Clash.',
-  'castle-battle': 'Vote on how you will take part in Castle Battle.',
 };
 
 const GROUPS = [
   { id: 'kvk', title: 'KvK', intro: 'The kingdom-versus-kingdom battle.', keys: ['joiner', 'prep', 'appointments'], cycle: true },
   { id: 'dragon', title: 'Flamedragon Tyrant', intro: 'The Flamedragon Tyrant event.', keys: ['dragon', 'noble'], cycle: true },
-  { id: 'votes', title: 'Event votes', intro: 'Short votes. They only open on certain days.', keys: ['swordland', 'tri-alliance', 'castle-battle'] },
+  { id: 'votes', title: 'Event votes', intro: 'Short votes. They only open on certain days.', keys: ['swordland', 'tri-alliance'] },
   { id: 'always', title: 'Any time', intro: 'You do not need to redo these for every event.', keys: ['lead'] },
 ];
 

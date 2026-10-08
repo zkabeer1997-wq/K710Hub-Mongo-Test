@@ -30,9 +30,11 @@ export default function EventParticipationForm({ form }) {
       .then((body) => {
         if (!alive) return;
         setData(body);
-        if (body.entry) {
-          setVote(body.entry.vote);
-          setPower(String(body.entry.power));
+        // This round's saved vote, otherwise the previous round's as a starting point (not saved until Submit).
+        const start = body.entry || body.previous;
+        if (start) {
+          setVote(start.vote);
+          setPower(String(start.power));
         }
       })
       .catch((err) => { if (alive) setLoadError(err.message); });
@@ -85,7 +87,7 @@ export default function EventParticipationForm({ form }) {
           )}
           {win.note && !open && <p className="event-form-times">{win.note}</p>}
 
-          <UpsertNotice known updatedAt={data.entry?.updated_at || null} />
+          <UpsertNotice known updatedAt={data.entry?.updated_at || null} previousLabel={!data.entry && data.previous ? data.previous.label : null} />
 
           <form onSubmit={submit} aria-describedby={`${uid}-status`} noValidate>
             <fieldset className="vote-group" disabled={!open || saving}>

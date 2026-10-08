@@ -67,7 +67,7 @@ console.log('admin logged in');
   const day = 864e5; const now = Date.now();
   const evs = [
     ['qa-test-kvk-season-1', 'KvK Season 1 kickoff', 'kvk', now + 5 * day, 'none'],
-    ['qa-test-swordland-weekly', 'Swordland Showdown (weekly)', 'swordland', now + 2 * day, 'weekly'],
+    ['qa-test-swordland-weekly', 'Swordland Summit (weekly)', 'swordland', now + 2 * day, 'weekly'],
     ['qa-test-championship', 'Kingdom Championship', 'championship', now + 12 * day, 'none'],
     ['qa-test-community-night', 'Community movie night', 'custom', now + 3 * day, 'monthly'],
     ['qa-test-draft-event', 'Unpublished planning draft', 'custom', now + 20 * day, 'none'],
@@ -173,7 +173,7 @@ const fdCycle = await ensureCycle('flamedragon', 'Flamedragon Season 1');
 // vote form windows (shut until scheduled); cycle ids are manual labels
 const soon = new Date(Date.now() - 36e5).toISOString().slice(0, 16) + ':00Z';
 const later = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 16) + ':00Z';
-for (const key of ['swordland', 'tri-alliance', 'castle-battle']) {
+for (const key of ['swordland', 'tri-alliance']) {
   must('vote-window', await admin('PATCH', '/api/admin-form-gates', { form_key: key, is_open: true, message: '', opens_at: soon, closes_at: later, cycle_id: 'qa-s1' }));
 }
 must('requests-gate', await admin('PATCH', '/api/admin-form-gates', { form_key: 'requests', is_open: true, message: '' }));
@@ -235,7 +235,7 @@ for (let i = 0; i < 25; i++) {
 
   // Vote forms
   const votes = ['legion_time', 'flexible', 'absent'];
-  for (const [fi, slug] of ['swordland-showdown', 'tri-alliance-clash', 'castle-battle'].entries()) {
+  for (const [fi, slug] of ['swordland-showdown', 'tri-alliance-clash'].entries()) {
     if (i + fi * 3 < 24) must('event-vote:' + slug, await m('POST', '/api/event-participation', { form: slug, vote: votes[(i + fi) % 3], power: `${(88 + i) * 1000000 + fi * 12345}` }));
   }
 

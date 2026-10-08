@@ -57,7 +57,7 @@ export default function ToolDatabasePage(){
 
   {dataset==='charms' && (
    <div className="tool-db-table-wrap">
-    <table className="tool-db-table">
+    <table className="tool-db-table stack-table">
      <thead><tr><th>Level</th><th>Guides</th><th>Designs</th><th>Health / Lethality</th><th>Power</th></tr></thead>
      <tbody>
       {CHARM_ROWS.map(row=>(
@@ -76,7 +76,7 @@ export default function ToolDatabasePage(){
 
   {dataset==='governor-gear' && (
    <div className="tool-db-table-wrap">
-    <table className="tool-db-table">
+    <table className="tool-db-table stack-table">
      <thead><tr><th>Rarity</th><th>Tier</th><th>Satin</th><th>Gilded Threads</th><th>Artisan&apos;s Vision</th><th>Stat Bonus</th><th>Cumulative</th><th>Set Bonus</th></tr></thead>
      <tbody>
       {GEAR_ROWS.map(row=>(

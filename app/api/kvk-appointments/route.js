@@ -3,11 +3,42 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { validateApplication, APPOINTMENT_TYPES, PREFERRED_HOUR_COUNT } from '../../../lib/kvkAppointments.mjs';
+import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { ObjectId } from 'mongodb';
 import { getCurrentEventCycle } from '../../../lib/eventCycles.server.js';
 import { loadAppointmentGate, isCyclePublished, publicApplication } from '../../../lib/kvkAppointments.server.js';
 
 export const dynamic = 'force-dynamic';
 const HEADERS = { 'Cache-Control': 'private, no-store' };
+
+// Newest earlier-cycle application for each day/buff, plus a plain label for the cycle they came from.
+async function loadPreviousApplications(memberId, currentCycleId) {
+  try {
+    const coll = await getCollection(COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS);
+    const rows = await coll.find({ member_id: memberId, cycle_id: { $ne: currentCycleId } }).toArray();
+    rows.sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0));
+    const seen = new Set();
+    const picked = rows.filter((r) => {
+      const key = `${r.day}:${r.buff}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    let previousLabel = null;
+    if (picked.length) {
+      const cid = String(picked[0].cycle_id || '');
+      if (ObjectId.isValid(cid) && cid.length === 24) {
+        const cycles = await getCollection(COLLECTIONS.EVENT_CYCLES);
+        const found = await cycles.findOne({ _id: new ObjectId(cid) });
+        previousLabel = found?.label || null;
+      }
+      previousLabel = previousLabel || 'an earlier cycle';
+    }
+    return { previousApplications: picked.map(publicApplication), previousLabel };
+  } catch {
+    return { previousApplications: [], previousLabel: null };
+  }
+}
 
 // GET -> this member's applications, and their assignments once published.
 export async function GET(request) {
@@ -21,6 +52,9 @@ export async function GET(request) {
       getCollection(COLLECTIONS.POWER_PROFILES).then((c) => c.findOne({ member_id: session.memberId }, { projection: { name: 1, _id: 0 } })),
     ]);
     const cycle = await getCurrentEventCycle('kvk').catch(() => null);
+    // Last cycle's answers per day/buff, offered as a starting point (never saved until the member presses Save).
+    const { previousApplications, previousLabel } = await loadPreviousApplications(session.memberId, g.cycleId);
+    const known = profiles?.name ? null : await loadMemberBase(session.memberId).catch(() => null);
     let assignments = [];
     if (pub.published) {
       const coll = await getCollection(COLLECTIONS.KVK_APPOINTMENT_ASSIGNMENTS);
@@ -37,7 +71,9 @@ export async function GET(request) {
       publishedAt: pub.publishedAt,
       applications: apps.map(publicApplication),
       assignments,
-      defaultName: profiles?.name || '',
+      defaultName: profiles?.name || known?.name || '',
+      previousApplications,
+      previousLabel,
     }, { headers: HEADERS });
   } catch (error) {
     console.error('kvk-appointments GET failed', error);

@@ -101,7 +101,7 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
     }
     if (result.member_id) setForm((current) => ({ ...current, member_id: result.member_id }));
     // This cycle's saved form, otherwise last cycle's answers as a starting point (not saved until Submit).
-    const r = result.record || result.previous;
+    const r = result.record || result.previous || result.fallback;
     if (r) {
       const charmSelections = parseCharmSelections(r.charms);
       const gearSelections = parseGovernorGearSelections(r.governor_gear);

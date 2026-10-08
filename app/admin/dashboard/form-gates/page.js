@@ -19,7 +19,7 @@ const GROUPS = [
   { id: 'kvk', title: 'KvK', keys: ['joiner', 'prep', 'appointments'] },
   { id: 'flamedragon', title: 'Flamedragon Tyrant', keys: ['dragon', 'noble'] },
   { id: 'standing', title: 'Standing', keys: ['lead', 'requests'] },
-  { id: 'other', title: 'Other', keys: ['swordland', 'tri-alliance', 'castle-battle'] },
+  { id: 'other', title: 'Other', keys: ['swordland', 'tri-alliance'] },
 ];
 const GATE_KEYS = GROUPS.flatMap((g) => g.keys);
 const TEXT_ONLY_KEYS = FORM_META_KEYS.filter((key) => !GATE_KEYS.includes(key));

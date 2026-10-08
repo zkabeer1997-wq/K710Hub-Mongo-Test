@@ -136,7 +136,7 @@ export default function AdminWebsiteRequestsPage() {
         <TableSkeleton columns={COLUMNS.length} rows={7} />
       ) : (
         <div className="admin-table-wrap">
-        <Table>
+        <Table className="stack-table">
           <thead>
             <tr>
               {COLUMNS.map((col) => (

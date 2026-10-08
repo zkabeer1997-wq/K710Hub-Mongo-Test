@@ -7,7 +7,7 @@ import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Field, Input, Select, Table } from '../../../../components/ui';
 import TableFilters from '../../../../components/admin/TableFilters';
 import { searchRow, compareValues, numericValue } from '../../../../lib/adminTable.mjs';
-import { TIME_SLOTS } from '../../../../lib/nobleAdvisor.mjs';
+import { TIME_SLOTS, NOBLE_TIME_SLOTS } from '../../../../lib/nobleAdvisor.mjs';
 import { schedule, OPEN_SPOT } from '../prepScheduler.mjs';
 
 const ALL_COLUMNS = [
@@ -176,7 +176,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
   // Each cycle has its own rows, so the schedule always uses every answer in the chosen cycle.
   const scheduleRows = rows;
 
-  function makeSchedule() { const data = schedule(scheduleRows.map(row=>({...row,...Object.fromEntries(ARRAY_KEYS.map(key=>[key,Array.isArray(row[key])?row[key]:String(row[key] || '').split(',').map(v=>v.trim()).filter(Boolean)]))}))); return noble ? {...data,days:data.days.filter(day=>day.day===4)} : data; }
+  function makeSchedule() { const data = schedule(scheduleRows.map(row=>({...row,...Object.fromEntries(ARRAY_KEYS.map(key=>[key,Array.isArray(row[key])?row[key]:String(row[key] || '').split(',').map(v=>v.trim()).filter(Boolean)]))})), noble ? { day4Slots: NOBLE_TIME_SLOTS } : undefined); return noble ? {...data,days:data.days.filter(day=>day.day===4)} : data; }
   function handleGenerate() { setResult(makeSchedule()); }
 
   const saveTimers = useRef({});
@@ -244,7 +244,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
             {key:'training',label:'Troop Training',value:ttFilter,onChange:setTtFilter,options:['Yes','No']},
             {key:'transfer',label:'Transfer',value:transferFilter,onChange:setTransferFilter,options:['Yes','No']},
             {key:'promotion',label:'Promoting T11',value:promotionFilter,onChange:setPromotionFilter,options:['Yes','No']},
-            {key:'slot',label:'Available at (UTC)',value:slotFilter,onChange:setSlotFilter,options:TIME_SLOTS},
+            {key:'slot',label:'Available at (UTC)',value:slotFilter,onChange:setSlotFilter,options:noble ? NOBLE_TIME_SLOTS : TIME_SLOTS},
           ]}>
             <label>Min. training speedup days<input type="number" min="0" value={minSpeedups} onChange={e=>setMinSpeedups(e.target.value)}/></label>
             <label>Sort by<select value={sortKey} onChange={e=>setSortKey(e.target.value)}>{COLUMNS.map(col=><option key={col.key} value={col.key}>{col.label}</option>)}</select></label>
@@ -279,7 +279,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
           {loading && <TableSkeleton columns={COLUMNS.length} rows={7} />}
           {error && <div className="status error">{error}</div>}
           {!loading && !error && (
-            <Table>
+            <Table className="stack-table">
               <thead><tr>{COLUMNS.map((col) => (<th key={col.key} aria-sort={sortKey===col.key ? (sortDir==='asc'?'ascending':'descending') : 'none'}><button type="button" className="admin-sort-btn" onClick={()=>{setSortKey(col.key);setSortDir(sortKey===col.key && sortDir==='asc'?'desc':'asc');}}>{col.label}{sortKey===col.key ? (sortDir==='asc'?' ↑':' ↓') : ''}</button></th>))}</tr></thead>
               <tbody>
                 {visibleRows.map((row) => (
