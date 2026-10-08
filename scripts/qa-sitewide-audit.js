@@ -18,7 +18,7 @@ const ROUTES = [
   '/admin', '/admin/login', '/admin/dashboard', '/admin/dashboard/guides', '/admin/dashboard/alliance-events',
   '/admin/dashboard/form-gates', '/admin/dashboard/member-pins', '/admin/dashboard/interest',
   '/admin/dashboard/prep-ministers', '/admin/dashboard/flamedragon',
-  '/design-lab/homepage', '/design-lab/homepage-fusion'
+
 ];
 const MEMBER_PREFIXES = ['/forms','/dashboard/form','/power-profile','/flamedragon','/prep-phase-backpack','/tools'];
 const ADMIN_PREFIX = '/admin/dashboard';
