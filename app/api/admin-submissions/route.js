@@ -171,6 +171,7 @@ export async function POST(request) {
     const [row] = mergePowerProfilesIntoRows([data], []);
     return NextResponse.json({ row });
   } catch (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    console.error('admin-submissions POST failed', insertError);
+    return NextResponse.json({ error: 'Could not save this member.' }, { status: 500 });
   }
 }

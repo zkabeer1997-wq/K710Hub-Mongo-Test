@@ -1,3 +1,5 @@
+> STALE: describes the old Supabase source of truth.
+
 # Repo re-evaluation (2026-09-06)
 
 ## KvK-Tracker-710

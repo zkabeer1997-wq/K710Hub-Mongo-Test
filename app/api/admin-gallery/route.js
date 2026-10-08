@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { bytesMatchImageType } from '../../../lib/interestUploadLimits.mjs';
 
 // Images are stored as base64 data URLs directly in the gallery_images
 // document (no object storage on this Mongo test stack - see the POST
@@ -28,23 +29,35 @@ export async function GET(request) {
 
   try {
     const coll = await getCollection(COLLECTIONS.GALLERY_IMAGES);
-    const data = await coll
-      .find({})
-      .project({
-        id: 1,
-        image_url: 1,
-        storage_path: 1,
-        title: 1,
-        caption: 1,
-        alt_text: 1,
-        position: 1,
-        is_published: 1,
-        created_at: 1,
-        updated_at: 1,
-        _id: 0,
-      })
-      .sort({ position: 1, created_at: -1 })
+    // Uploaded images are base64 data URLs; never ship those in the list.
+    // The aggregation blanks them server-side and we point at the on-demand
+    // image endpoint instead. Legacy https URLs pass through.
+    const rows = await coll
+      .aggregate([
+        { $sort: { position: 1, created_at: -1 } },
+        {
+          $project: {
+            _id: 0,
+            id: 1,
+            storage_path: 1,
+            title: 1,
+            caption: 1,
+            alt_text: 1,
+            position: 1,
+            is_published: 1,
+            created_at: 1,
+            updated_at: 1,
+            image_url: {
+              $cond: [{ $eq: [{ $substrCP: [{ $ifNull: ['$image_url', ''] }, 0, 5] }, 'data:'] }, '', '$image_url'],
+            },
+          },
+        },
+      ])
       .toArray();
+    const data = rows.map((row) => ({
+      ...row,
+      image_url: row.image_url || `/api/admin-gallery/${row.id}/image`,
+    }));
     return NextResponse.json(
       { images: data || [] },
       { headers: { 'Cache-Control': 'no-store, max-age=0' } }
@@ -101,6 +114,12 @@ export async function POST(request) {
   // Mongo test stack: store as data URL (no Supabase Storage).
   // Existing production images already have public image_url values.
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!bytesMatchImageType(buffer, file.type)) {
+    return NextResponse.json(
+      { error: 'This file is not a valid image of the selected type.' },
+      { status: 415 }
+    );
+  }
   const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`;
   const storagePath = `mongo/${new Date().toISOString().slice(0, 10)}/${randomUUID()}`;
 

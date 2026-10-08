@@ -1,3 +1,4 @@
+/* ONE-OFF / MANUAL TOOL: not part of the build or any scheduled job. Run by hand only when needed. */
 /**
  * Remove member_tool_state rows keyed by a pre-Kingshot-cutover display name
  * (e.g. "Eris") instead of a numeric Kingshot Player ID. These rows are

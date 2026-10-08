@@ -114,7 +114,7 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
       if (!response.ok) throw new Error(result.error || 'Unable to save this guide.');
       if (!result.guide) throw new Error('The saved guide was not returned by the server.');
 
-      // Immediately adopt the exact row returned by Supabase.
+      // Immediately adopt the exact row returned by the API.
       setGuide(result.guide);
       setDraftTitle(result.guide.title || '');
       setDraft(result.guide.body || '');
@@ -122,7 +122,7 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
       setStatus('Saved. Reloading the persisted guide…');
 
       // Full document reload: bypasses Next client router/cache completely.
-      // The server-rendered page then reads the row directly from Supabase.
+      // The server-rendered page then reads the row directly from MongoDB.
       window.location.replace(`${window.location.pathname}${window.location.search}${window.location.search ? '&' : '?'}saved=${Date.now()}`);
     } catch (err) {
       setError(err.message || 'Unable to save this guide.');

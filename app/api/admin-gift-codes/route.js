@@ -99,6 +99,6 @@ export async function POST(request) {
     return noStoreJson({ error: 'Unknown action.' }, { status: 400 });
   } catch (error) {
     console.error('admin-gift-codes POST failed', error);
-    return noStoreJson({ error: error?.message || 'Action failed.' }, { status: 500 });
+    return noStoreJson({ error: 'Action failed.' }, { status: 500 });
   }
 }

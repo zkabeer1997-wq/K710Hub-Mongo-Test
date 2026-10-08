@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from './lib/adminAuth';
 import { readMemberSession } from './lib/memberAuth';
+import { rejectCrossOriginMutation } from './lib/sameOrigin.js';
 
 // An explicit allowlist, not a denylist: the matcher below covers every
 // route in either protected set, and any route added to Waves 2-4 that
@@ -26,7 +27,7 @@ const MEMBER_PREFIXES = [
   '/tools',
 ];
 
-// Runs on every page request (not /api, build assets or the favicon) so each
+// Runs on every page request (not /api page rendering, build assets or the favicon) so each
 // response carries a per-request CSP nonce; the auth gates below still only
 // apply to the ADMIN/MEMBER prefixes. Prefetches are excluded: they never
 // render HTML that needs a nonce.
@@ -39,6 +40,9 @@ export const config = {
         { type: 'header', key: 'purpose', value: 'prefetch' },
       ],
     },
+    // API routes: only the CSRF/Origin guard runs here (no nonce/CSP/auth
+    // gating; /api CSP comes from next.config.js and each route authenticates).
+    { source: '/api/:path*' },
   ],
 };
 
@@ -83,6 +87,11 @@ function withCsp(request, csp, nonce, redirectTo) {
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
+    return rejectCrossOriginMutation(request, pathname) || NextResponse.next();
+  }
+
   const nonce = btoa(crypto.randomUUID());
   const csp = buildCsp(nonce);
 

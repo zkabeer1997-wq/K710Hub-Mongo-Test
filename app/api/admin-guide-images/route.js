@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
+import { bytesMatchImageType } from '../../../lib/interestUploadLimits.mjs';
 
 const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
@@ -23,14 +24,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Photos must be between 1 byte and 3 MB.' }, { status: 413 });
   }
   const bytes = Buffer.from(await file.arrayBuffer());
-  const valid =
-    (file.type === 'image/jpeg' && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) ||
-    (file.type === 'image/png' &&
-      bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) ||
-    (file.type === 'image/webp' &&
-      bytes.toString('ascii', 0, 4) === 'RIFF' &&
-      bytes.toString('ascii', 8, 12) === 'WEBP') ||
-    (file.type === 'image/gif' && ['GIF87a', 'GIF89a'].includes(bytes.toString('ascii', 0, 6)));
+  const valid = bytesMatchImageType(bytes, file.type);
   if (!valid) {
     return NextResponse.json(
       { error: 'This file is not a valid image of the selected type.' },

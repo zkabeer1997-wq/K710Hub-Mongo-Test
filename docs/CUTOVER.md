@@ -73,3 +73,63 @@ Auth:
 - [ ] PIN `/api/member-register` returns 410
 - [ ] Admin password still works
 - [ ] Logout clears member + admin + login-flow cookies
+
+
+## Security hardening notes (2026-10)
+
+**Indexes at runtime.** `instrumentation.js` calls `ensureIndexes()` once per
+Node server process on boot (non-fatal: failures are logged as `[indexes] ...`
+and the app still starts; skipped when `NODE_ENV=test`, `QA_NO_DB=1`, no
+`MONGODB_URI`/`MONGO_URI`, or on the edge runtime). `node scripts/ensure-indexes.mjs`
+remains the way to apply them explicitly and exits 1 listing any index that
+could not be built (usually a unique index blocked by historic duplicates).
+New in this pass: TTL `rate_limits.expires_at`; `kingshot_sessions
+(token_hash, revoked_at)`; `kingshot_users.access_role`;
+`interest_submissions (intake_period_id, created_at)`; `gallery_images`
+`id` and `(is_published, position, created_at)`; `kingdom_guides.slug`,
+`guide_content.slug`, `guide_attachments.path` (all non-unique, so none can
+fail on existing data).
+
+**Rate limiting.** `lib/rateLimit.mjs` `checkRateLimit()` keeps fixed-window
+counters in the `rate_limits` collection (atomic `$inc` upsert, TTL cleanup),
+so limits are shared across serverless instances. If Mongo errors, auth/abuse
+routes (admin login, interest submit, interest status) fall back to the
+per-instance in-memory limiter (still enforced); cost-only routes (translate-ui,
+governor-gear-ocr) pass `failOpen: true` and allow the request.
+
+**CSRF / Origin.** `proxy.js` now also matches `/api/:path*` and rejects any
+POST/PUT/PATCH/DELETE whose `Origin` host differs from the request host, or
+whose `Sec-Fetch-Site` is `cross-site`/`same-site` (`lib/sameOrigin.js`).
+Requests with neither header (curl, server-to-server, tests) pass, and
+`/api/cron/*` (Bearer secret) is exempt. Because this is a proxy change,
+restart the server after deploying. A reverse proxy must forward the original
+`Host` (or `X-Forwarded-Host`).
+
+**Member session revocation.** `readMemberSession` (and therefore proxy.js and
+every member route) now also checks the `kingshot_sessions` row for the cookie:
+revoked or expired rows reject the cookie; no row (legacy cookie) is still
+accepted. Results are cached in-process for 30 seconds, logout clears the local
+cache entry immediately, other instances converge within 30s. If Mongo is
+unreachable the signed cookie (with its own 30-day expiry) is trusted rather
+than locking everyone out. proxy.js runs on the Node runtime, so the dynamic
+`import('./mongo.js')` there is fine; `lib/memberAuth.js` has no static Mongo import.
+
+**Uploads.** Gallery, guide-image and interest uploads are accepted only when
+the leading magic bytes are a real JPEG/PNG/WebP/GIF matching the declared type
+(`lib/interestUploadLimits.mjs` `sniffImageType`), on top of the size caps.
+List endpoints no longer return base64 blobs: `GET /api/admin-gallery` and
+`GET /api/admin-interest-submissions` return links to
+`/api/admin-gallery/<id>/image` and
+`/api/admin-interest-submissions/<id>/screenshot/<n>` (admin-only, bytes served
+on demand). The public gallery (`lib/gallery.js`) still reads `image_url`
+inline; moving it to a cached image route is the next step if it gets heavy.
+
+**KvK auto-allocate** no longer does `deleteMany` + `insertMany`. It ordered-
+bulkWrites upserts keyed on the unique slot index, removes only rows that would
+collide beforehand (restoring them if the write fails), and deletes the leftover
+stale slots last. A true transaction would need a replica set, which standalone
+local Mongo is not.
+
+**Google Drive callback CSP.** `/api/*` CSP no longer allows `'unsafe-inline'`
+scripts; `/api/google-drive/callback` is excluded from that header and sets its
+own nonce-based CSP and escapes the message it renders.

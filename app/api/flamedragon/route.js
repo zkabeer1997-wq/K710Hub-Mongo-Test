@@ -47,8 +47,13 @@ export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return UNAUTHORIZED();
   let record;
+  let body;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  }
+  try {
     // Identity comes from the signed session, never from the request body.
     record = sanitizeFlamedragonInput({ ...body, member_id: session.memberId, pin: 'session' });
   } catch (error) {

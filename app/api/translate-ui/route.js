@@ -1,5 +1,5 @@
 import uiStrings from '../../../public/ui-strings.json';
-import { clientIp, isRateLimited } from '../../../lib/rateLimit.mjs';
+import { clientIp, checkRateLimit } from '../../../lib/rateLimit.mjs';
 import { protectTerms, restoreTerms } from '../../../lib/i18nTerms.mjs';
 
 export const runtime = 'nodejs';
@@ -221,7 +221,7 @@ export async function POST(request) {
     return Response.json({ error: 'Same-origin requests only.' }, { status: 403 });
   }
 
-  if (isRateLimited(`translate-ui:${clientIp(request)}`, { windowMs: 60_000, max: 20 })) {
+  if (await checkRateLimit(`translate-ui:${clientIp(request)}`, { windowMs: 60_000, max: 20, failOpen: true })) {
     return Response.json({ error: 'Too many translation requests. Please slow down.' }, { status: 429 });
   }
 

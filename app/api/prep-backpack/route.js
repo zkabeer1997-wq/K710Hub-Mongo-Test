@@ -8,7 +8,12 @@ export async function POST(request) {
     const session = await readMemberSession(request);
     if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
 
-    const data = await request.json();
+    let data;
+    try {
+      data = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    }
 
     const str = (v) => String(v == null ? '' : v);
     const arr = (v) => (Array.isArray(v) ? v.map(String) : []);

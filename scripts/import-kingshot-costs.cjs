@@ -1,3 +1,4 @@
+// ONE-OFF / MANUAL TOOL: not part of the build or any scheduled job. Run by hand only when needed.
 // Extract factual level records from the reference site's public data modules.
 // Usage: node scripts/import-kingshot-costs.cjs <directory-of-downloaded-modules>
 // Only literal data is read; external JavaScript is never executed.

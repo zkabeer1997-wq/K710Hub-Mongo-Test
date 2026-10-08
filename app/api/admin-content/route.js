@@ -9,7 +9,12 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    }
     const { page, type, content, position } = body;
     if (!page || !type) {
       return NextResponse.json({ error: 'Missing page or type' }, { status: 400 });

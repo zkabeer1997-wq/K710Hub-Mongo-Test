@@ -17,7 +17,12 @@ export async function PATCH(request, { params: paramsPromise }) {
   }
   try {
     const params = await paramsPromise;
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    }
     const updates = {};
     if (body.content !== undefined) updates.content = body.content;
     if (body.position !== undefined) updates.position = body.position;

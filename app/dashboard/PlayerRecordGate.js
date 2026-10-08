@@ -317,6 +317,12 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
 
         <div className={styles.leftColumn}>
           {banner && <div className={styles.banner}>{banner}</div>}
+          {!banner && safeNext && view !== 'profile' && view !== 'loading' && (
+            <div className={styles.banner} role="status">
+              <strong>Please sign in first.</strong> The page you asked for is for signed-in members. After you sign in we will take you there.{' '}
+              <Link href="/help#signin">Need help signing in?</Link>
+            </div>
+          )}
 
           <section className={styles.card} aria-live="polite" aria-busy={busy}>
           {view === 'loading' && (

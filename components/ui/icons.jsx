@@ -130,8 +130,6 @@ const PATHS = {
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
 };
 
-export const ICON_NAMES = Object.keys(PATHS);
-
 export default function Icon({ name, size = 28, strokeWidth = 1.6, className = '', title }) {
   const body = PATHS[name] || PATHS.gear;
   return (

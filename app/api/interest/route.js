@@ -2,16 +2,17 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { checkRateLimit, clientIp } from '../../../lib/rateLimit.mjs';
 import { getActiveIntakePeriod } from '../../../lib/transferIntakePeriods.server';
 import {
   INTEREST_UPLOAD_LIMITS,
+  bytesMatchImageType,
   isAcceptedInterestImage,
   validateProcessedInterestFiles,
 } from '../../../lib/interestUploadLimits.mjs';
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
-const rateLimitHits = new Map();
 const MIN_FILL_TIME_MS = 3000;
 const MAX_TEXT_FIELD_LENGTH = 300;
 
@@ -20,28 +21,9 @@ function cap(value, max = MAX_TEXT_FIELD_LENGTH) {
   return String(value || '').trim().slice(0, max);
 }
 
-function isRateLimited(ip) {
-  const now = Date.now();
-  const hits = (rateLimitHits.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  hits.push(now);
-  rateLimitHits.set(ip, hits);
-  if (rateLimitHits.size > 5000) {
-    const oldestKey = rateLimitHits.keys().next().value;
-    rateLimitHits.delete(oldestKey);
-  }
-  return hits.length > RATE_LIMIT_MAX;
-}
-
-function clientIp(request) {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return request.headers.get('x-real-ip') || 'unknown';
-}
-
 export async function POST(request) {
   try {
-    const ip = clientIp(request);
-    if (isRateLimited(ip)) {
+    if (await checkRateLimit(`interest-submit:${clientIp(request)}`, { windowMs: RATE_LIMIT_WINDOW_MS, max: RATE_LIMIT_MAX })) {
       return NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 });
     }
 
@@ -172,8 +154,15 @@ export async function POST(request) {
     for (const file of screenshots) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      const mime = file.type || 'application/octet-stream';
-      screenshotUrls.push(`data:${mime};base64,${buffer.toString('base64')}`);
+      // The client converts HEIC and recompresses, so what arrives must be a
+      // genuine JPEG/PNG/WebP whose header matches its declared type.
+      if (!bytesMatchImageType(buffer, file.type)) {
+        return NextResponse.json(
+          { error: 'One file is not a valid JPG, PNG, or WebP image.' },
+          { status: 415 }
+        );
+      }
+      screenshotUrls.push(`data:${file.type};base64,${buffer.toString('base64')}`);
     }
 
     const id = randomUUID();

@@ -46,7 +46,6 @@
   --stone-lit:       #23283a;
   --steel:           #2c313f;
   --steel-bright:    #3d4456;
-  --timber:          #241a12;
   --leather:         #2a1d14;
   --leather-lit:     #3a2a1d;
 
@@ -61,8 +60,6 @@
   --parchment-dim:   #d2c5a6;
   --ink:             #14100a;
 
-  --fire:            #e2692a;
-  --fire-core:       #ffb257;
   --smoke:           rgba(20, 22, 30, 0.72);
 
   --wb-710:          #d9a94e;
@@ -77,11 +74,9 @@
   --t-muted:         #a3aabf; /* AA (>=4.5:1) on every dark surface incl. --stone-lit; was #6a7085 (2.6-4.1:1) */
   --t-faint:         #8a91a8; /* previously referenced but undefined */
   --field-bg:        rgba(10, 13, 26, 0.6); /* previously referenced but undefined */
-  --t-gold:          var(--gold-aged);
 
   --edge:            rgba(201, 164, 78, 0.18);
   --edge-strong:     rgba(201, 164, 78, 0.42);
-  --edge-cold:       rgba(120, 140, 180, 0.16);
   --depth-1:         0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.5);
   --depth-2:         0 1px 0 rgba(255,255,255,0.05) inset, 0 18px 48px rgba(0,0,0,0.62);
 
@@ -89,11 +84,9 @@
   --ease-heavy:      cubic-bezier(0.65, 0.02, 0.25, 1);
   --t-fast:          160ms;
   --t-ui:            260ms;
-  --t-scene:         900ms;
 
   /* --- Legacy "glass" tokens (from globals.css) ------------- */
   --bg:              #10142a;
-  --bg-alt:          #1a2140;
   --ink-soft:        #1a2140;
   --ink-soft-2:      #212a4d;
 
@@ -133,7 +126,6 @@
      .theme-realm; the hero always needs light, warm text regardless of
      which theme the rest of the page is in. */
   --hero-ink:        #fff6e4;
-  --hero-ink-muted:  #e9d9bd;
 
   /* The gate scene's static approximation - used both by
      .gate-fallback-art (GateExperience's own no-WebGL fallback) and
@@ -157,7 +149,6 @@
   --space-9:  48px;
   --space-10: 64px;
   --space-11: 80px;
-  --space-12: 96px;
 
   /* --- Page hero / section header (components/ui/PageHero.jsx) --- */
   --page-max:        1120px;
@@ -168,16 +159,12 @@
   --hero-lede:       #e9d9bd;
 
   /* --- Shadows (add new ones here, not inline) --- */
-  --shadow-sm:  0 1px 2px rgba(0,0,0,0.28);
-  --shadow-md:  0 8px 24px rgba(0,0,0,0.38);
-  --shadow-lg:  0 18px 48px rgba(0,0,0,0.5);
 
   /* --- Radius scale ------------------------------------------ */
   --radius-xs:   2px;
   --radius-sm:   6px;
   --radius-md:   8px;
   --radius-lg:   12px;
-  --radius-xl:   16px;
   --radius-pill: 999px;
 
   /* --- Type scale ---------------------------------------------
@@ -185,7 +172,6 @@
      mono/narrative) stays a per-component decision. */
   --text-xs:   12px;
   --text-sm:   13px;
-  --text-base: 15px;
   --text-md:   16px;
   --text-lg:   18px;
   --text-xl:   22px;
@@ -234,7 +220,6 @@
    caller, so those are free to pick whatever reads well. */
 .theme-console {
   --color-bg:            var(--ink);
-  --color-bg-alt:        var(--stone);
   --color-surface:       var(--stone-lit);
   --color-surface-alt:   var(--steel);
   --color-ink:           var(--text);
@@ -260,7 +245,6 @@
      it keeps inheriting Cinzel from :root untouched. */
   --font-display: var(--font-fraunces-loaded), Georgia, 'Times New Roman', serif;
   --color-bg:            #fbf3e0;
-  --color-bg-alt:        #f5e6c4;
   --color-surface:       #fffaf0;
   --color-surface-alt:   #fdf1da;
   --color-ink:           #2c1c0c;

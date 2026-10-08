@@ -52,9 +52,16 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
   }
   let profile;
+  let rawBody;
   try {
-    profile = sanitizePowerProfileInput(await request.json());
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  }
+  try {
+    profile = sanitizePowerProfileInput(rawBody);
   } catch (error) {
+    // sanitize* throws deliberate, user-facing validation messages only.
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
   if (profile.member_id !== session.memberId) {

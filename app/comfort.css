@@ -70,7 +70,10 @@
 :root[data-easy="true"] button,
 :root[data-easy="true"] .btn,
 :root[data-easy="true"] [type="submit"] { min-height: 52px; font-weight: 700; }
-:root[data-easy="true"] a { text-decoration: underline; text-underline-offset: 3px; }
+:root[data-easy="true"] p a,
+:root[data-easy="true"] li a,
+:root[data-easy="true"] dd a,
+:root[data-easy="true"] small a { text-decoration: underline; text-decoration-color: currentColor; text-underline-offset: 3px; }
 :root[data-easy="true"] :focus-visible { outline: 3px solid var(--gold-hot); outline-offset: 3px; }
 :root[data-easy="true"] { --t-secondary: #d3d8e6; --t-muted: #c2c8d8; --text-muted: #d3d8e6; --text-dim: #c2c8d8; --t-faint: #b3bace; }
 /* No moving or decorative parts */
@@ -84,3 +87,64 @@
 /* Interest form: readable step counter and saved note */
 .petition-step-count { font-size: 16px; font-weight: 700; letter-spacing: normal; text-transform: none; display: flex; flex-direction: column; gap: 4px; }
 .petition-saved-note { display: block; font-size: 14px; font-weight: 400; color: var(--color-ink-muted); max-width: 34ch; }
+
+/* Appointment tabs: wrap instead of hiding the last tab off-screen on phones */
+@media (max-width: 640px) {
+  .appt-tabs { flex-wrap: wrap; overflow-x: visible; }
+  .appt-tabs a { flex: 1 1 auto; justify-content: center; padding: 0 12px; }
+}
+
+/* Easy view: the forms hub (MusterHall) becomes a plain list of big buttons.
+   Scene art, banners, braziers and crest are decoration only (aria-hidden). */
+:root[data-easy="true"] .muster-wall,
+:root[data-easy="true"] .muster-pillar,
+:root[data-easy="true"] .muster-banner,
+:root[data-easy="true"] .muster-floor,
+:root[data-easy="true"] .muster-brazier,
+:root[data-easy="true"] .muster .k-vignette,
+:root[data-easy="true"] .muster .hall-object,
+:root[data-easy="true"] .muster svg { display: none !important; }
+:root[data-easy="true"] .muster { min-height: 0; padding: 24px 16px 64px; }
+:root[data-easy="true"] .muster-inner { max-width: 640px; margin: 0 auto; }
+:root[data-easy="true"] .muster-head { text-align: left; margin-bottom: 20px; }
+:root[data-easy="true"] .muster-back-link { display: inline-flex; align-items: center; min-height: 52px; font-weight: 700; }
+:root[data-easy="true"] .muster-title { font-size: clamp(28px, 7vw, 40px); }
+:root[data-easy="true"] .hall { display: flex; flex-direction: column; gap: 14px; transform: none; }
+:root[data-easy="true"] .hall-station {
+  display: block; width: 100%; transform: none; opacity: 1;
+  padding: 20px; border: 2px solid var(--gold); border-radius: 12px;
+  background: rgba(10, 13, 26, 0.85); text-decoration: none; text-align: left;
+}
+:root[data-easy="true"] .hall-station:hover,
+:root[data-easy="true"] .hall-station:focus-visible { background: rgba(217, 169, 78, 0.16); }
+:root[data-easy="true"] .hall-plaque { display: flex; flex-direction: column; gap: 6px; text-align: left; position: static; transform: none; }
+:root[data-easy="true"] .hall-title { font-size: 24px; color: var(--gold-bright); }
+:root[data-easy="true"] .hall-line { font-size: 18px; color: var(--parchment); }
+:root[data-easy="true"] .hall-station[data-closed="true"] { border-color: var(--line); opacity: 0.85; }
+:root[data-easy="true"] .hall-closed-tag { align-self: flex-start; padding: 4px 10px; border: 1px solid currentColor; border-radius: 6px; font-weight: 700; }
+
+/* Apply form: help text, screenshot list, review step */
+.where-help { margin-top: 6px; }
+.where-help summary { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--color-link, var(--gold-bright)); font-weight: 700; font-size: 15px; }
+.where-help p { margin: 4px 0 8px; font-size: 16px; line-height: 1.6; max-width: 56ch; }
+.shot-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.shot-item { display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; }
+.shot-item img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; }
+.shot-item span { flex: 1; font-size: 16px; }
+.review-groups { display: grid; gap: 16px; }
+.review-group { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.review-group-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.review-group-head h3 { margin: 0; font-size: 18px; }
+.review-group dl { margin: 0; display: grid; gap: 8px; }
+.review-group dl > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; }
+.review-group dt { color: var(--color-ink-muted, var(--t-secondary)); font-size: 15px; }
+.review-group dd { margin: 0; font-size: 16px; font-weight: 600; word-break: break-word; }
+@media (max-width: 520px) { .review-group dl > div { grid-template-columns: 1fr; gap: 2px; } }
+
+@media (max-width: 640px) {
+  .petition-step-nav { flex-direction: column; align-items: stretch; gap: 14px; }
+  .petition-step-actions { width: 100%; display: flex; gap: 10px; }
+  .petition-step-actions .k-btn { flex: 1 1 0; min-height: 52px; }
+}
+:root[data-easy="true"] .muster-head { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+:root[data-easy="true"] .hall-kicker, :root[data-easy="true"] .hall-title, :root[data-easy="true"] .hall-line { display: block; text-align: left; width: 100%; }

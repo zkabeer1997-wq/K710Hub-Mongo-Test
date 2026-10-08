@@ -20,6 +20,7 @@ function matches(doc, filter) {
     if (cond && typeof cond === 'object' && !Array.isArray(cond) && !(cond instanceof ObjectId)) {
       if ('$exists' in cond) return cond.$exists ? value !== undefined : value === undefined;
       if ('$ne' in cond) return !equalsLoose(value, cond.$ne);
+      if ('$nin' in cond) return !(cond.$nin || []).some((v) => equalsLoose(value, v));
       if ('$in' in cond) return (cond.$in || []).some((v) => equalsLoose(value, v));
       if ('$type' in cond) return typeof value === (cond.$type === 'string' ? 'string' : typeof value);
     }
@@ -44,6 +45,7 @@ function project(doc, projection) {
 
 function applyUpdate(doc, filter, update) {
   if (update.$set) Object.assign(doc, update.$set);
+  if (update.$inc) for (const [k, v] of Object.entries(update.$inc)) doc[k] = (Number(doc[k]) || 0) + v;
   if (update.$setOnInsert) {
     for (const [k, v] of Object.entries(update.$setOnInsert)) if (!(k in doc)) doc[k] = v;
   }
@@ -54,6 +56,12 @@ function applyUpdate(doc, filter, update) {
     if (k.startsWith('$') || k in doc) continue;
     doc[k] = v;
   }
+}
+
+// An upsert with an equality `_id` filter creates the document with that _id.
+function upsertId(filter) {
+  const id = filter?._id;
+  return id !== undefined && (typeof id !== 'object' || id instanceof ObjectId) ? id : new ObjectId();
 }
 
 function duplicateKeyError() {
@@ -141,7 +149,7 @@ function makeCollection(tables, name, uniqueFields = []) {
       const doc = rows().find((d) => matches(d, filter));
       if (!doc) {
         if (opts.upsert) {
-          const created = { _id: new ObjectId() };
+          const created = { _id: upsertId(filter) };
           applyUpdate(created, filter, update);
           assertNoConflict(created, null);
           rows().push(created);
@@ -159,7 +167,7 @@ function makeCollection(tables, name, uniqueFields = []) {
       let doc = rows().find((d) => matches(d, filter));
       if (!doc) {
         if (!opts.upsert) return null;
-        doc = { _id: new ObjectId() };
+        doc = { _id: upsertId(filter) };
         applyUpdate(doc, filter, update);
         assertNoConflict(doc, null);
         rows().push(doc);
@@ -170,6 +178,23 @@ function makeCollection(tables, name, uniqueFields = []) {
         applyUpdate(doc, filter, update);
       }
       return project(doc, opts.projection);
+    },
+    async bulkWrite(ops) {
+      // Ordered, stops at the first error (mirrors the driver's default).
+      let upserted = 0;
+      let modified = 0;
+      for (const op of ops) {
+        if (op.updateOne) {
+          const res = await this.updateOne(op.updateOne.filter, op.updateOne.update, { upsert: op.updateOne.upsert });
+          upserted += res.upsertedCount;
+          modified += res.modifiedCount;
+        } else if (op.insertOne) {
+          await this.insertOne(op.insertOne.document);
+        } else if (op.deleteOne) {
+          await this.deleteOne(op.deleteOne.filter);
+        }
+      }
+      return { acknowledged: true, upsertedCount: upserted, modifiedCount: modified };
     },
     async deleteOne(filter) {
       const idx = rows().findIndex((d) => matches(d, filter));

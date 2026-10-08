@@ -1,3 +1,5 @@
+> STALE: describes the old Supabase source of truth.
+
 # Deployment Readiness Audit — K710Hub (Mongo stack)
 
 Audited at commit `18bf43e` on `main`. Verified against the live MongoDB Atlas

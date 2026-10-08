@@ -5,7 +5,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import {
   APPOINTMENT_TYPES, findType, allocateSlots, contributionScore, compareApplicants, validateManualAssignment, slotRange,
 } from '../../../lib/kvkAppointments.mjs';
-import { loadAppointmentGate, isCyclePublished, iso } from '../../../lib/kvkAppointments.server.js';
+import { loadAppointmentGate, isCyclePublished, iso, replaceAutoAssignments } from '../../../lib/kvkAppointments.server.js';
 
 export const dynamic = 'force-dynamic';
 const HEADERS = { 'Cache-Control': 'no-store' };
@@ -77,15 +77,8 @@ export async function POST(request) {
         const [apps, existing] = await Promise.all([appsColl.find(filter).toArray(), asgColl.find(filter).toArray()]);
         const locked = existing.filter((a) => a.manual === true);
         const result = allocateSlots(apps, locked);
-        await asgColl.deleteMany({ ...filter, manual: { $ne: true } });
         const names = new Map(apps.map((a) => [String(a.member_id), a.in_game_name || '']));
-        const now = new Date();
-        if (result.assignments.length) {
-          await asgColl.insertMany(result.assignments.map((a) => ({
-            ...filter, member_id: a.member_id, slot: a.slot, name: names.get(a.member_id) || '', score: a.score,
-            manual: false, created_at: now, updated_at: now,
-          })));
-        }
+        await replaceAutoAssignments(asgColl, filter, result.assignments, names);
         summary.push({ day: type.day, buff: type.buff, assigned: result.assignments.length, locked: locked.length, unassigned: result.unassigned.length });
       }
       return json({ ok: true, summary });

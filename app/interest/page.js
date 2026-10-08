@@ -4,7 +4,7 @@ import InterestForm from './InterestForm';
 import PageHero from '../../components/ui/PageHero';
 
 export const metadata = {
-  title: 'The Registry',
+  title: 'Apply to join Kingdom 710',
   description: 'Petition the registry to transfer into Kingdom 710.',
   alternates: { canonical: '/interest' },
 };
@@ -28,9 +28,9 @@ export default async function InterestPage() {
         <PageHero
           tone="console"
           className="registry-head"
-          eyebrow="The Registry · Transfer application"
-          title="Petition for Entry"
-          lede="State your name, your strength, and your intent. The council reviews every petition before intake opens."
+          eyebrow="Kingdom 710 · Transfer application"
+          title="Apply to join Kingdom 710"
+          lede="Answer a few questions about your account and your power. It takes about 5 minutes, and you can stop and come back later. Our officers read every application."
           actions={<a href="/about#alliances" className="registry-head-link">Want to check alliance schedules first? →</a>}
         />
 

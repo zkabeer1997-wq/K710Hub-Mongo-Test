@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
-import { clientIp, isRateLimited } from '../../../../lib/rateLimit.mjs';
+import { clientIp, checkRateLimit } from '../../../../lib/rateLimit.mjs';
 
 /**
  * Public status check for transfer applicants.
@@ -10,7 +10,7 @@ import { clientIp, isRateLimited } from '../../../../lib/rateLimit.mjs';
  */
 export async function GET(request) {
   const headers = { 'Cache-Control': 'no-store' };
-  if (isRateLimited(`interest-status:${clientIp(request)}`, { windowMs: 10 * 60 * 1000, max: 20 })) {
+  if (await checkRateLimit(`interest-status:${clientIp(request)}`, { windowMs: 10 * 60 * 1000, max: 20 })) {
     return NextResponse.json({ error: 'Too many lookups. Please wait a few minutes and try again.' }, { status: 429, headers });
   }
   try {

@@ -5,10 +5,10 @@ import {
   mintAdminToken,
   safeEqualStrings,
 } from '../../../lib/adminAuth';
-import { clientIp, isRateLimited } from '../../../lib/rateLimit.mjs';
+import { clientIp, checkRateLimit } from '../../../lib/rateLimit.mjs';
 
 export async function POST(request) {
-  if (isRateLimited(`admin-login:${clientIp(request)}`, { windowMs: 15 * 60 * 1000, max: 8 })) {
+  if (await checkRateLimit(`admin-login:${clientIp(request)}`, { windowMs: 15 * 60 * 1000, max: 8 })) {
     return NextResponse.json({ error: 'Too many attempts. Try again in a few minutes.' }, { status: 429 });
   }
 

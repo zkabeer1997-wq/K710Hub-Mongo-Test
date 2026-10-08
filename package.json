@@ -39,12 +39,14 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.3.3",
+    "acorn": "^8.18.0",
     "axe-core": "^4.13.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.3.3",
     "pixelmatch": "^7.2.0",
     "playwright": "^1.62.1",
     "pngjs": "^7.0.0",
+    "sharp": "^0.35.4",
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^36.0.1"
   }

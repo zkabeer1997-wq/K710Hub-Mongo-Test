@@ -1,9 +1,0 @@
-.site-shell-realm .gallery-page {
-  min-height: 100vh;
-  background: #0c0e12;
-  color: #eadfca;
-}
-
-.site-shell-realm .gallery-page::before {
-  display: none;
-}

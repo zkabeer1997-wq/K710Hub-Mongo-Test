@@ -39,8 +39,35 @@ const ACTS = [
   { id: 'intake', num: 'II', label: 'Your move', sub: 'Step 2 · Transfer details', required: ['migrateAlliance'] },
   { id: 'troops', num: 'III', label: 'Your power', sub: 'Step 3 · Your power and troops', required: ['highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower'], requiresT11: true },
   { id: 'commitment', num: 'IV', label: 'Your promise', sub: 'Step 4 · Your commitment', required: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'] },
-  { id: 'battle-report', num: 'V', label: 'Screenshots', sub: 'Step 5 · Screenshots and submit', requiresScreenshot: true },
+  { id: 'battle-report', num: 'V', label: 'Screenshots', sub: 'Step 5 · Screenshots', requiresScreenshot: true },
+  { id: 'review', num: 'VI', label: 'Check and send', sub: 'Step 6 · Check your answers' },
 ];
+
+function Where({ children }) {
+  return (
+    <details className="where-help">
+      <summary>Where do I find this?</summary>
+      <p>{children}</p>
+    </details>
+  );
+}
+
+function Thumb({ file, index, onRemove }) {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  return (
+    <li className="shot-item">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {url && <img src={url} alt={`Screenshot ${index + 1} preview`} />}
+      <span>Screenshot {index + 1}</span>
+      <button type="button" className="k-btn k-btn-quiet" onClick={() => onRemove(index)}>Remove</button>
+    </li>
+  );
+}
 
 function Chapter({ id, title, children }) {
   return (
@@ -289,22 +316,35 @@ function goBack() {
 async function handleScreenshotChange(event) {
   const input = event.currentTarget;
   const files = input.files;
+  if (!files || files.length === 0) return;
   setProcessingImages(true);
   setIsError(false);
-  setStatus('Preparing and compressing your screenshots…');
+  setStatus('Preparing your screenshot…');
 
   try {
     const processed = await processInterestImages(files);
-    setScreenshots(processed);
-    setStatus(`${processed.length} screenshot${processed.length === 1 ? '' : 's'} ready to upload.`);
+    const merged = [...screenshots, ...processed];
+    if (merged.length > 4) {
+      setIsError(true);
+      setStatus('You can add up to 4 screenshots. Remove one first if you want to add another.');
+    } else {
+      setScreenshots(merged);
+      setErrors((current) => current.filter((e) => e.key !== 'screenshots'));
+      setStatus(`${merged.length} screenshot${merged.length === 1 ? '' : 's'} added.`);
+    }
   } catch (error) {
-    setScreenshots([]);
     setIsError(true);
-    setStatus(error instanceof Error ? error.message : 'The screenshots could not be prepared. Please try again.');
-    input.value = '';
+    setStatus(error instanceof Error ? error.message : 'That screenshot could not be prepared. Please try a different picture.');
   } finally {
+    input.value = '';
     setProcessingImages(false);
   }
+}
+
+function removeScreenshot(index) {
+  setScreenshots((current) => current.filter((_, i) => i !== index));
+  setIsError(false);
+  setStatus('Screenshot removed.');
 }
 
 async function handleSubmit(e) {
@@ -433,7 +473,7 @@ return (
 <section id="identity" className="petition-act">
 <header className="petition-act-head">
 <span className="petition-act-num k-display">I</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Who Approaches</h2>
+<h2 className="petition-act-title k-display" tabIndex={-1}>Your account</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
 <p className="petition-act-sub">Step 1 · Your account</p>
@@ -441,8 +481,8 @@ return (
 <Chapter id="identity-fields" title="Identity">
 <div className="identity-grid">
 <div className="wizard-field"><label>{editableLabel('inGameName', 'In-game name')}<input {...gp('inGameName')} value={form.inGameName} onChange={(e) => updateField('inGameName', e.target.value)} /></label>{fe('inGameName')}</div>
-<div className="wizard-field"><label>{editableLabel('playerId', 'Player ID')}<input {...gp('playerId')} value={form.playerId} onChange={(e) => updateField('playerId', e.target.value)} /></label>{fe('playerId')}</div>
-<div className="wizard-field"><label>{editableLabel('discordUsername', 'Discord username')}<input {...gp('discordUsername')} value={form.discordUsername} onChange={(e) => updateField('discordUsername', e.target.value)} /></label>{fe('discordUsername')}</div>
+<div className="wizard-field"><label>{editableLabel('playerId', 'Player ID')}<input {...gp('playerId')} value={form.playerId} onChange={(e) => updateField('playerId', e.target.value)} /></label>{fe('playerId')}<Where>Open Kingshot and tap your picture in the top-left corner. Your Player ID is the number shown there.</Where></div>
+<div className="wizard-field"><label>{editableLabel('discordUsername', 'Discord username')}<input {...gp('discordUsername')} value={form.discordUsername} onChange={(e) => updateField('discordUsername', e.target.value)} /></label>{fe('discordUsername')}<Where>Open Discord and look under your picture at the bottom-left. Your username is the name written there, for example name or name#1234.</Where></div>
 <div className="wizard-field"><label>{editableLabel('currentServer', 'Your current server (prior to transfer)')}<input {...gp('currentServer')} value={form.currentServer} onChange={(e) => updateField('currentServer', e.target.value)} /></label>{fe('currentServer')}</div>
 <div className="wizard-field"><label>{editableLabel('currentAlliance', 'Your current alliance (prior to transfer)')}<input {...gp('currentAlliance')} value={form.currentAlliance} onChange={(e) => updateField('currentAlliance', e.target.value)} /></label>{fe('currentAlliance')}</div>
 </div>
@@ -455,7 +495,7 @@ return (
 <section id="intake" className="petition-act">
 <header className="petition-act-head">
 <span className="petition-act-num k-display">II</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>The Crossing</h2>
+<h2 className="petition-act-title k-display" tabIndex={-1}>Your move</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
 <p className="petition-act-sub">Step 2 · Transfer details</p>
@@ -498,7 +538,7 @@ return (
 <section id="troops" className="petition-act">
 <header className="petition-act-head">
 <span className="petition-act-num k-display">III</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Strength of Arms</h2>
+<h2 className="petition-act-title k-display" tabIndex={-1}>Your power</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
 <p className="petition-act-sub">Step 3 · Your power and troops</p>
@@ -518,7 +558,7 @@ return (
 </div>
 
 <div className="identity-grid">
-<div className="wizard-field"><label>{editableLabel('currentTg', 'Current amount of TG')}<input {...gp('currentTg')} inputMode="numeric" value={form.currentTg} onChange={(e) => updateField('currentTg', e.target.value)} placeholder={editablePlaceholder('currentTg', 'We need to understand how far you can push your TG level')} /></label>{fe('currentTg')}</div>
+<div className="wizard-field"><label>{editableLabel('currentTg', 'Current amount of TG')}<input {...gp('currentTg')} inputMode="numeric" value={form.currentTg} onChange={(e) => updateField('currentTg', e.target.value)} placeholder={editablePlaceholder('currentTg', 'We need to understand how far you can push your TG level')} /></label>{fe('currentTg')}<Where>TG means Troop Grade, the upgrade level of your troops. Look at your troop camps in the game, or ask your alliance leader.</Where></div>
 </div>
 
 <div className="troop-section public-section">
@@ -538,7 +578,7 @@ return (
 <Chapter id="power-fields" title="Power">
 <div className="identity-grid">
 <div className="wizard-field"><label>{editableLabel('mysticTrialStages', 'Current Mystic Trial TOTAL STAGES')}<input {...gp('mysticTrialStages')} inputMode="numeric" value={form.mysticTrialStages} onChange={(e) => updateField('mysticTrialStages', e.target.value)} /></label>{fe('mysticTrialStages')}</div>
-<div className="wizard-field"><label>{editableLabel('totalPower', 'Total Power')}<input {...gp('totalPower')} inputMode="numeric" value={form.totalPower} onChange={(e) => updateField('totalPower', e.target.value)} /></label>{fe('totalPower')}</div>
+<div className="wizard-field"><label>{editableLabel('totalPower', 'Total Power')}<input {...gp('totalPower')} inputMode="numeric" value={form.totalPower} onChange={(e) => updateField('totalPower', e.target.value)} /></label>{fe('totalPower')}<Where>In Kingshot tap your picture in the top-left corner. Your Power is the big number on your profile. Type it with digits only, for example 12345678.</Where></div>
 </div>
 
 <div className="troop-section public-section">
@@ -567,7 +607,7 @@ return (
 <section id="commitment" className="petition-act">
 <header className="petition-act-head">
 <span className="petition-act-num k-display">IV</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>The Oath</h2>
+<h2 className="petition-act-title k-display" tabIndex={-1}>Your promise</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
 <p className="petition-act-sub">Step 4 · Your commitment</p>
@@ -655,10 +695,10 @@ return (
 <section id="battle-report" className="petition-act">
 <header className="petition-act-head">
 <span className="petition-act-num k-display">V</span>
-<h2 className="petition-act-title k-display" tabIndex={-1}>Proof</h2>
+<h2 className="petition-act-title k-display" tabIndex={-1}>Screenshots</h2>
 <span className="petition-act-rule" aria-hidden="true" />
 </header>
-<p className="petition-act-sub">Step 5 · Screenshots and submit</p>
+<p className="petition-act-sub">Step 5 · Screenshots</p>
 <div className="petition-act-body">
 <Chapter id="proof-fields" title="Battle report">
 <div className="troop-section public-section">
@@ -667,9 +707,8 @@ return (
   {...gp('screenshots')}
   ref={screenshotInput}
   type="file"
-  multiple
   accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-  aria-label="Upload battle report screenshots"
+  aria-label="Add a screenshot"
   aria-describedby={errorFor('screenshots') ? 'f-screenshots-error battle-report-upload-help' : 'battle-report-upload-help'}
   disabled={processingImages || loading}
   onChange={handleScreenshotChange}
@@ -678,12 +717,51 @@ return (
   {processingImages
     ? 'Compressing images…'
     : screenshots.length > 0
-      ? `${screenshots.length} screenshot${screenshots.length === 1 ? '' : 's'} ready · JPG, PNG, WebP, HEIC, and HEIF supported`
-      : 'Up to 4 screenshots · 12 MB each · JPG, PNG, WebP, HEIC, or HEIF'}
+      ? 'Added. You can add another one (up to 4), or press Continue.'
+      : 'Add one screenshot at a time, up to 4. Pictures from your phone gallery work.'}
 </p>
+{screenshots.length > 0 && (
+  <ul className="shot-list" aria-label="Your screenshots">
+    {screenshots.map((file, i) => (
+      <Thumb key={`${file.name}-${file.size}-${i}`} file={file} index={i} onRemove={removeScreenshot} />
+    ))}
+  </ul>
+)}
 {fe('screenshots')}
 </div>
 </Chapter>
+</div>
+</section>
+)}
+
+{step === 5 && (
+<section id="review" className="petition-act">
+<header className="petition-act-head">
+<span className="petition-act-num k-display">VI</span>
+<h2 className="petition-act-title k-display" tabIndex={-1}>Check your answers</h2>
+<span className="petition-act-rule" aria-hidden="true" />
+</header>
+<p className="petition-act-sub">Step 6 · Look everything over, then press “Send my application”.</p>
+<div className="petition-act-body review-groups">
+{[
+  { stepIndex: 0, title: 'Your account', rows: [['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord username', form.discordUsername], ['Current server', form.currentServer], ['Current alliance', form.currentAlliance]] },
+  { stepIndex: 1, title: 'Your move', rows: [['Alliance you want to join', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance]] },
+  { stepIndex: 2, title: 'Your power', rows: [['Highest troop level', form.highestTroopLevel], ['Current TG', form.currentTg], ['Mystic Trial stages', form.mysticTrialStages], ['Total power', form.totalPower]] },
+  { stepIndex: 3, title: 'Your promise', rows: [['Active commitment', form.activeCommit], ['Willing to save resources', form.willingSaveResources], ['Takes part in battles', form.participatesBattles], ['Spending style', form.spendingArchetype], ['Main language', form.mainLanguage === 'Other' ? `Other: ${form.mainLanguageOther}` : form.mainLanguage]] },
+  { stepIndex: 4, title: 'Screenshots', rows: [['Screenshots added', String(screenshots.length)]] },
+].map((group) => (
+  <section key={group.title} className="review-group" aria-labelledby={`review-${group.stepIndex}`}>
+    <div className="review-group-head">
+      <h3 id={`review-${group.stepIndex}`}>{group.title}</h3>
+      <button type="button" className="k-btn k-btn-quiet" onClick={() => { setErrors([]); setStep(group.stepIndex); }}>Change</button>
+    </div>
+    <dl>
+      {group.rows.map(([k, v]) => (
+        <div key={k}><dt>{k}</dt><dd>{String(v || '').trim() || 'Not answered'}</dd></div>
+      ))}
+    </dl>
+  </section>
+))}
 </div>
 </section>
 )}
@@ -705,7 +783,7 @@ return (
       <button type="button" className="k-btn k-btn-quiet" onClick={goBack}>Back</button>
     )}
     {isFinalStep ? (
-      <button type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages || (activePeriodLoaded && !activePeriod)}>{processingImages ? 'Preparing images…' : loading ? 'Submitting...' : 'Submit Petition'}</button>
+      <button type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages || (activePeriodLoaded && !activePeriod)}>{processingImages ? 'Preparing images…' : loading ? 'Sending…' : 'Send my application'}</button>
     ) : (
       <button type="button" className="k-btn" onClick={goNext}>Continue</button>
     )}

@@ -12,12 +12,13 @@ const TOOL_SLUG_RENAMES = {
   'flamedragon-shop': 'dragons-caravan-optimizer',
 };
 
-// Page CSP (nonce + strict-dynamic) is set per request in proxy.js. This
-// legacy policy now only covers /api/*, which the proxy skips; the Google
-// Drive OAuth callback returns a small inline <script> that needs it.
+// Page CSP (nonce) is set per request in proxy.js. This policy covers /api/*
+// JSON/binary responses, so it needs no inline script at all. The Google Drive
+// OAuth callback returns a small inline <script> and sets its own nonce-based
+// CSP, so it is excluded from this rule (see the source pattern below).
 const API_CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
@@ -45,7 +46,7 @@ const nextConfig = {
         headers: SECURITY_HEADERS,
       },
       {
-        source: '/api/:path*',
+        source: '/api/:path((?!google-drive/callback$).*)',
         headers: [{ key: 'Content-Security-Policy', value: API_CSP }],
       },
     ];

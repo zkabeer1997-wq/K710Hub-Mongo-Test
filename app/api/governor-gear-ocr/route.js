@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { normalizePowerProfileOcrPayload } from '../../../lib/governorGearOcr.mjs';
 import { readMemberSession } from '../../../lib/memberAuth';
-import { clientIp, isRateLimited } from '../../../lib/rateLimit.mjs';
+import { clientIp, checkRateLimit } from '../../../lib/rateLimit.mjs';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -32,7 +32,7 @@ export async function POST(request) {
   if (!(await readMemberSession(request))) {
     return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
   }
-  if (isRateLimited(`governor-gear-ocr:${clientIp(request)}`, { windowMs: 60_000, max: 10 })) {
+  if (await checkRateLimit(`governor-gear-ocr:${clientIp(request)}`, { windowMs: 60_000, max: 10, failOpen: true })) {
     return NextResponse.json({ error: 'Too many scans. Please wait a moment and try again.' }, { status: 429 });
   }
   try {

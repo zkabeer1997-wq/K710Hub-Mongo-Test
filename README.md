@@ -25,10 +25,11 @@ Admin surface (shared password, or a Kingshot session with admin/superadmin role
 
 | Variable | Used by | Notes |
 |---|---|---|
-| `MONGODB_URI` | `lib/mongo.js` | Full connection string including password. Server only. Never expose. |
+| `MONGODB_URI` | `lib/mongo.js`, `instrumentation.js`, `lib/rateLimit.mjs` | Full connection string including password. Server only. Never expose. `MONGO_URI` is accepted as a fallback name by the app and the seed script; `scripts/ensure-indexes.mjs` still requires `MONGODB_URI`. |
 | `MONGODB_DB_NAME` | `lib/mongo.js` | Defaults to `k710hub` if unset |
 | `ADMIN_PASSWORD` | `lib/adminAuth.js` | Admin auth **fails closed** if unset — nobody can log in |
 | `MEMBER_SESSION_SECRET` | `lib/memberAuth.js`, `lib/memberSessionSecret.js` | **Set this explicitly in every environment.** Signs member session tokens; login **fails closed** if unset — there is no fallback to `ADMIN_PASSWORD` or any other secret. |
+| `ADMIN_SESSION_SECRET` | `lib/adminAuth.js` | Optional but recommended: dedicated key for signing admin session cookies. Falls back to `ADMIN_PASSWORD` when unset (existing deployments keep working); set it so a leaked cookie cannot be used to attack the password offline. Changing it logs every admin out. |
 | `CRON_SECRET` | `app/api/cron/gift-codes/route.js` | Bearer token Vercel Cron sends; required for the daily gift-code check |
 
 **Optional / feature-specific**
@@ -38,6 +39,9 @@ Admin surface (shared password, or a Kingshot session with admin/superadmin role
 | `SITE_URL` | Public origin (no trailing slash), e.g. `https://k710.example`. Drives `metadataBase`, canonical URLs, sitemap, robots, JSON-LD and Open Graph image URLs (`lib/siteUrl.js`). Defaults to the testing site; **set it in production**. |
 | `KINGSHOT_API_BASE_URL`, `KINGSHOT_PLAYER_API_URL`, `KINGSHOT_PLAYER_SEARCH_URL` | Upstream endpoints for the Kingshot login flow (`lib/kingshotLogin.js`) |
 | `CHARM_OCR_ENDPOINT`, `GOVERNOR_CHARM_OCR_ENDPOINT`, `GOVERNOR_GEAR_OCR_ENDPOINT` | Screenshot-scanning tools; those features degrade gracefully without them |
+| `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` | OAuth client for the Google Drive export (`lib/googleDrive.server.js`, `app/api/google-drive/*`, `app/api/export-to-drive`). Both must be set or the export reports "not configured". Authorized redirect URI: `<SITE_URL>/api/google-drive/callback`. |
+| `VERCEL_ENV` | Set automatically by Vercel. `preview` makes guides read from the `kingdom_guides_preview` collection instead of `kingdom_guides` (`lib/guideAccess.mjs`). Do not set by hand. |
+| `QA_NO_DB` | Set to `1` for QA/test runs without a database: skips the boot-time index sync and the shared rate-limit store. |
 | `K710_LIBRETRANSLATE_URLS` | Comma-separated LibreTranslate mirrors for `/api/translate-ui`; falls back to public mirrors |
 
 This stack no longer uses Supabase for anything — all `NEXT_PUBLIC_SUPABASE_*` / `SUPABASE_SERVICE_ROLE_KEY` variables can be removed from every environment.

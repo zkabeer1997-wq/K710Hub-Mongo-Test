@@ -83,6 +83,6 @@ export async function POST(request) {
     return noStoreJson({ ok: true, ...status });
   } catch (error) {
     console.error('gift-codes POST failed', error);
-    return noStoreJson({ error: error?.message || 'Unable to update redemption.' }, { status: 500 });
+    return noStoreJson({ error: 'Unable to update redemption.' }, { status: 500 });
   }
 }
