@@ -452,3 +452,16 @@ html body .vote-option span span, html body .vote-option small, html body .vote-
 :root[data-easy="true"] body .vote-option span span, :root[data-easy="true"] body .vote-option small { font-size: 16px; }
 html body .vote-option div span { font-size: 14px; display: block; }
 :root[data-easy="true"] body .vote-option div span { font-size: 16px; }
+
+/* KvK Prep & Appointments form: nothing below 14px (16px in Easy view) */
+html body .prep-slot small, html body .prep-slot .prep-slot-local,
+html body .prep2-block label, html body .prep2-follow label, html body .prep2-checks label,
+html body .prep2-day, html body .prep-yn-opt span, html body .prep2-id, html body .prep2-id strong,
+html body .prep-header-block p { font-size: 14px !important; }
+:root[data-easy="true"] body .prep-slot small, :root[data-easy="true"] body .prep2-block label,
+:root[data-easy="true"] body .prep2-follow label, :root[data-easy="true"] body .prep2-checks label,
+:root[data-easy="true"] body .prep2-day, :root[data-easy="true"] body .prep-yn-opt span,
+:root[data-easy="true"] body .prep-header-block p { font-size: 16px !important; }
+html body .prep2-block p.prep2-day { font-size: 14px !important; }
+html body .prep2-day p, html body .prep2-day > p, html body section.prep2-day p { font-size: 14px !important; }
+:root[data-easy="true"] body .prep2-day p { font-size: 16px !important; }
