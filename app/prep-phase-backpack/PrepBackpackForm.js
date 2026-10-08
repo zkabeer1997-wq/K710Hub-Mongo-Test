@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import NobleAdvisorFields, { SlotPicker } from '../../components/NobleAdvisorFields';
+import '../../components/member/easy-view-fixes.css';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 const CONSTRUCTION_UPGRADES = ['TG5', 'TG6', 'TG7', 'TG8'];

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
-import { getMemberFormStatuses, getDeadlineEntries } from '../../../lib/memberFormStatus.server.js';
+import { getOrderedMemberForms, getDeadlineEntries } from '../../../lib/memberFormStatus.server.js';
 import { firstIncomplete, stillNeedsSummary } from '../../../lib/memberForms.mjs';
 import { describeEntry } from '../../../lib/deadlines.mjs';
 
@@ -13,8 +13,8 @@ export async function GET(request) {
   if (!session) return NextResponse.json({ signedIn: false, forms: [], entries: [] }, { headers: HEADERS });
   const now = Date.now();
   try {
-    const [forms, entries] = await Promise.all([
-      getMemberFormStatuses(session.memberId, now),
+    const [{ forms, cycles }, entries] = await Promise.all([
+      getOrderedMemberForms(session.memberId, now),
       getDeadlineEntries(now),
     ]);
     const first = firstIncomplete(forms);
@@ -22,6 +22,7 @@ export async function GET(request) {
       signedIn: true,
       memberId: session.memberId,
       forms,
+      cycles,
       entries: entries.map((entry) => describeEntry(entry, now)),
       summary: stillNeedsSummary(forms),
       firstIncomplete: first ? { key: first.key, label: first.label, href: first.href } : null,

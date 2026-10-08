@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCorners, pointerWithin, useDroppable, useSensor, useSensors,
+  DndContext, DragOverlay, KeyboardSensor, MouseSensor, TouchSensor, closestCorners, pointerWithin, useSensor, useSensors,
 } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import GuidePageBody, { GuideMetaFooter } from '../../guides/GuidePageBody';
 import guideStyles from '../../guides/guideLayout.module.css';
 import {
@@ -15,7 +15,7 @@ import {
 } from '../../../lib/guideLayout.mjs';
 import { createHistory, pushHistory, redoHistory, replacePresent, undoHistory } from '../../../lib/guideHistory.mjs';
 import { BuilderContext } from './BuilderContext';
-import SortableBlock from './BlockEditors';
+import AreaDrop, { areaDropId } from './AreaDrop';
 import Inspector from './Inspector';
 import Palette from './Palette';
 import TemplatePicker from './TemplatePicker';
@@ -25,7 +25,6 @@ import styles from './builder.module.css';
 const META_KEYS = ['title', 'slug', 'category', 'description', 'access_level', 'reviewed_by', 'position', 'f2p_content', 'spender_content'];
 const signature = (layout, meta) => JSON.stringify([layout, ...META_KEYS.map(k => meta[k])]);
 const AUTO_SLUG = /^untitled-guide(-\d+)?$/;
-const areaDropId = id => `area:${id}`;
 
 function collision(args) {
   const hits = pointerWithin(args);
@@ -34,26 +33,6 @@ function collision(args) {
     return blocks.length ? blocks : hits;
   }
   return closestCorners(args);
-}
-
-function AreaDrop({ area, blocks, activeKind }) {
-  const { setNodeRef, isOver } = useDroppable({ id: areaDropId(area.id), data: { kind: 'area', areaId: area.id } });
-  return (
-    <section
-      ref={setNodeRef}
-      className={styles.areaShell}
-      data-area-drop={area.id}
-      data-over={isOver ? 'true' : undefined}
-      data-armed={activeKind ? 'true' : undefined}
-      aria-label={`${area.label} area`}
-    >
-      <span className={styles.areaLabel}>{area.label}</span>
-      <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-        {blocks.map((block, index) => <SortableBlock key={block.id} block={block} index={index} areaId={area.id} />)}
-      </SortableContext>
-      {blocks.length === 0 ? <p className={styles.areaEmpty}>Empty - drag a block here, or click a block in the left panel.</p> : null}
-    </section>
-  );
 }
 
 function LibraryModal({ library, onPick, onClose }) {
@@ -77,6 +56,100 @@ function LibraryModal({ library, onPick, onClose }) {
           </div>
         ) : <p>No images yet. Upload one first.</p>}
         <div className={styles.modalActions}><button type="button" className={styles.btn} onClick={onClose} autoFocus>Close</button></div>
+      </div>
+    </div>
+  );
+}
+
+function useDialogFocus(onClose) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const prev = document.activeElement;
+    ref.current?.querySelector('[data-autofocus]')?.focus();
+    const onKey = e => {
+      if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
+      if (e.key === 'Tab' && ref.current) {
+        const items = [...ref.current.querySelectorAll('button:not(:disabled), input, select, textarea, a[href]')];
+        if (!items.length) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => { document.removeEventListener('keydown', onKey, true); prev?.focus?.(); };
+  }, [onClose]);
+  return ref;
+}
+
+function ConfirmDelete({ label, onCancel, onConfirm }) {
+  const ref = useDialogFocus(onCancel);
+  return (
+    <div className={styles.modalBack} role="presentation">
+      <div className={`${styles.modal} ${styles.modalSmall}`} role="alertdialog" aria-modal="true" aria-labelledby="del-title" ref={ref}>
+        <h2 id="del-title">Delete this {label.toLowerCase()} block?</h2>
+        <p className={styles.modalLead}>You can bring it back right after with Undo.</p>
+        <div className={styles.modalActions}>
+          <button type="button" className={styles.btn} onClick={onCancel} data-autofocus>Keep it</button>
+          <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={onConfirm}>Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TipsCard({ onClose }) {
+  const ref = useDialogFocus(onClose);
+  return (
+    <div className={styles.tips} role="dialog" aria-labelledby="tips-title" ref={ref}>
+      <h2 id="tips-title">Welcome! Three quick tips</h2>
+      <ol>
+        <li><strong>Click any block to edit it.</strong> Type right on the page. Select words to make them bold or add a link.</li>
+        <li><strong>Drag the ⠿ handle to move a block.</strong> Or use the arrow buttons and the &quot;part of the page&quot; menu on the block.</li>
+        <li><strong>Add blocks from the left.</strong> Or press the + between blocks. Your work saves by itself.</li>
+      </ol>
+      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onClose} data-autofocus>Got it</button>
+    </div>
+  );
+}
+
+function CheckItem({ ok, children }) {
+  return <li data-ok={ok ? 'true' : 'false'}><span aria-hidden="true">{ok ? '✓' : '✕'}</span> <span className={styles.srOnly}>{ok ? 'Done: ' : 'To do: '}</span>{children}</li>;
+}
+
+function PublishDialog({ meta, layout, busy, onAccess, onTitle, onCancel, onFixPictures, onPublish }) {
+  const ref = useDialogFocus(onCancel);
+  const missing = imagesMissingAlt(layout).length;
+  const titled = Boolean(meta.title.trim()) && !/^untitled guide$/i.test(meta.title.trim());
+  const hasContent = layoutBlocks(layout).length > 0;
+  const ready = titled && hasContent && missing === 0;
+  return (
+    <div className={styles.modalBack} role="presentation">
+      <div className={`${styles.modal} ${styles.modalSmall}`} role="dialog" aria-modal="true" aria-labelledby="pub-title" ref={ref}>
+        <h2 id="pub-title">Ready to publish?</h2>
+        <p className={styles.modalLead}>Quick check before readers see this page at /guides/{meta.slug}.</p>
+        <ul className={styles.checklist}>
+          <CheckItem ok={titled}>{titled ? 'The guide has a title' : 'Give the guide a title'}</CheckItem>
+          <CheckItem ok={hasContent}>{hasContent ? 'The page has content' : 'Add at least one block'}</CheckItem>
+          <CheckItem ok={missing === 0}>{missing === 0 ? 'Every picture has a description (alt text)' : `${missing} picture${missing > 1 ? 's still need a description' : ' still needs a description'}`}</CheckItem>
+        </ul>
+        {!titled ? (
+          <label className={styles.mini} style={{ marginTop: 10 }}><span>Title</span>
+            <input value={meta.title} maxLength={180} onChange={e => onTitle(e.target.value)} data-autofocus />
+          </label>
+        ) : null}
+        <label className={styles.mini} style={{ marginTop: 12 }}><span>Who can read it</span>
+          <select value={meta.access_level} onChange={e => onAccess(e.target.value)}>
+            <option value="public">Public: anyone with the link</option>
+            <option value="members">Members only: signed-in members</option>
+          </select>
+        </label>
+        <div className={styles.modalActions}>
+          <button type="button" className={styles.btn} onClick={onCancel}>Keep editing</button>
+          {missing ? <button type="button" className={styles.btn} onClick={onFixPictures}>Fix pictures</button> : null}
+          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} disabled={!ready || busy} onClick={onPublish} data-autofocus={titled ? true : undefined}>Publish now</button>
+        </div>
       </div>
     </div>
   );
@@ -112,6 +185,11 @@ export default function GuideBuilder({ slug: initialSlug }) {
   const [dragLayout, setDragLayout] = useState(null);
   const [active, setActive] = useState(null);
   const [fileDrag, setFileDrag] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [publishDialog, setPublishDialog] = useState(false);
+  const [tips, setTips] = useState(false);
+  const [drawer, setDrawer] = useState(null); // 'blocks' | 'settings' | null (narrow windows)
 
   const rootRef = useRef(null);
   const headerRef = useRef(null);
@@ -263,7 +341,8 @@ export default function GuideBuilder({ slug: initialSlug }) {
       if (missing.length) {
         setPreview(false);
         setSelectedId(missing[0]);
-        setFocusAlt(missing[0]);
+        setFocusAlt(null);
+        setTimeout(() => setFocusAlt(missing[0]), 60);
         setNotice({ kind: 'error', text: `Add alt text (or mark as decorative) for ${missing.length} image${missing.length > 1 ? 's' : ''} before publishing. The first one is selected.` });
         return;
       }
@@ -293,6 +372,14 @@ export default function GuideBuilder({ slug: initialSlug }) {
     }
   }, [layout, meta, slugKey, router]);
 
+  useEffect(() => {
+    const onKey = e => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); commitLive({}); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [commitLive]);
+
   // ---------------------------------------------------------------- meta
   const setMetaField = (field, value) => setMeta(m => {
     const next = { ...m, [field]: value };
@@ -314,8 +401,17 @@ export default function GuideBuilder({ slug: initialSlug }) {
   }, [layout, selectedId, mainAreaId]);
 
   const startFileUpload = useCallback(async (files, target) => {
-    const list = files.filter(Boolean);
+    setNotice(null);
+    let list = files.filter(Boolean);
     let current = layout;
+    const targetBlock = target?.blockId && layout ? findBlock(layout, target.blockId) : null;
+    if (targetBlock?.block.type === 'imagegrid') {
+      const room = 4 - targetBlock.block.images.length + (target.index != null && target.index < targetBlock.block.images.length ? 1 : 0);
+      if (list.length > room) {
+        setNotice({ kind: 'error', text: room > 0 ? `An image grid holds 4 pictures. Only the first ${room} file${room > 1 ? 's were' : ' was'} added.` : 'This image grid is full (4 pictures). Remove one first.' });
+        list = list.slice(0, Math.max(room, 0));
+      }
+    }
     for (const file of list) {
       const problem = checkImageFile(file);
       if (problem) { setNotice({ kind: 'error', text: problem }); continue; }
@@ -358,11 +454,23 @@ export default function GuideBuilder({ slug: initialSlug }) {
   const requestUpload = useCallback((blockId, index, files) => {
     if (files?.length) { startFileUpload(files, { blockId, index }); return; }
     uploadTarget.current = { blockId, index };
-    if (fileRef.current) { fileRef.current.multiple = !blockId; fileRef.current.click(); }
+    // Several files at once for the page and for image grids; one for a single picture.
+    if (fileRef.current) { fileRef.current.multiple = !blockId || index != null; fileRef.current.click(); }
   }, [startFileUpload]);
 
   const actions = useMemo(() => ({
-    remove: id => { commit(l => removeBlock(l, id)); setSelectedId(null); },
+    requestRemove: id => setConfirmDelete(id),
+    remove: id => {
+      commit(l => removeBlock(l, id));
+      setSelectedId(null);
+      setConfirmDelete(null);
+      setToast({ text: 'Block deleted.', undo: true, at: Date.now() });
+    },
+    areaOf: id => (layout ? findBlock(layout, id)?.areaId : null),
+    indexOf: id => (layout ? findBlock(layout, id)?.index ?? 0 : 0),
+    addAt: (type, areaId, index) => insertBlock(createBlock(type), areaId, index),
+    openSettings: () => setDrawer('settings'),
+    showTips: () => setTips(true),
     nudge: (id, dir) => commit(l => nudgeBlock(l, id, dir)),
     moveToArea: (id, areaId) => commit(l => moveBlock(l, id, areaId, null)),
     duplicate: id => {
@@ -371,11 +479,13 @@ export default function GuideBuilder({ slug: initialSlug }) {
       if (out.id) { commit(() => out.layout); setSelectedId(out.id); }
     },
     addFromPalette: type => {
+      setDrawer(null);
       const block = createBlock(type);
       const at = defaultTarget();
       insertBlock(block, at.areaId, at.index);
     },
     addImage: src => {
+      setDrawer(null);
       const block = { ...createBlock('image'), src };
       const at = defaultTarget();
       insertBlock(block, at.areaId, at.index);
@@ -383,6 +493,22 @@ export default function GuideBuilder({ slug: initialSlug }) {
     },
     openTemplates: () => setPicker('switch'),
   }), [commit, layout, defaultTarget, insertBlock]);
+
+  // Undo toast lasts a few seconds.
+  useEffect(() => {
+    if (!toast) return undefined;
+    const t = setTimeout(() => setToast(null), 9000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // First visit: show the three quick tips once.
+  useEffect(() => {
+    try { if (!localStorage.getItem('k710-guide-builder-tips-v1')) setTips(true); } catch { setTips(true); }
+  }, []);
+  const closeTips = () => {
+    setTips(false);
+    try { localStorage.setItem('k710-guide-builder-tips-v1', '1'); } catch { /* ignore */ }
+  };
 
   const applyLibraryImage = src => {
     const target = libraryPicker;
@@ -411,7 +537,12 @@ export default function GuideBuilder({ slug: initialSlug }) {
 
   // ---------------------------------------------------------------- drag and drop
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    // Mouse and trackpad: a 6px move before a drag starts, so clicks and tiny
+    // slips never move a block. Touch: press and hold briefly (150ms) so a
+    // normal swipe still scrolls the page. Keyboard: Space on the handle, then
+    // the arrow keys.
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -430,11 +561,17 @@ export default function GuideBuilder({ slug: initialSlug }) {
     return { areaId: found.areaId, index: found.index + (below ? 1 : 0), overIndex: found.index };
   };
 
+  // Crossing into another area re-measures the layout, which can fire another
+  // drag-over straight away (and bounce the block back and forth). One move per
+  // animation frame keeps that from becoming an update loop.
+  const justMoved = useRef(false);
   const onDragOver = ({ active: a, over }) => {
-    if (a.data.current?.kind !== 'block' || !dragLayout) return;
+    if (a.data.current?.kind !== 'block' || !dragLayout || justMoved.current) return;
     const from = findBlock(dragLayout, a.id);
     const to = resolveOver(dragLayout, over, a.rect.current.translated);
     if (!from || !to || from.areaId === to.areaId) return;
+    justMoved.current = true;
+    requestAnimationFrame(() => { justMoved.current = false; });
     setDragLayout(moveBlock(dragLayout, String(a.id), to.areaId, to.index));
   };
 
@@ -512,14 +649,14 @@ export default function GuideBuilder({ slug: initialSlug }) {
   const selected = layout && selectedId ? findBlock(layout, selectedId) : null;
   const blockCount = layoutBlocks(layout || { template: 'article', areas: {} }).length;
   const differsFromLive = liveSig === null || sig !== liveSig;
-  const statusText = { saved: 'Saved', dirty: 'Unsaved changes…', saving: 'Saving…', error: 'Save failed - retrying' }[saveState];
+  const statusText = { saved: 'Saved', dirty: 'Changes not saved yet', saving: 'Saving…', error: 'Could not save. Trying again…' }[saveState];
   const previewGuide = layout ? { ...meta, slug: meta.slug, layout, body: layoutToMarkdown(layout), updated_at: new Date().toISOString() } : null;
   const dragBlock = active?.data?.kind === 'block' ? findBlock(shownLayout, active.id) : null;
   const publicHref = `/guides/${meta.slug}`;
 
   return (
     <BuilderContext.Provider value={ctx}>
-      <div className={styles.root} ref={rootRef}>
+      <div className={styles.root} ref={rootRef} data-builder-root>
         <header className={styles.header} ref={headerRef}>
           <div className={styles.headRow}>
             <Link className={styles.back} href="/admin/dashboard/guides">← Guides</Link>
@@ -527,18 +664,21 @@ export default function GuideBuilder({ slug: initialSlug }) {
               <span className={styles.srOnly}>Guide title</span>
               <input value={meta.title} maxLength={180} placeholder="Guide title" onChange={e => setMetaField('title', e.target.value)} />
             </label>
-            <span className={styles.status} data-state={saveState} role="status" aria-live="polite">{statusText}</span>
+            <span className={styles.status} data-state={saveState} role="status" aria-live="polite">{saveState === 'saved' ? '✓ ' : ''}{statusText}</span>
             <div className={styles.headTools}>
+              <button type="button" className={`${styles.btn} ${styles.drawerBtn}`} onClick={() => setDrawer(d => (d === 'blocks' ? null : 'blocks'))} aria-expanded={drawer === 'blocks'}>Blocks</button>
+              <button type="button" className={`${styles.btn} ${styles.drawerBtn}`} onClick={() => setDrawer(d => (d === 'settings' ? null : 'settings'))} aria-expanded={drawer === 'settings'}>Settings</button>
               <button type="button" className={styles.btn} onClick={undo} disabled={!history.past.length} aria-label="Undo" title="Undo (Ctrl/Cmd+Z)">Undo</button>
               <button type="button" className={styles.btn} onClick={redo} disabled={!history.future.length} aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)">Redo</button>
               <button type="button" className={styles.btn} aria-pressed={preview} onClick={() => { setPreview(p => !p); setSelectedId(null); }}>{preview ? 'Back to editing' : 'Preview'}</button>
+              <button type="button" className={styles.btn} onClick={() => setTips(true)} title="Quick tips" aria-label="Show quick tips">?</button>
               <a className={styles.btn} href={publicHref} target="_blank" rel="noopener noreferrer">Open public page</a>
             </div>
             <div className={styles.headTools}>
-              <button type="button" className={styles.btn} onClick={() => commitLive({})} disabled={committing}>{meta.is_published ? 'Update live page' : 'Save'}</button>
+              <button type="button" className={styles.btn} onClick={() => commitLive({})} disabled={committing} title="Save (Ctrl/Cmd+S)">{meta.is_published ? 'Update live page' : 'Save draft'}</button>
               {meta.is_published
                 ? <button type="button" className={styles.btn} onClick={() => commitLive({ publish: false })} disabled={committing}>Unpublish</button>
-                : <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => commitLive({ publish: true })} disabled={committing}>Publish</button>}
+                : <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setPublishDialog(true)} disabled={committing}>Publish…</button>}
               <button type="button" className={styles.btn} onClick={() => commitLive({ exit: true })} disabled={committing}>Save and exit</button>
             </div>
           </div>
@@ -550,7 +690,7 @@ export default function GuideBuilder({ slug: initialSlug }) {
               <input list="gb-cats" value={meta.category} maxLength={80} onChange={e => setMetaField('category', e.target.value)} />
             </label>
             <datalist id="gb-cats">{categories.map(c => <option key={c} value={c} />)}</datalist>
-            <label className={styles.mini}><span>Access</span>
+            <label className={styles.mini}><span>Who can read it</span>
               <select value={meta.access_level} onChange={e => setMetaField('access_level', e.target.value)}>
                 <option value="public">Public</option><option value="members">Members only</option>
               </select>
@@ -599,12 +739,13 @@ export default function GuideBuilder({ slug: initialSlug }) {
 
         {layout ? (
           <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragOver={onDragOver} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
-            <div className={styles.workspace}>
-              <aside className={styles.left} aria-label="Blocks and images">
+            <div className={styles.workspace} data-drawer={drawer || undefined}>
+              {drawer ? <button type="button" className={styles.drawerScrim} aria-label="Close panel" onClick={() => setDrawer(null)} /> : null}
+              <aside className={styles.left} aria-label="Blocks and images" data-open={drawer === 'blocks' ? 'true' : undefined}>
                 <Palette library={fullLibrary} uploads={uploads} tab={paletteTab} setTab={setPaletteTab} />
               </aside>
 
-              <div className={styles.canvasCol} onClick={e => { if (!e.target.closest('[data-block-id]')) setSelectedId(null); }}>
+              <div className={styles.canvasCol} onClick={e => { if (!e.target.closest('[data-block-id]') && !e.target.closest('[role="menu"]')) setSelectedId(null); }}>
                 <div className="site-shell-realm">
                   {preview ? (
                     <main className={`armory guide-page ${guideStyles.page}`} aria-label="Guide preview">
@@ -628,7 +769,7 @@ export default function GuideBuilder({ slug: initialSlug }) {
                             editing
                             renderArea={area => <AreaDrop area={area} blocks={shownLayout.areas[area.id] || []} activeKind={active?.data?.kind} />}
                           />
-                          {blockCount === 0 ? <p className={styles.canvasHint}>Start with a block from the left panel, or drop images straight onto the page.</p> : null}
+                          {blockCount === 0 ? <p className={styles.canvasHint}>Start with a block from the left panel, press &quot;Add block&quot; below, or drop pictures straight onto the page.</p> : null}
                         </div>
                       </main>
                       {fileDrag ? <div className={styles.fileOverlay} aria-hidden="true">Drop images to add them</div> : null}
@@ -637,7 +778,7 @@ export default function GuideBuilder({ slug: initialSlug }) {
                 </div>
               </div>
 
-              <aside className={styles.right} aria-label="Block settings">
+              <aside className={styles.right} aria-label="Block settings" data-open={drawer === 'settings' ? 'true' : undefined}>
                 {preview ? <div className={styles.inspEmpty}><h2>Preview</h2><p>This is the public page exactly as readers see it. Switch back to keep editing.</p></div>
                   : <Inspector block={selected?.block || null} areaId={selected?.areaId} />}
               </aside>
@@ -656,6 +797,33 @@ export default function GuideBuilder({ slug: initialSlug }) {
           </DndContext>
         ) : null}
 
+        {toast ? (
+          <div className={styles.toast} role="status">
+            <span>{toast.text}</span>
+            {toast.undo ? <button type="button" className={styles.btn} onClick={() => { undo(); setToast(null); }}>Undo</button> : null}
+            <button type="button" aria-label="Dismiss" onClick={() => setToast(null)}>✕</button>
+          </div>
+        ) : null}
+        {tips && !picker ? <TipsCard onClose={closeTips} /> : null}
+        {confirmDelete ? (
+          <ConfirmDelete
+            label={BLOCK_LABELS[findBlock(layout, confirmDelete)?.block.type] || 'block'}
+            onCancel={() => setConfirmDelete(null)}
+            onConfirm={() => actions.remove(confirmDelete)}
+          />
+        ) : null}
+        {publishDialog ? (
+          <PublishDialog
+            meta={meta}
+            layout={layout}
+            busy={committing}
+            onAccess={v => setMetaField('access_level', v)}
+            onTitle={v => setMetaField('title', v)}
+            onCancel={() => setPublishDialog(false)}
+            onFixPictures={() => { const first = imagesMissingAlt(layout)[0]; setPublishDialog(false); setPreview(false); setSelectedId(first); setFocusAlt(null); setTimeout(() => setFocusAlt(first), 60); }}
+            onPublish={async () => { await commitLive({ publish: true }); setPublishDialog(false); }}
+          />
+        ) : null}
         {picker ? <TemplatePicker first={picker === 'first'} current={layout?.template} onPick={pickTemplate} onClose={picker === 'switch' ? () => setPicker(null) : undefined} /> : null}
         {libraryPicker ? <LibraryModal library={fullLibrary} onPick={applyLibraryImage} onClose={() => setLibraryPicker(null)} /> : null}
       </div>

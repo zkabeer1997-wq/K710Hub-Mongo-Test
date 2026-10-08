@@ -1,0 +1,106 @@
+/* Signed-in dashboard (Console): dense, dark, 3/4 forms + 1/4 deadlines on desktop. */
+.dash { display: grid; gap: 20px; max-width: 1180px; margin: 0 auto; position: relative; z-index: 1; min-width: 0; }
+.head { display: grid; gap: 16px; align-items: end; }
+.hero :global(.ph-inner) { padding-inline: 0; margin-bottom: 0; }
+.assurance { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--edge, #3a3630); border-radius: 8px; background: rgba(12, 14, 21, 0.8); }
+.assurance strong { font-size: 15px; }
+.assurance span { font-size: 14px; color: var(--t-secondary, #a9afc0); }
+@media (min-width: 901px) { .head { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); } }
+
+.account { border: 1px solid var(--edge, #3a3630); border-radius: 10px; background: rgba(12, 14, 21, 0.9); padding: 16px 18px; display: grid; gap: 12px; }
+.accountTop { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--t-secondary, #a9afc0); }
+.accountTop i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--moss, #86a873); margin-right: 6px; }
+.role { text-transform: uppercase; letter-spacing: 0.08em; font-size: 13px; font-weight: 700; padding: 2px 8px; border: 1px solid currentColor; border-radius: 4px; color: var(--t-secondary, #a9afc0); }
+.role[data-role='admin'] { color: var(--brass-bright, #d9b878); }
+.role[data-role='superadmin'] { color: var(--gold-hot, #f3d99a); }
+.accountBody { display: grid; gap: 14px; align-items: center; }
+.who { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.who h2 { margin: 0; font: 700 22px/1.2 var(--font-display, serif); text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: anywhere; }
+.who p, .who span { margin: 2px 0 0; display: block; font-size: 14px; color: var(--t-secondary, #a9afc0); font-family: var(--font-mono, monospace); }
+.avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: #2a2620; overflow: hidden; font-size: 22px; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.stats div { padding: 10px 12px; border-radius: 8px; background: #12110f; border: 1px solid var(--edge, #3a3630); }
+.stats span { display: block; font-size: 14px; color: var(--t-secondary, #a9afc0); }
+.stats strong { font: 700 18px/1.3 var(--font-mono, monospace); font-variant-numeric: tabular-nums; }
+.notice { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--edge-strong, #6a5a30); font-size: 14px; }
+@media (min-width: 901px) { .accountBody { grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.split { display: grid; gap: 20px; align-items: stretch; }
+@media (min-width: 901px) { .split { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); } }
+.panel, .deadlines { border: 1px solid var(--edge, #3a3630); border-radius: 10px; background: rgba(12, 14, 21, 0.9); padding: 16px 18px; min-width: 0; }
+.panelHead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.panel h2, .deadlines h2 { margin: 0; font: 700 14px/1.3 var(--font-body, sans-serif); text-transform: uppercase; letter-spacing: 0.1em; color: var(--t-secondary, #a9afc0); }
+.panel h2 span { color: var(--gold-bright, #f0c669); }
+.textLink { font-size: 14px; color: var(--gold-bright, #f0c669); font-weight: 600; }
+.note { margin: 8px 0 0; font-size: 15px; color: var(--t-secondary, #a9afc0); }
+.caughtUp { margin: 4px 0 8px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--edge, #3a3630); font-size: 15px; }
+.caughtUp span { color: var(--moss, #86a873); margin-right: 6px; }
+
+.formList { list-style: none; margin: 0; padding: 0; }
+.formRow { display: grid; gap: 8px 16px; padding: 14px 0; border-top: 1px solid var(--edge, #3a3630); align-items: center; }
+.formRow:first-child { border-top: 0; }
+.formRow[data-state='closed'], .formRow[data-state='soon'] { opacity: 0.85; }
+.formMain h3 { margin: 0 0 2px; font-size: 17px; line-height: 1.3; }
+.formMain p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--t-secondary, #a9afc0); }
+.formMeta { display: grid; gap: 4px; justify-items: start; font-size: 14px; }
+.formStatus { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.formStatus[data-state='todo'] span { color: #ff6b5e; }
+.formStatus[data-state='carry'] { color: var(--gold-bright, #f0c669); }
+.formStatus[data-state='done'] { color: #9fd18b; }
+.formStatus[data-state='soon'] { color: #8fb7ff; }
+.formStatus[data-state='closed'] { color: var(--t-muted, #a3aabf); }
+.formDeadline { color: var(--t-secondary, #a9afc0); font-size: 14px; line-height: 1.4; }
+.formBtn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 8px; background: var(--gold, #d9a94e); color: var(--ink, #14100a); font-weight: 800; font-size: 15px; text-decoration: none; border: 1px solid transparent; white-space: nowrap; transition: background var(--t-fast, 160ms); }
+.formBtn:hover { background: var(--gold-bright, #f0c669); }
+.formBtn:focus-visible { outline: 3px solid var(--gold-hot, #f3d99a); outline-offset: 2px; }
+.formBtnQuiet { background: transparent; color: var(--gold-bright, #f0c669); border-color: var(--gold, #d9a94e); }
+.formBtnQuiet:hover { background: rgba(217, 169, 78, 0.14); }
+.formBtnOff { background: transparent; color: var(--t-muted, #a3aabf); border-color: var(--edge, #3a3630); cursor: not-allowed; }
+.formBtnOff:hover { background: transparent; }
+@media (min-width: 640px) { .formRow { grid-template-columns: minmax(0, 1fr) minmax(170px, 230px) 150px; } .formBtn { justify-self: stretch; } }
+
+.side { position: relative; min-width: 0; }
+.deadlines { display: flex; flex-direction: column; min-height: 0; }
+.deadlineList { list-style: none; margin: 8px 0 0; padding: 0; overflow: auto; flex: 1; }
+@media (min-width: 901px) { .side { min-height: 360px; } .deadlines { position: absolute; inset: 0; } }
+@media (max-width: 900px) { .deadlineList { max-height: 520px; } }
+.deadlineRow { padding: 10px 8px 10px 10px; border-top: 1px solid var(--edge, #3a3630); border-left: 3px solid transparent; }
+.deadlineRow[data-soon] { border-left-color: #ff6b5e; background: rgba(255, 107, 94, 0.07); }
+.deadlineTop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.deadlineTop a { color: var(--parchment, #e8dcc0); font-weight: 600; font-size: 15px; text-decoration: none; }
+.deadlineTop a:hover { color: var(--gold-hot, #f3d99a); text-decoration: underline; }
+.deadlineTop a:focus-visible { outline: 2px solid var(--gold-hot, #f3d99a); outline-offset: 2px; }
+.deadlineCount { display: inline-flex; align-items: center; gap: 6px; font: 600 14px var(--font-mono, monospace); color: var(--t-secondary, #a9afc0); }
+.dueChip { font: 700 12px var(--font-body, sans-serif); letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: rgba(255, 107, 94, 0.2); color: #ffb0a8; border: 1px solid rgba(255, 107, 94, 0.5); }
+.deadlineWhen { margin-top: 2px; font-size: 14px; line-height: 1.4; color: var(--t-secondary, #a9afc0); }
+
+.links { display: grid; gap: 8px; }
+.links a { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--edge, #3a3630); background: #12110f; color: inherit; text-decoration: none; font-weight: 600; font-size: 16px; }
+.links a:hover { border-color: var(--gold, #d9a94e); }
+.links a:focus-visible { outline: 2px solid var(--gold-hot, #f3d99a); outline-offset: 2px; }
+@media (min-width: 641px) { .links { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); } }
+
+.gifts { display: grid; gap: 8px; }
+.gifts h2 { margin: 0; font: 700 14px/1.3 var(--font-body, sans-serif); text-transform: uppercase; letter-spacing: 0.1em; color: var(--t-secondary, #a9afc0); }
+.logout { justify-self: start; background: none; border: 0; color: var(--gold-bright, #f0c669); cursor: pointer; padding: 8px 0; font-weight: 600; font-size: 15px; }
+
+:global(:root[data-easy='true']) .assurance span,
+:global(:root[data-easy='true']) .accountTop,
+:global(:root[data-easy='true']) .who p,
+:global(:root[data-easy='true']) .who span,
+:global(:root[data-easy='true']) .stats span,
+:global(:root[data-easy='true']) .formMain p,
+:global(:root[data-easy='true']) .formMeta,
+:global(:root[data-easy='true']) .formDeadline,
+:global(:root[data-easy='true']) .deadlineWhen,
+:global(:root[data-easy='true']) .deadlineCount,
+:global(:root[data-easy='true']) .note,
+:global(:root[data-easy='true']) .textLink,
+:global(:root[data-easy='true']) .panel h2,
+:global(:root[data-easy='true']) .deadlines h2 { font-size: 16px; }
+:global(:root[data-easy='true']) .formMain h3,
+:global(:root[data-easy='true']) .deadlineTop a,
+:global(:root[data-easy='true']) .formBtn,
+:global(:root[data-easy='true']) .links a { font-size: 18px; }
+@media (prefers-reduced-motion: reduce) { .formBtn { transition: none; } }

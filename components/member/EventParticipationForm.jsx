@@ -7,6 +7,7 @@ import { Button, Input } from '../ui';
 import UpsertNotice from './UpsertNotice';
 import { VOTE_OPTIONS } from '../../lib/eventForms.mjs';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
+import './easy-view-fixes.css';
 
 // Short single-card vote: legion time / flexible / absent + current power.
 // The window shown here comes from the API, and the API enforces it again on save.

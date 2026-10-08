@@ -33,7 +33,7 @@ async function loadUpcomingEvents(alliances) {
       ends_at: 1,
       recurrence_frequency: 1,
       recurrence_interval: 1,
-      recurrence_until: 1, recurrence_weekdays: 1, exdates: 1, all_day: 1, guide_slug: 1, alliance_tags: 1,
+      recurrence_until: 1, recurrence_count: 1, series_id: 1, recurrence_weekdays: 1, exdates: 1, all_day: 1, guide_slug: 1, alliance_tags: 1,
       _id: 0,
     })
     .sort({ starts_at: 1 })
@@ -46,7 +46,7 @@ async function loadUpcomingEvents(alliances) {
     slug: event.slug, title: event.title, kind: event.kind, description: event.description || '',
     starts_at: event.starts_at, ends_at: event.ends_at || null,
     recurrence_frequency: event.recurrence_frequency || 'none', recurrence_interval: event.recurrence_interval || 1,
-    recurrence_until: event.recurrence_until || null, recurrence_weekdays: event.recurrence_weekdays || null,
+    recurrence_until: event.recurrence_until || null, recurrence_count: event.recurrence_count || null, series_id: event.series_id || null, recurrence_weekdays: event.recurrence_weekdays || null,
     exdates: event.exdates || [], all_day: Boolean(event.all_day), guide_slug: event.guide_slug || null,
     alliance_tags: event.alliance_tags || [], alliance_tag: event.alliance_tag || null,
   }));

@@ -3,12 +3,10 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import GovernorGearOcr from '../../components/GovernorGearOcr';
+import { HeroRosterPicker, TroopLevelFields } from '../../components/member/TroopHeroFields';
 import {
-  HEROES,
-  TIERS,
-  TGS,
   ALLIANCES,
-  UNIT_FIELDS,
+  currentHeroesOnly,
   AVAILABILITY_OPTIONS,
   VOICE_CHAT_OPTIONS,
   AUTO_HELP_OPTIONS,
@@ -57,9 +55,6 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const tierValues = { infantry: form.infantry_tier, cavalry: form.cavalry_tier, archer: form.archer_tier };
-  const tgValues = { infantry: form.infantry_tg, cavalry: form.cavalry_tg, archer: form.archer_tg };
-
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
   }
@@ -107,7 +102,7 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
       const gearSelections = parseGovernorGearSelections(r.governor_gear);
       setCharms(charmSelections);
       setGovernorGear(gearSelections);
-      setHeroes(Array.isArray(r.heroes) ? r.heroes : []);
+      setHeroes(currentHeroesOnly(r.heroes));
       setOnFile(result.record || null);
       setForm((current) => ({
         ...current,
@@ -167,13 +162,15 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
   }
   return (
     <main className="page public-page">
-      <div className="public-shell single-form power-shell">
+      <div className="member-form-col">
         {intro}
+        <div className="public-shell single-form">
+        <section className="public-intro">
+          <span className="public-kicker">{fieldMetaIntro.kicker}</span>
+          <h1>{fieldMetaIntro.heading}</h1>
+          {fieldMetaIntro.description ? <p>{fieldMetaIntro.description}</p> : null}
+        </section>
         <form className="public-form-card" onSubmit={handleSubmit}>
-          <div className="form-section-header">
-            <span>{fieldMetaIntro.kicker}</span>
-            <h1>{fieldMetaIntro.heading}</h1>
-          </div>
 
           <section className="identity-grid">
             <label>In Game Name<input value={form.name} onChange={(e) => updateField('name', e.target.value)} placeholder="Your in-game name" /></label>
@@ -194,30 +191,13 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
           )}
 
           <section className="troop-section public-section">
-            <div className="section-title-row"><span>Troops</span><h3>Troop Levels</h3><p>Choose the best tier and TG for each troop type.</p></div>
-            <div className="unit-card-grid">
-              {UNIT_FIELDS.map((unit) => (
-                <div key={unit.key} className={`unit-card ${unit.key}`}>
-                  <h4>{unit.label}</h4>
-                  <div className="row">
-                    <label>Tier<select value={tierValues[unit.key]} onChange={(e) => updateField(unit.tier, e.target.value)}><option value="">Tier</option>{TIERS.map((t) => <option key={t} value={t}>{t}</option>)}</select></label>
-                    <label>TG<select value={tgValues[unit.key]} onChange={(e) => updateField(unit.tg, e.target.value)}><option value="">TG</option>{TGS.map((t) => <option key={t} value={t}>{t}</option>)}</select></label>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="section-title-row"><span>Army</span><h3>Troop levels</h3><p>Choose the best tier and TG for each troop type, as they stand for this battle.</p></div>
+            <TroopLevelFields values={form} onChange={updateField} />
           </section>
 
           <section className="troop-section public-section">
-            <div className="section-title-row"><span>Heroes</span><h3>Available Heroes</h3><p>Select the heroes you can field for this battle.</p></div>
-            <div className="hero-chip-grid">
-              {HEROES.map((hero) => (
-                <label key={hero} className={heroes.includes(hero) ? 'hero-chip selected' : 'hero-chip'}>
-                  <input type="checkbox" checked={heroes.includes(hero)} onChange={() => toggleHero(hero)} />
-                  <span>{hero}</span>
-                </label>
-              ))}
-            </div>
+            <div className="section-title-row"><span>Heroes</span><h3>Hero roster</h3><p>Select the heroes you have available for this battle.</p></div>
+            <HeroRosterPicker heroes={heroes} onToggle={toggleHero} />
           </section>
 
           <section className="troop-section public-section">
@@ -304,6 +284,7 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
           {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
           <button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'Submit Flamedragon form'}</button>
         </form>
+        </div>
       </div>
     </main>
   );

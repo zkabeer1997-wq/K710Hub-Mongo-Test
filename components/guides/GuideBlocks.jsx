@@ -1,6 +1,6 @@
 import GuideMarkdown from './GuideMarkdown';
-import { youtubeId, youtubeWatchUrl } from '../../lib/guideLayout.mjs';
-import { urlLabel } from '../../lib/guideContent.mjs';
+import { videoEmbedSrc, videoLinkUrl } from '../../lib/guideLayout.mjs';
+import VideoFacade from './VideoFacade';
 import styles from './guideLayout.module.css';
 
 // Presentational block renderers shared by the public guide page, the preview
@@ -49,20 +49,20 @@ function Button({ block }) {
   );
 }
 
-// The site CSP has no frame-src, so YouTube cannot be embedded. A link card
-// keeps the video reachable without weakening the policy (and loads nothing
-// from YouTube until the reader clicks).
+// Videos: YouTube (privacy-enhanced domain) or a Google Drive preview, both
+// loaded only when the reader clicks. Server component; the facade is the only
+// client code and degrades to a normal link without JavaScript.
 function Video({ block }) {
-  const href = youtubeWatchUrl(block.url);
-  if (!href || !youtubeId(block.url)) return null;
+  const href = videoLinkUrl(block);
+  if (!href) return null;
   return (
-    <a className={styles.video} href={href} rel="noopener noreferrer" target="_blank">
-      <span className={styles.videoPlay} aria-hidden="true" />
-      <span className={styles.videoText}>
-        <strong>{block.title || 'Watch the video'}</strong>
-        <small>{urlLabel(href)} · opens in a new tab</small>
-      </span>
-    </a>
+    <VideoFacade
+      provider={block.provider}
+      embedSrc={videoEmbedSrc(block)}
+      href={href}
+      title={block.title}
+      label={block.provider === 'drive' ? 'Google Drive video' : 'YouTube video'}
+    />
   );
 }
 

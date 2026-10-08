@@ -8,6 +8,7 @@ import { Button, Table } from '../ui';
 import { DEFAULT_KINGDOM_EVENTS, mergeDefaultEvents } from '../../lib/defaultEvents.mjs';
 import { recurrenceLabel } from '../../lib/eventRecurrence.mjs';
 import { eventAllianceLabel } from '../../lib/eventFields.mjs';
+import { planSplit, newSeriesSlug } from '../../lib/eventSeries.mjs';
 import { emptyForm, formFromEvent, eventFromForm, shiftSeries, singleOccurrenceCopy, withExdate } from '../../lib/eventForm.mjs';
 
 const FALLBACK_ALLIANCES = [{ tag: '710' }, { tag: 'RED' }, { tag: 'SKY' }];
@@ -93,6 +94,12 @@ export default function EventsPanel() {
     }
   }
 
+  // End (or re-stamp) the original series; a built-in is saved as an override copy.
+  async function patchSeries(event, patch, isDefault) {
+    if (isDefault) await api('/api/admin-events', { method: 'POST', body: JSON.stringify({ ...formToStored(event), ...patch, slug: event.slug }) });
+    else await api(`/api/admin-events/${event.id}`, { method: 'PUT', body: JSON.stringify(patch) });
+  }
+
   function save(payload, scope) {
     const { mode, event, occStart, seriesStart, recurring, isDefault } = dialog;
     return run(async () => {
@@ -109,6 +116,18 @@ export default function EventsPanel() {
         await api('/api/admin-events', { method: 'POST', body: JSON.stringify(copy) });
         return;
       }
+      if (recurring && scope === 'following') {
+        const plan = planSplit(event, occStart, payload, { slug: newSeriesSlug(payload.title, occStart, events.map(e => e.slug)) });
+        if (plan.kind === 'split') {
+          // Create the new series first so a failure never leaves a gap, then end the original before it.
+          const created = await api('/api/admin-events', { method: 'POST', body: JSON.stringify(plan.next) });
+          try { await patchSeries(event, plan.original, isDefault); } catch (err) {
+            await api(`/api/admin-events/${created.event.id}`, { method: 'DELETE' }).catch(() => {});
+            throw err;
+          }
+          return;
+        }
+      }
       const shift = recurring ? Date.parse(payload.starts_at) - Date.parse(occStart) : 0;
       const body = recurring ? shiftSeries(payload, seriesStart, shift) : payload;
       if (isDefault) await api('/api/admin-events', { method: 'POST', body: JSON.stringify({ ...body, slug: event.slug }) });
@@ -119,7 +138,13 @@ export default function EventsPanel() {
   function remove(which) {
     const { event, occStart, isDefault } = dialog;
     return run(async () => {
-      if (which === 'one') {
+      let target = which;
+      if (which === 'following') {
+        const plan = planSplit(event, occStart, null);
+        if (plan.kind === 'split') { await patchSeries(event, plan.original, isDefault); return; }
+        target = 'all'; // first occurrence: same as deleting every event
+      }
+      if (target === 'one') {
         const exdates = withExdate(event, occStart);
         if (isDefault) await api('/api/admin-events', { method: 'POST', body: JSON.stringify({ ...formToStored(event), exdates }) });
         else await api(`/api/admin-events/${event.id}`, { method: 'PUT', body: JSON.stringify({ exdates }) });
@@ -132,7 +157,7 @@ export default function EventsPanel() {
       } else {
         await api(`/api/admin-events/${event.id}`, { method: 'DELETE' });
       }
-    }, which === 'one' ? 'That date was removed from the series.' : 'Event deleted.');
+    }, which === 'one' ? 'That date was removed from the series.' : which === 'following' ? 'This and the following events were removed.' : 'Event deleted.');
   }
 
   return (

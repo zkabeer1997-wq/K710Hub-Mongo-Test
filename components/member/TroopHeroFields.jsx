@@ -2,6 +2,7 @@
 
 import { HEROES, PROFILE_UNIT_FIELDS, TROOP_TGS, TROOP_TIERS } from '../../lib/playerCombatOptions.mjs';
 import { heroSlug } from '../../lib/powerProfileWizard.mjs';
+import './easy-view-fixes.css';
 
 // Troop level (tier + TG per troop type) and hero roster pickers. Used by the KvK Availability form,
 // where these are answered once per KvK cycle. Controlled: the parent owns `values` + `heroes`.

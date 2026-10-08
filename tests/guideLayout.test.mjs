@@ -171,7 +171,7 @@ test('derived markdown covers every block type and headings expose unique anchor
   layout = addBlock(layout, 'main', block('image', { src: 'https://example.com/i.png', alt: 'Pic', caption: 'Cap' }));
   layout = addBlock(layout, 'main', block('callout', { tone: 'info', title: '', md: 'Body' }));
   layout = addBlock(layout, 'main', block('button', { label: 'Go', href: '/guides' }));
-  layout = addBlock(layout, 'main', block('video', { url: 'https://youtu.be/dQw4w9WgXcQ', title: 'Clip' }));
+  layout = addBlock(layout, 'main', block('video', { provider: 'youtube', videoId: 'dQw4w9WgXcQ', title: 'Clip' }));
   layout = addBlock(layout, 'main', block('table', { rows: [['H1', 'H2'], ['a', 'b']] }));
   const md = layoutToMarkdown(layout);
   assert.match(md, /## Same\n\n### Same/);

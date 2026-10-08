@@ -1,0 +1,20 @@
+/* Easy view (html[data-easy="true"]) fixes for member forms: every text control is at least 52px tall
+   and no readable text is under 16px. Higher specificity than the form-card control rules in
+   app/comfort.css, which cap these at 44px. */
+html[data-easy="true"] body form input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]):not([type="file"]),
+html[data-easy="true"] body form select,
+html[data-easy="true"] body form textarea,
+html[data-easy="true"] body form button {
+  min-height: 52px;
+  height: auto;
+  font-size: 18px;
+}
+html[data-easy="true"] body .public-form-card .gear-ocr-button,
+html[data-easy="true"] body .public-form-card summary,
+html[data-easy="true"] body .vote-group legend,
+html[data-easy="true"] body .vote-option b,
+html[data-easy="true"] body .vote-option span,
+html[data-easy="true"] body .vote-option small,
+html[data-easy="true"] body .vote-option time,
+html[data-easy="true"] body time { font-size: 16px; }
+html[data-easy="true"] body form summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; }

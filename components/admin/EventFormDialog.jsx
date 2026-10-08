@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import AdminDialog from './AdminDialog';
 import GuideCombobox from './GuideCombobox';
 import { Button } from '../ui';
-import { DURATIONS, REPEATS, eventFromForm, slugify } from '../../lib/eventForm.mjs';
-import { WEEKDAY_NAMES, expandOccurrences } from '../../lib/eventRecurrence.mjs';
+import { DURATIONS, REPEATS, eventFromForm, slugify, weekdayZoneNote } from '../../lib/eventForm.mjs';
+import { WEEKDAY_NAMES, expandOccurrences, rawOccurrences } from '../../lib/eventRecurrence.mjs';
 import './event-editor.css';
 
 const KINDS = [['custom', 'Kingdom event'], ['kvk', 'KvK'], ['championship', 'Championship'], ['swordland', 'Swordland']];
@@ -31,6 +31,14 @@ export default function EventFormDialog({ open, initial, mode, recurring, isDefa
     const from = Date.now();
     return expandOccurrences(built.payload, from, from + 400 * 86400000, 4).map(o => o.starts_at);
   }, [built]);
+  // For "after N occurrences" show the final date so the admin can sanity-check the total.
+  const lastDate = useMemo(() => {
+    if (!built.payload?.recurrence_count) return '';
+    let last = null;
+    for (const ms of rawOccurrences(built.payload)) last = ms;
+    return last ? new Date(last).toISOString().slice(0, 10) : '';
+  }, [built]);
+  const zoneNote = useMemo(() => weekdayZoneNote(built.payload?.starts_at), [built]);
   if (!open || !form) return null;
 
   const repeating = form.repeat !== 'none';
@@ -52,7 +60,8 @@ export default function EventFormDialog({ open, initial, mode, recurring, isDefa
   const footer = confirmDelete ? (
     <div className="evf-actions">
       <span className="evf-del-q">{recurring ? 'Delete which events?' : 'Delete this event?'}</span>
-      {recurring && <Button variant="quiet" className="evf-outline" onClick={() => onDelete('one')} disabled={busy}>This event only</Button>}
+      {recurring && <Button variant="quiet" className="evf-outline" onClick={() => onDelete('one')} disabled={busy}>This event</Button>}
+      {recurring && <Button variant="quiet" className="evf-outline" onClick={() => onDelete('following')} disabled={busy}>This and following events</Button>}
       <Button variant="quiet" className="evf-danger" onClick={() => onDelete('all')} disabled={busy}>{recurring ? 'All events' : 'Delete'}</Button>
       <Button variant="quiet" onClick={() => setConfirmDelete(false)} disabled={busy}>Back</Button>
     </div>
@@ -131,23 +140,35 @@ export default function EventFormDialog({ open, initial, mode, recurring, isDefa
           )}
           {showWeekdays && (
             <div role="group" aria-label="Repeat on these days (UTC)" className="evf-days">
+              <span className="evf-days-label">Days (UTC)</span>
               {WEEKDAY_NAMES.map((name, day) => (
                 <button type="button" key={name} aria-pressed={form.weekdays.includes(day)} onClick={() => toggleDay(day)}>{name}</button>
               ))}
               <small className="evf-hint">Days are UTC weekdays. None selected means the weekday of the start date.</small>
+              {zoneNote && <small className="evf-hint" data-testid="evf-zone-note">{zoneNote.text}.</small>}
+              {zoneNote?.hint && <small className="evf-hint evf-warn" role="status">{zoneNote.hint}</small>}
             </div>
           )}
           {repeating && (
-            <label className="evf-field">Stop repeating after (optional, UTC date)
-              <input className="evf-input" type="date" min={form.start_date} value={form.until} onChange={(e) => set({ until: e.target.value })} />
-            </label>
+            <div role="radiogroup" aria-label="Ends" className="evf-stop">
+              <span className="evf-days-label">Ends</span>
+              <label><input type="radio" name="stop" checked={form.stop === 'never'} onChange={() => set({ stop: 'never' })} /> Never</label>
+              <label><input type="radio" name="stop" checked={form.stop === 'date'} onChange={() => set({ stop: 'date' })} /> On date (UTC)
+                <input className="evf-input" type="date" aria-label="Stop date (UTC)" min={form.start_date} value={form.until} disabled={form.stop !== 'date'} onChange={(e) => set({ until: e.target.value })} />
+              </label>
+              <label><input type="radio" name="stop" checked={form.stop === 'count'} onChange={() => set({ stop: 'count' })} /> After
+                <input className="evf-input evf-count" type="number" min="1" max="500" step="1" aria-label="Number of occurrences" value={form.count} disabled={form.stop !== 'count'} onChange={(e) => set({ count: e.target.value })} /> occurrences
+              </label>
+            </div>
           )}
-          {preview.length > 0 && <p className="evf-hint">Next: {preview.map(iso => iso.slice(5, 16).replace('T', ' ')).join(' · ')} UTC</p>}
+          {preview.length > 0 && <p className="evf-hint">Next: {preview.map(iso => iso.slice(5, 16).replace('T', ' ')).join(' · ')} UTC{lastDate ? ` · last on ${lastDate}` : ''}</p>}
+          {form.series_id && <p className="evf-hint">Part of a series (split with &ldquo;this and following events&rdquo;).</p>}
           {form.exdates?.length > 0 && <p className="evf-hint">{form.exdates.length} single date(s) skipped.</p>}
           {recurring && mode === 'edit' && (
             <div role="radiogroup" aria-label="Apply changes to" className="evf-scope">
-              <label><input type="radio" name="scope" checked={scope === 'all'} onChange={() => setScope('all')} /> All events in the series</label>
-              <label><input type="radio" name="scope" checked={scope === 'one'} onChange={() => setScope('one')} /> This event only</label>
+              <label><input type="radio" name="scope" checked={scope === 'one'} onChange={() => setScope('one')} /> This event</label>
+              <label><input type="radio" name="scope" checked={scope === 'following'} onChange={() => setScope('following')} /> This and following events</label>
+              <label><input type="radio" name="scope" checked={scope === 'all'} onChange={() => setScope('all')} /> All events</label>
             </div>
           )}
         </fieldset>

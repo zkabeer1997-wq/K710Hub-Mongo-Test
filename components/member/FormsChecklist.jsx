@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemberFormStatus } from '../../lib/useMemberFormStatus';
 import DualTime from '../ui/DualTime';
+import { FORM_PLAIN, formDisplayState } from '../../lib/memberForms.mjs';
 import styles from './FormsChecklist.module.css';
 
 // One flat to-do list of every member form, grouped by event, with a plain
@@ -10,16 +11,8 @@ import styles from './FormsChecklist.module.css';
 // button. Replaces the two-level forms hub so nobody has to guess where a form
 // lives or whether they already filled it in for THIS cycle.
 
-const PLAIN = {
-  lead: 'Your gear, charms, pets and power. Update it whenever something changes. It does not reset between events.',
-  joiner: 'When you can play during KvK, plus your troop levels and heroes for this KvK.',
-  prep: 'What you can use during the KvK preparation days.',
-  appointments: 'Ask for a minister or advisor buff time slot.',
-  dragon: 'Your troops and heroes for Flamedragon Tyrant.',
-  noble: 'Book a time for troop training with the Noble Advisor.',
-  swordland: 'Vote on how you will take part in Swordland Summit.',
-  'tri-alliance': 'Vote on how you will take part in Tri-Alliance Clash.',
-};
+// One source of truth for the plain-language text (also used on the dashboard).
+export const PLAIN = FORM_PLAIN;
 
 const GROUPS = [
   { id: 'kvk', title: 'KvK', intro: 'The kingdom-versus-kingdom battle.', keys: ['joiner', 'prep', 'appointments'], cycle: true },
@@ -28,25 +21,26 @@ const GROUPS = [
   { id: 'always', title: 'Any time', intro: 'You do not need to redo these for every event.', keys: ['lead'] },
 ];
 
+const STATE_LOOK = {
+  closed: { icon: '🔒', cls: styles.sClosed },
+  soon: { icon: '⏳', cls: styles.sSoon },
+  done: { icon: '✓', cls: styles.sDone },
+  carry: { icon: '↻', cls: styles.sCarry },
+  todo: { icon: '●', cls: styles.sTodo },
+};
+
 function stateOf(form) {
-  if (form.state === 'closed') return { id: 'closed', label: 'Closed', icon: '🔒', cls: styles.sClosed };
-  if (form.state === 'upcoming') return { id: 'soon', label: form.badge || 'Opens soon', icon: '⏳', cls: styles.sSoon };
-  if (form.submitted) return { id: 'done', label: 'Done', icon: '✓', cls: styles.sDone };
-  if (form.carriedOver) return { id: 'carry', label: 'Check and save', icon: '↻', cls: styles.sCarry };
-  return { id: 'todo', label: 'To do', icon: '●', cls: styles.sTodo };
+  const st = formDisplayState(form);
+  return { ...st, ...STATE_LOOK[st.id] };
 }
 
-function buttonFor(st, form) {
-  if (st.id === 'closed') return { text: 'Closed', disabled: true };
-  if (st.id === 'soon') return { text: 'Not open yet', disabled: true };
-  if (st.id === 'done') return { text: 'Change my answers', quiet: true };
-  if (st.id === 'carry') return { text: 'Check and save', primary: true };
-  return { text: form.key === 'lead' ? 'Open' : 'Fill in', primary: true };
+function buttonFor(st) {
+  return st.button;
 }
 
 function Row({ form }) {
   const st = stateOf(form);
-  const btn = buttonFor(st, form);
+  const btn = buttonFor(st);
   const todo = st.id === 'todo' || st.id === 'carry';
   let hint = null;
   if (st.id === 'carry') hint = `We filled this in from your answers last time${form.previousLabel ? ` (${form.previousLabel})` : ''}. Please check them and press Save.`;
@@ -88,7 +82,12 @@ export default function FormsChecklist() {
     );
   }
   const forms = status.forms || [];
-  const byKey = Object.fromEntries(forms.map((f) => [f.key, f]));
+  // `forms` arrives already ordered by the ongoing cycle; groups follow the first form they hold.
+  const position = Object.fromEntries(forms.map((f, i) => [f.key, i]));
+  const orderedGroups = GROUPS
+    .map((group) => ({ group, rows: forms.filter((f) => group.keys.includes(f.key)) }))
+    .filter(({ rows }) => rows.length > 0)
+    .sort((a, b) => position[a.rows[0].key] - position[b.rows[0].key]);
   const todo = forms.filter((f) => f.needsInput);
   const first = status.firstIncomplete;
   return (
@@ -108,9 +107,7 @@ export default function FormsChecklist() {
         )}
       </section>
 
-      {GROUPS.map((group) => {
-        const rows = group.keys.map((k) => byKey[k]).filter(Boolean);
-        if (rows.length === 0) return null;
+      {orderedGroups.map(({ group, rows }) => {
         const cycleLabel = group.cycle ? rows.find((r) => r.cycleLabel)?.cycleLabel : null;
         return (
           <section key={group.id} className={styles.group} aria-labelledby={`g-${group.id}`}>

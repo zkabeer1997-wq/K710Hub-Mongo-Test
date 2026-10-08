@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import PageHero from '../../components/ui/PageHero';
 import GovernorGearOcr from '../../components/GovernorGearOcr';
+import '../../components/member/easy-view-fixes.css';
 import {
 CHARM_LEVEL_OPTIONS,
 CHARM_SLOTS,

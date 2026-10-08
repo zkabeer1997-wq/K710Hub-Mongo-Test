@@ -3,20 +3,9 @@
 import { useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { BLOCK_LABELS, BLOCK_TYPES } from '../../../lib/guideLayout.mjs';
+import { BLOCK_HINTS } from './blockHints';
 import { useBuilder } from './BuilderContext';
 import styles from './builder.module.css';
-
-const HINTS = {
-  heading: 'Section title (H2 / H3)',
-  text: 'Paragraphs, bold, links, lists',
-  image: 'One picture with caption',
-  imagegrid: '2 to 4 pictures side by side',
-  callout: 'Tip, info or warning box',
-  divider: 'A thin separator line',
-  button: 'A link styled as a button',
-  video: 'YouTube link card',
-  table: 'Simple rows and columns',
-};
 
 function PaletteItem({ type }) {
   const { actions } = useBuilder();
@@ -35,7 +24,7 @@ function PaletteItem({ type }) {
       {...pointerListeners}
     >
       <strong>{BLOCK_LABELS[type]}</strong>
-      <small>{HINTS[type]}</small>
+      <small>{BLOCK_HINTS[type]}</small>
     </button>
   );
 }
@@ -65,7 +54,7 @@ export default function Palette({ library, uploads, tab, setTab }) {
       <div id="pal-panel" role="tabpanel" aria-labelledby={`pal-tab-${tab}`} className={styles.palPanel}>
         {tab === 'blocks' ? (
           <>
-            <p className={styles.hintLine}>Click a block to add it, or drag it onto an area of the page.</p>
+            <p className={styles.hintLine}>Click a block to add it below the selected one, or drag it onto the page.</p>
             <div className={styles.palList}>{BLOCK_TYPES.map(type => <PaletteItem key={type} type={type} />)}</div>
           </>
         ) : (

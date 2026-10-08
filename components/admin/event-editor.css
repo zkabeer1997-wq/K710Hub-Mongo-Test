@@ -37,3 +37,12 @@ textarea.evf-input { min-height: 80px; resize: vertical; }
 .evp-list summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
 .evf label.evf-check, .evf .evf-scope label { flex-direction: row; justify-content: flex-start; align-items: center; text-align: left; text-transform: none; letter-spacing: normal; font-size: inherit; }
 .evf .evf-check input, .evf .evf-scope input { flex: 0 0 22px; margin: 0; }
+
+.evf-days-label { flex-basis: 100%; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-muted, #a9afc0); }
+.evf-warn { color: var(--gold-bright, #f0c669); }
+.evf-stop { display: flex; flex-direction: column; gap: 4px; }
+.evf .evf-stop > label { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 10px; min-height: 44px; text-align: left; text-transform: none; letter-spacing: normal; font-size: inherit; }
+.evf .evf-stop input[type='radio'] { width: 22px; height: 22px; flex: 0 0 22px; margin: 0; accent-color: var(--gold, #d9a94e); }
+.evf .evf-stop .evf-input { width: auto; min-width: 0; flex: 0 1 auto; }
+.evf .evf-stop .evf-count { width: 88px; }
+.evf .evf-stop .evf-input:disabled { opacity: 0.5; }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayload } from '../../../lib/flamedragonForm.mjs';
+import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayload, currentHeroesOnly } from '../../../lib/flamedragonForm.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { loadDragonFallback } from '../../../lib/memberPrefill.server.js';
@@ -39,7 +39,13 @@ export async function GET(request) {
     // `record` is this Flamedragon cycle's answer (null until saved); `previous` is the latest
     // earlier-cycle answer, offered as a pre-filled starting point.
     const { cycle, record, previous } = await loadMemberCycleRecord('dragon', session.memberId);
-    const strip = (row) => (row ? publicFlamedragonRecord(Object.fromEntries(Object.entries(row).filter(([k]) => k in PUBLIC_PROJECT || k === 'event_cycle_label'))) : null);
+    const strip = (row) => {
+      if (!row) return null;
+      const out = publicFlamedragonRecord(Object.fromEntries(Object.entries(row).filter(([k]) => k in PUBLIC_PROJECT || k === 'event_cycle_label')));
+      // Heroes retired from the shared list are not offered again (the stored data is untouched).
+      if (Array.isArray(out.heroes)) out.heroes = currentHeroesOnly(out.heroes);
+      return out;
+    };
     // No answer in any cycle yet: offer what is already known (Power Profile, KvK Availability, Kingshot name).
     const fallback = record || previous ? null : await loadDragonFallback(session.memberId);
     return NextResponse.json({ member_id: session.memberId, record: strip(record), previous: strip(previous), cycle, fallback });
@@ -73,7 +79,7 @@ export async function POST(request) {
     // Identity comes from the signed session, never from the request body.
     // A partial body on an existing record keeps the stored name.
     const named = existing && !('name' in body) ? { ...body, name: existing.name } : body;
-    record = sanitizeFlamedragonInput({ ...named, member_id: session.memberId, pin: 'session' });
+    record = sanitizeFlamedragonInput({ ...named, member_id: session.memberId, pin: 'session' }, { existingHeroes: existing?.heroes });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect,useState } from 'react';
 import NobleAdvisorFields from '../../../../components/NobleAdvisorFields';
+import '../../../../components/member/easy-view-fixes.css';
 import { validateNobleAdvisor, normalizeNobleSlots, NOBLE_TIME_SLOTS } from '../../../../lib/nobleAdvisor.mjs';
 import { refreshMemberFormStatus } from '../../../../lib/useMemberFormStatus';
 const EMPTY={inGameName:'',wantTroopTraining:'',isTransfer:'',troopSpeedupDays:'',promotingT11:''};

@@ -146,7 +146,7 @@ test('a new KvK cycle offers last cycle troops/heroes and shows the carried-over
 
 test('never-filled forms start from a Power Profile name (status baseLabel, GET fallbacks)', async () => {
   reset();
-  state.tables[T.POWER_PROFILES] = [{ member_id: 'm1', name: 'Ann Profile', charms: 'Archer Charm 1: 5', infantry_tier: 'T10', heroes: ['Zoe'] }];
+  state.tables[T.POWER_PROFILES] = [{ member_id: 'm1', name: 'Ann Profile', charms: 'Archer Charm 1: 5', infantry_tier: 'T10', heroes: ['Zoe', 'Saul'] }];
   state.tables.kingshot_users = [{ player_id: 'm1', nickname: 'Ann Nick', alliance_abbr: 'SKY' }];
   const s = await statuses();
   for (const k of ['joiner', 'prep', 'dragon', 'noble']) assert.equal(s[k].baseLabel, 'your Power Profile', k);
@@ -157,7 +157,7 @@ test('never-filled forms start from a Power Profile name (status baseLabel, GET 
   const dragon = (await json(await dragonRoute.GET(req()))).fallback;
   assert.equal(dragon.name, 'Ann Profile');
   assert.equal(dragon.charms, 'Archer Charm 1: 5');
-  assert.deepEqual(dragon.heroes, ['Zoe']);
+  assert.deepEqual(dragon.heroes, ['Saul']);
   assert.equal((await json(await requestsRoute.GET(req()))).profile.name, 'Ann Profile');
   // only a Kingshot profile: name + alliance come from it
   delete state.tables[T.POWER_PROFILES];
@@ -208,4 +208,39 @@ test('KvK appointments and event votes offer the previous cycle/round answers', 
 test('removed heroes are dropped from a saved row when it is loaded', async () => {
   const { troopFieldsOf } = await import('../lib/kvkAvailability.mjs');
   assert.deepEqual(troopFieldsOf({ heroes: ['Yeonwoo', 'Saul', 'Rosa'] }).heroes, ['Saul']);
+});
+
+const dragonPost = (body) => dragonRoute.POST(req({ body }));
+
+test('Flamedragon form shares the KvK hero list and troop validation', async () => {
+  reset();
+  const { HEROES: FD_HEROES, TIERS, TGS } = await import('../lib/flamedragonForm.mjs');
+  const { HEROES, TROOP_TIERS, TROOP_TGS } = await import('../lib/playerCombatOptions.mjs');
+  assert.deepEqual(FD_HEROES, HEROES);
+  assert.deepEqual(TIERS, TROOP_TIERS);
+  assert.deepEqual(TGS, TROOP_TGS);
+  const ok = await dragonPost({ name: 'Ann', infantry_tier: 'T11', infantry_tg: 'TG8', heroes: ['Saul', 'Chenko'] });
+  assert.equal(ok.status, 200);
+  assert.deepEqual((await ok.json()).record.heroes, ['Saul', 'Chenko']);
+  const bad = await dragonPost({ name: 'Ann', heroes: ['Yeonwoo'] });
+  assert.equal(bad.status, 400);
+  assert.match((await bad.json()).error, /heroes from the list/i);
+  assert.equal((await dragonPost({ name: 'Ann', archer_tier: 'T9' })).status, 400);
+  assert.equal((await dragonPost({ name: 'Ann', cavalry_tg: 'TG99' })).status, 400);
+});
+
+test('Flamedragon: previously saved removed heroes are hidden on load and never block a re-save', async () => {
+  reset();
+  state.tables[T.FLAMEDRAGON_FORMS] = [{ member_id: 'm1', name: 'Ann', heroes: ['Yeonwoo', 'Saul', 'Rosa'], availability: 'Unavailable' }];
+  const got = await json(await dragonRoute.GET(req()));
+  assert.deepEqual(got.record.heroes, ['Saul']);
+  // A stale client that still sends the retired hero it had saved is not rejected.
+  const res = await dragonPost({ name: 'Ann', heroes: ['Yeonwoo', 'Saul', 'Chenko'] });
+  assert.equal(res.status, 200);
+  assert.deepEqual((await res.json()).record.heroes, ['Saul', 'Chenko']);
+  // A retired hero that was never saved is still rejected.
+  assert.equal((await dragonPost({ name: 'Ann', heroes: ['Zoe'] })).status, 400);
+  // A partial POST without heroes keeps the stored list untouched.
+  const keep = await dragonPost({ name: 'Ann', availability: 'Unavailable' });
+  assert.equal(keep.status, 200);
 });

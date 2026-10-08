@@ -4,10 +4,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './member-login.module.css';
-import { getChecklistState } from '../../lib/gettingStarted.mjs';
-import { Term, PageHero } from '../../components/ui';
-import GiftCodeRewards from '../../components/GiftCodeRewards';
-import NeedsInputCard from '../../components/member/NeedsInputCard';
+import { PageHero } from '../../components/ui';
+import MemberDashboard from '../../components/member/MemberDashboard';
 
 function isSafeNext(next) {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//');
@@ -15,10 +13,6 @@ function isSafeNext(next) {
 
 function isAdminRole(role) {
   return role === 'admin' || role === 'superadmin';
-}
-
-function formatNumber(value) {
-  return value == null || value === '' ? '—' : new Intl.NumberFormat().format(value);
 }
 
 async function api(path, options = {}) {
@@ -37,66 +31,6 @@ async function api(path, options = {}) {
   return data;
 }
 
-const CHECKLIST_HREFS = {
-  'gear-profile': (memberId) =>
-    memberId ? `/power-profile?member_id=${encodeURIComponent(memberId)}` : '/power-profile',
-  'kvk-form': (memberId) =>
-    memberId ? `/forms/kvk?member_id=${encodeURIComponent(memberId)}` : '/forms/kvk',
-  'bear-hunt': () => '/events',
-};
-
-function GettingStartedChecklist({ items, memberId }) {
-  return (
-    <section className={styles.checklist} aria-labelledby="getting-started-title">
-      <h2 id="getting-started-title" className={styles.checklistTitle}>
-        Getting started
-      </h2>
-      <Link href="/glossary" className={styles.checklistGlossaryLink}>
-        What do these terms mean?
-      </Link>
-      <ul className={styles.checklistList}>
-        {items.map((item) => {
-          const href = (CHECKLIST_HREFS[item.key] || (() => '/dashboard'))(memberId);
-          return (
-            <li key={item.key} className={styles.checklistItem} data-complete={item.complete || undefined}>
-              {item.complete ? (
-                <span className={styles.checklistDone} aria-label={`${item.label}: completed`}>
-                  <b aria-hidden="true">✓</b>
-                  {item.label}
-                </span>
-              ) : (
-                <Link
-                  href={href}
-                  className={styles.checklistAction}
-                  aria-label={`${item.label}: not completed yet, open this page`}
-                >
-                  <b aria-hidden="true" className={styles.checklistBox} />
-                  {item.label}
-                  <i aria-hidden="true">→</i>
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-function Avatar({ profile, large = false }) {
-  const initial = (profile?.nickname || 'K').trim().charAt(0).toUpperCase();
-  return (
-    <span className={large ? styles.avatarLarge : styles.avatar}>
-      {profile?.avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={profile.avatarUrl} alt={`${profile.nickname} profile`} />
-      ) : (
-        <span>{initial}</span>
-      )}
-    </span>
-  );
-}
-
 export default function PlayerRecordGate({ banner, next, adminAccessRequested = false }) {
   const router = useRouter();
   const safeNext = useMemo(() => (isSafeNext(next) ? next : ''), [next]);
@@ -107,7 +41,6 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   const [deniedKingdom, setDeniedKingdom] = useState(null);
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
-  const [checklistData, setChecklistData] = useState({ powerProfile: null, kvkAvailability: null });
 
   useEffect(() => {
     let active = true;
@@ -133,31 +66,6 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
       });
     return () => { active = false; };
   }, [router, safeNext]);
-
-  // Getting-started checklist signals: reuse the same lightweight, already
-  // existing endpoints the Power Profile and KvK forms use, rather than
-  // adding a new query. Defensive by design — if the DB/API is unreachable
-  // both stay null and every item simply renders as an open action link.
-  useEffect(() => {
-    if (view !== 'profile' || !profile) return undefined;
-    let active = true;
-    const memberId = profile.playerId || profile.memberId || '';
-    Promise.allSettled([
-      memberId ? api(`/api/power-profile?member_id=${encodeURIComponent(memberId)}`) : Promise.resolve(null),
-      api('/api/kvk-availability'),
-    ])
-      .then(([powerResult, kvkResult]) => {
-        if (!active) return;
-        setChecklistData({
-          powerProfile: powerResult.status === 'fulfilled' ? powerResult.value?.profile || null : null,
-          kvkAvailability: kvkResult.status === 'fulfilled' ? kvkResult.value?.row || null : null,
-        });
-      })
-      .catch(() => {
-        if (active) setChecklistData({ powerProfile: null, kvkAvailability: null });
-      });
-    return () => { active = false; };
-  }, [view, profile]);
 
   function clearStatus() {
     setStatus('');
@@ -277,9 +185,20 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   }
 
   const step = view === 'player' ? '01' : '02';
-  const displayName = (profile?.nickname || '').trim() || 'Governor';
-  const memberId = profile?.playerId || '';
-  const checklistItems = useMemo(() => getChecklistState(checklistData), [checklistData]);
+
+  if (view === 'profile' && profile) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.grid} aria-hidden="true" />
+        <div className={styles.glow} aria-hidden="true" />
+        {banner && <div className={styles.banner}>{banner}</div>}
+        <MemberDashboard profile={profile} adminAccessRequested={adminAccessRequested} busy={busy} onLogout={logout} />
+        <p className={styles.disclaimer}>
+          Not affiliated with Century Games. Authentication is completed through the official Kingshot store.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className={styles.page}>
@@ -292,28 +211,20 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               tone="console"
               className={styles.hero}
               eyebrow="Secure player access · Kingdom 710"
-              title={view === 'profile' ? 'Dashboard' : 'Sign in'}
-              lede={view === 'profile'
-                ? `Welcome back, ${displayName}. Your account is connected. Choose where to go next.`
-                : 'Type your Player ID. We will send a short code to your Kingshot game. Type that code here and you are in. You stay signed in for 30 days.'}
+              title="Sign in"
+              lede="Type your Player ID. We will send a short code to your Kingshot game. Type that code here and you are in. You stay signed in for 30 days."
             />
 
             <div className={styles.assurance}>
               <span className={styles.assuranceMark} aria-hidden="true">◆</span>
               <div>
                 <strong>
-                  {view === 'profile'
-                    ? 'Signed in with Kingshot'
-                    : view === 'personalCode'
-                      ? 'Personal code sign-in'
-                      : 'Checked by the game itself'}
+                  {view === 'personalCode' ? 'Personal code sign-in' : 'Checked by the game itself'}
                 </strong>
                 <span>
-                  {view === 'profile'
-                    ? 'Session stays active for 30 days unless you log out.'
-                    : view === 'personalCode'
-                      ? 'Your personal code is kept private and safe.'
-                      : 'The code goes to your Kingshot game. We never keep it.'}
+                  {view === 'personalCode'
+                    ? 'Your personal code is kept private and safe.'
+                    : 'The code goes to your Kingshot game. We never keep it.'}
                 </span>
               </div>
             </div>
@@ -472,70 +383,6 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
             </div>
           )}
 
-          {view === 'profile' && profile && (
-            <div className={styles.profile}>
-              <div className={styles.connectedRow}>
-                <span><i /> Account connected</span>
-                <span className={styles.role}>{profile.role}</span>
-              </div>
-              <div className={styles.profileHead}>
-                <Avatar profile={profile} large />
-                <div>
-                  <h2>{profile.nickname}</h2>
-                  <p>#{profile.playerId} · Kingdom {profile.kingdomId}</p>
-                  <span>{profile.allianceAbbr ? `[${profile.allianceAbbr}] ${profile.allianceName}` : 'No alliance listed'}</span>
-                </div>
-              </div>
-
-              {adminAccessRequested && !isAdminRole(profile.role) && (
-                <div className={styles.accessNotice} role="status">
-                  Your member account does not have administrator access.
-                </div>
-              )}
-
-              <NeedsInputCard />
-
-              <GettingStartedChecklist items={checklistItems} memberId={memberId} />
-
-              <section className={styles.giftCodesSection} aria-labelledby="dashboard-gift-codes-title">
-                <h2 id="dashboard-gift-codes-title" className={styles.giftCodesTitle}>
-                  Gift codes
-                </h2>
-                <GiftCodeRewards />
-              </section>
-
-              <div className={styles.stats} aria-label="Player statistics">
-                <div><span>Power</span><strong>{formatNumber(profile.power)}</strong></div>
-                <div><span><Term term="Mystic Trial">Mystic Trial</Term></span><strong>{formatNumber(profile.mysticTrial)}</strong></div>
-                <div><span>Kills</span><strong>{formatNumber(profile.kills)}</strong></div>
-              </div>
-
-              <p className={styles.nextHint}>
-                Start with your power profile so leadership has current gear and charm data, then open any form that is currently active.
-              </p>
-
-              <nav className={styles.destinations} aria-label="Member destinations">
-                <Link href={memberId ? `/power-profile?member_id=${encodeURIComponent(memberId)}` : '/power-profile'} className={styles.primaryDest}>
-                  <span>Update power profile</span><b>→</b>
-                </Link>
-                <Link href={memberId ? `/forms?member_id=${encodeURIComponent(memberId)}` : '/forms'}>
-                  <span>Member forms</span><b>→</b>
-                </Link>
-                <Link href={memberId ? `/tools?member_id=${encodeURIComponent(memberId)}` : '/tools'}>
-                  <span>Tools & calculators</span><b>→</b>
-                </Link>
-                <Link href="/guides"><span>Kingdom guides</span><b>→</b></Link>
-                <Link href="/events"><span>Events & schedules</span><b>→</b></Link>
-                {isAdminRole(profile.role) && (
-                  <Link href="/admin/dashboard/interest"><span>Admin dashboard</span><b>→</b></Link>
-                )}
-              </nav>
-
-              <button className={styles.textButton} type="button" onClick={logout} disabled={busy}>
-                {busy ? 'Logging out…' : 'Log out'}
-              </button>
-            </div>
-          )}
           </section>
         </div>
       </div>

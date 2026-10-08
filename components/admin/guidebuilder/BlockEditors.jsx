@@ -4,10 +4,11 @@ import { useEffect, useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { BlockView } from '../../guides/GuideBlocks';
-import GuideMarkdown from '../../guides/GuideMarkdown';
 import guideStyles from '../../guides/guideLayout.module.css';
-import { BLOCK_LABELS, youtubeId } from '../../../lib/guideLayout.mjs';
-import { makeLink, toggleList, wrapSelection } from '../../../lib/guideTextFormat.mjs';
+import { BLOCK_LABELS, MAX_TABLE_COLS, MAX_TABLE_ROWS } from '../../../lib/guideLayout.mjs';
+import { VideoLinkField } from './fields';
+import { GridManager, ImageTextFields } from './ImageTools';
+import RichTextEditor from './RichTextEditor';
 import { useBuilder } from './BuilderContext';
 import styles from './builder.module.css';
 
@@ -18,55 +19,6 @@ function AutoTextarea({ value, onChange, className, label, ...rest }) {
     if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; }
   }, [value]);
   return <textarea ref={ref} rows={1} value={value} onChange={onChange} className={className} aria-label={label} {...rest} />;
-}
-
-function Toolbar({ taRef, block }) {
-  const { update } = useBuilder();
-  const apply = fn => {
-    const el = taRef.current;
-    if (!el) return;
-    const out = fn(el.value, el.selectionStart, el.selectionEnd);
-    update(block.id, { md: out.value }, `fmt:${block.id}`);
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(out.start, out.end); });
-  };
-  const link = () => {
-    const url = window.prompt('Link address (https://…)', 'https://');
-    if (url && /^(https?:\/\/|mailto:|\/)/i.test(url.trim())) apply((v, s, e) => makeLink(v, s, e, url.trim()));
-  };
-  return (
-    <div className={styles.rtToolbar} role="toolbar" aria-label="Text formatting">
-      <button type="button" aria-label="Bold" title="Bold" onClick={() => apply((v, s, e) => wrapSelection(v, s, e, '**'))}><b>B</b></button>
-      <button type="button" aria-label="Italic" title="Italic" onClick={() => apply((v, s, e) => wrapSelection(v, s, e, '*'))}><i>I</i></button>
-      <button type="button" aria-label="Add link" title="Link" onClick={link}>Link</button>
-      <button type="button" aria-label="Bulleted list" title="Bulleted list" onClick={() => apply((v, s, e) => toggleList(v, s, e, false))}>• List</button>
-      <button type="button" aria-label="Numbered list" title="Numbered list" onClick={() => apply((v, s, e) => toggleList(v, s, e, true))}>1. List</button>
-    </div>
-  );
-}
-
-function RichText({ block, selected, field = 'md', label = 'Text' }) {
-  const { update } = useBuilder();
-  const ref = useRef(null);
-  const value = block[field];
-  if (!selected) {
-    return value.trim() ? <div className={guideStyles.prose}><GuideMarkdown>{value}</GuideMarkdown></div> : <p className={styles.placeholder}>Empty {label.toLowerCase()} - click to write.</p>;
-  }
-  return (
-    <div className={styles.rtWrap}>
-      <Toolbar taRef={ref} block={block} />
-      <textarea
-        ref={ref}
-        className={styles.rtArea}
-        aria-label={`${label} (supports **bold**, *italic*, links and lists)`}
-        value={value}
-        rows={5}
-        maxLength={30000}
-        onChange={e => update(block.id, { [field]: e.target.value }, `md:${block.id}`)}
-      />
-      {value.trim() ? <div className={styles.rtPreviewLabel}>Preview</div> : null}
-      {value.trim() ? <div className={`${guideStyles.prose} ${styles.rtPreview}`}><GuideMarkdown>{value}</GuideMarkdown></div> : null}
-    </div>
-  );
 }
 
 function ImagePlaceholder({ block, index = null }) {
@@ -81,11 +33,11 @@ function ImagePlaceholder({ block, index = null }) {
         </div>
       ) : (
         <>
-          <strong>Drop an image here</strong>
-          <span>JPG, PNG, WebP or GIF up to 3 MB</span>
+          <strong>Drop a picture here</strong>
+          <span>or choose one. JPG, PNG, WebP or GIF, up to 3 MB.</span>
           <span className={styles.dropButtons}>
-            <button type="button" className={styles.btn} onClick={() => requestUpload(block.id, index)}>Upload image</button>
-            <button type="button" className={styles.btn} onClick={() => openLibrary(block.id, index)}>Choose from library</button>
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={e => { e.stopPropagation(); requestUpload(block.id, index); }}>Upload image</button>
+            <button type="button" className={styles.btn} onClick={e => { e.stopPropagation(); openLibrary(block.id, index); }}>Choose from library</button>
           </span>
         </>
       )}
@@ -96,25 +48,73 @@ function ImagePlaceholder({ block, index = null }) {
 
 function needsAlt(item) { return item.src && !item.decorative && !String(item.alt || '').trim(); }
 
+function TableEditor({ block }) {
+  const { update } = useBuilder();
+  const rows = block.rows;
+  const cols = rows[0]?.length || 0;
+  const set = next => update(block.id, { rows: next });
+  return (
+    <div className={styles.tableEdit} onClick={e => e.stopPropagation()}>
+      <div className={guideStyles.tableWrap}>
+        <table className={guideStyles.table}>
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={ri} data-header={block.header && ri === 0 ? 'true' : undefined}>
+                {row.map((cell, ci) => (
+                  <td key={ci}>
+                    <input className={styles.cellInput} aria-label={`Row ${ri + 1}, column ${ci + 1}${block.header && ri === 0 ? ' (header)' : ''}`} value={cell} maxLength={300}
+                      style={block.header && ri === 0 ? { fontWeight: 700 } : undefined}
+                      onChange={e => update(block.id, { rows: rows.map((r, i) => (i === ri ? r.map((c, j) => (j === ci ? e.target.value : c)) : r)) }, `cell:${block.id}`)} />
+                  </td>
+                ))}
+                <td className={styles.rowTool}>
+                  <button type="button" className={`${styles.barBtn} ${styles.barDanger}`} disabled={rows.length <= 1} aria-label={`Remove row ${ri + 1}`} title="Remove this row" onClick={() => set(rows.filter((_, i) => i !== ri))}>✕</button>
+                </td>
+              </tr>
+            ))}
+            <tr className={styles.colTools}>
+              {Array.from({ length: cols }, (_, ci) => (
+                <td key={ci}><button type="button" className={`${styles.barBtn} ${styles.barDanger}`} disabled={cols <= 1} aria-label={`Remove column ${ci + 1}`} title="Remove this column" onClick={() => set(rows.map(r => r.filter((_, j) => j !== ci)))}>✕ column</button></td>
+              ))}
+              <td />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className={styles.inline}>
+        <button type="button" className={styles.btn} disabled={rows.length >= MAX_TABLE_ROWS} onClick={() => set([...rows, Array.from({ length: cols || 2 }, () => '')])}>+ Row</button>
+        <button type="button" className={styles.btn} disabled={cols >= MAX_TABLE_COLS} onClick={() => set(rows.map(r => [...r, '']))}>+ Column</button>
+        <label className={styles.check} style={{ margin: 0 }}>
+          <input type="checkbox" checked={block.header} onChange={e => update(block.id, { header: e.target.checked })} /> First row is a header
+        </label>
+      </div>
+      <p className={styles.hintLine}>Click a cell and type. Tab moves to the next cell.</p>
+    </div>
+  );
+}
+
 function BlockBody({ block, selected }) {
-  const { update, uploads } = useBuilder();
+  const { update, uploads, actions } = useBuilder();
   switch (block.type) {
     case 'heading': {
       const Tag = block.level === 3 ? 'h3' : 'h2';
       return (
         <Tag className={`${guideStyles.heading} ${styles.headingEdit}`} data-level={block.level}>
-          <AutoTextarea className={styles.headingInput} label={`Heading text (level ${block.level})`} value={block.text} maxLength={200} placeholder="Heading" onChange={e => update(block.id, { text: e.target.value.replace(/\n/g, ' ') }, `h:${block.id}`)} />
+          <AutoTextarea className={styles.headingInput} label={`Heading text (level ${block.level})`} value={block.text} maxLength={200} placeholder="Type a heading" onChange={e => update(block.id, { text: e.target.value.replace(/\n/g, ' ') }, `h:${block.id}`)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); actions.addAt('text', actions.areaOf(block.id), actions.indexOf(block.id) + 1); } }} />
         </Tag>
       );
     }
-    case 'text': return <RichText block={block} selected={selected} />;
+    case 'text': return <RichTextEditor block={block} selected={selected} />;
     case 'image':
       if (!block.src) return <ImagePlaceholder block={block} />;
       return (
         <div className={styles.imgWrap}>
           <BlockView block={block} />
           {uploads[block.id] && !uploads[block.id].error ? <div className={styles.imgBusy}>Uploading…</div> : null}
-          {needsAlt(block) ? <p className={styles.altWarn}>Add alt text so readers who can&apos;t see this image know what it shows.</p> : null}
+          {uploads[block.id]?.error ? <p className={styles.errorText} role="alert">{uploads[block.id].error}</p> : null}
+          {needsAlt(block) && !selected ? <p className={styles.altWarn}>This picture needs a description for readers who cannot see it. Click the block to add one.</p> : null}
+          {selected ? <ImageTextFields block={block} idPrefix={`cv-${block.id}`} /> : null}
         </div>
       );
     case 'imagegrid': {
@@ -122,8 +122,10 @@ function BlockBody({ block, selected }) {
       return (
         <div>
           {empty ? <ImagePlaceholder block={block} index={0} /> : <BlockView block={block} />}
-          {block.images.some(needsAlt) ? <p className={styles.altWarn}>Some grid images need alt text. Select the block to add it.</p> : null}
-          {!empty && block.images.length < 4 ? <p className={styles.hintLine}>Select this block to add more images (up to 4).</p> : null}
+          {uploads[block.id]?.error && !empty ? <p className={styles.errorText} role="alert">{uploads[block.id].error}</p> : null}
+          {!selected && block.images.some(needsAlt) ? <p className={styles.altWarn}>Some pictures need a description. Click the block to add them.</p> : null}
+          {selected && !empty ? <GridManager block={block} /> : null}
+          {selected && empty ? null : null}
         </div>
       );
     }
@@ -132,36 +134,23 @@ function BlockBody({ block, selected }) {
       return (
         <div className={styles.calloutEdit} data-tone={block.tone}>
           <input className={styles.calloutTitleInput} aria-label="Callout title" value={block.title} maxLength={120} placeholder="Title" onChange={e => update(block.id, { title: e.target.value }, `ct:${block.id}`)} />
-          <RichText block={block} selected field="md" label="Callout text" />
+          <RichTextEditor block={block} selected field="md" label="Callout text" />
         </div>
       );
     case 'divider': return <BlockView block={block} />;
     case 'button':
-      if (!block.href || !block.label) return <p className={styles.placeholder}>Button - set the label and link in the panel on the right.</p>;
+      if (!block.href || !block.label) return <p className={styles.placeholder}>Button: type its label and link in the panel on the right.</p>;
       return <BlockView block={block} />;
     case 'video':
-      if (!youtubeId(block.url)) return <p className={styles.placeholder}>Video - paste a YouTube link in the panel on the right. It appears as a link card (embedding is blocked by the site security policy).</p>;
-      return <BlockView block={block} />;
-    case 'table':
-      if (!selected) return block.rows.length ? <BlockView block={block} /> : <p className={styles.placeholder}>Empty table.</p>;
       return (
-        <div className={guideStyles.tableWrap}>
-          <table className={guideStyles.table}>
-            <tbody>
-              {block.rows.map((row, ri) => (
-                <tr key={ri}>
-                  {row.map((cell, ci) => (
-                    <td key={ci}>
-                      <input className={styles.cellInput} aria-label={`Row ${ri + 1}, column ${ci + 1}${block.header && ri === 0 ? ' (header)' : ''}`} value={cell} maxLength={300}
-                        onChange={e => update(block.id, { rows: block.rows.map((r, i) => (i === ri ? r.map((c, j) => (j === ci ? e.target.value : c)) : r)) }, `cell:${block.id}`)} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div>
+          {block.provider ? <BlockView block={block} /> : <p className={styles.placeholder}>Video: paste a YouTube or Google Drive link below.</p>}
+          {selected ? <div className={styles.videoCanvasField} onClick={e => e.stopPropagation()}><VideoLinkField block={block} help={false} idPrefix={`cv-${block.id}`} onChange={patch => update(block.id, patch, `v:${block.id}`)} /></div> : null}
         </div>
       );
+    case 'table':
+      if (!selected) return block.rows.length ? <BlockView block={block} /> : <p className={styles.placeholder}>Empty table.</p>;
+      return <TableEditor block={block} />;
     default: return null;
   }
 }
@@ -184,27 +173,31 @@ export default function SortableBlock({ block, index, areaId }) {
       aria-label={`${label} block`}
       tabIndex={0}
       onClick={() => select(block.id)}
-      onClickCapture={e => { if (e.target.closest('a')) e.preventDefault(); }}
+      onClickCapture={e => { if (e.target.closest('a') && !e.target.closest('[data-allow-link]')) e.preventDefault(); }}
       onFocus={e => { if (e.target === e.currentTarget) select(block.id); }}
       onKeyDown={e => {
         if (e.target !== e.currentTarget) return;
-        if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); actions.remove(block.id); }
-        if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); actions.nudge(block.id, -1); }
-        if (e.altKey && e.key === 'ArrowDown') { e.preventDefault(); actions.nudge(block.id, 1); }
+        const mod = e.metaKey || e.ctrlKey;
+        if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); actions.requestRemove(block.id); }
+        else if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); actions.nudge(block.id, -1); }
+        else if (e.altKey && e.key === 'ArrowDown') { e.preventDefault(); actions.nudge(block.id, 1); }
+        else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); actions.duplicate(block.id); }
+        else if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.querySelector('[contenteditable], input, textarea')?.focus(); }
+        else if (e.key === 'Escape') { select(null); }
       }}
     >
       <div className={styles.blockBar}>
-        <button type="button" ref={setActivatorNodeRef} className={`${styles.handle}`} aria-label={`Drag to move this ${label.toLowerCase()} block. Or use the arrow buttons.`} title="Drag to move" {...attributes} {...listeners}>⠿</button>
-        <span className={styles.blockName}>{label}</span>
+        <button type="button" ref={setActivatorNodeRef} className={styles.handle} aria-label={`Drag to move this ${label.toLowerCase()} block. Or focus it and press Space, then the arrow keys.`} title={`Drag to move this ${label.toLowerCase()} block`} {...attributes} {...listeners}>⠿</button>
         <button type="button" className={styles.barBtn} aria-label={`Move ${label.toLowerCase()} block up`} title="Move up (Alt+↑)" onClick={e => { e.stopPropagation(); actions.nudge(block.id, -1); }}>↑</button>
         <button type="button" className={styles.barBtn} aria-label={`Move ${label.toLowerCase()} block down`} title="Move down (Alt+↓)" onClick={e => { e.stopPropagation(); actions.nudge(block.id, 1); }}>↓</button>
         {areas.length > 1 ? (
-          <select className={styles.barSelect} aria-label={`Move ${label.toLowerCase()} block to area`} value={areaId} onClick={e => e.stopPropagation()} onChange={e => actions.moveToArea(block.id, e.target.value)}>
+          <select className={styles.barSelect} aria-label={`Move ${label.toLowerCase()} block to another part of the page`} title="Move to another part of the page" value={areaId} onClick={e => e.stopPropagation()} onChange={e => actions.moveToArea(block.id, e.target.value)}>
             {areas.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
           </select>
         ) : null}
-        <button type="button" className={styles.barBtn} aria-label={`Duplicate ${label.toLowerCase()} block`} title="Duplicate" onClick={e => { e.stopPropagation(); actions.duplicate(block.id); }}>⧉</button>
-        <button type="button" className={`${styles.barBtn} ${styles.barDanger}`} aria-label={`Delete ${label.toLowerCase()} block`} title="Delete" onClick={e => { e.stopPropagation(); actions.remove(block.id); }}>✕</button>
+        <button type="button" className={styles.barBtn} aria-label={`Duplicate ${label.toLowerCase()} block`} title="Duplicate (Ctrl/Cmd+D)" onClick={e => { e.stopPropagation(); actions.duplicate(block.id); }}>⧉</button>
+        <button type="button" className={`${styles.barBtn} ${styles.settingsOnly}`} aria-label={`Open ${label.toLowerCase()} settings`} title="Settings" onClick={e => { e.stopPropagation(); actions.openSettings(); }}>⚙</button>
+        <button type="button" className={`${styles.barBtn} ${styles.barDanger}`} aria-label={`Delete ${label.toLowerCase()} block`} title="Delete (Delete key)" onClick={e => { e.stopPropagation(); actions.requestRemove(block.id); }}>✕</button>
       </div>
       <div className={styles.blockContent} data-index={index}>
         <BlockBody block={block} selected={selected} />

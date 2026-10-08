@@ -86,7 +86,7 @@ test('guide link resolution prefers the guide slug and falls back to the event p
   assert.equal(eventHref({ slug: 'x', guide_slug: '../evil' }), '/events/x');
 });
 test('extras validation: guide slug, alliances, defaults', () => {
-  assert.deepEqual(validateEventExtras({}, { withDefaults: true }).fields, { guide_slug: null, alliance_tags: [] });
+  assert.deepEqual(validateEventExtras({}, { withDefaults: true }).fields, { guide_slug: null, alliance_tags: [], series_id: null });
   assert.deepEqual(validateEventExtras({ alliance_tags: ['red', 'SKY', 'red'], guide_slug: ' my-guide ' }).fields, { alliance_tags: ['RED', 'SKY'], guide_slug: 'my-guide' });
   assert.deepEqual(validateEventExtras({}).fields, {});
   assert.ok(validateEventExtras({ guide_slug: 'Bad Slug!' }).error);

@@ -52,6 +52,12 @@ function matchesPrefix(pathname, prefixes) {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+// The ONLY third-party origins pages may frame: click-to-load video players in
+// guide Video blocks (YouTube privacy-enhanced embeds and Google Drive's video
+// preview). Keep in sync with lib/guideLayout.mjs videoEmbedSrc(); anything else
+// stays blocked (no other frame-src, default-src still 'self').
+const VIDEO_FRAME_SRC = 'frame-src https://www.youtube-nocookie.com https://drive.google.com';
+
 function buildCsp(nonce) {
   const dev = process.env.NODE_ENV === 'development';
   return [
@@ -70,6 +76,7 @@ function buildCsp(nonce) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
+    VIDEO_FRAME_SRC,
   ].join('; ');
 }
 

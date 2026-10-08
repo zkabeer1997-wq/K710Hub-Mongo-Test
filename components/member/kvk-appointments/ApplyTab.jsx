@@ -7,6 +7,7 @@ import HourPicker from './HourPicker';
 import { APPOINTMENT_TYPES, PREFERRED_HOUR_COUNT, typeKey, typeTitle } from '../../../lib/kvkAppointments.mjs';
 import { refreshMemberFormStatus } from '../../../lib/useMemberFormStatus';
 import './apply.css';
+import '../easy-view-fixes.css';
 
 const blankBuff = { want: '', tg: '', ttg: '', speedup: '', hours: [] };
 
