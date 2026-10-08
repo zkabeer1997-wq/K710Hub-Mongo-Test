@@ -189,7 +189,7 @@ Tests: `tests/scan*.test.mjs`. The 58 Governor Gear labels are checked 1:1 again
 Explicitly still UNKNOWN / blocking phases 2-4:
 - Quality frame colour palette (`QUALITY_PALETTE_STATUS = 'unmeasured'`, empty): measure from labelled screenshots.
 - The anchor element (type, template or text, expected rect) for both screens.
-- Charm level shape templates (`CHARM_SHAPE_TEMPLATES_STATUS = 'unknown'`).
+- Charm level shape templates: built, see docs/charm-shapes.md (levels 3, 4, 5, 6, 12, 13 verified on real screenshots; the rest art-only and capped for review).
 - The on-screen word for Forgery (`FORGERY_ON_SCREEN_WORD_STATUS = 'unknown'`; reference site says "Mastery").
 - Tier label look (including tier 0), star row look, hero gear rarities below gold/red on the backpack tab.
 - Full-resolution labelled screenshots from several devices; the best `STANDARD_WIDTH`.
