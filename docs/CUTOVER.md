@@ -33,20 +33,42 @@ Verify: Vercel project for `k710-hub-mongo-test` and future production domain sh
 
 Run: `MONGODB_URI=... node scripts/seed-public-content.mjs` after migration to fill missing public defaults.
 
-## Image storage (no object storage on this stack)
+## Image storage
 
-Supabase Storage isn't part of this stack, so `admin-gallery` and
-`admin-guide-images` store uploaded images as base64 data URLs directly in
-their Mongo documents instead. MongoDB's hard cap is 16 MB per document, and
-base64 inflates a file's size by ~33%, so upload caps are set well below
-that: 4 MB for gallery images (`app/api/admin-gallery/route.js`), 3 MB for
-guide images (`app/api/admin-guide-images/route.js`). Don't raise either cap
-without re-checking the real per-document ceiling.
+**Gallery images live in Google Drive** (guide images still use base64 in Mongo, 3 MB cap).
+`gallery_images` documents hold metadata only (`storage: 'drive'`, `drive_file_id`, `drive_md5`,
+`mime_type`, `size`, `width`/`height`, title/alt/caption/position/is_published).
+Legacy rows (`storage: 'db'` / no field) keep their base64 `image_url` until migrated.
 
-This works but doesn't scale: every read of a gallery/guide list pulls full
-image bytes along with it, and the collection grows one image at a time
-with no CDN caching. If image volume grows, move to GridFS or an external
-object store (S3/R2/Vercel Blob) instead of raising these caps further.
+Design:
+- One-time **Connect Google Drive** in Admin > Gallery (any admin / superadmin). Uses the existing OAuth
+  client with `access_type=offline`, `prompt=consent`, scope `drive.file`. It reuses the existing redirect
+  URI `<SITE_URL>/api/google-drive/callback` (the callback recognises the gallery flow by its own state cookie).
+- The refresh token is stored in Mongo `integration_tokens` (`_id: google_drive_gallery`), encrypted with
+  AES-256-GCM; key = `GALLERY_TOKEN_KEY` or HKDF(`MEMBER_SESSION_SECRET`). It never reaches the browser.
+  Rotating that secret requires reconnecting. A service account is NOT supported (the repo had none, and
+  service accounts have no Drive quota on personal accounts).
+- App creates/finds a Drive folder `K710 Gallery`; files stay private.
+- Public delivery: `GET /api/gallery/image/<gallery id>` streams from Drive (published only; admins can
+  preview unpublished). `Cache-Control: public, max-age=86400, stale-while-revalidate`, ETag from the Drive
+  md5, 304 without calling Drive, small-file in-memory LRU. Drive/outage -> placeholder SVG with 404/502.
+- Not connected: uploads return 409 "Connect Google Drive first (one-time setup)"; there is no fallback to Mongo.
+- Delete moves the Drive file to the Drive trash (recoverable), then removes the record.
+- Migration: Admin > Gallery > "Move existing images to Drive" (batches of 5, verifies size, then drops
+  base64), or `MONGODB_URI=... node scripts/migrate-gallery-to-drive.mjs [--yes]` (dry run without `--yes`).
+- Local dev without Google: `NODE_ENV=development` only, set `DRIVE_STORAGE_FAKE_DIR` or create
+  `.data/drive-fake/.enable` (gitignored); files are stored under `.data/drive-fake/`. Ignored in production.
+
+Owner setup checklist (cannot be done by the code):
+1. Google Cloud console: enable the **Google Drive API** for the project that owns the OAuth client.
+2. OAuth consent screen: add scope `.../auth/drive.file`; while in "Testing", add the kingdom Google account
+   as a test user (refresh tokens for Testing apps expire after 7 days: publish the app to "In production").
+3. OAuth client (Web): authorized redirect URI `https://<production domain>/api/google-drive/callback`
+   (plus any preview/localhost origins you use).
+4. Vercel env: `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `MEMBER_SESSION_SECRET`,
+   optionally `GALLERY_TOKEN_KEY` (long random).
+5. Deploy, open Admin > Gallery > Connect Google Drive, sign in with the kingdom account, consent.
+6. Run "Move existing images to Drive"; check the `K710 Gallery` folder appears in that Drive.
 
 ## Smoke checklist (prod vs Mongo-Test)
 
@@ -153,3 +175,7 @@ On cutover:
    cycle of their type by `backfillCycleTags()` (lib/eventCycles.server.js). It runs once per server process the
    first time a cycle is read, is idempotent, and needs no manual step. Start the new cycle afterwards: members then
    see every cycle form as "not done" with last cycle's answers offered as a starting point.
+
+## Page addresses (route aliases)
+
+SuperAdmins can rename public pages in Admin > Settings > Page addresses (collection `route_aliases`, created on first save; indexes in lib/mongoCollections.js). proxy.js rewrites the new address to the canonical page and 308-redirects (Cache-Control: no-store) the old one. The proxy reads the map from `/api/route-aliases` on its own origin (cached 15s, fails open). After deploying or changing proxy.js, restart the server.

@@ -1,318 +1,203 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import ConfirmDialog from './ConfirmDialog';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import EventCalendar from '../events/EventCalendar';
+import EventFormDialog from './EventFormDialog';
 import TableSkeleton from './TableSkeleton';
-import { Button, Field, Input, Select, Textarea, Table } from '../ui';
+import { Button, Table } from '../ui';
+import { DEFAULT_KINGDOM_EVENTS, mergeDefaultEvents } from '../../lib/defaultEvents.mjs';
+import { recurrenceLabel } from '../../lib/eventRecurrence.mjs';
+import { eventAllianceLabel } from '../../lib/eventFields.mjs';
+import { emptyForm, formFromEvent, eventFromForm, shiftSeries, singleOccurrenceCopy, withExdate } from '../../lib/eventForm.mjs';
 
-import { DEFAULT_KINGDOM_EVENTS } from '../../lib/defaultEvents.mjs';
-import { nextEventOccurrence, recurrenceLabel, validateEventSchedule } from '../../lib/eventRecurrence.mjs';
+const FALLBACK_ALLIANCES = [{ tag: '710' }, { tag: 'RED' }, { tag: 'SKY' }];
 
-const KINDS = ['kvk', 'championship', 'swordland', 'bear_hunt', 'custom'];
-const EMPTY_FORM = {
-  slug: '', title: '', kind: 'custom', description: '', body_md: '',
-  starts_at: '', ends_at: '', published: false,
-  recurrence_frequency: 'none', recurrence_interval: 1, recurrence_until: '',
-};
-
-function toLocalInputValue(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+async function api(url, options) {
+  const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json' }, cache: 'no-store' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || 'Request failed. Please try again.');
+  return result;
 }
 
+// Google-Calendar-style admin: click a day or drag a time range to add, click an event to edit or delete.
+// Everything saved here is what members see on /events (the API revalidates that page).
 export default function EventsPanel() {
   const [rows, setRows] = useState([]);
+  const [alliances, setAlliances] = useState(FALLBACK_ALLIANCES);
+  const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [dialog, setDialog] = useState(null); // { mode, initial, event, occStart, isDefault }
   const [saving, setSaving] = useState(false);
-  const [confirmRow, setConfirmRow] = useState(null);
-  const [repeatChoice, setRepeatChoice] = useState('none:1');
-  const scheduleInput = {
-    ...form,
-    starts_at: form.starts_at && Number.isFinite(Date.parse(form.starts_at)) ? new Date(form.starts_at).toISOString() : '',
-    ends_at: form.ends_at && Number.isFinite(Date.parse(form.ends_at)) ? new Date(form.ends_at).toISOString() : null,
-  };
-  const nextDates = [];
-  if (form.recurrence_frequency !== 'none') {
-    let after = Date.now();
-    for (let i = 0; i < 3; i++) {
-      const next = nextEventOccurrence(scheduleInput, after);
-      if (!next) break;
-      nextDates.push(next.starts_at);
-      after = Date.parse(next.ends_at || next.starts_at) + 1;
-    }
-  }
+  const [dialogError, setDialogError] = useState('');
 
-  function changeRepeat(value) {
-    setRepeatChoice(value);
-    if (value === 'custom') {
-      setForm(current => ({ ...current, recurrence_frequency: current.recurrence_frequency === 'none' ? 'daily' : current.recurrence_frequency }));
-      return;
-    }
-    const [frequency, interval] = value.split(':');
-    setForm(current => ({ ...current, recurrence_frequency: frequency, recurrence_interval: Number(interval), recurrence_until: frequency === 'none' ? '' : current.recurrence_until }));
-  }
-
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     setError('');
     try {
-      const response = await fetch('/api/admin-events', { cache: 'no-store' });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Unable to load events.');
-      setRows(result.events || []);
+      const [events, allianceList, guideList] = await Promise.all([
+        api('/api/admin-events'),
+        api('/api/admin-alliances').catch(() => null),
+        api('/api/admin-guides').catch(() => null),
+      ]);
+      setRows(events.events || []);
+      if (allianceList?.alliances?.length) setAlliances(allianceList.alliances.filter(a => a.active !== false && a.tag));
+      if (guideList?.guides) setGuides(guideList.guides.filter(g => g.is_published).map(g => ({ slug: g.slug, title: g.title || g.slug })));
     } catch (err) {
       setError(err.message || 'Unable to load events.');
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
-  useEffect(() => { load(); }, []);
+  // Stored events win over built-in ones with the same slug, so a customised default never shows twice.
+  const events = useMemo(() => mergeDefaultEvents(rows, []), [rows]);
+  const guideOptions = useMemo(() => guides, [guides]);
 
-  function openCreate() {
-    setError('');
+  function openCreate(startMs, endMs) {
+    setDialogError('');
     setStatus('');
-    setEditingId('new');
-    setRepeatChoice('none:1');
-    setForm(EMPTY_FORM);
+    setDialog({ mode: 'create', initial: emptyForm(startMs ?? Date.now(), endMs ?? (startMs ?? Date.now()) + 3600000), event: null });
   }
 
-  function openEdit(row) {
-    setError('');
+  function openEdit(occ) {
+    setDialogError('');
     setStatus('');
-    setEditingId(row.id);
-    const choice = `${row.recurrence_frequency || 'none'}:${row.recurrence_interval || 1}`;
-    setRepeatChoice(['none:1', 'daily:1', 'daily:2', 'weekly:1', 'weekly:2', 'monthly:1', 'yearly:1'].includes(choice) ? choice : 'custom');
-    setForm({
-      slug: row.slug,
-      title: row.title,
-      kind: row.kind,
-      description: row.description || '',
-      body_md: row.body_md || '',
-      starts_at: toLocalInputValue(row.starts_at),
-      ends_at: toLocalInputValue(row.ends_at),
-      published: row.published,
-      recurrence_frequency: row.recurrence_frequency || 'none',
-      recurrence_interval: row.recurrence_interval || 1,
-      recurrence_until: row.recurrence_until || '',
-    });
+    const event = occ.event;
+    const form = formFromEvent(event);
+    const seriesStart = Date.parse(event.starts_at);
+    const recurring = event.recurrence_frequency && event.recurrence_frequency !== 'none';
+    if (recurring) { // show the date that was clicked, like a calendar app
+      const start = new Date(occ.startMs).toISOString();
+      form.start_date = start.slice(0, 10);
+      form.start_time = start.slice(11, 16);
+    }
+    setDialog({ mode: 'edit', initial: form, event, occStart: occ.starts_at, seriesStart, recurring: Boolean(recurring), isDefault: Boolean(event.is_default) });
   }
 
-  // Start a stored event that overrides a built-in default (same slug).
-  function customizeDefault(def) {
-    setError('');
-    setStatus('');
-    setEditingId('new');
-    const choice = `${def.recurrence_frequency}:${def.recurrence_interval}`;
-    setRepeatChoice(['daily:1', 'daily:2', 'weekly:1', 'weekly:2', 'monthly:1', 'yearly:1'].includes(choice) ? choice : 'custom');
-    setForm({
-      slug: def.slug, title: def.title, kind: def.kind, description: def.description || '', body_md: '',
-      starts_at: toLocalInputValue(def.starts_at), ends_at: toLocalInputValue(def.ends_at), published: true,
-      recurrence_frequency: def.recurrence_frequency, recurrence_interval: def.recurrence_interval, recurrence_until: '',
-    });
-  }
+  const close = () => { if (!saving) setDialog(null); };
 
-  function closeEdit() {
-    if (saving) return;
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-  }
-
-  async function save() {
+  async function run(task, done) {
     setSaving(true);
-    setError('');
-    setStatus('');
+    setDialogError('');
     try {
-      const { error: scheduleError } = validateEventSchedule(scheduleInput);
-      if (scheduleError) throw new Error(scheduleError);
-      const isNew = editingId === 'new';
-      const response = await fetch(isNew ? '/api/admin-events' : `/api/admin-events/${editingId}`, {
-        method: isNew ? 'POST' : 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : '',
-          ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Unable to save event.');
-      setStatus(isNew ? 'Event created.' : 'Event saved.');
-      setEditingId(null);
-      setForm(EMPTY_FORM);
+      await task();
+      setDialog(null);
+      setStatus(done);
       await load();
     } catch (err) {
-      setError(err.message || 'Unable to save event.');
+      setDialogError(err.message || 'Unable to save.');
     } finally {
       setSaving(false);
     }
   }
 
-  async function confirmDelete() {
-    if (!confirmRow) return;
-    try {
-      const response = await fetch(`/api/admin-events/${confirmRow.id}`, { method: 'DELETE' });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Unable to delete event.');
-      setStatus('Event deleted.');
-      setConfirmRow(null);
-      await load();
-    } catch (err) {
-      setError(err.message || 'Unable to delete event.');
-      setConfirmRow(null);
-    }
+  function save(payload, scope) {
+    const { mode, event, occStart, seriesStart, recurring, isDefault } = dialog;
+    return run(async () => {
+      if (mode === 'create') {
+        await api('/api/admin-events', { method: 'POST', body: JSON.stringify(payload) });
+        return;
+      }
+      if (recurring && scope === 'one') {
+        // This event only: skip that date in the series and add a one-off event carrying the change.
+        const skip = withExdate(event, occStart);
+        const copy = singleOccurrenceCopy({ ...payload, slug: event.slug }, occStart);
+        if (isDefault) await api('/api/admin-events', { method: 'POST', body: JSON.stringify({ ...formToStored(event), exdates: skip }) });
+        else await api(`/api/admin-events/${event.id}`, { method: 'PUT', body: JSON.stringify({ exdates: skip }) });
+        await api('/api/admin-events', { method: 'POST', body: JSON.stringify(copy) });
+        return;
+      }
+      const shift = recurring ? Date.parse(payload.starts_at) - Date.parse(occStart) : 0;
+      const body = recurring ? shiftSeries(payload, seriesStart, shift) : payload;
+      if (isDefault) await api('/api/admin-events', { method: 'POST', body: JSON.stringify({ ...body, slug: event.slug }) });
+      else await api(`/api/admin-events/${event.id}`, { method: 'PUT', body: JSON.stringify(body) });
+    }, mode === 'create' ? 'Event added. It now shows on the public Events page.' : 'Event saved. The public Events page is updated.');
+  }
+
+  function remove(which) {
+    const { event, occStart, isDefault } = dialog;
+    return run(async () => {
+      if (which === 'one') {
+        const exdates = withExdate(event, occStart);
+        if (isDefault) await api('/api/admin-events', { method: 'POST', body: JSON.stringify({ ...formToStored(event), exdates }) });
+        else await api(`/api/admin-events/${event.id}`, { method: 'PUT', body: JSON.stringify({ exdates }) });
+      } else if (isDefault) {
+        // A built-in cannot be deleted; an unpublished copy with its slug hides it.
+        await api('/api/admin-events', { method: 'POST', body: JSON.stringify({ ...formToStored(event), published: false }) });
+      } else if (DEFAULT_KINGDOM_EVENTS.some(def => def.slug === event.slug)) {
+        // Deleting a customised built-in would bring the original back, so hide it instead.
+        await api(`/api/admin-events/${event.id}`, { method: 'PUT', body: JSON.stringify({ published: false }) });
+      } else {
+        await api(`/api/admin-events/${event.id}`, { method: 'DELETE' });
+      }
+    }, which === 'one' ? 'That date was removed from the series.' : 'Event deleted.');
   }
 
   return (
-    <div>
+    <div className="evp">
       <p className="admin-page-lead">
-        Schedule one-time or recurring kingdom events. Edit Bear Hunt times and alliance event dates in the Alliances tab.
+        Click a day, or drag across a time range in Week or Day view, to add an event. Click an event to edit or delete it. Published events appear on the public Events page automatically. Edit Bear Hunt times and alliance legion dates in the Alliances tab.
       </p>
       {error && <p className="guide-message error" role="alert">{error}</p>}
       {status && <p className="guide-message success" role="status">{status}</p>}
 
-      <div style={{ marginBottom: 16 }}>
-        <Button onClick={openCreate} disabled={editingId !== null}>+ New event</Button>
-      </div>
-
-      {editingId !== null && (
-        <div className="k-plate" style={{ padding: 20, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 12 }}>
-            <Field label="Title">
-              <Input tone="console" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
-            </Field>
-            <Field label="Slug" hint="lowercase-with-hyphens">
-              <Input tone="console" value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} />
-            </Field>
-            <Field label="Kind">
-              <Select tone="console" value={form.kind} onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}>
-                {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-              </Select>
-            </Field>
-            <Field label="Published">
-              <Select tone="console" value={form.published ? 'yes' : 'no'} onChange={(e) => setForm((f) => ({ ...f, published: e.target.value === 'yes' }))}>
-                <option value="no">Draft</option>
-                <option value="yes">Published</option>
-              </Select>
-            </Field>
-            <Field label="Starts at (your local time)">
-              <Input tone="console" type="datetime-local" value={form.starts_at} onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))} />
-            </Field>
-            <Field label="Ends at (optional)">
-              <Input tone="console" type="datetime-local" value={form.ends_at} onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))} />
-            </Field>
-          </div>
-          <fieldset disabled={saving} style={{ border: '1px solid var(--edge)', padding: 16, display: 'grid', gap: 12, minWidth: 0 }}>
-            <legend>Repeat schedule</legend>
-            <Field label="Repeats" htmlFor="event-repeat">
-              <Select id="event-repeat" tone="console" value={repeatChoice} onChange={event => changeRepeat(event.target.value)}>
-                <option value="none:1">Does not repeat</option>
-                <option value="daily:1">Daily</option>
-                <option value="daily:2">Every 2 days</option>
-                <option value="weekly:1">Weekly</option>
-                <option value="weekly:2">Every 2 weeks</option>
-                <option value="monthly:1">Monthly</option>
-                <option value="yearly:1">Yearly</option>
-                <option value="custom">Custom interval…</option>
-              </Select>
-            </Field>
-            {repeatChoice === 'custom' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Field label="Repeat every" htmlFor="event-interval">
-                  <Input id="event-interval" tone="console" type="number" min="1" max="365" step="1" value={form.recurrence_interval} onChange={event => setForm(current => ({ ...current, recurrence_interval: event.target.value }))} />
-                </Field>
-                <Field label="Unit" htmlFor="event-repeat-unit">
-                  <Select id="event-repeat-unit" tone="console" value={form.recurrence_frequency} onChange={event => setForm(current => ({ ...current, recurrence_frequency: event.target.value }))}>
-                    <option value="daily">Days</option><option value="weekly">Weeks</option><option value="monthly">Months</option><option value="yearly">Years</option>
-                  </Select>
-                </Field>
-              </div>
-            )}
-            {form.recurrence_frequency !== 'none' && (
-              <>
-                <Field label="Repeat through (optional, UTC date)" htmlFor="event-repeat-until" hint="Leave blank to repeat indefinitely. The stop date includes events starting on that day.">
-                  <Input id="event-repeat-until" tone="console" type="date" value={form.recurrence_until} onChange={event => setForm(current => ({ ...current, recurrence_until: event.target.value }))} />
-                </Field>
-                <p style={{ margin: 0 }}>Repeats at the same UTC time as the first event. Your local time may shift with daylight saving time. Editing this event updates the whole series.</p>
-                {['monthly', 'yearly'].includes(form.recurrence_frequency) && <p style={{ margin: 0 }}>Dates that do not exist in a month or year are skipped, including February 29 in non-leap years.</p>}
-                {!form.ends_at && <p style={{ margin: 0 }}>Add an end time to show each occurrence as live until it ends. Otherwise, the countdown advances after its start time.</p>}
-                {nextDates.length > 0 && <div><strong>Next dates (UTC)</strong><ul>{nextDates.map(date => <li key={date}>{date.slice(0, 16).replace('T', ' ')} UTC</li>)}</ul></div>}
-              </>
-            )}
-          </fieldset>
-          <Field label="Short description">
-            <Input tone="console" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-          </Field>
-          <Field label="Body (markdown)">
-            <Textarea tone="console" rows={8} value={form.body_md} onChange={(e) => setForm((f) => ({ ...f, body_md: e.target.value }))} />
-          </Field>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
-            <Button variant="quiet" onClick={closeEdit} disabled={saving}>Cancel</Button>
-          </div>
-        </div>
+      {loading ? <TableSkeleton rows={4} columns={4} /> : (
+        <EventCalendar
+          events={events}
+          mode="admin"
+          defaultUtc
+          views={['month', 'week', 'day']}
+          label="Admin event calendar"
+          onCreate={openCreate}
+          onOpen={openEdit}
+          toolbarExtra={<Button onClick={() => openCreate()}>+ New event</Button>}
+        />
       )}
 
-      {loading ? (
-        <TableSkeleton rows={4} columns={4} />
-      ) : (
+      <details className="evp-list">
+        <summary>All events as a list ({events.length})</summary>
         <Table className="stack-table">
-          <thead>
-            <tr><th>Title</th><th>Kind</th><th>First start</th><th>Repeats</th><th>Status</th><th /></tr>
-          </thead>
+          <thead><tr><th>Name</th><th>First start (UTC)</th><th>Repeats</th><th>Alliance</th><th>Status</th><th /></tr></thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td>{row.title}</td>
-                <td>{row.kind}</td>
-                <td>{new Date(row.starts_at).toLocaleString()}</td>
-                <td>{recurrenceLabel(row)}</td>
-                <td>{row.published ? 'Published' : 'Draft'}</td>
+            {events.map((event) => (
+              <tr key={event.slug}>
+                <td>{event.title}{event.is_default ? ' (built-in)' : ''}</td>
+                <td>{event.starts_at.slice(0, 16).replace('T', ' ')}</td>
+                <td>{recurrenceLabel(event)}</td>
+                <td>{eventAllianceLabel(event)}</td>
+                <td>{event.published ? 'Published' : 'Draft'}</td>
                 <td className="admin-table-actions">
-                  <Button variant="quiet" onClick={() => openEdit(row)} disabled={editingId !== null}>Edit</Button>
-                  <Button variant="quiet" onClick={() => setConfirmRow(row)} disabled={editingId !== null}>Delete</Button>
+                  <Button variant="quiet" onClick={() => openEdit({ event, startMs: Date.parse(event.starts_at), starts_at: event.starts_at })}>Edit</Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </Table>
-      )}
+        <p className="admin-page-lead">Built-in events: {DEFAULT_KINGDOM_EVENTS.map(e => e.title).join(', ')}. Editing one saves your own copy that replaces it; starting dates are defaults, so confirm them with leadership.</p>
+      </details>
 
-      <h3 style={{ marginTop: 28 }}>Built-in recurring events</h3>
-      <p className="admin-page-lead">These appear on the public Events page without being stored. Daily Bear Hunts per alliance come from each alliance&apos;s Bear Hunt times. To change or hide one of the series below, customize it: that saves an event with the same slug, which replaces the built-in one (save it as Draft to hide it). Starting dates are defaults; confirm them with leadership.</p>
-      <Table className="stack-table">
-        <thead><tr><th>Title</th><th>Slug</th><th>Repeats</th><th /></tr></thead>
-        <tbody>
-          {DEFAULT_KINGDOM_EVENTS.map((def) => {
-            const overridden = rows.some((row) => row.slug === def.slug);
-            return (
-              <tr key={def.slug}>
-                <td>{def.title}</td>
-                <td>{def.slug}</td>
-                <td>{recurrenceLabel(def)}{overridden ? ' · overridden above' : ''}</td>
-                <td className="admin-table-actions">
-                  <Button variant="quiet" onClick={() => customizeDefault(def)} disabled={editingId !== null || overridden}>Customize</Button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
-
-      <ConfirmDialog
-        open={Boolean(confirmRow)}
-        title="Delete this event?"
-        message={confirmRow ? `"${confirmRow.title}" and all its recurring dates will be permanently removed.` : ''}
-        confirmLabel="Delete"
-        onConfirm={confirmDelete}
-        onCancel={() => setConfirmRow(null)}
+      <EventFormDialog
+        open={Boolean(dialog)}
+        initial={dialog?.initial}
+        mode={dialog?.mode}
+        recurring={dialog?.recurring}
+        isDefault={dialog?.isDefault}
+        alliances={alliances}
+        guides={guideOptions}
+        busy={saving}
+        error={dialogError}
+        onSave={save}
+        onDelete={remove}
+        onClose={close}
       />
     </div>
   );
+}
+
+// A stored copy of a built-in or existing event, used to override a default.
+function formToStored(event) {
+  const { payload } = eventFromForm({ ...formFromEvent(event), slug: event.slug });
+  return { ...payload, slug: event.slug, exdates: event.exdates || [] };
 }

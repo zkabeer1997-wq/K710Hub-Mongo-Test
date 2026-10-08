@@ -24,7 +24,7 @@ export async function GET(_request, { params: paramsPromise }) {
       {
         projection: {
           slug: 1, title: 1, description: 1, starts_at: 1, ends_at: 1, published: 1,
-          recurrence_frequency: 1, recurrence_interval: 1, recurrence_until: 1, _id: 0,
+          recurrence_frequency: 1, recurrence_interval: 1, recurrence_until: 1, recurrence_weekdays: 1, exdates: 1, all_day: 1, guide_slug: 1, alliance_tags: 1, _id: 0,
         },
       }
     );

@@ -40,6 +40,7 @@ Admin surface (shared password, or a Kingshot session with admin/superadmin role
 | `KINGSHOT_API_BASE_URL`, `KINGSHOT_PLAYER_API_URL`, `KINGSHOT_PLAYER_SEARCH_URL` | Upstream endpoints for the Kingshot login flow (`lib/kingshotLogin.js`) |
 | `CHARM_OCR_ENDPOINT`, `GOVERNOR_CHARM_OCR_ENDPOINT`, `GOVERNOR_GEAR_OCR_ENDPOINT` | Screenshot-scanning tools; those features degrade gracefully without them |
 | `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` | OAuth client for the Google Drive export (`lib/googleDrive.server.js`, `app/api/google-drive/*`, `app/api/export-to-drive`). Both must be set or the export reports "not configured". Authorized redirect URI: `<SITE_URL>/api/google-drive/callback`. |
+| `GALLERY_TOKEN_KEY` | `lib/driveCrypto.mjs` | Optional. Key material for AES-256-GCM encryption of the stored Google Drive refresh token (`integration_tokens`). Falls back to HKDF from `MEMBER_SESSION_SECRET`. Changing either later means reconnecting Drive. Gallery images are stored in Google Drive (Admin > Gallery > Connect Google Drive); the same `GOOGLE_DRIVE_CLIENT_*` pair is used. |
 | `VERCEL_ENV` | Set automatically by Vercel. `preview` makes guides read from the `kingdom_guides_preview` collection instead of `kingdom_guides` (`lib/guideAccess.mjs`). Do not set by hand. |
 | `QA_NO_DB` | Set to `1` for QA/test runs without a database: skips the boot-time index sync and the shared rate-limit store. |
 | `K710_LIBRETRANSLATE_URLS` | Comma-separated LibreTranslate mirrors for `/api/translate-ui`; falls back to public mirrors |

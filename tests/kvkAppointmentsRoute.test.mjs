@@ -102,3 +102,62 @@ test('manual assign keeps its slot through auto-allocate and rejects a taken slo
   assert.equal(state.tables[COLLECTIONS.KVK_APPOINTMENT_ASSIGNMENTS].some((r) => r.member_id === 'member-a'), false);
   assert.equal((await admin.POST(req({ as: 'admin', body: { action: 'nope' } }))).status, 400);
 });
+
+// ---- one form with all three buffs: POST { applications: [...], withdraw: [...] }
+const hours = (h) => [h, `${String(Number(h.slice(0, 2)) + 1).padStart(2, '0')}:00`, `${String(Number(h.slice(0, 2)) + 2).padStart(2, '0')}:00`];
+const one = (day, buff, extra = {}) => ({ day, buff, tg: 10, ttg: 1, speedup_days: 5, preferred_hours: hours('08:00'), ...extra });
+const batch = (as, body) => member.POST(req({ as, body }));
+
+test('batch: validated all-or-nothing, shared name copied, nothing saved on a bad item', async () => {
+  const before = state.tables[COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS].length;
+  const bad = await batch('a', { in_game_name: 'Ann', applications: [one(1, 'construction'), one(2, 'research', { preferred_hours: ['08:00'] })] });
+  assert.equal(bad.status, 400);
+  assert.match((await bad.json()).error, /Day 2 Research/);
+  assert.equal((await batch('a', { applications: [one(1, 'construction'), one(1, 'construction')] })).status, 400);
+  assert.equal((await batch('a', { applications: [one(1, 'construction')], withdraw: [{ day: 1, buff: 'construction' }] })).status, 400);
+  assert.equal((await batch('a', { applications: [] })).status, 400);
+  assert.equal((await batch('a', { applications: [one(3, 'construction')] })).status, 400);
+  assert.equal(state.tables[COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS].length, before, 'nothing was written');
+  const ok = await batch('a', { in_game_name: 'Ann', applications: [one(1, 'construction'), one(2, 'research'), one(4, 'training')] });
+  assert.equal(ok.status, 200);
+  const body = await ok.json();
+  assert.equal(body.saved, 'Day 1 Construction, Day 2 Research, Day 4 Troop Training');
+  const mine = state.tables[COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS].filter((r) => r.member_id === 'member-a');
+  assert.equal(mine.length, 3);
+  assert.ok(mine.every((r) => r.in_game_name === 'Ann'));
+});
+
+test('batch honours the closed gate and the old single body still works', async () => {
+  state.tables[COLLECTIONS.FORM_GATES] = [{ form_key: 'appointments', is_open: false }];
+  assert.equal((await batch('a', { applications: [one(1, 'construction')] })).status, 403);
+  state.tables[COLLECTIONS.FORM_GATES] = [];
+  assert.equal((await apply('a', { tg: 321 })).status, 200);
+  assert.equal(state.tables[COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS].find((r) => r.member_id === 'member-a' && r.day === 1).tg, 321);
+});
+
+test('batch withdraw removes the application and its assignment, leaving other members alone', async () => {
+  const ASG = COLLECTIONS.KVK_APPOINTMENT_ASSIGNMENTS;
+  state.tables[ASG] = [
+    { cycle_id: 'current', day: 2, buff: 'research', member_id: 'member-a', slot: '08:00' },
+    { cycle_id: 'current', day: 2, buff: 'research', member_id: 'member-b', slot: '09:00' },
+  ];
+  await batch('b', { applications: [one(2, 'research')] });
+  const res = await batch('a', { applications: [one(1, 'construction')], withdraw: [{ day: 2, buff: 'research' }, { day: 4, buff: 'training' }] });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).withdrawn, 'Day 2 Research, Day 4 Troop Training');
+  const apps = state.tables[COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS];
+  assert.deepEqual(apps.filter((r) => r.member_id === 'member-a').map((r) => r.day), [1]);
+  assert.ok(apps.some((r) => r.member_id === 'member-b' && r.day === 2));
+  assert.deepEqual(state.tables[ASG].map((r) => r.member_id), ['member-b']);
+  assert.equal((await batch('a', { withdraw: [{ day: 7, buff: 'x' }] })).status, 400);
+});
+
+test('GET offers the previous cycle applications for prefill', async () => {
+  const APPS = COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS;
+  state.tables[APPS].push({ member_id: 'member-a', day: 4, buff: 'training', cycle_id: 'older', tg: 7, ttg: 0, speedup_days: 1, preferred_hours: hours('10:00'), in_game_name: 'Ann', updated_at: new Date('2026-01-01') });
+  const got = await (await member.GET(req({ as: 'a' }))).json();
+  assert.equal(got.applications.some((a) => a.day === 4), false, 'older cycle is not this cycle');
+  const prev = got.previousApplications.find((a) => a.day === 4 && a.buff === 'training');
+  assert.equal(prev.tg, 7);
+  assert.equal(prev.in_game_name, 'Ann');
+});

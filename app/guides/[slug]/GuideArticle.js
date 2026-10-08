@@ -159,7 +159,7 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
 
       <div className="armory-inner guide-inner">
         <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Guides', href: guidesHref }]} current={guide.title} />
-        {isAdmin && <div className="guide-topbar"><span className="guide-admin-badge">Admin editing available</span></div>}
+        {isAdmin && <div className="guide-topbar"><span className="guide-admin-badge">Admin editing available</span><Link href={`/admin/dashboard/guides/${slug}`} className="guide-back">Open in page builder</Link></div>}
 
         <header className="guide-header">
           <span className="k-mark">{guide.category}</span>

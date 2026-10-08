@@ -7,7 +7,7 @@ import { HOUR_OPTIONS, PREFERRED_HOUR_COUNT, localTimeLabel } from '../../../lib
 // once mounted, the viewer's local time. Native checkboxes keep keyboard and
 // screen-reader behaviour for free; once the limit is reached the unchecked
 // options are disabled (the API validates the count again on save).
-export default function HourPicker({ value, onChange, disabled = false, describedBy }) {
+export default function HourPicker({ value, onChange, disabled = false, describedBy, label }) {
   const uid = useId();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -21,7 +21,7 @@ export default function HourPicker({ value, onChange, disabled = false, describe
 
   return (
     <fieldset className="hour-picker" disabled={disabled} aria-describedby={describedBy}>
-      <legend>Preferred hours (pick exactly {PREFERRED_HOUR_COUNT})</legend>
+      <legend>{label || 'Preferred hours'} (pick exactly {PREFERRED_HOUR_COUNT})</legend>
       <p className="hour-picker-count" id={`${uid}-count`} role="status" aria-live="polite">
         {value.length} of {PREFERRED_HOUR_COUNT} selected{value.length === PREFERRED_HOUR_COUNT ? ' - ready' : ''}
       </p>

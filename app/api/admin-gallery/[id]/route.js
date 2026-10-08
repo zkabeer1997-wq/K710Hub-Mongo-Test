@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { isAdminRequest } from '../../../../lib/adminAuth';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
+import { getDriveStorage } from '../../../../lib/driveStorage.server';
 
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -68,7 +69,8 @@ export async function PATCH(request, { params: paramsPromise }) {
     if (!doc) {
       return NextResponse.json({ error: 'Unable to update this image.' }, { status: 500 });
     }
-    const { _id, ...image } = doc;
+    const { _id, image_url: _blob, drive_file_id, drive_md5, ...image } = doc;
+    image.image_url = `/api/gallery/image/${doc.id}`;
     revalidatePath('/');
     revalidatePath('/gallery');
     return NextResponse.json({ image });
@@ -91,12 +93,28 @@ export async function DELETE(request, { params: paramsPromise }) {
     if (!image) {
       return NextResponse.json({ error: 'Image not found.' }, { status: 404 });
     }
-    // Production images may still point at Supabase Storage URLs; we only
-    // delete the Mongo record on the test stack (no storage bucket here).
+    // Drive-backed rows: move the file to the Drive trash (recoverable for
+    // 30 days), never a permanent delete. A Drive failure does not block
+    // removing the record; the response says so.
+    let driveTrashed = null;
+    if (image.drive_file_id) {
+      try {
+        const drive = await getDriveStorage();
+        await drive.trashFile(image.drive_file_id);
+        driveTrashed = true;
+      } catch (error) {
+        driveTrashed = error?.code === 'not_found';
+        if (!driveTrashed) console.error('gallery drive trash failed', error?.code || error?.message);
+      }
+    }
     await coll.deleteOne({ id });
     revalidatePath('/');
     revalidatePath('/gallery');
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      driveTrashed,
+      ...(driveTrashed === false ? { warning: 'The gallery record was removed, but the Drive file could not be moved to the trash. You can delete it from the K710 Gallery folder in Drive.' } : {}),
+    });
   } catch {
     return NextResponse.json({ error: 'The gallery record could not be removed.' }, { status: 500 });
   }

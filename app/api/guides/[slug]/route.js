@@ -18,7 +18,7 @@ function collectionName() {
 }
 
 const GUIDE_PROJECT = {
-  slug: 1, title: 1, category: 1, description: 1, body: 1,
+  slug: 1, title: 1, category: 1, description: 1, body: 1, layout: 1,
   f2p_content: 1, spender_content: 1, position: 1,
   is_published: 1, access_level: 1, reviewed_by: 1, updated_at: 1, _id: 0,
 };
@@ -67,6 +67,10 @@ export async function PUT(request, { params: paramsPromise }) {
   if (body.length > 120000) return NextResponse.json({ error: 'Guide text is too long.' }, { status: 413 });
   try {
     const coll = await getCollection(collectionName());
+    const current = await coll.findOne({ slug }, { projection: { layout: 1, slug: 1 } });
+    if (current?.layout) {
+      return NextResponse.json({ error: 'This guide uses the page builder. Edit it from Admin > Guides.' }, { status: 409 });
+    }
     const result = await coll.findOneAndUpdate(
       { slug },
       { $set: { title, body, updated_at: new Date().toISOString() } },

@@ -17,7 +17,7 @@ test('manifest covers member forms, dashboard and appointment strings', () => {
   for (const text of [
     'Needs your input', 'Get started', 'Your vote', 'Submit my vote', 'Current power', // Phase 8 events + dashboard
     'You can change your answers and save again.',                                     // upsert notice
-    'Apply', 'My Appointments', 'View Schedule', 'Update my application',            // appointments UI
+    'Apply', 'My Appointments', 'View Schedule', 'Save my changes',            // appointments UI
     'Not applied', 'Pending', 'Assigned',                                            // lib/kvkAppointments.mjs status labels
     'Legion time', 'Flexible', 'Absent',                                             // lib/eventForms.mjs (.mjs source)
     'Change language', 'Choose your language',                                       // language switcher / chooser

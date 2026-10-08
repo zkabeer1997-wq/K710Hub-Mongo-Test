@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Icon from '../ui/icons';
+import './deadline-ticker.css';
 import { formatCountdown, formatUtc, isDueSoon } from '../../lib/deadlines.mjs';
 
 // Thin bar under the header: the next 2-3 dated events/deadlines as live

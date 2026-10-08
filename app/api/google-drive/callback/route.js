@@ -8,6 +8,10 @@ import {
   googleDriveRedirectUri,
   isGoogleDriveConfigured,
 } from '../../../../lib/googleDrive.server';
+import { isAdminRequest } from '../../../../lib/adminAuth';
+import { GALLERY_DRIVE_STATE_COOKIE } from '../../../../lib/galleryDriveOAuth.mjs';
+import { exchangeCode } from '../../../../lib/driveClient.mjs';
+import { getTokenStore } from '../../../../lib/driveStorage.server';
 
 const escapeHtml = (value) =>
   String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -46,7 +50,36 @@ function popupResponse({ ok, message }, init = {}) {
   });
 }
 
+// Gallery-storage connect flow (full-page redirect, offline access). Stores the
+// refresh token encrypted server-side; the browser never sees it.
+async function handleGalleryStorageCallback(request, expectedState) {
+  const back = (result) => {
+    const res = NextResponse.redirect(new URL(`/admin/dashboard/gallery?drive=${result}`, request.url));
+    res.cookies.set(GALLERY_DRIVE_STATE_COOKIE, '', { path: '/', maxAge: 0 });
+    return res;
+  };
+  const url = new URL(request.url);
+  if (url.searchParams.get('state') !== expectedState || !url.searchParams.get('code')) return back('failed');
+  if (!(await isAdminRequest(request))) return back('failed');
+  try {
+    const tokens = await exchangeCode({
+      clientId: process.env.GOOGLE_DRIVE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+      redirectUri: googleDriveRedirectUri(request),
+      code: url.searchParams.get('code'),
+    });
+    const store = await getTokenStore();
+    await store.save({ refreshToken: tokens.refreshToken, email: tokens.email });
+    return back('connected');
+  } catch (error) {
+    console.error('gallery drive connect failed', error?.message);
+    return back('failed');
+  }
+}
+
 export async function GET(request) {
+  const galleryState = (await cookies()).get(GALLERY_DRIVE_STATE_COOKIE)?.value;
+  if (galleryState && isGoogleDriveConfigured()) return handleGalleryStorageCallback(request, galleryState);
   if (!isGoogleDriveConfigured()) {
     return popupResponse({ ok: false, message: 'Google Drive export is not configured on this deployment.' });
   }

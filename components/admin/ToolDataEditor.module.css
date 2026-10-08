@@ -1,0 +1,33 @@
+.note { margin: 0 0 12px; color: var(--text-muted); font-size: 13px; max-width: 72ch; line-height: 1.5; }
+.note a { color: var(--gold-bright); text-underline-offset: 3px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px 16px; margin: 0 0 12px; align-items: flex-end; }
+.toolbar > * { flex: 1 1 220px; max-width: 340px; min-width: 0; }
+.status { margin: 0 0 8px; font-size: 13px; color: var(--text); }
+.status[data-tone='ok'] { color: var(--success); }
+.status[data-tone='error'] { color: var(--danger); }
+.status[data-tone='info'] { color: var(--gold-bright); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 14px; }
+.stamp { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+.section { margin: 0 0 18px; min-width: 0; }
+.section h2 { margin: 0 0 8px; font-size: 14px; text-transform: none; color: var(--parchment); letter-spacing: 0; }
+.fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.table { font-variant-numeric: tabular-nums; }
+.table th:not(:first-child), .table td:not(:first-child) { width: 1%; min-width: 120px; }
+.rowName { font-weight: 700; color: var(--text); }
+.cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.input { width: 100%; min-width: 0; min-height: 36px; padding: 6px 10px; font-variant-numeric: tabular-nums; }
+.input[aria-invalid='true'] { border-color: var(--danger); }
+.changed .input { border-color: var(--gold-bright); }
+.err { font-size: 11.5px; color: var(--danger); }
+.empty { color: var(--text-dim); }
+.usd { display: flex; align-items: center; gap: 4px; }
+.usd span { color: var(--text-dim); }
+.refWrap { max-height: 70vh; overflow: auto; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; color: var(--badge-color); background: color-mix(in srgb, var(--badge-color) 16%, transparent); border: 1px solid color-mix(in srgb, var(--badge-color) 40%, transparent); }
+@media (max-width: 640px) {
+  .toolbar > * { max-width: none; flex-basis: 100%; }
+  .input { min-height: 44px; }
+  .stamp { margin-left: 0; flex-basis: 100%; }
+  .actions > button { flex: 1 1 100%; min-height: 44px; }
+  .table th:not(:first-child), .table td:not(:first-child) { width: auto; min-width: 0; }
+}

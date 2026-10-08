@@ -5,6 +5,7 @@ import { isAdminRequest } from '../../../../lib/adminAuth';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
 import { validateEventSchedule } from '../../../../lib/eventRecurrence.mjs';
+import { validateEventExtras } from '../../../../lib/eventFields.mjs';
 
 const KINDS = ['kvk', 'championship', 'swordland', 'bear_hunt', 'custom'];
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
@@ -52,6 +53,9 @@ export async function PUT(request, { params: paramsPromise }) {
     if (!SLUG_RE.test(slug)) {
       return NextResponse.json({ error: 'Slug must be lowercase letters, numbers, and hyphens only.' }, { status: 400 });
     }
+    if (slug !== existing.slug && await coll.findOne({ slug })) {
+      return NextResponse.json({ error: 'An event with that slug already exists.' }, { status: 409 });
+    }
     update.slug = slug;
   }
   if (body.title !== undefined) {
@@ -70,6 +74,9 @@ export async function PUT(request, { params: paramsPromise }) {
   const { schedule, error: scheduleError } = validateEventSchedule({ ...existing, ...body });
   if (scheduleError) return NextResponse.json({ error: scheduleError }, { status: 400 });
   Object.assign(update, schedule);
+  const { fields: extras, error: extrasError } = validateEventExtras(body);
+  if (extrasError) return NextResponse.json({ error: extrasError }, { status: 400 });
+  Object.assign(update, extras);
   if (body.published !== undefined) update.published = Boolean(body.published);
   update.updated_at = new Date().toISOString();
 

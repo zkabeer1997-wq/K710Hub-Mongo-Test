@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from './lib/adminAuth';
 import { readMemberSession } from './lib/memberAuth';
 import { rejectCrossOriginMutation } from './lib/sameOrigin.js';
+import { resolveAlias } from './lib/routeAliases.mjs';
+import { loadProxyAliasMap } from './lib/routeAliasesProxy.mjs';
 
 // An explicit allowlist, not a denylist: the matcher below covers every
 // route in either protected set, and any route added to Waves 2-4 that
@@ -71,7 +73,7 @@ function buildCsp(nonce) {
   ].join('; ');
 }
 
-function withCsp(request, csp, nonce, redirectTo) {
+function withCsp(request, csp, nonce, redirectTo, rewriteTo) {
   if (redirectTo) {
     const res = NextResponse.redirect(redirectTo);
     res.headers.set('Content-Security-Policy', csp);
@@ -80,13 +82,33 @@ function withCsp(request, csp, nonce, redirectTo) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', csp);
-  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  let res;
+  if (rewriteTo) {
+    const url = request.nextUrl.clone();
+    url.pathname = rewriteTo;
+    res = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+  } else {
+    res = NextResponse.next({ request: { headers: requestHeaders } });
+  }
   res.headers.set('Content-Security-Policy', csp);
   return res;
 }
 
+// Page addresses (SuperAdmin renames): the old canonical address redirects to
+// the new one (308, never cached so a later reset cannot strand browsers);
+// the new address is rewritten to the canonical path so gating below and the
+// app code only ever see canonical paths.
+function aliasRedirect(request, csp, target) {
+  const url = request.nextUrl.clone();
+  url.pathname = target;
+  const res = NextResponse.redirect(url, 308);
+  res.headers.set('Content-Security-Policy', csp);
+  res.headers.set('Cache-Control', 'no-store');
+  return res;
+}
+
 export async function proxy(request) {
-  const { pathname } = request.nextUrl;
+  let { pathname } = request.nextUrl;
 
   if (pathname === '/api' || pathname.startsWith('/api/')) {
     return rejectCrossOriginMutation(request, pathname) || NextResponse.next();
@@ -94,6 +116,16 @@ export async function proxy(request) {
 
   const nonce = btoa(crypto.randomUUID());
   const csp = buildCsp(nonce);
+
+  let rewriteTo = null;
+  if (!matchesPrefix(pathname, ADMIN_PREFIXES) && pathname !== '/admin' && !pathname.startsWith('/admin/')) {
+    const decision = resolveAlias(pathname, await loadProxyAliasMap(request.nextUrl.origin));
+    if (decision.action === 'redirect') return aliasRedirect(request, csp, decision.pathname);
+    if (decision.action === 'rewrite') {
+      rewriteTo = decision.pathname;
+      pathname = decision.pathname;
+    }
+  }
 
   if (matchesPrefix(pathname, ADMIN_PREFIXES)) {
     if (!(await isAdminRequest(request))) {
@@ -111,10 +143,10 @@ export async function proxy(request) {
     const session = await readMemberSession(request);
     if (!session) {
       const loginUrl = new URL('/dashboard', request.url);
-      loginUrl.searchParams.set('next', pathname + request.nextUrl.search);
+      loginUrl.searchParams.set('next', request.nextUrl.pathname + request.nextUrl.search);
       return withCsp(request, csp, nonce, loginUrl);
     }
   }
 
-  return withCsp(request, csp, nonce);
+  return withCsp(request, csp, nonce, undefined, rewriteTo);
 }

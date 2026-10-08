@@ -154,3 +154,17 @@ test('resolveAppointmentCycle: legacy "current" gate maps to the live event cycl
   assert.equal(r.options[0].id, 'current');
   assert.equal(r.options[0].is_current, true);
 });
+
+test('validateApplicationBatch is all-or-nothing and lists titles in schedule order', async () => {
+  const { validateApplicationBatch, listTypeTitles } = await import('../lib/kvkAppointments.mjs');
+  const app = (day, buff) => ({ day, buff, tg: '1,000', ttg: '', speedup_days: '2.5', preferred_hours: ['01:00', '02:00', '03:00'] });
+  const ok = validateApplicationBatch({ in_game_name: ' Ann ', applications: [app(4, 'training'), app(1, 'construction')], withdraw: [{ day: 2, buff: 'research' }] });
+  assert.equal(ok.error, undefined);
+  assert.equal(ok.applications[0].in_game_name, 'Ann');
+  assert.equal(ok.applications[0].tg, 1000);
+  assert.deepEqual(ok.withdraw, [{ day: 2, buff: 'research' }]);
+  assert.ok(validateApplicationBatch({}).error);
+  assert.ok(validateApplicationBatch({ applications: [app(1, 'construction'), { ...app(2, 'research'), tg: 'abc' }] }).error);
+  assert.ok(validateApplicationBatch({ applications: [app(1, 'construction')], withdraw: [{ day: 1, buff: 'construction' }] }).error);
+  assert.equal(listTypeTitles([{ day: 4, buff: 'training' }, { day: 1, buff: 'construction' }]), 'Day 1 Construction, Day 4 Troop Training');
+});

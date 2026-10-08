@@ -1,0 +1,39 @@
+.evf { display: flex; flex-direction: column; gap: 14px; font-size: 14px; }
+:root[data-easy='true'] .evf { font-size: 16px; }
+.evf-field { display: flex; flex-direction: column; gap: 4px; font-weight: 600; min-width: 0; flex: 1 1 0; }
+.evf-input { min-height: 44px; padding: 8px 10px; box-sizing: border-box; width: 100%; font: inherit; font-weight: 400; color: var(--color-ink, #f3e9d2); background: var(--field-bg, rgba(10, 13, 26, 0.6)); border: 1px solid var(--color-border-strong, rgba(201, 164, 78, 0.42)); border-radius: 6px; }
+textarea.evf-input { min-height: 80px; resize: vertical; }
+.evf-input:focus-visible, .evf-days button:focus-visible, .evf-combo-list button:focus-visible { outline: 2px solid var(--gold-bright, #f0c669); outline-offset: 2px; }
+.evf-group { border: 1px solid var(--color-border, rgba(201, 164, 78, 0.18)); border-radius: 8px; padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.evf-group legend { padding: 0 6px; font-weight: 700; }
+.evf-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.evf-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; }
+.evf-check input, .evf-scope input { width: 22px; height: 22px; accent-color: var(--gold, #d9a94e); }
+.evf-scope { display: flex; flex-direction: column; gap: 4px; }
+.evf-scope label { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.evf-days { display: flex; flex-wrap: wrap; gap: 6px; }
+.evf-days button { min-width: 48px; min-height: 44px; padding: 0 10px; border: 1px solid var(--color-border-strong, rgba(201, 164, 78, 0.42)); border-radius: 6px; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.evf-days button[aria-pressed='true'] { background: var(--gold, #d9a94e); color: #14100a; }
+.evf-days .evf-hint { flex-basis: 100%; }
+.evf-hint, .evf-zone { margin: 0; color: var(--color-ink-muted, #a9afc0); font-size: 14px; font-weight: 400; line-height: 1.5; }
+.evf-zone b { color: var(--color-ink, #f3e9d2); }
+.evf-note { margin: 0; padding: 10px 12px; border-left: 3px solid var(--gold, #d9a94e); background: rgba(217, 169, 78, 0.1); line-height: 1.5; }
+.evf-error { margin: 0; color: var(--danger, #ff6b6b); font-weight: 600; }
+.evf-adv summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.evf-adv { display: flex; flex-direction: column; gap: 10px; }
+.evf-combo { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.evf-combo-clear { align-self: flex-start; min-height: 44px; background: transparent; border: 0; color: var(--color-link, #f3d99a); cursor: pointer; font: inherit; text-decoration: underline; }
+.evf-combo-list { list-style: none; margin: 0; padding: 4px; max-height: 220px; overflow-y: auto; border: 1px solid var(--color-border-strong, rgba(201, 164, 78, 0.42)); border-radius: 6px; background: var(--ink-soft, #1a2140); }
+.evf-combo-list button { display: flex; flex-direction: column; align-items: flex-start; width: 100%; min-height: 44px; padding: 6px 10px; background: transparent; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 4px; }
+.evf-combo-list button:hover { background: rgba(201, 164, 78, 0.14); }
+.evf-combo-list small, .evf-combo-empty { color: var(--color-ink-muted, #a9afc0); font-size: 14px; padding: 6px 10px; }
+.evf-actions { padding-right: 56px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; }
+.evf-spacer { flex: 1 1 auto; }
+.evf-del-q { font-weight: 700; margin-right: auto; }
+.evf-danger { color: var(--danger, #ff6b6b) !important; border: 1px solid var(--danger, #ff6b6b) !important; }
+.evf-outline { border: 1px solid var(--color-border-strong, rgba(201, 164, 78, 0.42)) !important; }
+.evp { display: flex; flex-direction: column; gap: 16px; }
+.evp > .admin-page-lead, .evp-list > .admin-page-lead { margin: 0; }
+.evp-list summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.evf label.evf-check, .evf .evf-scope label { flex-direction: row; justify-content: flex-start; align-items: center; text-align: left; text-transform: none; letter-spacing: normal; font-size: inherit; }
+.evf .evf-check input, .evf .evf-scope input { flex: 0 0 22px; margin: 0; }

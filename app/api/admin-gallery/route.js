@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { randomUUID } from 'node:crypto';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { bytesMatchImageType } from '../../../lib/interestUploadLimits.mjs';
-
-// Images are stored as base64 data URLs directly in the gallery_images
-// document (no object storage on this Mongo test stack - see the POST
-// handler below). Base64 inflates size by ~33%, and MongoDB's hard cap is
-// 16 MB per document, so this cap has to leave real headroom: 10 MB of
-// binary would already be ~13.3 MB of base64 before the rest of the
-// document's fields, uncomfortably close to failing outright. 4 MB keeps
-// every upload comfortably under the limit.
-const MAX_FILE_SIZE = 4 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+import { getDriveStorage } from '../../../lib/driveStorage.server';
+import { listGalleryRows } from '../../../lib/galleryRows.mjs';
+import { CONNECT_DRIVE_MESSAGE, storeGalleryImageInDrive, validateGalleryUpload } from '../../../lib/galleryUpload.mjs';
 
 async function requireAdmin(request) {
   if (!(await isAdminRequest(request))) {
@@ -29,39 +20,9 @@ export async function GET(request) {
 
   try {
     const coll = await getCollection(COLLECTIONS.GALLERY_IMAGES);
-    // Uploaded images are base64 data URLs; never ship those in the list.
-    // The aggregation blanks them server-side and we point at the on-demand
-    // image endpoint instead. Legacy https URLs pass through.
-    const rows = await coll
-      .aggregate([
-        { $sort: { position: 1, created_at: -1 } },
-        {
-          $project: {
-            _id: 0,
-            id: 1,
-            storage_path: 1,
-            title: 1,
-            caption: 1,
-            alt_text: 1,
-            position: 1,
-            is_published: 1,
-            created_at: 1,
-            updated_at: 1,
-            image_url: {
-              $cond: [{ $eq: [{ $substrCP: [{ $ifNull: ['$image_url', ''] }, 0, 5] }, 'data:'] }, '', '$image_url'],
-            },
-          },
-        },
-      ])
-      .toArray();
-    const data = rows.map((row) => ({
-      ...row,
-      image_url: row.image_url || `/api/admin-gallery/${row.id}/image`,
-    }));
-    return NextResponse.json(
-      { images: data || [] },
-      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
-    );
+    // Metadata + same-origin proxy URLs only; base64 never ships in the list.
+    const images = await listGalleryRows(coll);
+    return NextResponse.json({ images }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (error) {
     console.error('admin gallery GET failed', error);
     return NextResponse.json({ error: 'Unable to load gallery images.' }, { status: 500 });
@@ -89,64 +50,44 @@ export async function POST(request) {
   if (!file || typeof file.arrayBuffer !== 'function') {
     return NextResponse.json({ error: 'Choose an image to upload.' }, { status: 400 });
   }
-  if (!ALLOWED_TYPES.has(file.type)) {
-    return NextResponse.json({ error: 'Use a JPG, PNG, WebP, or GIF image.' }, { status: 415 });
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ error: 'Images must be 4 MB or smaller.' }, { status: 413 });
-  }
-  if (!altText || altText.length > 240) {
-    return NextResponse.json(
-      { error: 'Image description is required and must be 240 characters or fewer.' },
-      { status: 400 }
-    );
-  }
-  if (title.length > 120 || caption.length > 500) {
-    return NextResponse.json({ error: 'Title or caption is too long.' }, { status: 400 });
-  }
-  if (!Number.isInteger(position) || position < 0 || position > 100000) {
-    return NextResponse.json(
-      { error: 'Position must be a whole number between 0 and 100000.' },
-      { status: 400 }
-    );
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const checked = validateGalleryUpload({ file, buffer, title, caption, altText, position });
+  if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: checked.status });
+
+  // Images live in Google Drive, never in MongoDB. No silent DB fallback.
+  let drive;
+  try {
+    drive = await getDriveStorage();
+    const status = await drive.getStatus();
+    if (!status.connected) {
+      return NextResponse.json({ error: CONNECT_DRIVE_MESSAGE, needsConnect: true }, { status: 409 });
+    }
+  } catch (error) {
+    console.error('gallery drive status failed', error);
+    return NextResponse.json({ error: 'Google Drive is unavailable right now.' }, { status: 502 });
   }
 
-  // Mongo test stack: store as data URL (no Supabase Storage).
-  // Existing production images already have public image_url values.
-  const buffer = Buffer.from(await file.arrayBuffer());
-  if (!bytesMatchImageType(buffer, file.type)) {
-    return NextResponse.json(
-      { error: 'This file is not a valid image of the selected type.' },
-      { status: 415 }
-    );
+  let doc;
+  try {
+    doc = await storeGalleryImageInDrive({ drive, buffer, mimeType: file.type, title, caption, altText, position, isPublished });
+  } catch (error) {
+    console.error('gallery drive upload failed', error);
+    if (error?.code === 'reauth' || error?.code === 'not_connected') {
+      return NextResponse.json({ error: 'Google Drive needs to be reconnected.', needsConnect: true }, { status: 409 });
+    }
+    return NextResponse.json({ error: 'The image could not be uploaded to Google Drive.' }, { status: 502 });
   }
-  const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`;
-  const storagePath = `mongo/${new Date().toISOString().slice(0, 10)}/${randomUUID()}`;
 
   try {
     const coll = await getCollection(COLLECTIONS.GALLERY_IMAGES);
-    const doc = {
-      id: randomUUID(),
-      storage_path: storagePath,
-      image_url: dataUrl,
-      title,
-      caption,
-      alt_text: altText,
-      position,
-      is_published: isPublished,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-    await coll.insertOne(doc);
-    const { _id, ...image } = doc;
+    await coll.insertOne({ ...doc });
+    const { _id, drive_file_id, drive_md5, ...image } = doc;
     revalidatePath('/');
     revalidatePath('/gallery');
-    return NextResponse.json({ image }, { status: 201 });
+    return NextResponse.json({ image: { ...image, image_url: `/api/gallery/image/${doc.id}` } }, { status: 201 });
   } catch (error) {
     console.error('gallery record insert failed', error);
-    return NextResponse.json(
-      { error: 'The image could not be added to the gallery.' },
-      { status: 500 }
-    );
+    try { await drive.trashFile(doc.drive_file_id); } catch { /* orphan stays in the Drive folder */ }
+    return NextResponse.json({ error: 'The image could not be added to the gallery.' }, { status: 500 });
   }
 }

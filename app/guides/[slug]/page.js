@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import GuideArticle from './GuideArticle';
+import GuideLayoutPage from '../../../components/guides/GuideLayoutPage';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
@@ -27,6 +28,7 @@ async function loadGuideBySlug(slug) {
         category: 1,
         description: 1,
         body: 1,
+        layout: 1,
         f2p_content: 1,
         spender_content: 1,
         position: 1,
@@ -60,8 +62,9 @@ export async function generateMetadata({ params }) {
   }
 }
 
-export default async function GuidePage({ params }) {
+export default async function GuidePage({ params, searchParams }) {
   const { slug } = await params;
+  const memberId = String((await searchParams)?.member_id || '').slice(0, 40);
   const request = { cookies: await cookies() };
   const [admin, session] = await Promise.all([isAdminRequest(request), readMemberSession(request)]);
   let guide = null;
@@ -135,6 +138,9 @@ export default async function GuidePage({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
         />
       )}
+      {guide.layout ? (
+        <GuideLayoutPage guide={guide} prev={prev} next={next} isAdmin={admin} memberId={memberId} />
+      ) : (
       <Suspense fallback={null}>
         <GuideArticle
           slug={slug}
@@ -145,6 +151,7 @@ export default async function GuidePage({ params }) {
           next={next}
         />
       </Suspense>
+      )}
     </>
   );
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ADMIN_NAV, isNavActive, navBadge } from './adminNav';
+import { ADMIN_NAV, isNavActive, navBadge, visibleNav } from './adminNav';
 import { useAdminEmbedded } from './adminEmbed';
 import StackTableLabels from '../ui/StackTableLabels';
 
@@ -16,10 +16,10 @@ function activeGroupId(pathname) {
   return group ? group.id : null;
 }
 
-function NavGroups({ pathname, taskCounts, openGroups, onToggle, collapsed = false, onNavigate, labelsOnly = false }) {
+function NavGroups({ nav = ADMIN_NAV, pathname, taskCounts, openGroups, onToggle, collapsed = false, onNavigate, labelsOnly = false }) {
   return (
     <nav className="admin-sidebar-nav" aria-label="Admin sections">
-      {ADMIN_NAV.map((group) => {
+      {nav.map((group) => {
         const hasActive = group.items.some((item) => isNavActive(pathname, item));
         const open = collapsed ? true : Boolean(openGroups[group.id]);
         const groupBadge = group.items.reduce((sum, item) => sum + navBadge(item, taskCounts), 0);
@@ -97,6 +97,8 @@ function FullShell({ title, subtitle, actions, meta, counters = [], onLogout, ch
     return id ? { [id]: true } : {};
   });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const nav = visibleNav(isSuperadmin);
   const menuButtonRef = useRef(null);
   const drawerRef = useRef(null);
 
@@ -122,6 +124,15 @@ function FullShell({ title, subtitle, actions, meta, counters = [], onLogout, ch
       window.removeEventListener('admin-tasks-changed', refresh);
     };
   }, [pathname]);
+
+  useEffect(() => {
+    let live = true;
+    fetch('/api/admin-whoami', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (live && d?.isSuperadmin) setIsSuperadmin(true); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, []);
 
   // Restore remembered state once; the group holding this page is always opened.
   useEffect(() => {
@@ -214,8 +225,8 @@ function FullShell({ title, subtitle, actions, meta, counters = [], onLogout, ch
     window.location.href = '/admin/login';
   }
 
-  const currentItem = ADMIN_NAV.flatMap((g) => g.items).find((item) => isNavActive(pathname, item));
-  const menuBadge = ADMIN_NAV.flatMap((g) => g.items).reduce((sum, item) => sum + navBadge(item, taskCounts), 0);
+  const currentItem = nav.flatMap((g) => g.items).find((item) => isNavActive(pathname, item));
+  const menuBadge = nav.flatMap((g) => g.items).reduce((sum, item) => sum + navBadge(item, taskCounts), 0);
 
   const bottom = (
     <div className="admin-sidebar-bottom">
@@ -249,6 +260,7 @@ function FullShell({ title, subtitle, actions, meta, counters = [], onLogout, ch
           </button>
         </div>
         <NavGroups
+          nav={nav}
           pathname={pathname}
           taskCounts={taskCounts}
           openGroups={openGroups}
@@ -291,9 +303,10 @@ function FullShell({ title, subtitle, actions, meta, counters = [], onLogout, ch
               </button>
             </div>
             <NavGroups
+              nav={nav}
               pathname={pathname}
               taskCounts={taskCounts}
-              openGroups={Object.fromEntries(ADMIN_NAV.map((g) => [g.id, true]))}
+              openGroups={Object.fromEntries(nav.map((g) => [g.id, true]))}
               onToggle={() => {}}
               labelsOnly
               onNavigate={() => setMenuOpen(false)}

@@ -1,0 +1,1637 @@
+{
+ "config": {
+  "charm-pack-optimizer": {
+   "costs": [
+    null,
+    [
+     5,
+     5
+    ],
+    [
+     40,
+     15
+    ],
+    [
+     60,
+     40
+    ],
+    [
+     80,
+     100
+    ],
+    [
+     100,
+     200
+    ],
+    [
+     120,
+     300
+    ],
+    [
+     140,
+     400
+    ],
+    [
+     200,
+     400
+    ],
+    [
+     300,
+     400
+    ],
+    [
+     420,
+     420
+    ],
+    [
+     560,
+     420
+    ],
+    [
+     580,
+     600
+    ],
+    [
+     610,
+     780
+    ],
+    [
+     645,
+     960
+    ],
+    [
+     685,
+     1140
+    ],
+    [
+     730,
+     1320
+    ],
+    [
+     780,
+     1500
+    ],
+    [
+     835,
+     1680
+    ],
+    [
+     895,
+     1860
+    ],
+    [
+     960,
+     2040
+    ],
+    [
+     1030,
+     2220
+    ],
+    [
+     1105,
+     2400
+    ]
+   ],
+   "packs": [
+    {
+     "price": 4.99,
+     "g": 20,
+     "d": 22,
+     "choices": 3,
+     "max": 1
+    },
+    {
+     "price": 9.99,
+     "g": 40,
+     "d": 44,
+     "choices": 3,
+     "max": 1
+    },
+    {
+     "price": 19.99,
+     "g": 80,
+     "d": 88,
+     "choices": 3,
+     "max": 1
+    },
+    {
+     "price": 49.99,
+     "g": 200,
+     "d": 220,
+     "choices": 3,
+     "max": 1
+    },
+    {
+     "price": 99.99,
+     "g": 400,
+     "d": 440,
+     "choices": 3,
+     "max": 1
+    }
+   ]
+  },
+  "wavebound-charms": {
+   "costs": [
+    null,
+    [
+     5,
+     5
+    ],
+    [
+     40,
+     15
+    ],
+    [
+     60,
+     40
+    ],
+    [
+     80,
+     100
+    ],
+    [
+     100,
+     200
+    ],
+    [
+     120,
+     300
+    ],
+    [
+     140,
+     400
+    ],
+    [
+     200,
+     400
+    ],
+    [
+     300,
+     400
+    ],
+    [
+     420,
+     420
+    ],
+    [
+     560,
+     420
+    ],
+    [
+     580,
+     600
+    ],
+    [
+     610,
+     780
+    ],
+    [
+     645,
+     960
+    ],
+    [
+     685,
+     1140
+    ],
+    [
+     730,
+     1320
+    ],
+    [
+     780,
+     1500
+    ],
+    [
+     835,
+     1680
+    ],
+    [
+     895,
+     1860
+    ],
+    [
+     960,
+     2040
+    ],
+    [
+     1030,
+     2220
+    ],
+    [
+     1105,
+     2400
+    ]
+   ],
+   "rewards": {
+    "cost.1.g": 5,
+    "cost.1.d": 5,
+    "cost.2.g": 40,
+    "cost.2.d": 15,
+    "cost.3.g": 60,
+    "cost.3.d": 40,
+    "cost.4.g": 80,
+    "cost.4.d": 100,
+    "cost.5.g": 100,
+    "cost.5.d": 200,
+    "cost.6.g": 120,
+    "cost.6.d": 300,
+    "cost.7.g": 140,
+    "cost.7.d": 400,
+    "cost.8.g": 200,
+    "cost.8.d": 400,
+    "cost.9.g": 300,
+    "cost.9.d": 400,
+    "cost.10.g": 420,
+    "cost.10.d": 420,
+    "cost.11.g": 560,
+    "cost.11.d": 420,
+    "cost.12.g": 580,
+    "cost.12.d": 600,
+    "cost.13.g": 610,
+    "cost.13.d": 780,
+    "cost.14.g": 645,
+    "cost.14.d": 960,
+    "cost.15.g": 685,
+    "cost.15.d": 1140,
+    "cost.16.g": 730,
+    "cost.16.d": 1320,
+    "cost.17.g": 780,
+    "cost.17.d": 1500,
+    "cost.18.g": 835,
+    "cost.18.d": 1680,
+    "cost.19.g": 895,
+    "cost.19.d": 1860,
+    "cost.20.g": 960,
+    "cost.20.d": 2040,
+    "cost.21.g": 1030,
+    "cost.21.d": 2220,
+    "cost.22.g": 1105,
+    "cost.22.d": 2400,
+    "common.d": 5,
+    "premium.g": 5,
+    "premium.d": 10,
+    "exquisite.g": 15,
+    "exquisite.d": 15,
+    "exquisite.shards": 2,
+    "majestic.g": 50,
+    "majestic.d": 50,
+    "majestic.shards": 6
+   }
+  },
+  "governor-gear-sailing-tool": {
+   "costs": [
+    null,
+    [
+     56,
+     56,
+     0
+    ],
+    [
+     93,
+     93,
+     0
+    ],
+    [
+     132,
+     132,
+     0
+    ],
+    [
+     173,
+     173,
+     0
+    ],
+    [
+     215,
+     215,
+     0
+    ],
+    [
+     259,
+     259,
+     0
+    ],
+    [
+     304,
+     304,
+     0
+    ],
+    [
+     351,
+     351,
+     0
+    ],
+    [
+     400,
+     400,
+     0
+    ],
+    [
+     450,
+     450,
+     0
+    ],
+    [
+     502,
+     502,
+     0
+    ],
+    [
+     555,
+     555,
+     0
+    ],
+    [
+     610,
+     610,
+     0
+    ],
+    [
+     667,
+     667,
+     0
+    ],
+    [
+     725,
+     725,
+     0
+    ],
+    [
+     785,
+     785,
+     0
+    ],
+    [
+     846,
+     846,
+     0
+    ],
+    [
+     909,
+     909,
+     0
+    ],
+    [
+     974,
+     974,
+     0
+    ],
+    [
+     1040,
+     1040,
+     0
+    ],
+    [
+     1108,
+     1108,
+     0
+    ],
+    [
+     1177,
+     1177,
+     0
+    ],
+    [
+     1248,
+     1248,
+     0
+    ],
+    [
+     1321,
+     1321,
+     0
+    ],
+    [
+     1395,
+     1395,
+     0
+    ],
+    [
+     1471,
+     1471,
+     0
+    ],
+    [
+     1548,
+     1548,
+     0
+    ],
+    [
+     1627,
+     1627,
+     0
+    ],
+    [
+     1708,
+     1708,
+     0
+    ],
+    [
+     1790,
+     1790,
+     0
+    ],
+    [
+     1874,
+     1874,
+     0
+    ],
+    [
+     1959,
+     1959,
+     0
+    ],
+    [
+     2046,
+     2046,
+     0
+    ],
+    [
+     2135,
+     2135,
+     0
+    ],
+    [
+     2225,
+     2225,
+     0
+    ],
+    [
+     2317,
+     2317,
+     0
+    ],
+    [
+     2410,
+     2410,
+     0
+    ],
+    [
+     2505,
+     2505,
+     0
+    ],
+    [
+     2602,
+     2602,
+     0
+    ],
+    [
+     2700,
+     2700,
+     0
+    ],
+    [
+     2800,
+     2800,
+     0
+    ],
+    [
+     2901,
+     2901,
+     0
+    ],
+    [
+     3004,
+     3004,
+     0
+    ],
+    [
+     3109,
+     3109,
+     0
+    ],
+    [
+     3215,
+     3215,
+     0
+    ],
+    [
+     3323,
+     3323,
+     0
+    ],
+    [
+     3432,
+     3432,
+     0
+    ],
+    [
+     3543,
+     3543,
+     0
+    ],
+    [
+     3656,
+     3656,
+     0
+    ],
+    [
+     3770,
+     3770,
+     0
+    ],
+    [
+     3886,
+     3886,
+     0
+    ],
+    [
+     4003,
+     4003,
+     0
+    ],
+    [
+     4122,
+     4122,
+     0
+    ],
+    [
+     4243,
+     4243,
+     0
+    ],
+    [
+     4365,
+     4365,
+     0
+    ],
+    [
+     4489,
+     4489,
+     0
+    ],
+    [
+     4614,
+     4614,
+     0
+    ]
+   ],
+   "rewards": {
+    "cost.1.g": 56,
+    "cost.1.d": 56,
+    "cost.2.g": 93,
+    "cost.2.d": 93,
+    "cost.3.g": 132,
+    "cost.3.d": 132,
+    "cost.4.g": 173,
+    "cost.4.d": 173,
+    "cost.4.shards": 0,
+    "cost.5.g": 215,
+    "cost.5.d": 215,
+    "cost.5.shards": 0,
+    "cost.6.g": 259,
+    "cost.6.d": 259,
+    "cost.6.shards": 0,
+    "cost.7.g": 304,
+    "cost.7.d": 304,
+    "cost.7.shards": 0,
+    "cost.8.g": 351,
+    "cost.8.d": 351,
+    "cost.8.shards": 0,
+    "cost.9.g": 400,
+    "cost.9.d": 400,
+    "cost.9.shards": 0,
+    "cost.10.g": 450,
+    "cost.10.d": 450,
+    "cost.10.shards": 0,
+    "cost.11.g": 502,
+    "cost.11.d": 502,
+    "cost.11.shards": 0,
+    "cost.12.g": 555,
+    "cost.12.d": 555,
+    "cost.12.shards": 0,
+    "cost.13.g": 610,
+    "cost.13.d": 610,
+    "cost.13.shards": 0,
+    "cost.14.g": 667,
+    "cost.14.d": 667,
+    "cost.14.shards": 0,
+    "cost.15.g": 725,
+    "cost.15.d": 725,
+    "cost.15.shards": 0,
+    "cost.16.g": 785,
+    "cost.16.d": 785,
+    "cost.16.shards": 0,
+    "cost.17.g": 846,
+    "cost.17.d": 846,
+    "cost.17.shards": 0,
+    "cost.18.g": 909,
+    "cost.18.d": 909,
+    "cost.18.shards": 0,
+    "cost.19.g": 974,
+    "cost.19.d": 974,
+    "cost.19.shards": 0,
+    "cost.20.g": 1040,
+    "cost.20.d": 1040,
+    "cost.20.shards": 0,
+    "cost.21.g": 1108,
+    "cost.21.d": 1108,
+    "cost.21.shards": 0,
+    "cost.22.g": 1177,
+    "cost.22.d": 1177,
+    "cost.22.shards": 0,
+    "cost.23.g": 1248,
+    "cost.23.d": 1248,
+    "cost.23.shards": 0,
+    "cost.24.g": 1321,
+    "cost.24.d": 1321,
+    "cost.24.shards": 0,
+    "cost.25.g": 1395,
+    "cost.25.d": 1395,
+    "cost.25.shards": 0,
+    "cost.26.g": 1471,
+    "cost.26.d": 1471,
+    "cost.26.shards": 0,
+    "cost.27.g": 1548,
+    "cost.27.d": 1548,
+    "cost.27.shards": 0,
+    "cost.28.g": 1627,
+    "cost.28.d": 1627,
+    "cost.28.shards": 0,
+    "cost.29.g": 1708,
+    "cost.29.d": 1708,
+    "cost.29.shards": 0,
+    "cost.30.g": 1790,
+    "cost.30.d": 1790,
+    "cost.30.shards": 0,
+    "cost.31.g": 1874,
+    "cost.31.d": 1874,
+    "cost.31.shards": 0,
+    "cost.32.g": 1959,
+    "cost.32.d": 1959,
+    "cost.32.shards": 0,
+    "cost.33.g": 2046,
+    "cost.33.d": 2046,
+    "cost.33.shards": 0,
+    "cost.34.g": 2135,
+    "cost.34.d": 2135,
+    "cost.34.shards": 0,
+    "cost.35.g": 2225,
+    "cost.35.d": 2225,
+    "cost.35.shards": 0,
+    "cost.36.g": 2317,
+    "cost.36.d": 2317,
+    "cost.36.shards": 0,
+    "cost.37.g": 2410,
+    "cost.37.d": 2410,
+    "cost.37.shards": 0,
+    "cost.38.g": 2505,
+    "cost.38.d": 2505,
+    "cost.38.shards": 0,
+    "cost.39.g": 2602,
+    "cost.39.d": 2602,
+    "cost.39.shards": 0,
+    "cost.40.g": 2700,
+    "cost.40.d": 2700,
+    "cost.40.shards": 0,
+    "cost.41.g": 2800,
+    "cost.41.d": 2800,
+    "cost.41.shards": 0,
+    "cost.42.g": 2901,
+    "cost.42.d": 2901,
+    "cost.42.shards": 0,
+    "cost.43.g": 3004,
+    "cost.43.d": 3004,
+    "cost.43.shards": 0,
+    "cost.44.g": 3109,
+    "cost.44.d": 3109,
+    "cost.44.shards": 0,
+    "cost.45.g": 3215,
+    "cost.45.d": 3215,
+    "cost.45.shards": 0,
+    "cost.46.g": 3323,
+    "cost.46.d": 3323,
+    "cost.46.shards": 0,
+    "cost.47.g": 3432,
+    "cost.47.d": 3432,
+    "cost.47.shards": 0,
+    "cost.48.g": 3543,
+    "cost.48.d": 3543,
+    "cost.48.shards": 0,
+    "cost.49.g": 3656,
+    "cost.49.d": 3656,
+    "cost.49.shards": 0,
+    "cost.50.g": 3770,
+    "cost.50.d": 3770,
+    "cost.50.shards": 0,
+    "cost.51.g": 3886,
+    "cost.51.d": 3886,
+    "cost.51.shards": 0,
+    "cost.52.g": 4003,
+    "cost.52.d": 4003,
+    "cost.52.shards": 0,
+    "cost.53.g": 4122,
+    "cost.53.d": 4122,
+    "cost.53.shards": 0,
+    "cost.54.g": 4243,
+    "cost.54.d": 4243,
+    "cost.54.shards": 0,
+    "cost.55.g": 4365,
+    "cost.55.d": 4365,
+    "cost.55.shards": 0,
+    "cost.56.g": 4489,
+    "cost.56.d": 4489,
+    "cost.56.shards": 0,
+    "cost.57.g": 4614,
+    "cost.57.d": 4614,
+    "cost.57.shards": 0,
+    "common.g": 1300,
+    "common.d": 20,
+    "premium.g": 5000,
+    "premium.d": 50,
+    "exquisite.g": 4400,
+    "exquisite.d": 44,
+    "exquisite.shards": 22,
+    "majestic.g": 13200,
+    "majestic.d": 132,
+    "majestic.shards": 66
+   }
+  },
+  "pet-pack-optimizer": {
+   "resources": {
+    "food": {
+     "label": "Pet Food",
+     "singleBase": 9000
+    },
+    "manual": {
+     "label": "Growth Manuals",
+     "singleBase": 55,
+     "chestYield": 7
+    },
+    "potion": {
+     "label": "Nutrient Potions",
+     "singleBase": 16,
+     "chestYield": 2
+    },
+    "medal": {
+     "label": "Promotion Medallions",
+     "singleBase": 8,
+     "chestYield": 1
+    }
+   },
+   "customFood": 5000,
+   "customChests": 6
+  },
+  "adventure-stall": {
+   "items": [
+    {
+     "key": "true-gold-limited",
+     "name": "True Gold",
+     "shells": 30,
+     "reward": 58,
+     "unit": "pieces",
+     "max": 2
+    },
+    {
+     "key": "hero-shards",
+     "name": "Hero Shards",
+     "shells": 50,
+     "reward": 12,
+     "unit": "shards",
+     "max": 2
+    },
+    {
+     "key": "forgehammers-limited",
+     "name": "Forgehammers",
+     "shells": 100,
+     "reward": 75,
+     "unit": "hammers",
+     "max": 2
+    },
+    {
+     "key": "mithril",
+     "name": "Mithril",
+     "shells": 40,
+     "reward": 1,
+     "unit": "Mithril",
+     "max": 25
+    },
+    {
+     "key": "mythic-hero-gear",
+     "name": "Mythic Hero Gear Chest",
+     "shells": 120,
+     "reward": 1,
+     "unit": "chest",
+     "max": 9
+    },
+    {
+     "key": "island-pieces",
+     "name": "Island Pieces",
+     "shells": 10,
+     "reward": 1,
+     "unit": "piece",
+     "max": 300
+    },
+    {
+     "key": "hero-gear-chests",
+     "name": "Hero Gear Regular Chest",
+     "shells": 50,
+     "reward": 30,
+     "unit": "chests",
+     "max": 30
+    },
+    {
+     "key": "forgehammers-regular",
+     "name": "Regular Forgehammers",
+     "shells": 50,
+     "reward": 30,
+     "unit": "hammers",
+     "max": 30
+    },
+    {
+     "key": "true-gold-regular",
+     "name": "Regular True Gold",
+     "shells": 10,
+     "reward": 15,
+     "unit": "pieces",
+     "max": 50
+    },
+    {
+     "key": "visions",
+     "name": "Artisan's Visions",
+     "shells": 20,
+     "reward": 28,
+     "unit": "visions",
+     "max": 100
+    },
+    {
+     "key": "threads",
+     "name": "Threads",
+     "shells": 20,
+     "reward": 140,
+     "unit": "threads",
+     "max": 100
+    },
+    {
+     "key": "satin",
+     "name": "Satin",
+     "shells": 20,
+     "reward": 14000,
+     "unit": "Satin",
+     "max": 100
+    },
+    {
+     "key": "charm-designs",
+     "name": "Charm Designs",
+     "shells": 20,
+     "reward": 24,
+     "unit": "designs",
+     "max": 100
+    },
+    {
+     "key": "charm-guides",
+     "name": "Charm Guides",
+     "shells": 20,
+     "reward": 24,
+     "unit": "guides",
+     "max": 100
+    },
+    {
+     "key": "pet-food",
+     "name": "Pet Food",
+     "shells": 20,
+     "reward": 4800,
+     "unit": "food",
+     "max": 50
+    },
+    {
+     "key": "pet-chests",
+     "name": "Pet Chests",
+     "shells": 25,
+     "reward": 7,
+     "unit": "chests",
+     "max": 50
+    },
+    {
+     "key": "pet-refinement",
+     "name": "Advanced Pet Refinement",
+     "shells": 100,
+     "reward": 10,
+     "unit": "refinements",
+     "max": 50
+    }
+   ],
+   "packs": [
+    {
+     "key": "20",
+     "name": "20 Shell Pack",
+     "shells": 20,
+     "cents": 99,
+     "perDay": 1
+    },
+    {
+     "key": "40",
+     "name": "40 Shell Pack",
+     "shells": 40,
+     "cents": 199,
+     "perDay": 1
+    },
+    {
+     "key": "80",
+     "name": "80 Shell Pack",
+     "shells": 80,
+     "cents": 499,
+     "perDay": 1
+    },
+    {
+     "key": "120",
+     "name": "120 Shell Pack",
+     "shells": 120,
+     "cents": 999,
+     "perDay": 1
+    },
+    {
+     "key": "200",
+     "name": "200 Shell Pack",
+     "shells": 200,
+     "cents": 1999,
+     "perDay": 1
+    },
+    {
+     "key": "500",
+     "name": "500 Shell Pack",
+     "shells": 500,
+     "cents": 4999,
+     "perDay": 1
+    },
+    {
+     "key": "1000",
+     "name": "1,000 Shell Pack",
+     "shells": 1000,
+     "cents": 9999,
+     "perDay": 3
+    }
+   ]
+  },
+  "flamedragon-shop": {
+   "items": [
+    {
+     "key": "triton",
+     "name": "Triton Shard",
+     "essence": 20,
+     "reward": 1,
+     "unit": "shard",
+     "max": 1075,
+     "tier": "U"
+    },
+    {
+     "key": "sophia",
+     "name": "Sophia Shard",
+     "essence": 20,
+     "reward": 1,
+     "unit": "shard",
+     "max": 1075,
+     "tier": "U"
+    },
+    {
+     "key": "yang",
+     "name": "Yang Shard",
+     "essence": 20,
+     "reward": 1,
+     "unit": "shard",
+     "max": 1075,
+     "tier": "U"
+    },
+    {
+     "key": "mythic-gear",
+     "name": "Mythic Gold Hero Gear",
+     "essence": 1000,
+     "reward": 1,
+     "unit": "piece",
+     "max": 2,
+     "tier": "U"
+    },
+    {
+     "key": "hero-chests",
+     "name": "Hero Gear Random Chests",
+     "essence": 200,
+     "reward": 24,
+     "unit": "chests",
+     "max": 100,
+     "tier": "A",
+     "comparison": 125
+    },
+    {
+     "key": "forgehammers",
+     "name": "Forgehammers",
+     "essence": 200,
+     "reward": 24,
+     "unit": "hammers",
+     "max": 40,
+     "tier": "U"
+    },
+    {
+     "key": "mithril",
+     "name": "Mithril",
+     "essence": 160,
+     "reward": 1,
+     "unit": "Mithril",
+     "max": 25,
+     "tier": "IB",
+     "comparison": 80
+    },
+    {
+     "key": "visions",
+     "name": "Artisan's Vision",
+     "essence": 40,
+     "reward": 18,
+     "unit": "visions",
+     "max": 100,
+     "tier": "C",
+     "comparison": 106
+    },
+    {
+     "key": "threads",
+     "name": "Gilded Thread",
+     "essence": 40,
+     "reward": 90,
+     "unit": "threads",
+     "max": 100,
+     "tier": "IB",
+     "comparison": 96
+    },
+    {
+     "key": "satin",
+     "name": "Satin",
+     "essence": 40,
+     "reward": 9000,
+     "unit": "Satin",
+     "max": 100,
+     "tier": "IB",
+     "comparison": 96
+    },
+    {
+     "key": "designs",
+     "name": "Charm Designs",
+     "essence": 80,
+     "reward": 28,
+     "unit": "designs",
+     "max": 100,
+     "tier": "C",
+     "comparison": 114
+    },
+    {
+     "key": "guides",
+     "name": "Charm Guides",
+     "essence": 80,
+     "reward": 28,
+     "unit": "guides",
+     "max": 100,
+     "tier": "C",
+     "comparison": 114
+    },
+    {
+     "key": "pet-food",
+     "name": "Pet Food",
+     "essence": 40,
+     "reward": 3000,
+     "unit": "food",
+     "max": 50,
+     "tier": "IB",
+     "comparison": 100
+    },
+    {
+     "key": "pet-chests",
+     "name": "Pet Advancement Chests",
+     "essence": 80,
+     "reward": 4,
+     "unit": "chests",
+     "max": 50,
+     "tier": "A",
+     "comparison": 180
+    },
+    {
+     "key": "pet-refinement",
+     "name": "Advanced Pet Refinement",
+     "essence": 80,
+     "reward": 1,
+     "unit": "refinement",
+     "max": 50,
+     "tier": "A",
+     "comparison": 240
+    },
+    {
+     "key": "truegold",
+     "name": "Truegold",
+     "essence": 40,
+     "reward": 16,
+     "unit": "pieces",
+     "max": 50,
+     "tier": "IB",
+     "comparison": 84
+    }
+   ],
+   "packs": [
+    {
+     "key": "daily-300",
+     "name": "Daily Caravan Pack",
+     "essence": 300,
+     "cents": 499,
+     "defaultMax": 1,
+     "daily": true
+    },
+    {
+     "key": "200",
+     "name": "200 Essence Pack",
+     "essence": 200,
+     "cents": 499,
+     "defaultMax": 20
+    },
+    {
+     "key": "400",
+     "name": "400 Essence Pack",
+     "essence": 400,
+     "cents": 999,
+     "defaultMax": 20
+    },
+    {
+     "key": "800",
+     "name": "800 Essence Pack",
+     "essence": 800,
+     "cents": 1999,
+     "defaultMax": 20
+    },
+    {
+     "key": "2000",
+     "name": "2,000 Essence Pack",
+     "essence": 2000,
+     "cents": 4999,
+     "defaultMax": 20
+    },
+    {
+     "key": "4000",
+     "name": "4,000 Essence Pack",
+     "essence": 4000,
+     "cents": 9999,
+     "defaultMax": 20
+    }
+   ]
+  }
+ },
+ "pet": {
+  "weeks": 4,
+  "cost": 34.940000000000005,
+  "shortfall": {
+   "food": 60000,
+   "manual": 300,
+   "potion": 0,
+   "medal": 0
+  },
+  "custom": {
+   "foodUnits": 12,
+   "chestUnits": 6,
+   "cost": 29.950000000000003,
+   "picks": [
+    {
+     "packs": 4,
+     "foodSlots": 6,
+     "chestSlots": 6
+    },
+    {
+     "packs": 1,
+     "foodSlots": 3,
+     "chestSlots": 0
+    },
+    {
+     "packs": 0,
+     "foodSlots": 0,
+     "chestSlots": 0
+    },
+    {
+     "packs": 0,
+     "foodSlots": 0,
+     "chestSlots": 0
+    },
+    {
+     "packs": 0,
+     "foodSlots": 0,
+     "chestSlots": 0
+    }
+   ]
+  },
+  "customFood": 60000,
+  "boughtChests": 36,
+  "foodPlan": {
+   "cost": 0,
+   "amount": 0,
+   "picks": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "resourcePlan": {
+   "cost": 4.99,
+   "allocations": {
+    "manual": 35,
+    "potion": 0,
+    "medal": 2
+   },
+   "plans": {
+    "manual": {
+     "cost": 4.99,
+     "picks": [
+      1,
+      0,
+      0,
+      0,
+      0
+     ],
+     "amount": 55
+    },
+    "potion": {
+     "cost": 0,
+     "amount": 0,
+     "picks": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "medal": {
+     "cost": 0,
+     "amount": 0,
+     "picks": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "schedule": [
+   {
+    "week": 1,
+    "custom": [
+     {
+      "tier": "Common",
+      "price": 4.99,
+      "foodSlots": 3,
+      "chestSlots": 0
+     },
+     {
+      "tier": "Uncommon",
+      "price": 9.99,
+      "foodSlots": 3,
+      "chestSlots": 0
+     }
+    ],
+    "singles": [
+     {
+      "resource": "manual",
+      "tier": "Common",
+      "price": 4.99,
+      "amount": 55
+     }
+    ]
+   },
+   {
+    "week": 2,
+    "custom": [
+     {
+      "tier": "Common",
+      "price": 4.99,
+      "foodSlots": 3,
+      "chestSlots": 0
+     }
+    ],
+    "singles": []
+   },
+   {
+    "week": 3,
+    "custom": [
+     {
+      "tier": "Common",
+      "price": 4.99,
+      "foodSlots": 0,
+      "chestSlots": 3
+     }
+    ],
+    "singles": []
+   },
+   {
+    "week": 4,
+    "custom": [
+     {
+      "tier": "Common",
+      "price": 4.99,
+      "foodSlots": 0,
+      "chestSlots": 3
+     }
+    ],
+    "singles": []
+   }
+  ]
+ },
+ "charmPack": {
+  "costCents": 24978,
+  "picks": [
+   {
+    "index": 0,
+    "quantity": 8,
+    "guideSlots": 0,
+    "designSlots": 24,
+    "guides": 0,
+    "designs": 528,
+    "costCents": 3992
+   },
+   {
+    "index": 1,
+    "quantity": 7,
+    "guideSlots": 1,
+    "designSlots": 20,
+    "guides": 40,
+    "designs": 880,
+    "costCents": 6993
+   },
+   {
+    "index": 2,
+    "quantity": 7,
+    "guideSlots": 17,
+    "designSlots": 4,
+    "guides": 1360,
+    "designs": 352,
+    "costCents": 13993
+   },
+   {
+    "index": 3,
+    "quantity": 0,
+    "guideSlots": 0,
+    "designSlots": 0,
+    "guides": 0,
+    "designs": 0,
+    "costCents": 0
+   },
+   {
+    "index": 4,
+    "quantity": 0,
+    "guideSlots": 0,
+    "designSlots": 0,
+    "guides": 0,
+    "designs": 0,
+    "costCents": 0
+   }
+  ],
+  "weeks": 8,
+  "cost": 249.78,
+  "shortfall": {
+   "g": 1400,
+   "d": 1750
+  },
+  "purchased": {
+   "g": 1400,
+   "d": 1760
+  },
+  "remaining": {
+   "g": 0,
+   "d": 10
+  },
+  "schedule": [
+   {
+    "week": 1,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     },
+     {
+      "index": 1,
+      "quantity": 1,
+      "guideSlots": 1,
+      "designSlots": 2,
+      "guides": 40,
+      "designs": 88,
+      "costCents": 999
+     },
+     {
+      "index": 2,
+      "quantity": 1,
+      "guideSlots": 3,
+      "designSlots": 0,
+      "guides": 240,
+      "designs": 0,
+      "costCents": 1999
+     }
+    ]
+   },
+   {
+    "week": 2,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     },
+     {
+      "index": 1,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 132,
+      "costCents": 999
+     },
+     {
+      "index": 2,
+      "quantity": 1,
+      "guideSlots": 3,
+      "designSlots": 0,
+      "guides": 240,
+      "designs": 0,
+      "costCents": 1999
+     }
+    ]
+   },
+   {
+    "week": 3,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     },
+     {
+      "index": 1,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 132,
+      "costCents": 999
+     },
+     {
+      "index": 2,
+      "quantity": 1,
+      "guideSlots": 3,
+      "designSlots": 0,
+      "guides": 240,
+      "designs": 0,
+      "costCents": 1999
+     }
+    ]
+   },
+   {
+    "week": 4,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     },
+     {
+      "index": 1,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 132,
+      "costCents": 999
+     },
+     {
+      "index": 2,
+      "quantity": 1,
+      "guideSlots": 3,
+      "designSlots": 0,
+      "guides": 240,
+      "designs": 0,
+      "costCents": 1999
+     }
+    ]
+   },
+   {
+    "week": 5,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     },
+     {
+      "index": 1,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 132,
+      "costCents": 999
+     },
+     {
+      "index": 2,
+      "quantity": 1,
+      "guideSlots": 3,
+      "designSlots": 0,
+      "guides": 240,
+      "designs": 0,
+      "costCents": 1999
+     }
+    ]
+   },
+   {
+    "week": 6,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     },
+     {
+      "index": 1,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 132,
+      "costCents": 999
+     },
+     {
+      "index": 2,
+      "quantity": 1,
+      "guideSlots": 2,
+      "designSlots": 1,
+      "guides": 160,
+      "designs": 88,
+      "costCents": 1999
+     }
+    ]
+   },
+   {
+    "week": 7,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     },
+     {
+      "index": 1,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 132,
+      "costCents": 999
+     },
+     {
+      "index": 2,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 264,
+      "costCents": 1999
+     }
+    ]
+   },
+   {
+    "week": 8,
+    "purchases": [
+     {
+      "index": 0,
+      "quantity": 1,
+      "guideSlots": 0,
+      "designSlots": 3,
+      "guides": 0,
+      "designs": 66,
+      "costCents": 499
+     }
+    ]
+   }
+  ]
+ }
+}

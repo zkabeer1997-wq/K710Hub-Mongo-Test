@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
-import { validateApplication, APPOINTMENT_TYPES, PREFERRED_HOUR_COUNT } from '../../../lib/kvkAppointments.mjs';
+import { validateApplication, validateApplicationBatch, listTypeTitles, APPOINTMENT_TYPES, PREFERRED_HOUR_COUNT } from '../../../lib/kvkAppointments.mjs';
 import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
 import { ObjectId } from 'mongodb';
 import { getCurrentEventCycle } from '../../../lib/eventCycles.server.js';
@@ -81,8 +81,27 @@ export async function GET(request) {
   }
 }
 
-// POST { day, buff, tg, ttg, speedup_days, preferred_hours: [3 UTC hours] }
-// Upserts on (member_id, day, buff, cycle_id): saving again overwrites.
+// Upsert one application on (member_id, day, buff, cycle_id): saving again overwrites.
+async function upsertApplication(coll, memberId, cycleId, value, now) {
+  const filter = { member_id: memberId, day: value.day, buff: value.buff, cycle_id: cycleId };
+  // day/buff/member_id/cycle_id come from the filter on insert; setting them in
+  // $set or $setOnInsert as well makes MongoDB reject the update with a path conflict.
+  const { day: _day, buff: _buff, ...fields } = value;
+  const update = { $set: { ...fields, updated_at: now }, $setOnInsert: { created_at: now } };
+  try {
+    await coll.updateOne(filter, update, { upsert: true });
+  } catch (err) {
+    if (err?.code !== 11000) throw err;
+    await coll.updateOne(filter, update, { upsert: true });
+  }
+}
+
+// POST, two body shapes:
+//  - one form with every buff: { in_game_name, applications: [{ day, buff, tg, ttg, speedup_days,
+//    preferred_hours }], withdraw: [{ day, buff }] }. Validated all-or-nothing, then saved.
+//    A withdrawn buff removes the member's application AND any slot leadership gave them for it,
+//    so the admin screens never show an assignment without an application.
+//  - the older single application: { day, buff, tg, ttg, speedup_days, preferred_hours }.
 export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401, headers: HEADERS });
@@ -92,25 +111,35 @@ export async function POST(request) {
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400, headers: HEADERS });
   }
-  const { value, error } = validateApplication(body);
-  if (error) return NextResponse.json({ error }, { status: 400, headers: HEADERS });
+  const isBatch = Array.isArray(body?.applications) || Array.isArray(body?.withdraw);
+  const checked = isBatch ? validateApplicationBatch(body) : validateApplication(body);
+  if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400, headers: HEADERS });
   try {
     const g = await loadAppointmentGate();
     if (!g.open) return NextResponse.json({ error: g.closedMessage || 'This form is closed.' }, { status: 403, headers: HEADERS });
     const coll = await getCollection(COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS);
-    const filter = { member_id: session.memberId, day: value.day, buff: value.buff, cycle_id: g.cycleId };
     const now = new Date();
-    // day/buff/member_id/cycle_id come from the filter on insert; setting them in
-    // $set or $setOnInsert as well makes MongoDB reject the update with a path conflict.
-    const { day: _day, buff: _buff, ...fields } = value;
-    const update = { $set: { ...fields, updated_at: now }, $setOnInsert: { created_at: now } };
-    try {
-      await coll.updateOne(filter, update, { upsert: true });
-    } catch (err) {
-      if (err?.code !== 11000) throw err;
-      await coll.updateOne(filter, update, { upsert: true });
+    if (!isBatch) {
+      await upsertApplication(coll, session.memberId, g.cycleId, checked.value, now);
+      return NextResponse.json({ ok: true, application: publicApplication({ ...checked.value, updated_at: now }) }, { headers: HEADERS });
     }
-    return NextResponse.json({ ok: true, application: publicApplication({ ...value, updated_at: now }) }, { headers: HEADERS });
+    for (const value of checked.applications) await upsertApplication(coll, session.memberId, g.cycleId, value, now);
+    if (checked.withdraw.length) {
+      const asg = await getCollection(COLLECTIONS.KVK_APPOINTMENT_ASSIGNMENTS);
+      for (const { day, buff } of checked.withdraw) {
+        const filter = { member_id: session.memberId, day, buff, cycle_id: g.cycleId };
+        await coll.deleteOne(filter);
+        await asg.deleteOne(filter);
+      }
+    }
+    const cycle = await getCurrentEventCycle('kvk').catch(() => null);
+    return NextResponse.json({
+      ok: true,
+      cycleLabel: cycle?.label || null,
+      applications: checked.applications.map((v) => publicApplication({ ...v, updated_at: now })),
+      saved: listTypeTitles(checked.applications),
+      withdrawn: listTypeTitles(checked.withdraw),
+    }, { headers: HEADERS });
   } catch (err) {
     console.error('kvk-appointments POST failed', err);
     return NextResponse.json({ error: 'Could not save your application. Please try again.' }, { status: 500, headers: HEADERS });

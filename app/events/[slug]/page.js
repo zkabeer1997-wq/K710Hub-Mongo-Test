@@ -31,7 +31,7 @@ async function loadEvent(slug) {
       projection: {
         slug: 1, title: 1, kind: 1, description: 1, body_md: 1,
         starts_at: 1, ends_at: 1, published: 1,
-        recurrence_frequency: 1, recurrence_interval: 1, recurrence_until: 1,
+        recurrence_frequency: 1, recurrence_interval: 1, recurrence_until: 1, recurrence_weekdays: 1, exdates: 1, all_day: 1, guide_slug: 1, alliance_tags: 1,
         _id: 0,
       },
     }
@@ -87,6 +87,7 @@ export default async function EventPage({ params }) {
         {event.description && <p className="event-description">{event.description}</p>}
 
         <div className="event-actions">
+          {event.guide_slug && <Button href={`/guides/${event.guide_slug}`}>Read the guide</Button>}
           <Button href={`/api/events/${event.slug}/ics`} variant="quiet">📅 Add to calendar (.ics)</Button>
         </div>
 

@@ -32,7 +32,9 @@ export async function POST(request) {
     );
   }
 
-  // Mongo test stack: store as data URL document; return data URL for embedding.
+  // Stored in Mongo; builder guides reference it through /api/guide-images/<path>.
+  const guide = typeof form.get('guide') === 'string' && /^[a-z0-9-]{1,80}$/.test(form.get('guide')) ? form.get('guide') : '';
+  const compact = form.get('compact') === '1';
   const dataUrl = `data:${file.type};base64,${bytes.toString('base64')}`;
   const path = `${randomUUID()}.${TYPES[file.type]}`;
   try {
@@ -41,11 +43,31 @@ export async function POST(request) {
       path,
       content_type: file.type,
       data_url: dataUrl,
+      guide,
       created_at: new Date(),
     });
-    return NextResponse.json({ url: dataUrl }, { status: 201 });
+    const src = `/api/guide-images/${path}`;
+    // Compact responses (page builder) skip echoing the whole image back.
+    return NextResponse.json({ url: compact ? src : dataUrl, src, path }, { status: 201 });
   } catch (error) {
     console.error('Guide photo upload failed', error);
     return NextResponse.json({ error: 'Photo upload failed. Please try again.' }, { status: 500 });
+  }
+}
+
+// Thumbnail library for one guide (page builder).
+export async function GET(request) {
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: 'Admin login required.' }, { status: 401 });
+  }
+  const guide = new URL(request.url).searchParams.get('guide') || '';
+  if (!/^[a-z0-9-]{1,80}$/.test(guide)) return NextResponse.json({ images: [] });
+  try {
+    const coll = await getCollection('guide_attachments');
+    const rows = await coll.find({ guide }).project({ path: 1, created_at: 1, _id: 0 }).sort({ created_at: -1 }).limit(200).toArray();
+    return NextResponse.json({ images: rows.map(r => ({ src: `/api/guide-images/${r.path}`, created_at: r.created_at })) }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    console.error('Guide image library failed', error);
+    return NextResponse.json({ images: [] });
   }
 }

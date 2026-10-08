@@ -12,10 +12,27 @@ function collectionName() {
 }
 
 const GUIDE_PROJECT = {
-  slug: 1, title: 1, category: 1, description: 1, body: 1,
+  slug: 1, title: 1, category: 1, description: 1, body: 1, layout: 1,
   f2p_content: 1, spender_content: 1, position: 1,
   is_published: 1, access_level: 1, reviewed_by: 1, created_at: 1, updated_at: 1, _id: 0,
 };
+
+export async function GET(request, { params: paramsPromise }) {
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: 'Admin login required.' }, { status: 401 });
+  }
+  const { slug } = await paramsPromise;
+  if (!SLUG_RE.test(slug || '')) return NextResponse.json({ error: 'Invalid guide.' }, { status: 400 });
+  try {
+    const coll = await getCollection(collectionName());
+    const guide = await coll.findOne({ slug }, { projection: { ...GUIDE_PROJECT, draft: 1 } });
+    if (!guide) return NextResponse.json({ error: 'Guide not found.' }, { status: 404 });
+    return NextResponse.json({ guide }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    console.error('admin guide GET failed', error);
+    return NextResponse.json({ error: 'Unable to load guide.' }, { status: 500 });
+  }
+}
 
 export async function DELETE(request, { params: paramsPromise }) {
   if (!(await isAdminRequest(request))) {
@@ -54,7 +71,7 @@ export async function PUT(request, { params }) {
     const now = new Date().toISOString();
     const result = await coll.findOneAndUpdate(
       { slug },
-      { $set: { ...guide, updated_at: now } },
+      { $set: { ...guide, updated_at: now }, $unset: { draft: '' } },
       { returnDocument: 'after', projection: GUIDE_PROJECT }
     );
     const data = result?.value || result;

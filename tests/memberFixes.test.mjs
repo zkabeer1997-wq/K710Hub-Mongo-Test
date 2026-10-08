@@ -53,10 +53,11 @@ test('KvK availability: cannot save for another member id', async () => {
   assert.equal(res.status, 403);
 });
 
-test('withAppointmentProgress marks 1 of 3 as partial and 3 of 3 as complete', () => {
+test('withAppointmentProgress: saving the one form is Done, never "partial"; it lists the buffs', () => {
   const base = [{ key: 'appointments', submitted: true }, { key: 'prep', submitted: true }];
-  const one = withAppointmentProgress(base, 1, 3);
-  assert.deepEqual([one[0].appliedCount, one[0].appliedTotal, one[0].partial], [1, 3, true]);
+  const one = withAppointmentProgress(base, 2, 3, 'Day 1 Construction, Day 2 Research');
+  assert.deepEqual([one[0].appliedCount, one[0].appliedTotal, one[0].partial], [2, 3, false]);
+  assert.equal(one[0].appliedTitles, 'Day 1 Construction, Day 2 Research');
   assert.equal(one[1].partial, undefined);
   assert.equal(withAppointmentProgress(base, 3, 3)[0].partial, false);
   assert.equal(withAppointmentProgress(base, 0, 3)[0].partial, false);

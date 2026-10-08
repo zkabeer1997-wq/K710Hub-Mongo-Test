@@ -69,14 +69,15 @@ test('guide directory and direct URL enforce public/member/draft visibility with
   assert.equal((await detail.GET(req({},role),params('draft'))).status,role==='admin'?200:404);
  }
 });
-test('the guide image storage proxy is gated by session but unavailable on the Mongo stack',async()=>{
+test('guide images are served publicly by random file name from stored uploads',async()=>{
  const file='11111111-1111-4111-8111-111111111111.png',p={params:Promise.resolve({file})};
- assert.equal((await images.GET(req(),p)).status,401);
- for(const role of ['member','admin']){
-  const response=await images.GET(req({},role),p);
-  assert.equal(response.status,501);
-  assert.equal((await response.json()).code,'STORAGE_UNAVAILABLE');
- }
+ assert.equal((await images.GET(req(),p)).status,404);
+ state.tables.guide_attachments=[{path:file,content_type:'image/png',data_url:'data:image/png;base64,iVBORw0KGgo='}];
+ const response=await images.GET(req(),p);
+ assert.equal(response.status,200);
+ assert.equal(response.headers.get('content-type'),'image/png');
+ assert.equal(response.headers.get('x-content-type-options'),'nosniff');
+ assert.equal((await images.GET(req(),{params:Promise.resolve({file:'../etc/passwd'})})).status,404);
 });
 test('member bookings are session-owned, persist, update, and honor form closure',async()=>{
  assert.equal((await noble.POST(req(booking))).status,401);
@@ -109,8 +110,8 @@ test('legacy quarter-hour Noble slots snap to the earlier :00/:30 without droppi
 test('tool settings preserve fixed rules, validate bounds and apply to optimizer inputs',async()=>{
  for(const key of Object.keys(TOOL_CATALOG))assert.ok(validateToolQuantities(key,defaultQuantities(key)).quantities,key);
  for(const [tool,q] of [['adventure-stall',{algorithm:'changed'}],['wavebound-charms',{'majestic.g':1}],['charm-pack-optimizer',{'pack.0.g':40}],['pet-pack-optimizer',{'custom.food':-1}]])assert.ok(validateToolQuantities(tool,q).error);
- const tool='adventure-stall',quantities={...defaultQuantities(tool),'pack.20.shells':100};
- assert.equal((await settings.PUT(req({tool,quantities},'admin'))).status,200);
+ const tool='adventure-stall',quantities={'pack.20.shells':100};
+ assert.equal((await settings.PUT(req({tool,kind:'pack',quantities},'admin'))).status,200);
  const saved=(await (await settings.GET(req({},'admin'))).json()).tools.find(t=>t.key===tool);
  const config=toolConfiguration(tool,saved.quantities),normal=toolConfiguration(tool);
  assert.equal(optimizeShellPacks(100,1,config.packs).costCents,99);

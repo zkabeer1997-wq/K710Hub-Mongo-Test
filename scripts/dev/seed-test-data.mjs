@@ -28,7 +28,7 @@ const must = (label, r, ok = [200, 201]) => {
 };
 
 const ALLIANCE_OF = (i) => (i % 3 === 0 ? '710' : i % 3 === 1 ? 'RED' : 'SKY');
-const HEROES = ['Chenko', 'Yeonwoo', 'Amane', 'Amadeus', 'Vivian', 'Margot', 'Thrud', 'Saul'];
+const HEROES = ['Chenko', 'Amane', 'Thrud', 'Saul', 'Hilde', 'Gordon', 'Eric', 'Fahd'];
 const TIER = ['T11', 'T10'];
 const TG = ['TG8', 'TG7', 'TG6', 'TG5', 'Below TG5'];
 const AVAIL_KVK = ['First half (12-14:30 UTC)', 'Second half (14:30-17 UTC)', 'Full battle (12-17 UTC)', 'Not Available'];

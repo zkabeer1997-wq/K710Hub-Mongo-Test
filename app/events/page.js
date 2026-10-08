@@ -2,13 +2,12 @@ import Link from 'next/link';
 import { unstable_rethrow } from 'next/navigation';
 import { getCollection } from '../../lib/mongo';
 import { COLLECTIONS } from '../../lib/mongoCollections';
-import { Card, EmptyState, Button, Term, PageHero, SectionHeader } from '../../components/ui';
+import { Card, Button, Term, PageHero, SectionHeader } from '../../components/ui';
 import { loadPublicBearScheduleOrNull } from '../../lib/publicBearSchedule';
 import { loadPublicAllianceEventsOrNull } from '../../lib/publicAllianceEvents';
 import AllianceEventSchedule from './AllianceEventSchedule';
 import BearHuntSchedule from './BearHuntSchedule';
-import EventCountdownCards from './EventCountdownCards';
-import { upcomingEventSeries } from '../../lib/eventRecurrence.mjs';
+import EventsExplorer from '../../components/events/EventsExplorer';
 import { mergeDefaultEvents } from '../../lib/defaultEvents.mjs';
 
 export const metadata = {
@@ -34,14 +33,23 @@ async function loadUpcomingEvents(alliances) {
       ends_at: 1,
       recurrence_frequency: 1,
       recurrence_interval: 1,
-      recurrence_until: 1,
+      recurrence_until: 1, recurrence_weekdays: 1, exdates: 1, all_day: 1, guide_slug: 1, alliance_tags: 1,
       _id: 0,
     })
     .sort({ starts_at: 1 })
     .toArray();
   // Built-in recurring defaults appear unless a stored event (even a draft) reuses their slug.
   const merged = mergeDefaultEvents(data || [], alliances || []).filter((event) => event.published);
-  return upcomingEventSeries(merged).map((entry) => entry.event);
+  // Bear Hunts have their own section above; the table/calendar list every other published series.
+  // Series (not single dates) go to the client so the calendar can expand them for any month.
+  return merged.filter((event) => event.kind !== 'bear_hunt').map((event) => ({
+    slug: event.slug, title: event.title, kind: event.kind, description: event.description || '',
+    starts_at: event.starts_at, ends_at: event.ends_at || null,
+    recurrence_frequency: event.recurrence_frequency || 'none', recurrence_interval: event.recurrence_interval || 1,
+    recurrence_until: event.recurrence_until || null, recurrence_weekdays: event.recurrence_weekdays || null,
+    exdates: event.exdates || [], all_day: Boolean(event.all_day), guide_slug: event.guide_slug || null,
+    alliance_tags: event.alliance_tags || [], alliance_tag: event.alliance_tag || null,
+  }));
 }
 
 export default async function EventsPage() {
@@ -82,20 +90,11 @@ export default async function EventsPage() {
           <AllianceEventSchedule initialEvents={allianceEvents} initialNow={Date.now()} />
         </section>
 
-        <section className="events-section">
-          <SectionHeader eyebrow="Calendar" title="Upcoming events" lede="Open an event to see its full details. Countdown times use your device’s time zone." className="events-sh" />
-          {loadError ? (
-            <Card className="events-error">{loadError}</Card>
-          ) : events.length === 0 ? (
-            <EmptyState
-              icon="🗓️"
-              title="No upcoming events yet"
-              description="When an admin publishes an event, it will appear here with a live countdown."
-            />
-          ) : (
-            <EventCountdownCards events={events} initialNow={Date.now()} />
-          )}
-        </section>
+        {loadError ? (
+          <section className="events-section"><Card className="events-error">{loadError}</Card></section>
+        ) : (
+          <EventsExplorer events={events} initialNow={Date.now()} />
+        )}
 
         <div className="events-footer"><p>Kingdom 710 event calendar</p><Button href="/about" variant="quiet">← About Kingdom 710</Button></div>
       </div>
@@ -115,6 +114,13 @@ export default async function EventsPage() {
         .events-ics-link{display:inline-block;color:var(--color-link);font-weight:700;font-size:14px;text-decoration:none}
         .events-ics-link:hover{text-decoration:underline}
         .events-ics-hint{margin:4px 0 0;color:var(--color-ink-muted);font-size:12px;line-height:1.5}
+        .events-eyebrow{margin:0 0 6px;color:var(--color-accent-text);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:14px}
+        .events-h2{margin:0;font:700 clamp(26px,4vw,34px)/1.15 var(--font-display);text-wrap:balance}
+        .events-lede{margin:8px 0 0;color:var(--color-ink-muted);font-size:16px;line-height:1.55;max-width:62ch}
+        .events-empty{color:var(--color-ink-muted);font-size:16px}
+        .events-table th,.events-table td{font-size:15px;vertical-align:middle}.events-table th[scope=row]{text-align:left;font-weight:700}
+        .events-table a{color:var(--color-link);font-weight:700;display:inline-flex;align-items:center;min-height:44px}
+        .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
         .events-error{padding:20px;color:var(--color-ink-muted)}
         .events-footer{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-top:28px;border-top:1px solid var(--color-border)}.events-footer p{margin:0;font:700 20px/1.2 var(--font-display)}
         @media(max-width:720px){.events-time-dial{display:none}.events-section-hunts{margin-top:-96px;padding:20px 16px}.events-footer{align-items:flex-start;flex-direction:column}}

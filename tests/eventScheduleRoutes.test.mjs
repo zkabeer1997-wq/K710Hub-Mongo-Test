@@ -47,7 +47,7 @@ test('event mutations require admin authentication', async () => {
   assert.equal(state.tables.events.length, 1);
 });
 test('creation saves frequency, interval and stop date together', async () => {
-  const result = await POST(request({ ...existing(), title: 'Weekly event', kind: 'custom', published: true }));
+  const result = await POST(request({ ...existing(), slug: 'weekly-event', title: 'Weekly event', kind: 'custom', published: true }));
   assert.equal(result.status, 200);
   assert.equal(newest().recurrence_interval, 2);
   assert.equal(newest().recurrence_until, '2026-12-31');

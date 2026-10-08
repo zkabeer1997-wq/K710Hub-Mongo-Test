@@ -5,7 +5,7 @@ import { buildKvkMembersWorkbook, kvkMemberExportRows, KVK_MEMBER_HEADERS } from
 const member = {
   name: '雪 & <Knight>', member_id: '0001234567890123456789',
   infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG7',
-  archer_tier: 'T11', archer_tg: 'TG6', heroes: ['Hilde', 'Saul', 'Petra', 'Rosa'],
+  archer_tier: 'T11', archer_tg: 'TG6', heroes: ['Hilde', 'Saul', 'Petra', 'Eric'],
   availability: 'Full battle (12-17 UTC)', current_alliance: 'RED', updated_at: '2026-09-03T12:00:00Z',
 };
 
@@ -13,7 +13,7 @@ test('exports nine independent columns, both troop levels, and the complete hero
   assert.deepEqual(KVK_MEMBER_HEADERS, ['Player Name', 'Player ID', 'Infantry Level', 'Cavalry Level', 'Archer Level', 'Heroes', 'Availability', 'Alliance', 'Updated']);
   assert.deepEqual(kvkMemberExportRows([member]), [[
     '雪 & <Knight>', '0001234567890123456789', 'T11 / TG8', 'T10 / TG7', 'T11 / TG6',
-    'Hilde, Saul, Petra, Rosa', 'Full battle (12-17 UTC)', 'RED', '2026-09-03T12:00:00.000Z',
+    'Hilde, Saul, Petra, Eric', 'Full battle (12-17 UTC)', 'RED', '2026-09-03T12:00:00.000Z',
   ]]);
 });
 

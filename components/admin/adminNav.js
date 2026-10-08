@@ -56,7 +56,10 @@ export const ADMIN_NAV = [
   {
     id: 'settings',
     label: 'Settings',
-    items: [{ href: '/admin/dashboard/form-gates', label: 'Forms & copy', match: ['/admin/dashboard/form-gates'] }],
+    items: [
+      { href: '/admin/dashboard/form-gates', label: 'Forms & copy', match: ['/admin/dashboard/form-gates'] },
+      { href: '/admin/dashboard/page-addresses', label: 'Page addresses', match: ['/admin/dashboard/page-addresses'], superadminOnly: true },
+    ],
   },
 ];
 
@@ -68,4 +71,13 @@ export function navBadge(item, counts) {
   if (!item.badge) return 0;
   const keys = Array.isArray(item.badge) ? item.badge : [item.badge];
   return keys.reduce((sum, key) => sum + Number(counts?.[key] || 0), 0);
+}
+
+// Superadmin-only items are hidden from everyone else (cosmetic: the APIs
+// and pages re-check the live role on the server).
+export function visibleNav(isSuperadmin) {
+  return ADMIN_NAV.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.superadminOnly || isSuperadmin),
+  })).filter((group) => group.items.length > 0);
 }

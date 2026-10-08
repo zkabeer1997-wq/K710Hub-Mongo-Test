@@ -8,7 +8,7 @@ Each tab is a real link, so it can be shared and works with the Back button.
 
 | Tab | URL | What it does |
 |---|---|---|
-| Apply | `?tab=apply` (default) | Pick day + buff, enter TG, TTG, speedup days, pick **exactly 3** preferred hours |
+| Apply | `?tab=apply` (default) | ONE form for all three buffs: shared in-game name, then per buff a Yes/No choice, TG, TTG, speedup days and **exactly 3** preferred hours. One Save. Saying No to a buff already applied for asks to confirm, then removes the application and any slot |
 | My Appointments | `?tab=mine` | One row per day/buff with the status in words: `Day 1 Construction: Not applied` / `Pending` / `Assigned 02:00-02:30`. The coloured chip is decoration, never the only signal |
 | View Schedule | `?tab=schedule` | Published 30-minute slots per day, UTC and local time, your own slots highlighted. Shows names only (no member IDs) |
 
@@ -56,7 +56,7 @@ Registered in `lib/mongoCollections.js`; apply with `node scripts/ensure-indexes
 
 ## Routes
 
-- `GET/POST /api/kvk-appointments` (member session): my applications (+ assignments when published); upsert one application. Closed gate -> 403.
+- `GET/POST /api/kvk-appointments` (member session): my applications (+ assignments when published). POST takes `{in_game_name, applications:[...], withdraw:[{day,buff}]}` (validated all-or-nothing; withdraw also deletes the member's assignment) or the older single `{day,buff,...}` body. Closed gate -> 403.
 - `GET /api/kvk-appointments/schedule` (member session): published schedule.
 - `GET/POST /api/admin-kvk-appointments` (admin): list; `auto_allocate`, `assign`, `unassign`, `publish`.
 

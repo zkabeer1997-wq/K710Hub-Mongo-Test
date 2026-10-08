@@ -57,28 +57,29 @@ const statuses = async () => Object.fromEntries((await (await statusRoute.GET(re
 const json = async (res) => res.json();
 
 const AVAIL = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)' };
-const TROOPS = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7', heroes: ['Zoe', 'Rosa'] };
+const TROOPS = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7', heroes: ['Chenko', 'Saul'] };
 
 test('sanitizeKvkTroops: absent fields untouched, blanks clear, bad values rejected', () => {
   assert.deepEqual(sanitizeKvkTroops({}), { fields: {}, error: null });
-  assert.deepEqual(sanitizeKvkTroops({ infantry_tier: 'T10', cavalry_tg: '', heroes: ['Zoe', 'Zoe'] }).fields, { infantry_tier: 'T10', cavalry_tg: null, heroes: ['Zoe'] });
+  assert.deepEqual(sanitizeKvkTroops({ infantry_tier: 'T10', cavalry_tg: '', heroes: ['Saul', 'Saul'] }).fields, { infantry_tier: 'T10', cavalry_tg: null, heroes: ['Saul'] });
   assert.match(sanitizeKvkTroops({ infantry_tier: 'T9' }).error, /Infantry tier/);
   assert.match(sanitizeKvkTroops({ archer_tg: 'TG99' }).error, /Archer TG/);
   assert.ok(sanitizeKvkTroops({ heroes: ['Nobody'] }).error);
-  assert.ok(sanitizeKvkTroops({ heroes: 'Zoe' }).error);
+  assert.ok(sanitizeKvkTroops({ heroes: 'Saul' }).error);
+  assert.ok(sanitizeKvkTroops({ heroes: ['Yeonwoo'] }).error, 'removed heroes are rejected on new saves');
 });
 
 test('resolveTroopPrefill: per-field fallback record > previous > profile, invalid options dropped', () => {
   const out = resolveTroopPrefill([
     { row: { infantry_tier: 'T11', heroes: [] }, from: 'record' },
-    { row: { infantry_tier: 'T10', infantry_tg: 'TG8', archer_tier: 'T9', heroes: ['Zoe', 'Ghost'] }, from: 'previous' },
-    { row: { cavalry_tg: 'TG5', heroes: ['Rosa'] }, from: 'profile' },
+    { row: { infantry_tier: 'T10', infantry_tg: 'TG8', archer_tier: 'T9', heroes: ['Saul', 'Ghost', 'Zoe'] }, from: 'previous' },
+    { row: { cavalry_tg: 'TG5', heroes: ['Thrud'] }, from: 'profile' },
   ]);
   assert.equal(out.troops.infantry_tier, 'T11');
   assert.equal(out.troops.infantry_tg, 'TG8');
   assert.equal(out.troops.archer_tier, '');
   assert.equal(out.troops.cavalry_tg, 'TG5');
-  assert.deepEqual(out.heroes, ['Zoe']);
+  assert.deepEqual(out.heroes, ['Saul']);
   assert.equal(out.troopsFrom, 'profile');
   assert.equal(out.heroesFrom, 'previous');
 });
@@ -90,19 +91,19 @@ test('KvK availability accepts, validates and stores troop levels and heroes', a
   assert.equal((await availRoute.POST(req({ body: { ...AVAIL, ...TROOPS } }))).status, 200);
   const row = state.tables[T.SUBMISSIONS][0];
   assert.equal(row.infantry_tier, 'T11');
-  assert.deepEqual(row.heroes, ['Zoe', 'Rosa']);
+  assert.deepEqual(row.heroes, ['Chenko', 'Saul']);
   // an old client that omits the fields does not wipe them
   assert.equal((await availRoute.POST(req({ body: AVAIL }))).status, 200);
-  assert.deepEqual(state.tables[T.SUBMISSIONS][0].heroes, ['Zoe', 'Rosa']);
+  assert.deepEqual(state.tables[T.SUBMISSIONS][0].heroes, ['Chenko', 'Saul']);
   const got = await json(await availRoute.GET(req()));
   assert.equal(got.prefill.troops.cavalry_tg, 'TG6');
-  assert.deepEqual(got.record.heroes, ['Zoe', 'Rosa']);
+  assert.deepEqual(got.record.heroes, ['Chenko', 'Saul']);
 });
 
 test('Power Profile no longer writes troop levels or heroes and keeps the old ones', async () => {
   reset();
   state.tables[T.POWER_PROFILES] = [{ member_id: 'm1', name: 'Ann', pet_power: '1M', infantry_tier: 'T10', heroes: ['Zoe'] }];
-  const res = await profileRoute.POST(req({ body: { name: 'Ann', member_id: 'm1', pet_power: '2M', infantry_tier: 'T11', heroes: ['Rosa'] } }));
+  const res = await profileRoute.POST(req({ body: { name: 'Ann', member_id: 'm1', pet_power: '2M', infantry_tier: 'T11', heroes: ['Thrud'] } }));
   assert.equal(res.status, 200);
   const stored = state.tables[T.POWER_PROFILES][0];
   assert.equal(stored.pet_power, '2M');
@@ -112,23 +113,23 @@ test('Power Profile no longer writes troop levels or heroes and keeps the old on
 
 test('old Power Profile troops/heroes prefill KvK Availability, and the admin view prefers the availability row', async () => {
   reset();
-  state.tables[T.POWER_PROFILES] = [{ member_id: 'm1', name: 'Ann', infantry_tier: 'T10', infantry_tg: 'TG5', heroes: ['Zoe'] }];
+  state.tables[T.POWER_PROFILES] = [{ member_id: 'm1', name: 'Ann', infantry_tier: 'T10', infantry_tg: 'TG5', heroes: ['Saul'] }];
   state.tables[T.SUBMISSIONS] = [{ member_id: 'm1', name: 'Ann', availability: 'Not Available', current_alliance: 'RED' }];
   const got = await json(await availRoute.GET(req()));
   assert.equal(got.prefill.troops.infantry_tier, 'T10');
-  assert.deepEqual(got.prefill.heroes, ['Zoe']);
+  assert.deepEqual(got.prefill.heroes, ['Saul']);
   assert.equal(got.prefill.troopsFrom, 'profile');
 
   let admin = await json(await adminSubs.GET(req({ as: 'admin' })));
   assert.equal(admin.rows[0].infantry_tier, 'T10', 'fallback to profile when the row lacks troops');
-  assert.deepEqual(admin.rows[0].heroes, ['Zoe']);
+  assert.deepEqual(admin.rows[0].heroes, ['Saul']);
   assert.equal((await availRoute.POST(req({ body: { ...AVAIL, ...TROOPS } }))).status, 200);
   admin = await json(await adminSubs.GET(req({ as: 'admin' })));
   assert.equal(admin.rows[0].infantry_tier, 'T11');
-  assert.deepEqual(admin.rows[0].heroes, ['Zoe', 'Rosa']);
-  const merged = mergePowerProfilesIntoRows([{ member_id: 'x', infantry_tier: 'T11', heroes: [] }], [{ member_id: 'x', infantry_tier: 'T10', heroes: ['Rosa'] }]);
+  assert.deepEqual(admin.rows[0].heroes, ['Chenko', 'Saul']);
+  const merged = mergePowerProfilesIntoRows([{ member_id: 'x', infantry_tier: 'T11', heroes: [] }], [{ member_id: 'x', infantry_tier: 'T10', heroes: ['Thrud'] }]);
   assert.equal(merged[0].infantry_tier, 'T11');
-  assert.deepEqual(merged[0].heroes, ['Rosa']);
+  assert.deepEqual(merged[0].heroes, ['Thrud']);
 });
 
 test('a new KvK cycle offers last cycle troops/heroes and shows the carried-over state', async () => {
@@ -137,7 +138,7 @@ test('a new KvK cycle offers last cycle troops/heroes and shows the carried-over
   await startCycle('kvk', 'KvK 2');
   const got = await json(await availRoute.GET(req()));
   assert.equal(got.record, null);
-  assert.deepEqual(got.previous.heroes, ['Zoe', 'Rosa']);
+  assert.deepEqual(got.previous.heroes, ['Chenko', 'Saul']);
   assert.equal(got.prefill.troops.archer_tg, 'TG7');
   assert.equal(got.prefill.troopsFrom, 'previous');
   assert.equal((await statuses()).joiner.carriedOver, true);
@@ -202,4 +203,9 @@ test('KvK appointments and event votes offer the previous cycle/round answers', 
   assert.equal(vote.entry, null);
   assert.equal(vote.previous.vote, 'flexible');
   assert.equal(vote.previous.power, 123456);
+});
+
+test('removed heroes are dropped from a saved row when it is loaded', async () => {
+  const { troopFieldsOf } = await import('../lib/kvkAvailability.mjs');
+  assert.deepEqual(troopFieldsOf({ heroes: ['Yeonwoo', 'Saul', 'Rosa'] }).heroes, ['Saul']);
 });

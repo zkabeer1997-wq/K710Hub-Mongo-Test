@@ -177,7 +177,7 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
         </div>
         <label>How much TTG will you use?<input value={form.ttgUsed} onChange={(e) => updateField('ttgUsed', e.target.value)} /></label>
         <label>How much TG will you use?<input value={form.tgUsed} onChange={(e) => updateField('tgUsed', e.target.value)} /></label>
-        <SlotPicker label="Available Times &mdash; Day 1 (Construction)" sublabel="30-minute start times, UTC" selected={availDay1} onToggle={toggleInArray(setAvailDay1)} />
+        <SlotPicker label="Available Times &mdash; Day 1 (Construction)" sublabel="Every 30 minutes" showLocal selected={availDay1} onToggle={toggleInArray(setAvailDay1)} />
       </section>
 
       <section className="form-block">
@@ -201,16 +201,16 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
         </div>
         <label>How much TG Dust will you use?<input value={form.tgDust} onChange={(e) => updateField('tgDust', e.target.value)} /></label>
         <label>How many days of speedups will you use? (Include general speedups)<input value={form.researchSpeedupDays} onChange={(e) => updateField('researchSpeedupDays', e.target.value)} /></label>
-        <SlotPicker label="Available Times &mdash; Day 2 (Research)" sublabel="30-minute start times, UTC" selected={availDay2} onToggle={toggleInArray(setAvailDay2)} />
+        <SlotPicker label="Available Times &mdash; Day 2 (Research)" sublabel="Every 30 minutes" showLocal selected={availDay2} onToggle={toggleInArray(setAvailDay2)} />
       </section>
 
-      <NobleAdvisorFields form={form} updateField={updateField} availDay4={availDay4} onToggle={toggleInArray(setAvailDay4)} />
+      <NobleAdvisorFields form={form} updateField={updateField} availDay4={availDay4} onToggle={toggleInArray(setAvailDay4)} showLocal />
 
       <section className="form-block">
         <span className="minister-day-badge minister-day-badge-overflow">Day 5</span>
         <h3>Overflow &mdash; Construction &amp; Research second chance</h3>
         <p className="prep-slot-sub">If you are not scheduled on Day 1 or Day 2, you may be placed here. Pick any times you are available.</p>
-        <SlotPicker label="Available Times &mdash; Day 5 (Overflow)" sublabel="30-minute start times, UTC" selected={availDay5} onToggle={toggleInArray(setAvailDay5)} />
+        <SlotPicker label="Available Times &mdash; Day 5 (Overflow)" sublabel="Every 30 minutes" showLocal selected={availDay5} onToggle={toggleInArray(setAvailDay5)} />
       </section>
         </div>
 

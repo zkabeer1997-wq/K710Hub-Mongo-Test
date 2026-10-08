@@ -4,6 +4,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { normalizePrepRowSlots, validatePrepSlots, PREP_SLOT_KEYS } from '../../../lib/nobleAdvisor.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ export async function GET(request) {
     // With no answer in any cycle, `base` has the name we already know (Power Profile / Kingshot).
     const base = record || previous ? null : await loadMemberBase(session.memberId);
     return NextResponse.json(
-      { member_id: session.memberId, record, previous, cycle, ...(base ? { base: { name: base.name, from: base.from } } : {}) },
+      { member_id: session.memberId, record: normalizePrepRowSlots(record), previous: normalizePrepRowSlots(previous), cycle, ...(base ? { base: { name: base.name, from: base.from } } : {}) },
       { headers: HEADERS }
     );
   } catch (error) {
@@ -67,6 +68,12 @@ export async function POST(request) {
       notes: str(data.notes),
       updated_at: new Date(),
     };
+
+    for (const key of PREP_SLOT_KEYS) {
+      const checked = validatePrepSlots(data[key]);
+      if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
+      payload[key] = checked.slots;
+    }
 
     if (!payload.member_id || !payload.in_game_name) {
       return NextResponse.json({ error: 'Missing Member ID or in-game name.' }, { status: 400 });

@@ -5,6 +5,7 @@ import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { validateEventSchedule } from '../../../lib/eventRecurrence.mjs';
+import { validateEventExtras } from '../../../lib/eventFields.mjs';
 
 const KINDS = ['kvk', 'championship', 'swordland', 'bear_hunt', 'custom'];
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
@@ -69,8 +70,15 @@ export async function POST(request) {
   const { schedule, error: scheduleError } = validateEventSchedule(body);
   if (scheduleError) return NextResponse.json({ error: scheduleError }, { status: 400 });
 
+  const { fields: extras, error: extrasError } = validateEventExtras(body, { withDefaults: true });
+  if (extrasError) return NextResponse.json({ error: extrasError }, { status: 400 });
+
   try {
     const coll = await getCollection(COLLECTIONS.EVENTS);
+    // One stored row per slug: a built-in default is overridden by saving a row with its slug.
+    if (await coll.findOne({ slug })) {
+      return NextResponse.json({ error: 'An event with that slug already exists. Edit it instead.' }, { status: 409 });
+    }
     const doc = {
       id: randomUUID(),
       slug,
@@ -79,6 +87,7 @@ export async function POST(request) {
       description: String(body.description || ''),
       body_md: String(body.body_md || ''),
       ...schedule,
+      ...extras,
       published: Boolean(body.published),
       created_at: new Date(),
       updated_at: new Date(),

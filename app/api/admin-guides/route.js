@@ -33,6 +33,7 @@ export async function GET(request) {
         category: 1,
         description: 1,
         body: 1,
+        'layout.template': 1,
         f2p_content: 1,
         spender_content: 1,
         position: 1,

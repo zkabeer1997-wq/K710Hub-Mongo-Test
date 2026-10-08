@@ -1,0 +1,30 @@
+/* Deadline ticker on phones: a short vertical list, never a sideways-scrolling strip. */
+@media (max-width: 640px) {
+  html body .deadline-ticker { overflow-x: hidden; }
+  html body .deadline-ticker-list {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    overflow: visible;
+    gap: 0;
+    padding: 4px 16px;
+  }
+  html body .deadline-ticker-item {
+    width: 100%;
+    flex: 0 0 auto;
+    font-size: 14px;
+    border-bottom: 1px solid var(--edge, rgba(255, 255, 255, 0.08));
+  }
+  html body .deadline-ticker-item:last-child { border-bottom: 0; }
+  html body .deadline-ticker-item a {
+    flex-wrap: wrap;
+    width: 100%;
+    min-height: 44px;
+    padding-block: 6px;
+    gap: 4px 10px;
+    align-items: center;
+  }
+  html body .deadline-ticker-label,
+  html body .deadline-ticker-count,
+  html body .deadline-ticker-flag { font-size: 14px; }
+  html body .deadline-ticker-label { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+}

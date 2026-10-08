@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { normalizePrepRowSlots, validatePrepSlots, PREP_SLOT_KEYS } from '../../../lib/nobleAdvisor.mjs';
 import { listEventCycles, loadCycleFormRows } from '../../../lib/eventCycles.server.js';
 
 export async function GET(request) {
@@ -15,7 +16,7 @@ export async function GET(request) {
     if (!loaded) return NextResponse.json({ error: 'Cycle not found.' }, { status: 404 });
     const cycles = (await listEventCycles('kvk')).map((c) => ({ id: c.id, label: c.label, is_current: c.is_current === true }));
     return NextResponse.json({
-      rows: loaded.rows.map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id) })),
+      rows: loaded.rows.map(({ _id, ...r }) => normalizePrepRowSlots({ ...r, id: r.id || String(_id) })),
       cycle: { id: loaded.cycle.id, label: loaded.cycle.label, is_current: loaded.cycle.is_current === true },
       cycles,
     });
@@ -61,14 +62,20 @@ export async function PATCH(request) {
     if (!id || !key || !EDITABLE.includes(key)) {
       return NextResponse.json({ error: 'Invalid update' }, { status: 400 });
     }
+    let newValue = value;
+    if (PREP_SLOT_KEYS.includes(key)) {
+      const checked = validatePrepSlots(value);
+      if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
+      newValue = checked.slots;
+    }
     const coll = await getCollection(COLLECTIONS.PREP_BACKPACK);
     const result = await coll.updateOne(
       { $or: [{ id }, { _id: id }] },
-      { $set: { [key]: value, updated_at: new Date() } }
+      { $set: { [key]: newValue, updated_at: new Date() } }
     );
     if (result.matchedCount === 0) {
       // try string id field only
-      await coll.updateOne({ id: String(id) }, { $set: { [key]: value, updated_at: new Date() } });
+      await coll.updateOne({ id: String(id) }, { $set: { [key]: newValue, updated_at: new Date() } });
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
