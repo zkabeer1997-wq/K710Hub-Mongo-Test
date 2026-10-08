@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
 export async function POST(request) {
   try {
     const session = await readMemberSession(request);
     if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401 });
+    const gateCheck = await checkFormOpen('prep');
+    if (!gateCheck.open) return NextResponse.json({ error: gateCheck.error }, { status: 403 });
 
     let data;
     try {

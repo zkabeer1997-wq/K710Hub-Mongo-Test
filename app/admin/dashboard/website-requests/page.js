@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
+import SectionTabs, { INBOX_TABS } from '../../../../components/admin/SectionTabs';
 import StatusBadge from '../../../../components/admin/StatusBadge';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Input, Table } from '../../../../components/ui';
@@ -108,15 +109,15 @@ export default function AdminWebsiteRequestsPage() {
 
   return (
     <AdminShell
-      title="Website Requests"
-      subtitle="Member suggestions for K710Hub"
+      title="Inbox"
+      subtitle="Requests from members and visitors that need an answer."
       onLogout={handleLogout}
       counters={[
         { label: 'Total', value: rows.length },
         { label: 'New', value: newCount },
       ]}
     >
-      <p className="admin-page-lead">Improvement suggestions submitted through the Website Requests form.</p>
+      <SectionTabs tabs={INBOX_TABS} label="Inbox sections" />
       <div className="admin-toolbar">
         <Input
           tone="console"

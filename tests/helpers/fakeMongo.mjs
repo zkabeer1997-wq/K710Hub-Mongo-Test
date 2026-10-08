@@ -163,6 +163,11 @@ function makeCollection(tables, name, uniqueFields = []) {
       applyUpdate(doc, filter, update);
       return { acknowledged: true, matchedCount: 1, modifiedCount: 1, upsertedCount: 0 };
     },
+    async updateMany(filter, update) {
+      const matched = rows().filter((d) => matches(d, filter));
+      matched.forEach((doc) => applyUpdate(doc, {}, update));
+      return { acknowledged: true, matchedCount: matched.length, modifiedCount: matched.length };
+    },
     async findOneAndUpdate(filter, update, opts = {}) {
       let doc = rows().find((d) => matches(d, filter));
       if (!doc) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { loadCycleRoster } from '../../../lib/eventCycles.server';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
 const ADMIN_PROJECTION = {
@@ -50,10 +51,19 @@ export async function GET(request) {
     const submissions = await getCollection(COLLECTIONS.SUBMISSIONS);
     const powerProfilesColl = await getCollection(COLLECTIONS.POWER_PROFILES);
 
-    const data = await submissions
-      .find({}, { projection: ADMIN_PROJECTION })
-      .sort({ name: 1 })
-      .toArray();
+    // ?cycle=<event cycle id> returns that cycle's roster (frozen snapshots for ended cycles).
+    const cycleId = new URL(request.url).searchParams.get('cycle');
+    let data;
+    if (cycleId) {
+      const loaded = await loadCycleRoster('kvk', cycleId, ADMIN_PROJECTION);
+      if (!loaded) return NextResponse.json({ error: 'Cycle not found.' }, { status: 404 });
+      data = loaded.rows.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    } else {
+      data = await submissions
+        .find({}, { projection: ADMIN_PROJECTION })
+        .sort({ name: 1 })
+        .toArray();
+    }
 
     let powerProfiles = [];
     let powerProfilesConfigured = true;

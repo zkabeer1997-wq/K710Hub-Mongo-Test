@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
 const SECTIONS = ['Tools and Calculators', 'Forms', 'Events', 'Guides', 'General'];
@@ -38,6 +39,8 @@ export async function GET(request) {
 export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const gateCheck = await checkFormOpen('requests');
+  if (!gateCheck.open) return NextResponse.json({ error: gateCheck.error }, { status: 403 });
   let body;
   try {
     body = await request.json();

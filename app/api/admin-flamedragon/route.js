@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { loadCycleRoster } from '../../../lib/eventCycles.server';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
 const PROJECT = {
@@ -36,8 +37,16 @@ export async function GET(request) {
   try {
     const formsColl = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
     const profilesColl = await getCollection(COLLECTIONS.POWER_PROFILES);
+    // ?cycle=<event cycle id> returns that cycle's roster (frozen snapshots for ended cycles).
+    const cycleId = new URL(request.url).searchParams.get('cycle');
+    let cycleRows = null;
+    if (cycleId) {
+      const loaded = await loadCycleRoster('flamedragon', cycleId, PROJECT);
+      if (!loaded) return NextResponse.json({ error: 'Cycle not found.' }, { status: 404 });
+      cycleRows = loaded.rows.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+    }
     const [data, profiles] = await Promise.all([
-      formsColl.find({}).project(PROJECT).sort({ updated_at: -1 }).toArray(),
+      cycleRows ? Promise.resolve(cycleRows) : formsColl.find({}).project(PROJECT).sort({ updated_at: -1 }).toArray(),
       profilesColl
         .find({})
         .project({

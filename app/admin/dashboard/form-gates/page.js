@@ -1,25 +1,40 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
+import AdminDialog from '../../../../components/admin/AdminDialog';
+import StatusChip from '../../../../components/admin/StatusChip';
+import Switch from '../../../../components/admin/Switch';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
-import { Button, Field, Input, Table, Textarea } from '../../../../components/ui';
-import { FORM_GATE_KEYS as ORDER, FORM_GATE_LABELS as LABELS, EVENT_GATE_KEYS } from '../../../../lib/formGates.mjs';
-import { windowState, windowMessage, formatUtc } from '../../../../lib/deadlines.mjs';
-import { toUtcInput, fromUtcInput } from '../../../../lib/formGateWindow.mjs';
+import { describeFormState, fromLocalInput, localZoneName, toLocalInput } from '../../../../components/admin/adminDates';
+import { Button, Field, Input, Textarea } from '../../../../components/ui';
+import { FORM_GATE_LABELS as LABELS, EVENT_GATE_KEYS } from '../../../../lib/formGates.mjs';
+import { useEscapeToClose } from '../../../../lib/useEscapeToClose';
+import { windowState } from '../../../../lib/deadlines.mjs';
 import { FORM_META_KEYS, FORM_META_TITLES, FORM_FIELDS_REORDERABLE, DEFAULT_FORM_FIELDS } from '../../../../lib/formFieldMeta.mjs';
 
-const OTHER_FORM_KEYS = FORM_META_KEYS.filter((key) => !ORDER.includes(key));
+// Forms grouped by the event they belong to.
+const GROUPS = [
+  { id: 'kvk', title: 'KvK', keys: ['joiner', 'prep', 'appointments'] },
+  { id: 'flamedragon', title: 'Flamedragon Tyrant', keys: ['dragon', 'noble'] },
+  { id: 'standing', title: 'Standing', keys: ['lead', 'requests'] },
+  { id: 'other', title: 'Other', keys: ['swordland', 'tri-alliance', 'castle-battle'] },
+];
+const GATE_KEYS = GROUPS.flatMap((g) => g.keys);
+const TEXT_ONLY_KEYS = FORM_META_KEYS.filter((key) => !GATE_KEYS.includes(key));
 
 export default function AdminFormGatesPage() {
   const [gates, setGates] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
+  const [notice, setNotice] = useState('');
   const [savingKey, setSavingKey] = useState(null);
-  const [drafts, setDrafts] = useState({});
-  const [windows, setWindows] = useState({});
+  const [closing, setClosing] = useState(null);
+  const [settingsKey, setSettingsKey] = useState(null);
+  const [settingsDraft, setSettingsDraft] = useState({ message: '', opens: '', closes: '' });
+  const [settingsError, setSettingsError] = useState('');
+  const [settingsSaved, setSettingsSaved] = useState(false);
   const [editingFormKey, setEditingFormKey] = useState(null);
   const [editorLoading, setEditorLoading] = useState(false);
   const [editorSaving, setEditorSaving] = useState(false);
@@ -27,6 +42,7 @@ export default function AdminFormGatesPage() {
   const [editorIntro, setEditorIntro] = useState({ kicker: '', heading: '', description: '' });
   const [editorFields, setEditorFields] = useState([]);
   const router = useRouter();
+  const now = useMemo(() => Date.now(), [gates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true);
@@ -34,20 +50,12 @@ export default function AdminFormGatesPage() {
     try {
       const response = await fetch('/api/admin-form-gates', { cache: 'no-store' });
       const result = await response.json().catch(() => null);
-      if (!response.ok || !Array.isArray(result?.gates)) throw new Error(result?.error || 'Unable to load form status. Please reload the page.');
+      if (!response.ok || !Array.isArray(result?.gates)) throw new Error(result?.error || 'Unable to load forms. Please reload the page.');
       const byKey = {};
-      const nextDrafts = {};
-      const nextWindows = {};
-      for (const gate of result.gates || []) {
-        byKey[gate.form_key] = gate;
-        nextDrafts[gate.form_key] = gate.message || '';
-        nextWindows[gate.form_key] = { opens: toUtcInput(gate.opens_at), closes: toUtcInput(gate.closes_at), cycle: gate.cycle_id || 'current' };
-      }
-      setWindows(nextWindows);
+      for (const gate of result.gates || []) byKey[gate.form_key] = gate;
       setGates(byKey);
-      setDrafts(nextDrafts);
     } catch (err) {
-      setError(err.message || 'Unable to load form gates.');
+      setError(err.message || 'Unable to load forms.');
     } finally {
       setLoading(false);
     }
@@ -83,6 +91,7 @@ export default function AdminFormGatesPage() {
     if (editorSaving) return;
     setEditingFormKey(null);
   }
+  useEscapeToClose(Boolean(editingFormKey), closeEditor);
 
   function updateEditorField(index, key, value) {
     setEditorFields((current) => current.map((f, i) => (i === index ? { ...f, [key]: value } : f)));
@@ -118,154 +127,208 @@ export default function AdminFormGatesPage() {
     }
   }
 
-  async function toggle(formKey) {
-    const current = gates[formKey];
-    await save(formKey, !current?.is_open, drafts[formKey] ?? '');
+  async function patchGate(formKey, body) {
+    const response = await fetch('/api/admin-form-gates', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ form_key: formKey, ...body }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.gate?.form_key !== formKey) throw new Error(result?.error || 'Unable to confirm the change. Reload the page before trying again.');
+    setGates((prev) => ({ ...prev, [formKey]: result.gate }));
+    return result.gate;
   }
 
-  async function saveMessage(formKey) {
-    const current = gates[formKey];
-    await save(formKey, current?.is_open !== false, drafts[formKey] ?? '');
-  }
-
-  async function saveWindow(formKey) {
-    const w = windows[formKey] || {};
+  async function setOpen(formKey, isOpen) {
     setSavingKey(formKey);
     setError('');
-    setStatus('');
+    setNotice('');
+    try {
+      await patchGate(formKey, { is_open: isOpen, message: gates[formKey]?.message || '' });
+      setNotice(`${LABELS[formKey]} is now ${isOpen ? 'on' : 'off'}.`);
+    } catch (err) {
+      setError(err.message || 'Unable to save.');
+    } finally {
+      setSavingKey(null);
+      setClosing(null);
+    }
+  }
+
+  function onSwitch(formKey, next) {
+    if (next) setOpen(formKey, true);
+    else setClosing(formKey);
+  }
+
+  function openSettings(formKey) {
+    const gate = gates[formKey] || {};
+    setSettingsKey(formKey);
+    setSettingsDraft({ message: gate.message || '', opens: toLocalInput(gate.opens_at), closes: toLocalInput(gate.closes_at) });
+    setSettingsError('');
+    setSettingsSaved(false);
+  }
+
+  async function saveSettings(event) {
+    event.preventDefault();
+    const formKey = settingsKey;
+    const hasWindow = EVENT_GATE_KEYS.includes(formKey);
+    if (hasWindow && settingsDraft.opens && settingsDraft.closes && new Date(settingsDraft.closes) <= new Date(settingsDraft.opens)) {
+      setSettingsError('Closes must be after Opens.');
+      return;
+    }
+    setSavingKey(formKey);
+    setSettingsError('');
+    setSettingsSaved(false);
     try {
       const gate = gates[formKey] || {};
-      const response = await fetch('/api/admin-form-gates', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          form_key: formKey,
-          is_open: gate.is_open !== false,
-          message: drafts[formKey] ?? '',
-          opens_at: fromUtcInput(w.opens),
-          closes_at: fromUtcInput(w.closes),
-          cycle_id: w.cycle || 'current',
-        }),
+      await patchGate(formKey, {
+        is_open: gate.is_open !== false,
+        message: settingsDraft.message,
+        ...(hasWindow ? { opens_at: fromLocalInput(settingsDraft.opens), closes_at: fromLocalInput(settingsDraft.closes) } : {}),
       });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || result?.gate?.form_key !== formKey) throw new Error(result?.error || 'Unable to save the voting window.');
-      setGates((prev) => ({ ...prev, [formKey]: result.gate }));
-      setStatus(`${LABELS[formKey]} window saved.`);
+      setSettingsSaved(true);
     } catch (err) {
-      setError(err.message || 'Unable to save the voting window.');
+      setSettingsError(err.message || 'Unable to save.');
     } finally {
       setSavingKey(null);
     }
   }
 
-  async function save(formKey, isOpen, message) {
-    setSavingKey(formKey);
-    setError('');
-    setStatus('');
-    try {
-      const response = await fetch('/api/admin-form-gates', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ form_key: formKey, is_open: isOpen, message }),
-      });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || result?.gate?.form_key !== formKey) throw new Error(result?.error || 'Unable to confirm form status. Reload the page before trying again.');
-      setGates((prev) => ({ ...prev, [formKey]: result.gate }));
-      setStatus(`${LABELS[formKey]} ${isOpen ? 'opened' : 'closed'}.`);
-    } catch (err) {
-      setError(err.message || 'Unable to save form gate.');
-    } finally {
-      setSavingKey(null);
-    }
+  function renderGateRow(formKey) {
+    const gate = gates[formKey] || { is_open: true, message: '' };
+    const isOn = gate.is_open !== false;
+    const win = windowState(gate, now, { requireWindow: EVENT_GATE_KEYS.includes(formKey) });
+    const chip = describeFormState(win.state, win.opensAt, win.closesAt, win.reason);
+    return (
+      <tr key={formKey}>
+        <th scope="row" data-label="Form" className="ec-form-name">{LABELS[formKey]}</th>
+        <td data-label="State"><StatusChip kind={chip.kind}>{chip.text}</StatusChip></td>
+        <td data-label="Switch">
+          <Switch
+            checked={isOn}
+            label={`${LABELS[formKey]}: ${isOn ? 'on, switch off' : 'off, switch on'}`}
+            onChange={(next) => onSwitch(formKey, next)}
+            disabled={savingKey === formKey}
+          />
+        </td>
+        <td data-label="Closed message" className="ff-message">
+          {gate.message ? <span className="ff-message-text" title={gate.message}>{gate.message}</span> : <span className="ff-message-none">None</span>}
+        </td>
+        <td data-label="Actions" className="ff-actions">
+          <Button variant="quiet" className="ec-btn-sm" onClick={() => openSettings(formKey)} aria-label={`Message and times for ${LABELS[formKey]}`}>
+            {gate.message ? 'Message & times' : EVENT_GATE_KEYS.includes(formKey) ? 'Times & message' : 'Add message'}
+          </Button>
+          <Button variant="quiet" className="ec-btn-sm" onClick={() => openEditor(formKey)} aria-label={`Edit text of ${LABELS[formKey]}`}>Edit form text</Button>
+        </td>
+      </tr>
+    );
   }
+
+  const settingsHasWindow = settingsKey ? EVENT_GATE_KEYS.includes(settingsKey) : false;
 
   return (
     <AdminShell
-      title="Form Gates"
-      subtitle="Open or close the member intake forms linked from /forms."
+      title="Forms & copy"
+      subtitle="Switch member forms on or off, set the message people see while a form is closed, and edit form wording."
       onLogout={handleLogout}
     >
-      {error && <p className="guide-message error" role="alert">{error}</p>}
-      {status && <p className="guide-message success" role="status">{status}</p>}
+      <div className="ec-live" role="status" aria-live="polite">{notice ? <p className="ec-notice">{'\u2713 '}{notice}</p> : null}</div>
+      {error && <p className="ec-inline-error" role="alert">{error}</p>}
 
       {loading ? (
-        <TableSkeleton rows={4} columns={4} />
+        <TableSkeleton rows={6} columns={5} />
       ) : (
-        <Table>
-          <thead><tr><th>Form</th><th>Status</th><th>Closed message</th><th /></tr></thead>
-          <tbody>
-            {ORDER.map((formKey) => {
-              const gate = gates[formKey] || { is_open: true, message: '' };
-              const isOpen = gate.is_open !== false;
-              return (
-                <Fragment key={formKey}>
-                <tr>
-                  <td>{LABELS[formKey]}</td>
-                  <td>{isOpen ? 'Open' : 'Closed'}</td>
-                  <td style={{ minWidth: 260 }}>
-                    <Field label="">
-                      <Input
-                        tone="console"
-                        aria-label={`Message shown while ${LABELS[formKey]} is closed (optional)`} placeholder="Optional message shown while closed"
-                        value={drafts[formKey] ?? ''}
-                        onChange={(e) => setDrafts((d) => ({ ...d, [formKey]: e.target.value }))}
-                        onBlur={() => saveMessage(formKey)}
-                      />
-                    </Field>
-                  </td>
-                  <td className="admin-table-actions">
-                    <Button
-                      variant="quiet"
-                      onClick={() => toggle(formKey)}
-                      disabled={savingKey === formKey}
-                    >
-                      {savingKey === formKey ? 'Saving…' : isOpen ? 'Close form' : 'Open form'}
-                    </Button>
-                    <Button variant="quiet" onClick={() => openEditor(formKey)}>Edit Form</Button>
-                  </td>
-                </tr>
-                {EVENT_GATE_KEYS.includes(formKey) && (() => {
-                  const w = windows[formKey] || { opens: '', closes: '', cycle: 'current' };
-                  const win = windowState(gate, Date.now(), { requireWindow: true });
-                  return (
+        <div className="ff-groups">
+          {GROUPS.map((group) => (
+            <section key={group.id} aria-labelledby={`ff-${group.id}`} className="ff-group">
+              <h2 id={`ff-${group.id}`} className="ec-h2">{group.title}</h2>
+              <div className="admin-table-wrap">
+                <table className="admin-table ff-table">
+                  <thead>
                     <tr>
-                      <td colSpan={4}>
-                        <fieldset className="form-window" style={{ border: 0, padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
-                          <legend style={{ fontSize: 12, marginBottom: 6 }}>Voting window for {LABELS[formKey]} (times are UTC) · now: {windowMessage(win)}{win.closesAt ? ` · closes ${formatUtc(win.closesAt)}` : ''}</legend>
-                          <Field label="Opens (UTC)"><Input tone="console" type="datetime-local" value={w.opens} onChange={(e) => setWindows((cur) => ({ ...cur, [formKey]: { ...w, opens: e.target.value } }))} /></Field>
-                          <Field label="Closes (UTC)"><Input tone="console" type="datetime-local" value={w.closes} onChange={(e) => setWindows((cur) => ({ ...cur, [formKey]: { ...w, closes: e.target.value } }))} /></Field>
-                          <Field label="Cycle id" hint="Change to start a fresh round of votes."><Input tone="console" value={w.cycle} maxLength={40} onChange={(e) => setWindows((cur) => ({ ...cur, [formKey]: { ...w, cycle: e.target.value } }))} /></Field>
-                          <Button onClick={() => saveWindow(formKey)} disabled={savingKey === formKey}>{savingKey === formKey ? 'Saving…' : 'Save window'}</Button>
-                        </fieldset>
-                      </td>
+                      <th scope="col">Form</th>
+                      <th scope="col">State</th>
+                      <th scope="col">Switch</th>
+                      <th scope="col">Closed message</th>
+                      <th scope="col"><span className="sr-only">Actions</span></th>
                     </tr>
-                  );
-                })()}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </Table>
+                  </thead>
+                  <tbody>
+                    {group.keys.map((formKey) => renderGateRow(formKey))}
+                    {group.id === 'other' && TEXT_ONLY_KEYS.map((formKey) => (
+                      <tr key={formKey}>
+                        <th scope="row" data-label="Form" className="ec-form-name">{FORM_META_TITLES[formKey]}</th>
+                        <td data-label="State"><span className="ff-message-none">Always available</span></td>
+                        <td data-label="Switch"><span className="ff-message-none">-</span></td>
+                        <td data-label="Closed message"><span className="ff-message-none">-</span></td>
+                        <td data-label="Actions" className="ff-actions">
+                          <Button variant="quiet" className="ec-btn-sm" onClick={() => openEditor(formKey)} aria-label={`Edit text of ${FORM_META_TITLES[formKey]}`}>Edit form text</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ))}
+        </div>
       )}
 
-      {OTHER_FORM_KEYS.length > 0 && (
-        <>
-          <h2 style={{ marginTop: 28 }}>Other forms</h2>
-          <Table>
-            <thead><tr><th>Form</th><th /></tr></thead>
-            <tbody>
-              {OTHER_FORM_KEYS.map((formKey) => (
-                <tr key={formKey}>
-                  <td>{FORM_META_TITLES[formKey]}</td>
-                  <td className="admin-table-actions">
-                    <Button variant="quiet" onClick={() => openEditor(formKey)}>Edit Form</Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </>
-      )}
+      <AdminDialog
+        open={Boolean(closing)}
+        title={closing ? `Switch off ${LABELS[closing]}?` : ''}
+        onClose={() => setClosing(null)}
+        role="alertdialog"
+        busy={Boolean(savingKey)}
+        footer={(
+          <>
+            <Button variant="quiet" onClick={() => setClosing(null)}>Cancel</Button>
+            <Button className="ec-btn-danger" onClick={() => setOpen(closing, false)} disabled={Boolean(savingKey)}>{savingKey ? 'Working...' : 'Switch off'}</Button>
+          </>
+        )}
+      >
+        <p className="ec-confirm-line">Members will see the closed message instead of this form. Answers already sent are kept. You can switch it on again at any time.</p>
+      </AdminDialog>
+
+      <AdminDialog
+        open={Boolean(settingsKey)}
+        variant="drawer"
+        title={settingsKey ? `${LABELS[settingsKey]}: message${settingsHasWindow ? ' and times' : ''}` : ''}
+        onClose={() => setSettingsKey(null)}
+        busy={Boolean(savingKey)}
+        footer={(
+          <>
+            <Button variant="quiet" onClick={() => setSettingsKey(null)}>Close</Button>
+            <Button type="submit" form="ff-settings-form" disabled={Boolean(savingKey)}>{savingKey ? 'Saving...' : 'Save'}</Button>
+          </>
+        )}
+      >
+        <form id="ff-settings-form" className="ec-form" onSubmit={saveSettings}>
+          {settingsError ? <p className="ec-inline-error" role="alert">{settingsError}</p> : null}
+          {settingsSaved ? <p className="ec-notice" role="status">{'\u2713 '}Saved</p> : null}
+          <Field label="Message shown while the form is closed" hint="Optional. Leave empty to show the default wording." htmlFor="ff-message">
+            <Textarea
+              tone="console"
+              id="ff-message"
+              data-autofocus
+              rows={4}
+              maxLength={500}
+              value={settingsDraft.message}
+              onChange={(e) => { setSettingsDraft((d) => ({ ...d, message: e.target.value })); setSettingsSaved(false); }}
+            />
+          </Field>
+          {settingsHasWindow ? (
+            <>
+              <Field label="Opens" htmlFor="ff-opens">
+                <Input tone="console" id="ff-opens" type="datetime-local" value={settingsDraft.opens} onChange={(e) => { setSettingsDraft((d) => ({ ...d, opens: e.target.value })); setSettingsSaved(false); }} />
+              </Field>
+              <Field label="Closes" htmlFor="ff-closes">
+                <Input tone="console" id="ff-closes" type="datetime-local" value={settingsDraft.closes} onChange={(e) => { setSettingsDraft((d) => ({ ...d, closes: e.target.value })); setSettingsSaved(false); }} />
+              </Field>
+              <p className="ec-hint">Times are in your local time ({localZoneName()}) and saved in UTC.</p>
+            </>
+          ) : null}
+        </form>
+      </AdminDialog>
 
       {editingFormKey && (
         <div className="admin-drawer-overlay" role="presentation" onClick={closeEditor}>

@@ -42,7 +42,7 @@ The weights (`CONTRIBUTION_WEIGHTS`) are an **assumption**, not game data: TTG c
 
 Ranked applicant table per day/buff, a slot dropdown per applicant (booked slots disabled), **Auto-allocate** (this day) / **all days** (manual placements are kept, the rest are recomputed), and **Publish / Unpublish**. Until published, members only ever see "Pending" and `/api/kvk-appointments/schedule` returns `{published:false}`. Publish state is per cycle; edits made while published are visible immediately.
 
-Open/close the form in Admin > Form Gates ("KvK Appointments"). `cycle_id` comes from that gate (default `current`); start a new cycle by changing it, old rows are kept.
+Open/close the form in Admin > Form Gates ("KvK Appointments") or from the KvK event control (`/api/admin-event-control?type=kvk`). Every form gate (including `appointments`) accepts `opens_at`, `closes_at` and `cycle_id` through `PATCH /api/admin-form-gates`. With no window the gate is a manual open/close switch; with a window the member routes open and close it by time (`windowState`, enforced server-side by `checkFormOpen` in `lib/formGates.server.js`) and answer with "This form is closed. It closed on ..." or "This form is not open yet. It opens on ...". `cycle_id` comes from the gate (default `current`). The KvK event control's `start_cycle` action sets it to the new event cycle id on every KvK form, so the new cycle gets a clean applications/assignments/published state while old rows are kept under the old cycle id.
 
 ## Data
 
@@ -63,3 +63,9 @@ Registered in `lib/mongoCollections.js`; apply with `node scripts/ensure-indexes
 Tests: `tests/kvkAppointments.test.mjs` (options, formula, validation, allocator, status text), `tests/kvkAppointmentsRoute.test.mjs` (auth, gate, upsert, allocation, publish visibility), Playwright `scripts/qa-interactions.js` (picker renders 24 options, enforces exactly 3, tab URLs).
 
 The older Noble Advisor form (`/forms/flamedragon-tyrant/noble-advisor`, `lib/nobleAdvisor.mjs`) is untouched: it is the Flamedragon-period Troop Training booking with its own questions and admin page. This flow generalises the same idea; migrating the old form into it is not done.
+
+## Cycle control and history
+
+`GET/POST /api/admin-event-control` (admin) runs a whole KvK or Flamedragon Tyrant cycle: `start_cycle`, `close_forms`, `open_forms`, `set_window`, `publish`/`unpublish` (KvK only), `archive_reset` (needs `confirm: true`). Implementation: `lib/eventControl.server.js`.
+
+History: a member has one roster row, so when a member resubmits in a newer cycle the old row is first copied into `event_cycle_snapshots` (`{event_type, event_cycle_id, label, member_id, payload, archived_at}`, PIN hash never copied). `start_cycle` and `archive_reset` also snapshot the whole roster. `GET /api/admin-submissions?cycle=<id>` and `GET /api/admin-flamedragon?cycle=<id>` read a past cycle from those snapshots. Rally planner rows (`admin_rallies`, `admin_flamedragon_rallies`) carry `event_cycle_id`; the planner only loads and replaces the current cycle's rows (untagged legacy rows count as current until the cycle is retired).

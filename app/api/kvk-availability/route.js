@@ -4,7 +4,8 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { readKingshotSession } from '../../../lib/memberAuthKingshot';
-import { getCurrentEventCycle } from '../../../lib/eventCycles.server';
+import { checkFormOpen } from '../../../lib/formGates.server.js';
+import { getCurrentEventCycle, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 
 const ALLIANCES = ['710', 'RED', 'SKY'];
 const AVAILABILITY = [
@@ -61,6 +62,8 @@ export async function GET(request) {
 export async function POST(request) {
   const session = await resolveSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const gateCheck = await checkFormOpen('joiner');
+  if (!gateCheck.open) return NextResponse.json({ error: gateCheck.error }, { status: 403 });
   let body;
   try {
     body = await request.json();
@@ -114,6 +117,7 @@ export async function POST(request) {
     }
     const now = new Date();
     const cycle = await getCurrentEventCycle('kvk').catch(() => null);
+    await snapshotIfFromPastCycle('kvk', existing, cycle);
     await coll.updateOne(
       { member_id: memberId },
       {

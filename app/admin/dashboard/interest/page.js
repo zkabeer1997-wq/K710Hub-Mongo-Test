@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
+import SectionTabs, { INBOX_TABS } from '../../../../components/admin/SectionTabs';
 import StatusBadge from '../../../../components/admin/StatusBadge';
 import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
@@ -466,8 +467,8 @@ export default function AdminInterestPage() {
   }
 
   return (
-    <AdminShell title="Transfer Requests" subtitle="Review transfer applications" onLogout={handleLogout}>
-          <p className="admin-page-lead">Review 710 transfer onboarding requests submitted through the public interest form.</p>
+    <AdminShell title="Inbox" subtitle="Requests from members and visitors that need an answer." onLogout={handleLogout}>
+          <SectionTabs tabs={INBOX_TABS} label="Inbox sections" />
 
           <div className="admin-subtabs" role="tablist" aria-label="Intake periods">
             <button

@@ -148,3 +148,17 @@
 }
 :root[data-easy="true"] .muster-head { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 :root[data-easy="true"] .hall-kicker, :root[data-easy="true"] .hall-title, :root[data-easy="true"] .hall-line { display: block; text-align: left; width: 100%; }
+
+/* Glossary terms: on phones the explanation opens as a readable bottom card
+   instead of a small bubble that can cover the page heading. */
+@media (max-width: 640px) {
+  .ui-term-popover {
+    position: fixed !important; left: 12px !important; right: 12px !important; bottom: 12px !important; top: auto !important;
+    transform: none !important; max-width: none !important; width: auto !important;
+    padding: 16px 18px; font-size: 17px; line-height: 1.55; z-index: 300;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+}
+@media (pointer: coarse) {
+  .ui-term-trigger { min-height: 32px; padding: 4px 0; }
+}

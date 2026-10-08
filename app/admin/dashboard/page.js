@@ -1,17 +1,6 @@
-import RosterWorkspace from '../../../components/admin/RosterWorkspace';
+import { redirect } from 'next/navigation';
 
+// The KvK roster now lives on the KvK event page.
 export default function AdminDashboardPage() {
-  return (
-    <RosterWorkspace
-      title="KvK Participants"
-      subtitle="Manage participant records"
-      membersEndpoint="/api/admin-submissions"
-      ralliesEndpoint="/api/admin-rallies"
-      rallyStorageKey="kvk-admin-rallies-v1"
-      exportFileNamePrefix="k710-kvk-participants"
-      workbookSheetName="KvK Participants"
-      allowClearTestData
-      cycleType="kvk"
-    />
-  );
+  redirect('/admin/dashboard/events/kvk?tab=participants');
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { currentRallyScope } from '../../../lib/eventCycles.server';
 import {
   formatRallyRows,
   serializeRalliesForSave,
@@ -19,9 +20,10 @@ export async function GET(request) {
   if (unauthorized) return unauthorized;
 
   try {
+    const scope = await currentRallyScope('kvk');
     const coll = await getCollection(COLLECTIONS.ADMIN_RALLIES);
     const data = await coll
-      .find({})
+      .find(scope.filter)
       .project({
         id: 1,
         name: 1,
@@ -54,10 +56,13 @@ export async function PUT(request) {
   const rows = serializeRalliesForSave(rallies);
 
   try {
+    // Scoped to the current cycle: earlier cycles' planner rows stay as history.
+    const scope = await currentRallyScope('kvk');
     const coll = await getCollection(COLLECTIONS.ADMIN_RALLIES);
-    await coll.deleteMany({});
-    if (rows.length > 0) {
-      await coll.insertMany(rows);
+    await coll.deleteMany(scope.filter);
+    const stamped = scope.cycleId ? rows.map((row) => ({ ...row, event_cycle_id: scope.cycleId })) : rows;
+    if (stamped.length > 0) {
+      await coll.insertMany(stamped);
     }
     return NextResponse.json({ rallies: formatRallyRows(rows) });
   } catch (error) {

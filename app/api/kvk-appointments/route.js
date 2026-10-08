@@ -57,7 +57,7 @@ export async function POST(request) {
   if (error) return NextResponse.json({ error }, { status: 400, headers: HEADERS });
   try {
     const g = await loadAppointmentGate();
-    if (!g.open) return NextResponse.json({ error: g.note || g.message || 'Appointments are closed.' }, { status: 403, headers: HEADERS });
+    if (!g.open) return NextResponse.json({ error: g.closedMessage || 'This form is closed.' }, { status: 403, headers: HEADERS });
     const coll = await getCollection(COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS);
     const filter = { member_id: session.memberId, day: value.day, buff: value.buff, cycle_id: g.cycleId };
     const now = new Date();

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
+import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { publicPowerProfile, sanitizePowerProfileInput } from '../../../lib/powerProfiles.mjs';
 
 const PUBLIC_PROJECT = {
@@ -51,6 +52,8 @@ export async function POST(request) {
   if (!session) {
     return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
   }
+  const gateCheck = await checkFormOpen('lead');
+  if (!gateCheck.open) return NextResponse.json({ error: gateCheck.error }, { status: 403 });
   let profile;
   let rawBody;
   try {

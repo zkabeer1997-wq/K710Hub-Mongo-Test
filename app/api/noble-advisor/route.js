@@ -3,7 +3,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { validateNobleAdvisor } from '../../../lib/nobleAdvisor.mjs';
-import { getFormGate } from '../../../lib/formGates.server.js';
+import { checkFormOpen } from '../../../lib/formGates.server.js';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store' };
@@ -36,8 +36,9 @@ export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401, headers });
   try {
-    if ((await getFormGate('noble')).is_open === false) {
-      return NextResponse.json({ error: 'Noble Advisor bookings are closed.' }, { status: 403, headers });
+    const gateCheck = await checkFormOpen('noble');
+    if (!gateCheck.open) {
+      return NextResponse.json({ error: gateCheck.error }, { status: 403, headers });
     }
   } catch {
     return NextResponse.json({ error: 'Unable to save your booking. Please try again.' }, { status: 500, headers });

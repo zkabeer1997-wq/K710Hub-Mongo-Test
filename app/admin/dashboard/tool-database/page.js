@@ -1,6 +1,7 @@
 'use client';
 import {useRouter} from 'next/navigation';
 import {useState} from 'react';
+import SectionTabs, { TOOL_TABS } from '../../../../components/admin/SectionTabs';
 import AdminShell from '../../../../components/admin/AdminShell';
 import {GOVERNOR_GEAR_LEVELS, CHARM_LEVELS} from '../../../../lib/phase2Data.mjs';
 
@@ -47,7 +48,8 @@ export default function ToolDatabasePage(){
  async function logout(){await fetch('/api/admin-logout',{method:'POST'});router.push('/admin/login');router.refresh();}
  const [dataset,setDataset]=useState(DATASETS[0].key);
 
- return <AdminShell onLogout={logout} title="Tool Database" subtitle="Reference tables for each tool's per-level and per-tier requirements">
+ return <AdminShell onLogout={logout} title="Tools" subtitle="Reference tables for each tool's per-level and per-tier requirements">
+  <SectionTabs tabs={TOOL_TABS} label="Tools sections" />
   <p>Read-only lookup tables pulled from the same verified data the Charms Sailing Optimizer and Governor Gear Sailing Tool planners use.</p>
   <div className="tool-db-toolbar">
    <label>Data set<select value={dataset} onChange={e=>setDataset(e.target.value)}>{DATASETS.map(d=><option key={d.key} value={d.key}>{d.label}</option>)}</select></label>

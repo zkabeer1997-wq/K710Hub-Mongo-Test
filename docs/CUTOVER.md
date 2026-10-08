@@ -83,6 +83,13 @@ and the app still starts; skipped when `NODE_ENV=test`, `QA_NO_DB=1`, no
 `MONGODB_URI`/`MONGO_URI`, or on the edge runtime). `node scripts/ensure-indexes.mjs`
 remains the way to apply them explicitly and exits 1 listing any index that
 could not be built (usually a unique index blocked by historic duplicates).
+
+**New collection: `event_cycle_snapshots`.** Frozen per-cycle copies of roster rows (KvK
+`submissions`, `flamedragon_forms`) so history survives members resubmitting in a newer
+cycle. Created on first write; its indexes (`type_cycle_member_unique`, `type_cycle_idx`,
+`member_id_idx`) come from `ensureIndexes()`. Rally planner rows (`admin_rallies`,
+`admin_flamedragon_rallies`) gain an optional `event_cycle_id`; untagged rows count as the
+current cycle, so no data migration is needed.
 New in this pass: TTL `rate_limits.expires_at`; `kingshot_sessions
 (token_hash, revoked_at)`; `kingshot_users.access_role`;
 `interest_submissions (intake_period_id, created_at)`; `gallery_images`

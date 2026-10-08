@@ -24,17 +24,17 @@ export async function PATCH(request, { params: paramsPromise }) {
         return NextResponse.json({ error: 'Unknown cycle type.' }, { status: 400 });
       }
       const cycle = await setCurrentEventCycle(type, id);
-      if (!cycle) return NextResponse.json({ error: 'Season not found.' }, { status: 404 });
+      if (!cycle) return NextResponse.json({ error: 'Cycle not found.' }, { status: 404 });
       return NextResponse.json({ cycle });
     }
     if (body?.archived === true) {
       const cycle = await archiveEventCycle(id);
-      if (!cycle) return NextResponse.json({ error: 'Season not found.' }, { status: 404 });
+      if (!cycle) return NextResponse.json({ error: 'Cycle not found.' }, { status: 404 });
       return NextResponse.json({ cycle });
     }
     return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
   } catch (error) {
     console.error('admin-event-cycles/[id]' + ' failed', error);
-    return NextResponse.json({ error: 'Unable to update season.' }, { status: 500 });
+    return NextResponse.json({ error: 'Unable to update cycle.' }, { status: 500 });
   }
 }

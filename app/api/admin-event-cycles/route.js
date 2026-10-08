@@ -15,7 +15,7 @@ export async function GET(request) {
     return NextResponse.json({ cycles });
   } catch (error) {
     console.error('admin-event-cycles' + ' failed', error);
-    return NextResponse.json({ error: 'Unable to load seasons.' }, { status: 500 });
+    return NextResponse.json({ error: 'Unable to load cycles.' }, { status: 500 });
   }
 }
 
@@ -35,7 +35,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unknown cycle type.' }, { status: 400 });
   }
   if (!label || label.length > 80) {
-    return NextResponse.json({ error: 'Season label is required and must be 80 characters or fewer.' }, { status: 400 });
+    return NextResponse.json({ error: 'Cycle name is required and must be 80 characters or fewer.' }, { status: 400 });
   }
   try {
     const cycle = await createEventCycle(type, {
@@ -47,6 +47,6 @@ export async function POST(request) {
     return NextResponse.json({ cycle });
   } catch (error) {
     console.error('admin-event-cycles' + ' failed', error);
-    return NextResponse.json({ error: 'Unable to create season.' }, { status: 500 });
+    return NextResponse.json({ error: 'Unable to create cycle.' }, { status: 500 });
   }
 }

@@ -217,8 +217,8 @@ export default function AdminMemberPinsPage() {
 
   return (
     <AdminShell
-      title="Member Profiles"
-      subtitle="Player levels, equipment, power totals, and PIN resets"
+      title="Members"
+      subtitle="Player levels, equipment and power totals."
       onLogout={handleLogout}
       actions={(
         <Button variant="quiet" onClick={showCreate ? closeCreate : openCreate}>

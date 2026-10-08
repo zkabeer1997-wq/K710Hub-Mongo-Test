@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { publicFlamedragonRecord, sanitizeFlamedragonInput } from '../../../lib/flamedragonForm.mjs';
-import { getCurrentEventCycle } from '../../../lib/eventCycles.server';
+import { getCurrentEventCycle, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
+import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
 const PUBLIC_PROJECT = {
@@ -46,6 +47,8 @@ export async function GET(request) {
 export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return UNAUTHORIZED();
+  const gateCheck = await checkFormOpen('dragon');
+  if (!gateCheck.open) return NextResponse.json({ error: gateCheck.error }, { status: 403 });
   let record;
   let body;
   try {
@@ -61,10 +64,7 @@ export async function POST(request) {
   }
   try {
     const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
-    const existing = await coll.findOne(
-      { member_id: record.member_id },
-      { projection: { member_id: 1 } }
-    );
+    const existing = await coll.findOne({ member_id: record.member_id });
     const payload = {
       member_id: record.member_id,
       name: record.name,
@@ -87,6 +87,7 @@ export async function POST(request) {
       updated_at: new Date(),
     };
     const cycle = await getCurrentEventCycle('flamedragon').catch(() => null);
+    await snapshotIfFromPastCycle('flamedragon', existing, cycle);
     if (cycle) {
       payload.event_cycle_id = cycle.id;
       payload.event_cycle_label = cycle.label;

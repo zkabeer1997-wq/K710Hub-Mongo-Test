@@ -29,6 +29,6 @@ export default async function UserAccessPage() {
   }
 
   const session = await readKingshotSession(requestLike);
-  if (session?.role !== 'superadmin') redirect('/admin/dashboard/interest');
+  if (session?.role !== 'superadmin') redirect('/admin/dashboard/overview');
   return <AccessManager actorPlayerId={session.playerId} />;
 }

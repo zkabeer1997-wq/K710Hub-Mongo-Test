@@ -157,7 +157,7 @@ export default function AccessManager({ actorPlayerId }) {
 
   return (
     <AdminShell
-      title="User access"
+      title="Access"
       subtitle="Assign member, admin, and superadmin permissions"
       onLogout={logout}
       counters={counters}
