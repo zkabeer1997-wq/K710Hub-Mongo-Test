@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { getOrderedMemberForms, getDeadlineEntries, getMemberResults } from '../../../lib/memberFormStatus.server.js';
 import { firstIncomplete, stillNeedsSummary } from '../../../lib/memberForms.mjs';
+import { visibleMemberItems } from '../../../lib/memberResults.mjs';
 import { describeEntry } from '../../../lib/deadlines.mjs';
 
 const HEADERS = { 'Cache-Control': 'private, no-store' };
@@ -13,17 +14,20 @@ export async function GET(request) {
   if (!session) return NextResponse.json({ signedIn: false, forms: [], entries: [] }, { headers: HEADERS });
   const now = Date.now();
   try {
-    const [{ forms, cycles }, entries] = await Promise.all([
+    const [{ forms: allForms, cycles }, entries] = await Promise.all([
       getOrderedMemberForms(session.memberId, now),
       getDeadlineEntries(now),
     ]);
+    // Owner rule: closed / not-yet-open forms are not listed; My appointment follows its form.
+    const allResults = await getMemberResults(session.memberId, allForms, now).catch(() => []);
+    const { forms, results, hidden } = visibleMemberItems(allForms, allResults);
     const first = firstIncomplete(forms);
-    const results = await getMemberResults(session.memberId, forms, now).catch(() => []);
     return NextResponse.json({
       signedIn: true,
       memberId: session.memberId,
       forms,
       results,
+      hidden,
       cycles,
       entries: entries.map((entry) => describeEntry(entry, now)),
       summary: stillNeedsSummary(forms),
