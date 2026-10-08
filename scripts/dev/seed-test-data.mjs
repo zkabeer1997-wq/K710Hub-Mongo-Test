@@ -219,7 +219,7 @@ for (let i = 0; i < 25; i++) {
   if (i < 10) {
     const yes = i % 3 !== 2;
     must('noble-advisor', await m('POST', '/api/noble-advisor', yes
-      ? { in_game_name: name, want_troop_training: 'Yes', is_transfer: 'No', troop_speedup_days: String(10 + i), promoting_t11: 'Yes', avail_day4: ['02:15', '03:15', '14:45'] }
+      ? { in_game_name: name, want_troop_training: 'Yes', is_transfer: 'No', troop_speedup_days: String(10 + i), promoting_t11: 'Yes', avail_day4: ['02:00', '03:30', '14:00'] }
       : { in_game_name: name, want_troop_training: 'No', is_transfer: '', troop_speedup_days: '', promoting_t11: '', avail_day4: [] }));
   }
 

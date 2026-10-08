@@ -442,5 +442,13 @@ html body .tool-box { padding-top: 20px; }
 /* Noble Advisor slot picker: UTC time with the viewer's local time underneath */
 html body .prep-slot-grid--local { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
 html body .prep-slot-grid--local .prep-slot { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 48px; line-height: 1.15; }
-html body .prep-slot-utc { font-size: 11px; opacity: 0.7; }
-html body .prep-slot-local { font-size: 12px; opacity: 0.8; font-weight: 400; }
+html body .prep-slot-utc { font-size: 14px; opacity: 0.85; }
+html body .prep-slot-local { font-size: 14px; opacity: 0.9; font-weight: 400; }
+
+/* member fixes (round 3): readable sizes for slot times and event form notes */
+.event-form-times, .event-form-times *, .event-form-card .help, .event-form-times time { font-size: 14px; }
+:root[data-easy="true"] .prep-slot-utc, :root[data-easy="true"] .prep-slot-local { font-size: 16px; }
+html body .vote-option span span, html body .vote-option small, html body .vote-option .vote-hint { font-size: 14px; }
+:root[data-easy="true"] body .vote-option span span, :root[data-easy="true"] body .vote-option small { font-size: 16px; }
+html body .vote-option div span { font-size: 14px; display: block; }
+:root[data-easy="true"] body .vote-option div span { font-size: 16px; }
