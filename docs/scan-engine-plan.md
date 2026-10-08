@@ -218,3 +218,18 @@ guidance modal, review screen, API payload and fixtures), all sharing the same e
    (Renamed from the earlier placeholder `backpack_gear` to avoid confusion with inventory.)
 3. `backpack_inventory`: resources, speedups, bonuses and other items from the other Backpack tabs. Later.
 The Power Profile Gear & Charms board uses only `governor_profile`. Hero gear and inventory get their own screens.
+
+
+## Update 4: Governor Profile scanner built (engine 0.2.0)
+
+`runScan('governor_profile', pixels)` reads the six Governor Gear pieces and the 18 charms, finding them in the image itself
+(no layout profile or fixed anchor needed; it works on full screenshots and on cropped / zoomed images). Charms: docs/charm-shapes.md.
+Gear: docs/gear-reader.md. Upload, drag and drop, review screen (values under 0.8 must be confirmed) and "Use these values"
+are in components/loadout/ (ScanLauncher, ScanReview); the image is decoded in the browser and never uploaded or stored.
+`npm run scan:eval` reports per-field accuracy over the labelled images; the honest charm figure is the leave-one-image-out one
+from `npm run scan:charms:eval`.
+
+Open: what the `P1` / `P2` tier labels on some tiles mean (reader returns no tier for them); T5/T6 and blue/green frames
+have no real example; charm levels 1 and 18-22 are art-only; no server endpoint or correction storage yet (corrections
+are produced in memory by the review step); the Flamedragon form still uses the old third-party scanner; hero_gear and
+backpack_inventory scanners are not started.

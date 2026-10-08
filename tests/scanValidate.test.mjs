@@ -69,18 +69,23 @@ test('kind registry', () => {
   assert.throws(() => validateReading('nope', {}), /Unknown scan kind/);
 });
 
-test('engine skeleton never fakes readings', () => {
+test('engine: hero_gear is not built yet and never fakes readings; governor_profile reads or fails honestly', () => {
   const pixels = { width: 20, height: 40, data: new Uint8ClampedArray(20 * 40 * 4) };
   const rect = { x: 0.1, y: 0.1, w: 0.2, h: 0.1 };
-  const profile = { kind: 'governor_profile', version: 3, anchor: { type: 'rect', expected: rect }, regions: {} };
-  const r = runScan('governor_profile', pixels, profile);
+  const profile = { kind: 'hero_gear', version: 3, anchor: { type: 'rect', expected: rect }, regions: {} };
+  const r = runScan('hero_gear', pixels, profile);
   assert.equal(r.status, 'not_implemented');
   assert.deepEqual(r.reasons, ['readers arrive in phase 3']);
-  assert.equal(r.engine_version, ENGINE_VERSION); assert.equal(ENGINE_VERSION, '0.1.0-phase1');
+  assert.equal(r.engine_version, ENGINE_VERSION);
   assert.deepEqual(r.normalized_size, { width: 1080, height: 2160 });
   assert.equal(r.gear, undefined);
-  assert.equal(runScan('governor_profile', pixels, { ...profile, anchor: undefined }).status, 'invalid_profile');
-  assert.equal(runScan('hero_gear', pixels, profile).status, 'invalid_profile');
-  assert.equal(runScan('governor_profile', { width: 0, height: 0, data: new Uint8Array(0) }, profile).status, 'invalid_image');
+  assert.equal(runScan('hero_gear', pixels, { ...profile, anchor: undefined }).status, 'invalid_profile');
+  assert.equal(runScan('hero_gear', { width: 0, height: 0, data: new Uint8Array(0) }, profile).status, 'invalid_image');
   assert.throws(() => runScan('nope', pixels, profile), /Unknown scan kind/);
+  // governor_profile: too small / nothing recognisable -> honest status, no readings
+  assert.equal(runScan('governor_profile', pixels).status, 'invalid_image');
+  const blank = { width: 600, height: 1200, data: new Uint8ClampedArray(600 * 1200 * 4).fill(200) };
+  const failed = runScan('governor_profile', blank);
+  assert.equal(failed.status, 'failed');
+  assert.equal(failed.gear, undefined);
 });

@@ -44,8 +44,8 @@ test('slots and charms', () => {
   assert.equal(isValidCharmLevel(22), true); assert.equal(isValidCharmLevel(23), false); assert.equal(isValidCharmLevel(0), false);
 });
 
-test('quality palette is explicitly unmeasured', () => {
-  assert.equal(QUALITY_PALETTE_STATUS, 'unmeasured');
+test('quality palette lives in gearTemplates.json, not in a hand-typed list', () => {
+  assert.equal(QUALITY_PALETTE_STATUS, 'in-gearTemplates.json');
   assert.deepEqual(QUALITY_PALETTE, []);
 });
 
