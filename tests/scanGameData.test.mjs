@@ -7,7 +7,7 @@ import {
 } from '../lib/scan/kinds/governorProfile/gameData.mjs';
 import {
   TROOP_ICONS, rarityForLevel, isValidHeroGearLevel, isValidForgery, troopForIcon,
-} from '../lib/scan/kinds/backpackGear/gameData.mjs';
+} from '../lib/scan/kinds/heroGear/gameData.mjs';
 
 test('58 governor gear states', () => {
   assert.equal(GOVERNOR_GEAR_STATES.length, 58);

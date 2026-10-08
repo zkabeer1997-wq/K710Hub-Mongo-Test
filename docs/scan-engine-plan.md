@@ -133,7 +133,7 @@ Three images were supplied (small UI screenshots, not usable as test fixtures):
 3. **"Screenshot your Backpack, Gear tab"** guidance modal: a grid of gear items on the Backpack Gear tab.
 
 ### What this changes in the plan
-- Scan kinds become: `governor_profile` (6 gear slots + 18 charm slots, first), `backpack_gear` (items grid,
+- Scan kinds become: `governor_profile` (6 gear slots + 18 charm slots, first), `hero_gear` (items grid,
   second), then `backpack_resources`, `backpack_speedups` later. The engine stays the same; each kind is a
   profile JSON + readers + game data.
 - The scan flow gets a guidance step per kind (which screen to open, correct/incorrect example, "do not crop").
@@ -181,7 +181,7 @@ Built under `lib/scan/` (pure ES modules, no fs/DOM): `imageCheck` (PNG/JPEG/Web
 `STANDARD_WIDTH = 1080` provisional), `normalize` (resize/grey/crop/scaleUp), `coords` (anchor frame maths),
 `color` (HSV, trimmed mean, palette match with confidence), `otsu` (threshold, auto-invert, `prepareForOcr`),
 `schemas` (zod: profile, readings, `LoadoutPayload`, `FixtureLabels`), `validate` (lower confidence, flags, never
-changes values), `kinds/` registry (`governor_profile`, `backpack_gear` game data + validators) and an
+changes values), `kinds/` registry (`governor_profile`, `hero_gear` game data + validators) and an
 `engine.mjs` skeleton (`ENGINE_VERSION 0.1.0-phase1`, returns `not_implemented`, fakes no readings).
 `npm run scan:eval` and `tests/fixtures/scan/README.md` (labels.json format) exist; `zod` is now declared.
 Tests: `tests/scan*.test.mjs`. The 58 Governor Gear labels are checked 1:1 against `GOVERNOR_GEAR_OPTIONS`.
@@ -209,3 +209,12 @@ Hat/shirt/ring and charms come from `Kingshot_Gear_Charms`; pendant/pants/baton 
 `Red_T3_to_T6` (Red T3 .. T6). The same background-removal pipeline is used for all of them (flood fill of near-white from the border, 2px
 feather, WebP q85). Every manifest entry is `source: 'owner-art'` with `usableAsTemplate: true`, so all of it can serve as OCR templates.
 The earlier Gear Guide screenshot crops (dimmed, brightness-lifted, partly composited) were removed together with their script.
+
+## Update 3: three separate scanners (owner decision)
+The owner decided on THREE independent scanners, each its own scan kind (own layout profile, readers, game data,
+guidance modal, review screen, API payload and fixtures), all sharing the same engine in `lib/scan/`:
+1. `governor_profile`: Governor Gear (6 slots) + Charms (18) from the Governor Profile screen. BUILT FIRST.
+2. `hero_gear`: Hero Gear pieces from the Backpack > Gear tab (troop icon, level 1-200, Forgery 0-20). Later.
+   (Renamed from the earlier placeholder `backpack_gear` to avoid confusion with inventory.)
+3. `backpack_inventory`: resources, speedups, bonuses and other items from the other Backpack tabs. Later.
+The Power Profile Gear & Charms board uses only `governor_profile`. Hero gear and inventory get their own screens.

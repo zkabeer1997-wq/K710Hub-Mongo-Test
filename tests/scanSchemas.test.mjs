@@ -17,7 +17,7 @@ const payload = () => ({ kind: 'governor_profile', source: 'scan', engine_versio
 
 test('valid profile parses; kind restriction works', () => {
   assert.equal(LayoutProfile.safeParse(profile()).success, true);
-  assert.equal(layoutProfileFor('backpack_gear').safeParse(profile()).success, false);
+  assert.equal(layoutProfileFor('hero_gear').safeParse(profile()).success, false);
   assert.equal(ScanKind.safeParse('nope').success, false);
 });
 
@@ -63,7 +63,7 @@ test('loadout payload limits and strictness', () => {
   assert.equal(LoadoutPayload.safeParse({ ...payload(), charms: [...charms, { slot: 'archer_1', level: 1 }] }).success, false);
   assert.equal(LoadoutPayload.safeParse({ ...payload(), charms: [{ slot: 'archer_1', level: 1 }, { slot: 'archer_1', level: 2 }] }).success, false);
   assert.equal(LoadoutPayload.safeParse({ ...payload(), charms: [{ slot: 'archer_1', level: 23 }] }).success, false);
-  const hero = { kind: 'backpack_gear', source: 'scan', engine_version: 'x', profile_version: 1 };
+  const hero = { kind: 'hero_gear', source: 'scan', engine_version: 'x', profile_version: 1 };
   const pieces = (n) => Array.from({ length: n }, () => ({ troop: 'archer', level: 100, forgery: 20 }));
   assert.equal(LoadoutPayload.safeParse({ ...hero, heroGear: pieces(200) }).success, true);
   assert.equal(LoadoutPayload.safeParse({ ...hero, heroGear: pieces(201) }).success, false);

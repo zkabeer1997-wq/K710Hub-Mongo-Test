@@ -40,15 +40,15 @@ test('charm level', () => {
 
 test('hero gear flags', () => {
   const piece = (o = {}) => ({ troop: f('infantry'), rarity: f('gold'), level: f(100), forgery: f(20), ...o });
-  assert.equal(needsReview(validateReading('backpack_gear', piece())), false);
-  const v = validateReading('backpack_gear', piece({ troop: f('mage'), level: f(201), forgery: f(21) }));
+  assert.equal(needsReview(validateReading('hero_gear', piece())), false);
+  const v = validateReading('hero_gear', piece({ troop: f('mage'), level: f(201), forgery: f(21) }));
   assert.ok(v.troop.flags.includes('troop_unknown'));
   assert.ok(v.level.flags.includes('level_out_of_range'));
   assert.ok(v.forgery.flags.includes('forgery_out_of_range'));
   assert.equal(v.forgery.value, 21);
-  const mismatch = validateReading('backpack_gear', piece({ rarity: f('gold'), level: f(101) }));
+  const mismatch = validateReading('hero_gear', piece({ rarity: f('gold'), level: f(101) }));
   assert.ok(mismatch.rarity.flags.includes('rarity_level_mismatch'));
-  assert.equal(validateReading('backpack_gear', piece({ troop: f(null) })).troop.confidence, 0);
+  assert.equal(validateReading('hero_gear', piece({ troop: f(null) })).troop.confidence, 0);
 });
 
 test('needsReview thresholds', () => {
@@ -59,7 +59,7 @@ test('needsReview thresholds', () => {
 });
 
 test('kind registry', () => {
-  assert.deepEqual(Object.keys(KINDS).sort(), ['backpack_gear', 'governor_profile']);
+  assert.deepEqual(Object.keys(KINDS).sort(), ['hero_gear', 'governor_profile']);
   for (const k of Object.keys(KINDS)) {
     const e = getKind(k);
     assert.ok(e.gameData && typeof e.validate === 'function' && e.profileSchema);
@@ -80,7 +80,7 @@ test('engine skeleton never fakes readings', () => {
   assert.deepEqual(r.normalized_size, { width: 1080, height: 2160 });
   assert.equal(r.gear, undefined);
   assert.equal(runScan('governor_profile', pixels, { ...profile, anchor: undefined }).status, 'invalid_profile');
-  assert.equal(runScan('backpack_gear', pixels, profile).status, 'invalid_profile');
+  assert.equal(runScan('hero_gear', pixels, profile).status, 'invalid_profile');
   assert.equal(runScan('governor_profile', { width: 0, height: 0, data: new Uint8Array(0) }, profile).status, 'invalid_image');
   assert.throws(() => runScan('nope', pixels, profile), /Unknown scan kind/);
 });

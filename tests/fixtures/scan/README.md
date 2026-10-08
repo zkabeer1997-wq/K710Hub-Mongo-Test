@@ -10,7 +10,7 @@ tests/fixtures/scan/governor_profile/
   labels.json
   profile.json          optional layout profile for that kind (validated by zod)
   iphone-15-001.png
-tests/fixtures/scan/backpack_gear/
+tests/fixtures/scan/hero_gear/
   labels.json
   ...
 ```
@@ -35,7 +35,7 @@ Validated by `FixtureLabels` in `lib/scan/schemas.mjs`:
 
 - `gear` keys: `hat`, `pendant`, `shirt`, `pants`, `ring`, `baton`. `quality` is one of `green|blue|purple|gold|red`.
 - `charms` keys: `infantry_1..6`, `cavalry_1..6`, `archer_1..6`; value is the level 1-22.
-- `heroGear` (backpack_gear): array of `{ "troop": "infantry|cavalry|archer", "level": 1-200, "forgery": 0-20 }`.
+- `heroGear` (hero_gear): array of `{ "troop": "infantry|cavalry|archer", "level": 1-200, "forgery": 0-20 }`.
 - Every image must be a genuine, full-resolution, uncropped screenshot with the true values. Blur names/IDs.
 
 With no fixtures the script prints a notice and exits 0. While the engine is not implemented it
