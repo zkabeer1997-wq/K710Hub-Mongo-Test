@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "kind": "governor_profile",
+  "images": {
+    "profile-001.png": {
+      "gear": {
+        "hat": { "quality": "gold", "tier": 3, "stars": 1 },
+        "pendant": { "quality": "gold", "tier": 3, "stars": 0 },
+        "shirt": { "quality": "red", "tier": 1, "stars": 1 },
+        "pants": { "quality": "red", "tier": 1, "stars": 0 },
+        "ring": { "quality": "red", "tier": 1, "stars": 0 },
+        "baton": { "quality": "red", "tier": 1, "stars": 0 }
+      },
+      "charms": {
+        "cavalry_1": 5, "cavalry_2": 5, "cavalry_3": 5, "cavalry_4": 5, "cavalry_5": 5, "cavalry_6": 5,
+        "infantry_1": 13, "infantry_2": 12, "infantry_3": 12, "infantry_4": 12, "infantry_5": 12, "infantry_6": 12,
+        "archer_1": 12, "archer_2": 12, "archer_3": 12, "archer_4": 12, "archer_5": 12, "archer_6": 12
+      }
+    },
+    "profile-002.png": {
+      "gear": {
+        "hat": { "quality": "gold", "tier": 0, "stars": 1 },
+        "pendant": { "quality": "gold", "tier": 0, "stars": 0 },
+        "shirt": { "quality": "gold", "tier": 3, "stars": 0 },
+        "pants": { "quality": "gold", "tier": 3, "stars": 0 },
+        "ring": { "quality": "gold", "tier": 1, "stars": 2 },
+        "baton": { "quality": "gold", "tier": 1, "stars": 1 }
+      },
+      "charms": {
+        "cavalry_1": 4, "cavalry_2": 4, "cavalry_3": 4, "cavalry_4": 3, "cavalry_5": 3, "cavalry_6": 3,
+        "infantry_1": 5, "infantry_2": 5, "infantry_3": 5, "infantry_4": 5, "infantry_5": 5, "infantry_6": 5,
+        "archer_1": 6, "archer_2": 5, "archer_3": 5, "archer_4": 5, "archer_5": 5, "archer_6": 5
+      }
+    }
+  }
+}

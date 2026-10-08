@@ -5,3 +5,7 @@ node_modules
 work-npm-cache
 qa-screenshots
 .data/
+
+# Real screenshots show player names/IDs: keep them out of git until blurred
+tests/fixtures/scan/**/*.png
+tests/fixtures/scan/**/*.jpg
