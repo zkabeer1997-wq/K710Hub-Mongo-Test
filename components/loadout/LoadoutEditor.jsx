@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import LoadoutBoard from './LoadoutBoard';
 import LoadoutTable from './LoadoutTable';
 import ScanLauncher from './ScanLauncher';
@@ -14,22 +14,17 @@ import './loadout.css';
  */
 export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChange, onClear }) {
   const [active, setActive] = useState(null);
+  const [open, setOpen] = useState(null);
   const [announce, setAnnounce] = useState('');
   const [confirming, setConfirming] = useState(false);
   const clearBtn = useRef(null);
-  const reduce = useRef(false);
-  useEffect(() => {
-    try { reduce.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { /* ignore */ }
-  }, []);
 
-  // Board slot -> its row in the table: focus the first control for that slot and bring it into view.
+  // Board slot -> its small editor (one open at a time). Pressing the open slot again closes it.
   function activate(pieceId, target) {
     setActive({ piece: pieceId, target });
-    const el = document.getElementById(target === 'gear' ? `lo-gear-${pieceId}` : `lo-charm-${pieceId}-${target}`);
-    if (!el) return;
-    el.focus({ preventScroll: true });
-    el.scrollIntoView({ block: 'center', behavior: reduce.current ? 'auto' : 'smooth' });
+    setOpen((cur) => (cur?.piece === pieceId && cur?.target === target ? null : { piece: pieceId, target }));
   }
+  const closePopover = () => setOpen(null);
 
   function changeGear(piece, value) {
     setActive({ piece: piece.id, target: 'gear' });
@@ -44,6 +39,7 @@ export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChang
   function clearAll() {
     onClear();
     setActive(null);
+    setOpen(null);
     setConfirming(false);
     setAnnounce('All gear and charms cleared');
     clearBtn.current?.focus();
@@ -53,8 +49,7 @@ export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChang
     <div className="lo">
       <div className="lo-head">
         <div className="lo-head-copy">
-          <h3 className="lo-title">Your Governor Gear and Charms</h3>
-          <p className="lo-help">Tap a slot on the board, or use the table below. Both show the same values.</p>
+          <p className="lo-help">Tap a slot on the board to edit it, or use the table below. Both show the same values.</p>
         </div>
         <ScanLauncher />
       </div>
@@ -72,7 +67,7 @@ export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChang
         )}
       </div>
 
-      <LoadoutBoard gear={gear} charms={charms} active={active} onActivate={activate} />
+      <LoadoutBoard gear={gear} charms={charms} active={active} open={open} onActivate={activate} onClose={closePopover} onGearChange={changeGear} onCharmChange={changeCharm} />
       <LoadoutTable gear={gear} charms={charms} active={active} onGearChange={changeGear} onCharmChange={changeCharm} />
 
       <p className="lo-sr-only" role="status" aria-live="polite">{announce}</p>

@@ -289,7 +289,8 @@ function PowerProfileForm({ identity, intro }) {
   function handleFormKeyDown(event) {
     if (event.key !== 'Enter') return;
     if (step === STEPS.length - 1) return;
-    if (event.target.tagName === 'TEXTAREA') return;
+    // Buttons and links must keep their normal Enter activation (keyboard users press Back/Next with it).
+    if (['TEXTAREA', 'BUTTON', 'A'].includes(event.target.tagName)) return;
     event.preventDefault();
   }
 
