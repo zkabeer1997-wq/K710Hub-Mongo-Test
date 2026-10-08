@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import IdentityFields from '../../components/member/IdentityFields';
 import PageHero from '../../components/ui/PageHero';
 import GovernorGearOcr from '../../components/GovernorGearOcr';
 import '../../components/member/easy-view-fixes.css';
@@ -68,11 +68,12 @@ const CHARM_GROUPS = [
   slots: CHARM_SLOTS.filter((slot) => slot.key.startsWith(`${group.id}_`)),
 }));
 
-function PowerProfileForm({ initialMemberId = '', intro }) {
+function PowerProfileForm({ identity, intro }) {
+  const memberId = identity?.memberId || '';
   const { intro: formIntro } = useFormFieldMeta('lead');
   const [form, setForm] = useState({
-    name: '',
-    member_id: initialMemberId,
+    name: identity?.name || '',
+    member_id: memberId,
     governor_gear: '',
     charms: '',
     hero_gear: '',
@@ -130,7 +131,8 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
       const draft = parseDraft(window.localStorage.getItem(DRAFT_KEY));
       if (draft) {
         const restored = mergeDraft(form, draft.form || {});
-        if (initialMemberId) restored.member_id = initialMemberId;
+        restored.member_id = memberId; // the login, never a stored draft value
+        if (!restored.name) restored.name = identity?.name || '';
         formRef.current = restored;
         draftRef.current = draft;
         setForm(restored);
@@ -231,14 +233,12 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
   // Always load the saved profile. A leftover local draft means unsaved edits (it is deleted after a
   // successful save), so a non-empty draft value wins; anything the draft left blank comes from the
   // saved profile, so the form never shows a blank where an answer is on file.
-  async function lookup(overrideMemberId) {
-    const memberId = (overrideMemberId !== undefined ? overrideMemberId : form.member_id).trim();
-    if (!memberId) return;
+  async function lookup() {
     setLookingUp(true);
     let response;
     let result;
     try {
-      response = await fetch(`/api/power-profile?member_id=${encodeURIComponent(memberId)}`, { cache: 'no-store' });
+      response = await fetch('/api/power-profile', { cache: 'no-store' });
       result = await response.json();
     } catch {
       return;
@@ -260,7 +260,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
       setOnFile(result.profile);
       setForm((current) => ({
         ...current,
-        name: current.name || result.profile.name || '',
+        name: String(draftForm.name || '') || result.profile.name || current.name || '',
         governor_gear: serializeGovernorGearSelections(gearSelections) || result.profile.governor_gear || '',
         charms: serializeCharmSelections(charmSelections) || result.profile.charms || '',
         hero_gear: pick('hero_gear'),
@@ -275,28 +275,9 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
     }
   }
 
-  // Signed in: Member ID is their login, so fill it in (read-only) and prefill the
-  // name from the saved profile, otherwise from their Kingshot nickname.
-  const [signedInId, setSignedInId] = useState('');
+  // Identity (name + locked Member ID) arrives from the server as props; only the saved profile is fetched.
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      let profile = null;
-      try {
-        const res = await fetch('/api/session', { cache: 'no-store' });
-        const data = await res.json();
-        if (data?.state === 'authenticated') profile = data.profile;
-      } catch { /* not signed in or offline */ }
-      if (cancelled) return;
-      const id = String(profile?.memberId || profile?.playerId || initialMemberId || '').trim();
-      if (profile && id) {
-        setSignedInId(id);
-        const nick = String(profile.nickname || '').trim();
-        setForm((current) => ({ ...current, member_id: id, name: current.name || (nick && nick !== id ? nick : '') }));
-      }
-      if (id) await lookup(id);
-    })();
-    return () => { cancelled = true; };
+    if (memberId) lookup();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -393,18 +374,10 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
             <div className="ledger-block-head">
               <span className="ledger-block-kicker">{STEPS[0].kicker}</span>
               <h2 ref={(el) => { headingRefs.current[0] = el; }} tabIndex={-1}>Your details</h2>
-              <p>{signedInId ? 'We filled in your name and Member ID from your sign-in. Check that your name is right. Your Member ID is your login, so it cannot be changed here.' : 'Your name and Member ID look you up and prefill anything already on file.'}</p>
+              <p>We filled in your name and Member ID from your sign-in. Check that your name is right. Your Member ID is your login, so it cannot be changed here.</p>
             </div>
-            <div className="identity-grid">
-              <div className="wizard-field">
-                <label>Your name<input {...fieldProps('name')} autoComplete="nickname" value={form.name} onChange={(e) => updateField('name', e.target.value)} placeholder="Your in-game name" /></label>
-                {fieldError('name')}
-              </div>
-              <div className="wizard-field">
-                <label>Member ID<input {...fieldProps('member_id')} value={form.member_id} readOnly={Boolean(signedInId)} aria-readonly={signedInId ? 'true' : undefined} onChange={(e) => updateField('member_id', e.target.value)} onBlur={() => { if (!signedInId) lookup(); }} placeholder="Your Member ID" /></label>
-                {fieldError('member_id')}
-              </div>
-            </div>
+            <IdentityFields memberId={form.member_id} name={form.name} onNameChange={(v) => updateField('name', v)} known={Boolean(identity?.name)} inputProps={{ id: 'pp-name' }} invalid={Boolean(fieldProps('name')['aria-invalid'])} describedBy={fieldProps('name')['aria-describedby']} />
+            {fieldError('name')}
             {/* Reserved height: the row appearing on blur must not shift the Next button mid-click. */}
             <div className="lookup-slot" aria-live="polite">{lookingUp && <LoadingRow>Looking up your profile…</LoadingRow>}</div>
             {onFile && (
@@ -527,16 +500,6 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
   );
 }
 
-function PowerProfilePageInner({ intro }) {
-  const searchParams = useSearchParams();
-  const memberId = searchParams.get('member_id') || '';
-  return <PowerProfileForm initialMemberId={memberId} intro={intro} />;
-}
-
-export default function PowerProfileClient({ intro }) {
-  return (
-    <Suspense fallback={null}>
-      <PowerProfilePageInner intro={intro} />
-    </Suspense>
-  );
+export default function PowerProfileClient({ intro, identity }) {
+  return <PowerProfileForm identity={identity} intro={intro} />;
 }

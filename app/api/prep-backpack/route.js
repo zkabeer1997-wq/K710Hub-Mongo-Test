@@ -3,7 +3,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
-import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { loadMemberBase, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { normalizePrepRowSlots, validatePrepSlots, PREP_SLOT_KEYS } from '../../../lib/nobleAdvisor.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
 
@@ -19,8 +19,9 @@ export async function GET(request) {
     const { cycle, record, previous } = await loadMemberCycleRecord('prep', session.memberId);
     // With no answer in any cycle, `base` has the name we already know (Power Profile / Kingshot).
     const base = record || previous ? null : await loadMemberBase(session.memberId);
+    const identity = await getMemberIdentity(session);
     return NextResponse.json(
-      { member_id: session.memberId, record: normalizePrepRowSlots(record), previous: normalizePrepRowSlots(previous), cycle, ...(base ? { base: { name: base.name, from: base.from } } : {}) },
+      { member_id: session.memberId, identity, record: normalizePrepRowSlots(record), previous: normalizePrepRowSlots(previous), cycle, ...(base ? { base: { name: base.name, from: base.from } } : {}) },
       { headers: HEADERS }
     );
   } catch (error) {
@@ -46,9 +47,11 @@ export async function POST(request) {
     const str = (v) => String(v == null ? '' : v);
     const arr = (v) => (Array.isArray(v) ? v.map(String) : []);
 
+    // Name falls back to the account's name when the box was left empty; the id is always the session's.
+    const typedName = str(data.in_game_name).trim();
     const payload = {
       member_id: session.memberId,
-      in_game_name: str(data.in_game_name),
+      in_game_name: typedName || (await getMemberIdentity(session)).name,
       want_construction: str(data.want_construction),
       construction_upgrades: arr(data.construction_upgrades),
       ttg_used: str(data.ttg_used),

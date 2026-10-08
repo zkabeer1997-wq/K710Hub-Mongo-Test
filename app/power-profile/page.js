@@ -3,6 +3,7 @@ import { getFormGate } from '../../lib/formGates.server.js';
 import EditableSection from '../../components/EditableSection';
 import UpsertNotice from '../../components/member/UpsertNotice';
 import FormClosedNotice from '../../components/FormClosedNotice';
+import { getPageIdentity } from '../../lib/memberPrefill.server.js';
 import PowerProfileClient from './PowerProfileClient';
 
 export const metadata = {
@@ -10,10 +11,11 @@ export const metadata = {
 };
 
 export default async function PowerProfilePage() {
-  const [blocks, isAdmin, gate] = await Promise.all([
+  const [blocks, isAdmin, gate, identity] = await Promise.all([
     getBlocks('power-profile-intro'),
     checkIsAdmin(),
     getFormGate('lead'),
+    getPageIdentity(),
   ]);
   const hasIntro = Array.isArray(blocks) && blocks.length > 0;
   const intro =
@@ -36,5 +38,5 @@ export default async function PowerProfilePage() {
       </main>
     );
   }
-  return <PowerProfileClient intro={<><UpsertNotice formKey="lead" />{intro}</>} />;
+  return <PowerProfileClient identity={identity} intro={<><UpsertNotice formKey="lead" />{intro}</>} />;
 }

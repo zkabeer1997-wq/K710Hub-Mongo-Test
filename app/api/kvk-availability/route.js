@@ -6,7 +6,7 @@ import { readMemberSession } from '../../../lib/memberAuth';
 import { readKingshotSession } from '../../../lib/memberAuthKingshot';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
-import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { loadMemberBase, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
 import { resolveTroopPrefill, sanitizeKvkTroops, troopFieldsOf } from '../../../lib/kvkAvailability.mjs';
 
@@ -61,7 +61,7 @@ export async function GET(request) {
     // `row` is the member's roster row (name, ID, last values) as before. `record` is the answer
     // for THIS KvK cycle (null until saved) and `previous` the latest earlier-cycle answer.
     const { cycle, record, previous } = await loadMemberCycleRecord('joiner', session.memberId);
-    const base = await loadMemberBase(session.memberId);
+    const [base, identity] = await Promise.all([loadMemberBase(session.memberId), getMemberIdentity(session)]);
     const heroList = await getActiveHeroNames(); // inactive heroes are dropped from what the form shows
     // Troop levels + heroes are per KvK cycle. Prefill: this cycle's answer, else the latest earlier
     // cycle's, else the old Power Profile values (where they used to be entered).
@@ -75,6 +75,7 @@ export async function GET(request) {
         row: data, auth: session.via, record: pickJoiner(record, heroList), previous: pickJoiner(previous, heroList), cycle,
         prefill,
         base: { name: base.name, current_alliance: base.current_alliance, from: base.from },
+        identity,
       },
       { headers: { 'Cache-Control': 'no-store' } }
     );
@@ -98,16 +99,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
   const name = String(body?.name || '').trim();
-  const memberId = String(body?.member_id || '').trim();
+  // The player id is the login (session). A member_id in the body is ignored, never trusted.
+  const memberId = session.memberId;
   const alliance = String(body?.current_alliance || '').trim();
   const availability = String(body?.availability || '').trim();
   const pin = String(body?.pin || '');
-  if (memberId !== session.memberId) {
-    return NextResponse.json(
-      { error: 'Sign in with this Player ID to update its availability.' },
-      { status: 403 }
-    );
-  }
   if (
     !name ||
     name.length > 120 ||

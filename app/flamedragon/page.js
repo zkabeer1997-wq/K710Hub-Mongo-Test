@@ -4,6 +4,7 @@ import EditableSection from '../../components/EditableSection';
 import UpsertNotice from '../../components/member/UpsertNotice';
 import FormClosedNotice from '../../components/FormClosedNotice';
 import { getPublicHeroes } from '../../lib/heroCatalog.server.js';
+import { getPageIdentity } from '../../lib/memberPrefill.server.js';
 import FlamedragonClient from './FlamedragonClient';
 
 export const metadata = {
@@ -11,11 +12,12 @@ export const metadata = {
 };
 
 export default async function FlamedragonPage() {
-  const [blocks, isAdmin, gate, heroCatalog] = await Promise.all([
+  const [blocks, isAdmin, gate, heroCatalog, identity] = await Promise.all([
     getBlocks('flamedragon-intro'),
     checkIsAdmin(),
     getFormGate('dragon'),
     getPublicHeroes(),
+    getPageIdentity(),
   ]);
   const hasIntro = Array.isArray(blocks) && blocks.length > 0;
   const intro =
@@ -36,5 +38,5 @@ export default async function FlamedragonPage() {
       </main>
     );
   }
-  return <FlamedragonClient heroCatalog={heroCatalog} intro={<><UpsertNotice formKey="dragon" />{intro}</>} />;
+  return <FlamedragonClient identity={identity} heroCatalog={heroCatalog} intro={<><UpsertNotice formKey="dragon" />{intro}</>} />;
 }

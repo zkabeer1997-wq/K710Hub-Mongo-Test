@@ -33,11 +33,8 @@ export async function GET(request) {
   if (!session) {
     return NextResponse.json({ error: 'Please sign in to load your profile.' }, { status: 401 });
   }
-  const url = new URL(request.url);
-  const memberId = String(url.searchParams.get('member_id') || session.memberId).trim();
-  if (memberId !== session.memberId) {
-    return NextResponse.json({ error: 'You can only load your own profile.' }, { status: 403 });
-  }
+  // Always the signed-in player's own record: a ?member_id= for anyone else is ignored.
+  const memberId = session.memberId;
   try {
     const coll = await getCollection(COLLECTIONS.POWER_PROFILES);
     const data = await coll.findOne({ member_id: memberId }, { projection: PUBLIC_PROJECT });
@@ -68,16 +65,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
   try {
-    profile = sanitizePowerProfileInput(rawBody);
+    // The Member ID is the login: whatever the body says, the session id is what is saved.
+    profile = sanitizePowerProfileInput({ ...(rawBody && typeof rawBody === 'object' ? rawBody : {}), member_id: session.memberId });
   } catch (error) {
     // sanitize* throws deliberate, user-facing validation messages only.
     return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-  if (profile.member_id !== session.memberId) {
-    return NextResponse.json(
-      { error: 'Sign in with this Member ID to update its Power Profile.' },
-      { status: 403 }
-    );
   }
   try {
     const coll = await getCollection(COLLECTIONS.POWER_PROFILES);

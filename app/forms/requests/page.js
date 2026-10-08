@@ -1,6 +1,7 @@
 import { checkIsAdmin } from '../../../lib/contentBlocks';
 import { getFormGate } from '../../../lib/formGates.server.js';
 import FormClosedNotice from '../../../components/FormClosedNotice';
+import { getPageIdentity } from '../../../lib/memberPrefill.server.js';
 import WebsiteRequestForm from './WebsiteRequestForm';
 
 export const metadata = {
@@ -8,7 +9,7 @@ export const metadata = {
 };
 
 export default async function WebsiteRequestsPage() {
-  const [isAdmin, gate] = await Promise.all([checkIsAdmin(), getFormGate('requests')]);
+  const [isAdmin, gate, identity] = await Promise.all([checkIsAdmin(), getFormGate('requests'), getPageIdentity()]);
 
   if (gate.is_open === false && !isAdmin) {
     return (
@@ -22,7 +23,7 @@ export default async function WebsiteRequestsPage() {
 
   return (
     <main className="page public-page">
-      <WebsiteRequestForm />
+      <WebsiteRequestForm identity={identity} />
     </main>
   );
 }

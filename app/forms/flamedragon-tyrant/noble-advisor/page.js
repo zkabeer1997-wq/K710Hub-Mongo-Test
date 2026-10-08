@@ -7,6 +7,7 @@ import { getFormFieldMeta } from '../../../../lib/formFieldMeta.server';
 import WhichFormNotice from '../../../../components/member/WhichFormNotice';
 import UpsertNotice from '../../../../components/member/UpsertNotice';
 import FormClosedNotice from '../../../../components/FormClosedNotice';
+import { getMemberIdentity } from '../../../../lib/memberPrefill.server.js';
 import NobleAdvisorForm from './NobleAdvisorForm';
 
 export const metadata = { title: 'Noble Advisor Schedule' };
@@ -14,9 +15,10 @@ export const metadata = { title: 'Noble Advisor Schedule' };
 export default async function NobleAdvisorPage() {
   const session = await readMemberSession({ cookies: await cookies() });
   if (!session) redirect('/dashboard?next=/forms/flamedragon-tyrant/noble-advisor');
-  const [gate, fieldMeta] = await Promise.all([
+  const [gate, fieldMeta, identity] = await Promise.all([
     getFormGate('noble'),
     getFormFieldMeta('noble').catch(() => null),
+    getMemberIdentity(session),
   ]);
   const intro = fieldMeta?.intro || { heading: 'Noble Advisor Schedule' };
   return (
@@ -31,7 +33,7 @@ export default async function NobleAdvisorPage() {
           <>
             <WhichFormNotice kind="noble" />
             <UpsertNotice formKey="noble" />
-            <NobleAdvisorForm memberId={session.memberId} />
+            <NobleAdvisorForm identity={identity} />
           </>
         )}
       </div>

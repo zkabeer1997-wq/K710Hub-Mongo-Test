@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import IdentityFields from '../../components/member/IdentityFields';
 import GovernorGearOcr from '../../components/GovernorGearOcr';
 import { HeroRosterPicker, TroopLevelFields } from '../../components/member/TroopHeroFields';
 import {
@@ -25,12 +25,12 @@ import {
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 
-function FlamedragonForm({ initialMemberId = '', intro, heroCatalog }) {
+function FlamedragonForm({ identity, intro, heroCatalog }) {
   const { intro: fieldMetaIntro } = useFormFieldMeta('dragon');
   const [form, setForm] = useState({
-    name: '',
-    member_id: initialMemberId,
-    current_alliance: '',
+    name: identity?.name || '',
+    member_id: identity?.memberId || '',
+    current_alliance: identity?.alliance || '',
     infantry_tier: '',
     infantry_tg: '',
     cavalry_tier: '',
@@ -94,7 +94,6 @@ function FlamedragonForm({ initialMemberId = '', intro, heroCatalog }) {
       setOnFile(null);
       return;
     }
-    if (result.member_id) setForm((current) => ({ ...current, member_id: result.member_id }));
     // This cycle's saved form, otherwise last cycle's answers as a starting point (not saved until Submit).
     const r = result.record || result.previous || result.fallback;
     if (r) {
@@ -107,8 +106,8 @@ function FlamedragonForm({ initialMemberId = '', intro, heroCatalog }) {
       setOnFile(result.record || null);
       setForm((current) => ({
         ...current,
-        name: current.name || r.name || '',
-        current_alliance: r.current_alliance || '',
+        name: r.name || current.name || result.identity?.name || '',
+        current_alliance: r.current_alliance || current.current_alliance || '',
         infantry_tier: r.infantry_tier || '',
         infantry_tg: r.infantry_tg || '',
         cavalry_tier: r.cavalry_tier || '',
@@ -173,10 +172,7 @@ function FlamedragonForm({ initialMemberId = '', intro, heroCatalog }) {
         </section>
         <form className="public-form-card" onSubmit={handleSubmit}>
 
-          <section className="identity-grid">
-            <label>In Game Name<input value={form.name} onChange={(e) => updateField('name', e.target.value)} placeholder="Your in-game name" /></label>
-            <label>Player ID<input value={form.member_id} readOnly placeholder="Filled in when you sign in" /></label>
-          </section>
+          <IdentityFields memberId={form.member_id} name={form.name} onNameChange={(v) => updateField('name', v)} label="In Game Name" known={Boolean(identity?.name)} />
 
           <section className="troop-section public-section">
             <div className="section-title-row"><span>Alliance</span><h3>Current Alliance</h3><p>Select the alliance you are currently in.</p></div>
@@ -291,16 +287,6 @@ function FlamedragonForm({ initialMemberId = '', intro, heroCatalog }) {
   );
 }
 
-function FlamedragonPageInner({ intro, heroCatalog }) {
-  const searchParams = useSearchParams();
-  const memberId = searchParams.get('member_id') || '';
-  return <FlamedragonForm initialMemberId={memberId} intro={intro} heroCatalog={heroCatalog} />;
-}
-
-export default function FlamedragonClient({ intro, heroCatalog }) {
-  return (
-    <Suspense fallback={null}>
-      <FlamedragonPageInner intro={intro} heroCatalog={heroCatalog} />
-    </Suspense>
-  );
+export default function FlamedragonClient({ intro, heroCatalog, identity }) {
+  return <FlamedragonForm identity={identity} intro={intro} heroCatalog={heroCatalog} />;
 }

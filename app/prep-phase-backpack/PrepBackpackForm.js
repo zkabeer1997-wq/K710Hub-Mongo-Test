@@ -9,6 +9,7 @@ import './prep.css';
 import { NOBLE_TIME_SLOTS } from '../../lib/nobleAdvisor.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
+import IdentityFields from '../../components/member/IdentityFields';
 
 const CONSTRUCTION_UPGRADES = ['TG5', 'TG6', 'TG7', 'TG8'];
 const T11_TROOPS = ['T11 Infantry', 'T11 Cavalry', 'T11 Archers'];
@@ -57,9 +58,10 @@ function YesNo({ id, legend, value, onChange, error }) {
   );
 }
 
-export default function PrepBackpackForm({ initialMemberId = '' }) {
+export default function PrepBackpackForm({ identity }) {
+  const memberId = identity?.memberId || '';
   const { intro } = useFormFieldMeta('prep');
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => ({ ...initialForm, inGameName: identity?.name || '' }));
   const [avail, setAvail] = useState({ availDay1: [], availDay2: [], availDay4: [], availDay5: [] });
   const [overflow, setOverflow] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,11 +81,12 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
         const r = data?.record || data?.previous;
         if (!r) {
           // Never filled in: at least start with the name we already know.
-          if (data?.base?.name) setForm((prev) => ({ ...prev, inGameName: prev.inGameName || data.base.name }));
+          const known = data?.identity?.name || data?.base?.name;
+          if (known) setForm((prev) => ({ ...prev, inGameName: prev.inGameName || known }));
           return;
         }
         setForm({
-          inGameName: r.in_game_name || '',
+          inGameName: r.in_game_name || data?.identity?.name || identity?.name || '',
           wantConstruction: r.want_construction || '',
           constructionUpgrades: r.construction_upgrades || [],
           ttgUsed: r.ttg_used || '',
@@ -104,6 +107,7 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
       })
       .catch(() => {});
     return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function updateField(key, value) {
@@ -130,7 +134,6 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
 
   function validate() {
     const next = {};
-    if (!initialMemberId) next.member = 'We could not tell who you are. Go back to the hub, unlock again, then open this form.';
     if (!String(form.inGameName).trim()) next.name = 'Type your in-game name in the first box, then press Save again.';
     for (const step of STEPS) {
       const a = answer(step);
@@ -154,7 +157,6 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
     // A day answered No sends no times, so leadership never schedules someone who said No.
     const times = (step) => (answer(step) === 'Yes' ? avail[step.avail] : []);
     const payload = {
-      member_id: initialMemberId,
       in_game_name: form.inGameName,
       want_construction: form.wantConstruction,
       construction_upgrades: form.constructionUpgrades,
@@ -209,7 +211,6 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
         <h1>{intro.heading || 'KvK Prep & Appointments'}</h1>
         <p className="prep2-lede">{intro.description || 'This one form is how you ask for your buffs on prep days and tell us when you are online.'}</p>
         <p className="prep2-rule">{ONE_PER_DAY}</p>
-        <p className="prep2-id">Member ID: <strong>{initialMemberId || '(unknown)'}</strong></p>
       </div>
 
       {saved ? (
@@ -221,9 +222,7 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
       ) : null}
 
       <section className="prep2-block">
-        <label className="prep2-field">Your in-game name
-          <input value={form.inGameName} onChange={(e) => updateField('inGameName', e.target.value)} autoComplete="off" aria-invalid={errors.name ? 'true' : undefined} aria-describedby={errors.name ? 'prep-name-err' : undefined} />
-        </label>
+        <IdentityFields memberId={memberId} name={form.inGameName} onNameChange={(v) => updateField('inGameName', v)} label="Your in-game name" known={Boolean(identity?.name)} invalid={Boolean(errors.name)} describedBy={errors.name ? 'prep-name-err' : undefined} />
         {errors.name ? <p className="prep-err" id="prep-name-err">{errors.name}</p> : null}
       </section>
 

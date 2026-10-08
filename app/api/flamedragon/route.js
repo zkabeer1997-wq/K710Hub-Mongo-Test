@@ -5,7 +5,7 @@ import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayloa
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
-import { loadDragonFallback } from '../../../lib/memberPrefill.server.js';
+import { loadDragonFallback, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
 const PUBLIC_PROJECT = {
@@ -50,7 +50,8 @@ export async function GET(request) {
     };
     // No answer in any cycle yet: offer what is already known (Power Profile, KvK Availability, Kingshot name).
     const fallback = record || previous ? null : await loadDragonFallback(session.memberId);
-    return NextResponse.json({ member_id: session.memberId, record: strip(record), previous: strip(previous), cycle, fallback });
+    const identity = await getMemberIdentity(session);
+    return NextResponse.json({ member_id: session.memberId, identity, record: strip(record), previous: strip(previous), cycle, fallback });
   } catch (error) {
     console.error('flamedragon GET failed', error);
     return NextResponse.json({ error: 'Could not load your form. Please try again.' }, { status: 500 });
@@ -80,7 +81,8 @@ export async function POST(request) {
   try {
     // Identity comes from the signed session, never from the request body.
     // A partial body on an existing record keeps the stored name.
-    const named = existing && !('name' in body) ? { ...body, name: existing.name } : body;
+    const typedName = String(body?.name || '').trim();
+    const named = existing && !('name' in body) ? { ...body, name: existing.name } : typedName ? body : { ...body, name: (await getMemberIdentity(session)).name };
     record = sanitizeFlamedragonInput({ ...named, member_id: session.memberId, pin: 'session' }, { existingHeroes: existing?.heroes, allowedHeroes: await getActiveHeroNames() });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

@@ -4,7 +4,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { validateNobleAdvisor, normalizeNobleSlots } from '../../../lib/nobleAdvisor.mjs';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
-import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export async function GET(request) {
     const record = snap(loaded.record);
     const previous = snap(loaded.previous);
     return NextResponse.json(
-      { record, previous, cycle, member_id: session.memberId, profile_name: profile?.name || '' },
+      { record, previous, cycle, member_id: session.memberId, profile_name: profile?.name || '', identity: await getMemberIdentity(session) },
       { headers }
     );
   } catch {
@@ -50,7 +50,10 @@ export async function POST(request) {
   } catch {
     return NextResponse.json({ error: 'Invalid booking.' }, { status: 400, headers });
   }
-  const { record, error } = validateNobleAdvisor(body);
+  // Empty name box: use the account's name. The member id is always the session's (see below).
+  const typed = body && typeof body === 'object' ? body : {};
+  const named = String(typed.in_game_name || '').trim() ? typed : { ...typed, in_game_name: (await getMemberIdentity(session)).name };
+  const { record, error } = validateNobleAdvisor(named);
   if (error) return NextResponse.json({ error }, { status: 400, headers });
   try {
     const cycle = await getCurrentEventCycle('flamedragon');

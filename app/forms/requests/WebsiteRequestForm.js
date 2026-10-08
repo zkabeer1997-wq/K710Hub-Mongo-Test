@@ -5,14 +5,15 @@ import Link from 'next/link';
 import { KVK_ALLIANCES } from '../../../lib/playerCombatOptions.mjs';
 import { useFormFieldMeta } from '../../../lib/useFormFieldMeta';
 import { useToast } from '../../../components/ui/Toast';
+import IdentityFields from '../../../components/member/IdentityFields';
 
 const SECTIONS = ['Tools and Calculators', 'Forms', 'Events', 'Guides', 'General'];
 const MAX_MESSAGE_LENGTH = 2000;
 
-export default function WebsiteRequestForm() {
-  const [name, setName] = useState('');
-  const [memberId, setMemberId] = useState('');
-  const [currentAlliance, setCurrentAlliance] = useState('');
+export default function WebsiteRequestForm({ identity }) {
+  const [name, setName] = useState(identity?.name || '');
+  const memberId = identity?.memberId || '';
+  const [currentAlliance, setCurrentAlliance] = useState(identity?.alliance || '');
   const [section, setSection] = useState('');
   const [message, setMessage] = useState('');
   const [needsSignIn, setNeedsSignIn] = useState(false);
@@ -36,9 +37,8 @@ export default function WebsiteRequestForm() {
         }
         if (!response.ok) throw new Error(result.error || 'Could not load your profile.');
         if (!cancelled && result.profile) {
-          setName(result.profile.name || '');
-          setMemberId(result.profile.member_id || '');
-          setCurrentAlliance(result.profile.current_alliance || '');
+          setName((current) => current || result.profile.name || '');
+          setCurrentAlliance((current) => current || result.profile.current_alliance || '');
         }
       } catch (error) {
         if (!cancelled) { setIsError(true); setStatus(error.message); }
@@ -64,7 +64,7 @@ export default function WebsiteRequestForm() {
       const response = await fetch('/api/website-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current_alliance: currentAlliance, section, message: message.trim() }),
+        body: JSON.stringify({ name, current_alliance: currentAlliance, section, message: message.trim() }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not submit your request.');
@@ -123,10 +123,7 @@ export default function WebsiteRequestForm() {
           <span>Website Requests</span>
           <h2>What would you like to see improved?</h2>
         </div>
-        <section className="identity-grid">
-          <label>Your name<input value={name} readOnly placeholder="Loading..." /></label>
-          <label>Member ID<input value={memberId} readOnly placeholder="Loading..." /></label>
-        </section>
+        <IdentityFields memberId={memberId} name={name} onNameChange={setName} known={Boolean(identity?.name)} />
         {fields.map((field) => {
           if (field.key === 'current_alliance') {
             return (

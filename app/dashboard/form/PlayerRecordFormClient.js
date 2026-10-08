@@ -1,10 +1,8 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import PlayerRecordForm from '../PlayerRecordForm';
 
-export default function PlayerRecordFormClient({ heroCatalog }) {
-  const searchParams = useSearchParams();
-  const memberId = searchParams.get('member_id') || '';
-  return <PlayerRecordForm initialMemberId={memberId} heroCatalog={heroCatalog} />;
+// Identity comes from the server (the signed-in session), never from the URL.
+export default function PlayerRecordFormClient({ heroCatalog, identity }) {
+  return <PlayerRecordForm identity={identity} heroCatalog={heroCatalog} />;
 }

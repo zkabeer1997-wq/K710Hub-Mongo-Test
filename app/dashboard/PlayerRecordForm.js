@@ -7,16 +7,18 @@ import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 import { TROOP_FIELD_KEYS } from '../../lib/kvkAvailability.mjs';
 import UpsertNotice from '../../components/member/UpsertNotice';
 import { HeroRosterPicker, TroopLevelFields } from '../../components/member/TroopHeroFields';
+import IdentityFields from '../../components/member/IdentityFields';
 
 const AVAILABILITY_OPTIONS = KVK_AVAILABILITY_OPTIONS;
 const ALLIANCES = KVK_ALLIANCES;
 
-export default function PlayerRecordForm({ initialMemberId = '', heroCatalog }) {
+export default function PlayerRecordForm({ identity, heroCatalog }) {
   const { intro } = useFormFieldMeta('joiner');
-  const [name, setName] = useState('');
-  const [memberId, setMemberId] = useState(initialMemberId);
+  // Identity arrives from the server as props: the form opens with name and (locked) Member ID filled.
+  const memberId = identity?.memberId || '';
+  const [name, setName] = useState(identity?.name || '');
   const [availability, setAvailability] = useState('');
-  const [currentAlliance, setCurrentAlliance] = useState('');
+  const [currentAlliance, setCurrentAlliance] = useState(identity?.alliance || '');
   const [troops, setTroops] = useState(() => Object.fromEntries(TROOP_FIELD_KEYS.map((key) => [key, ''])));
   const [heroes, setHeroes] = useState([]);
   // Where the troop/hero starting values came from, when not this cycle's saved answer.
@@ -40,8 +42,7 @@ export default function PlayerRecordForm({ initialMemberId = '', heroCatalog }) 
           const start = result.record || result.previous || null;
           const base = result.base || {};
           setOnFile(result.record || null);
-          setName(result.row?.name || start?.name || base.name || '');
-          setMemberId(result.row?.member_id || initialMemberId);
+          setName(start?.name || result.row?.name || identity?.name || result.identity?.name || '');
           setCurrentAlliance(start?.current_alliance || result.row?.current_alliance || base.current_alliance || '');
           setAvailability(start?.availability || '');
           const prefill = result.prefill;
@@ -69,13 +70,14 @@ export default function PlayerRecordForm({ initialMemberId = '', heroCatalog }) 
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setStatus('');
     setIsError(false);
-    if (!name.trim() || !memberId || !currentAlliance || !availability) {
+    if (!name.trim() || !currentAlliance || !availability) {
       setIsError(true);
       setStatus('Enter your name and select alliance and availability.');
       return;
@@ -87,7 +89,6 @@ export default function PlayerRecordForm({ initialMemberId = '', heroCatalog }) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          member_id: memberId,
           current_alliance: currentAlliance,
           availability,
           ...troops,
@@ -121,16 +122,7 @@ export default function PlayerRecordForm({ initialMemberId = '', heroCatalog }) 
           <h2>Tell us when you can play and what you are bringing.</h2>
           <p>Your availability, troop levels and heroes are for this KvK. They are filled in from your last answers, so just check them and press Save.</p>
         </div>
-        <section className="identity-grid">
-          <label>
-            Your name
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your in-game name" />
-          </label>
-          <label>
-            Member ID
-            <input value={memberId} readOnly placeholder="Your Member ID" />
-          </label>
-        </section>
+        <IdentityFields memberId={memberId} name={name} onNameChange={setName} known={Boolean(identity?.name)} />
         <section className="troop-section public-section">
           <div className="section-title-row">
             <span>Alliance</span>

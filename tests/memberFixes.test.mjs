@@ -48,9 +48,12 @@ test('KvK availability: first save creates the roster row instead of 404', async
   assert.equal(rows.find((r) => r.member_id === '920000777').current_alliance, 'RED');
 });
 
-test('KvK availability: cannot save for another member id', async () => {
+test('KvK availability: a spoofed member_id is ignored; the row is saved for the session id', async () => {
   const res = await availability.POST(req({ name: 'X', member_id: '123456789', current_alliance: '710', availability: 'Not Available' }));
-  assert.equal(res.status, 403);
+  assert.equal(res.status, 200);
+  const rows = state.tables[COLLECTIONS.SUBMISSIONS] || [];
+  assert.equal(rows.some((r) => r.member_id === '123456789'), false);
+  assert.equal(rows.find((r) => r.member_id === '920000777').name, 'X');
 });
 
 test('withAppointmentsSummary adds the published lines to the Prep entry only', () => {

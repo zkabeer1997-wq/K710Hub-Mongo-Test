@@ -40,9 +40,12 @@ test('anonymous visitors cannot read any profile', async () => {
   assert.equal(res.status, 401);
 });
 
-test("members cannot read someone else's profile", async () => {
+test("a ?member_id= for someone else is ignored: members only ever get their own profile", async () => {
   const res = await route.GET(req('?member_id=member-b', true));
-  assert.equal(res.status, 403);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.profile.name, 'A');
+  assert.equal(body.profile.member_id, 'member-a');
 });
 
 test('members can prefill their own profile', async () => {

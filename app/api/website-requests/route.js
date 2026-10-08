@@ -1,4 +1,4 @@
-import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { loadMemberBase, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
@@ -22,8 +22,10 @@ export async function GET(request) {
     // Only the member's name is prefilled (their suggestion text always starts empty). When the roster
     // row has no name, use the one we know from their Power Profile / other forms / Kingshot profile.
     const known = data?.name ? null : await loadMemberBase(session.memberId);
+    const identity = await getMemberIdentity(session);
     return NextResponse.json(
       {
+        identity,
         profile: {
           name: data?.name || known?.name || '',
           member_id: session.memberId,
@@ -72,11 +74,14 @@ export async function POST(request) {
       { member_id: session.memberId },
       { projection: { name: 1 } }
     );
+    // Name: what the member typed (max 120), else their roster name, else the account's name.
+    const typedName = String(body?.name || '').trim().slice(0, 120);
+    const identityName = typedName || profile?.name || (await getMemberIdentity(session)).name;
     const requests = await getCollection(COLLECTIONS.WEBSITE_REQUESTS);
     const doc = {
       id: randomUUID(),
       member_id: session.memberId,
-      name: profile?.name || session.memberId,
+      name: identityName || session.memberId,
       current_alliance: currentAlliance,
       section,
       message,

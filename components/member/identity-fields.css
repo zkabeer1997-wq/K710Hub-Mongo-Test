@@ -1,0 +1,13 @@
+/* Shared identity block for member forms: editable name (prefilled) + locked Member ID (the login). */
+.member-identity { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 15rem); gap: 12px; align-items: start; }
+.member-identity-field { display: grid; gap: 6px; min-width: 0; }
+.member-identity-field > .member-identity-label { font-size: 14px; color: var(--t-secondary, var(--text-muted)); }
+.member-identity-hint { margin: 0; font-size: 13px; line-height: 1.4; color: var(--t-muted, var(--text-dim)); }
+.member-identity-locked {
+  display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px;
+  border: 1px dashed var(--edge-strong, var(--line)); border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03); color: var(--t-primary, var(--text));
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; cursor: default; user-select: all;
+}
+.member-identity-locked svg { flex: none; color: var(--brass, var(--gold)); }
+@media (max-width: 640px) { .member-identity { grid-template-columns: minmax(0, 1fr); } }
