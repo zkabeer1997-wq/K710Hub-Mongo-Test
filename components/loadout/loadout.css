@@ -177,3 +177,4 @@ html[data-easy="true"] body .lo .lo-tile-caption { font-size: 16px; line-height:
 html[data-easy="true"] body .lo .lo-gem-badge { font-size: 16px; min-width: 24px; height: 24px; }
 html[data-easy="true"] body .lo .lo-art { animation: none; }
 @media (prefers-reduced-motion: reduce) { .lo .lo-art { animation: none !important; } }
+

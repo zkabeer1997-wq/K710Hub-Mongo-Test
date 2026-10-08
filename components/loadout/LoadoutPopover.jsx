@@ -92,7 +92,7 @@ export default function LoadoutPopover({ piece, target, anchorId, gear, charms, 
       {!isGear || HAS_GEAR_ART[piece.gearKey] ? (
         <div className="lo-pop-preview" data-empty={previewSrc ? undefined : 'true'}>
           <LoadoutArt src={previewSrc} alt={isGear ? `${title} preview` : `${title} level ${String(charms[piece.charmKeys[target]]).replace(/^Level\s*/, '')} preview`} className="lo-pop-art" />
-          {previewSrc ? null : <span className="lo-pop-preview-note">{isGear ? 'No gear' : 'Not set'}</span>}
+          {previewSrc ? null : <span className="lo-pop-preview-note">{isGear ? (value ? 'No picture yet' : 'No gear') : 'Not set'}</span>}
         </div>
       ) : null}
       {isGear ? (

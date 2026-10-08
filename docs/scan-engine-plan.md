@@ -197,3 +197,11 @@ Explicitly still UNKNOWN / blocking phases 2-4:
 ## Update 3: owner art for the loadout board
 
 Owner-supplied game art (Governor Gear for hat/shirt/ring, charms per troop) is imported by `scripts/import-loadout-images.mjs` into `public/images/loadout/` (384px WebP with the white background removed, plus `manifest.json`). It is shown on the Power Profile board now and is kept at full size so it can serve as OCR templates later. No art exists yet for pendant, pants and baton. The table editor was removed: the board popovers are the only editors, with a screen-reader-only summary list.
+
+## Note: loadout art for pendant, pants and baton
+
+`scripts/import-gear-guide-screens.mjs` crops the pendant, pants and baton tiles from the owner's in-game Gear Guide screenshots (frame colour checked
+against the expected quality per group; tiles are dimmed in-game so a fixed brightness lift is applied; padlocked or highlighted tiles are rebuilt from
+real pixels of a clean sibling where one exists). Red T3..T6 come from the owner's 384px files in `Red_T3_to_T6`. Missing: pendant Gold T3 and Red T0..T2
+(only locked/highlighted in the screenshots); the board draws its fallback tile there. These guide crops are dimmed/lifted, so prefer the owner's
+original art as OCR templates; entries with `composited` are never templates (`usableAsTemplate:false`).

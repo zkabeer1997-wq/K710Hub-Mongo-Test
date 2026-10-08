@@ -6,8 +6,8 @@ import { QUALITIES } from '../../lib/scan/kinds/governorProfile/gameData.mjs';
 const NAME = new Map(QUALITIES.map((q) => [q.id, q.name]));
 
 /**
- * One Governor Gear tile. With owner art (hat, shirt, ring) the picture already contains the tier label and stars, so only a
- * caption strip is added; without art (pendant, pants, baton) or if the image fails, the drawn tile is used.
+ * One Governor Gear tile. The art already contains the tier label and stars, so only a caption strip is added; with no gear, no art for
+ * that state (pendant Gold T3, Red T0-T2) or if the image fails, the drawn tile is used.
  * Quality colour is a DISPLAY choice (see loadout.css), and the quality name is always printed as text.
  */
 export default function GearSlotButton({ piece, value, active, open, onActivate }) {
