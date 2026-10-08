@@ -119,7 +119,7 @@ export default function FormsChecklist() {
         return (
           <section key={group.id} className={styles.group} aria-labelledby={`g-${group.id}`}>
             <div className={styles.groupHead}>
-              <h2 id={`g-${group.id}`}>{group.title}{cycleLabel ? ` · ${cycleLabel}` : ''}</h2>
+              <h2 id={`g-${group.id}`}>{cycleLabel ? (cycleLabel.toLowerCase().includes(group.title.toLowerCase()) ? cycleLabel : `${group.title} · ${cycleLabel}`) : group.title}</h2>
               <p>{group.intro}{group.cycle ? ' Your answers are saved separately for each round, so you fill these in again every time.' : ''}</p>
             </div>
             <ul className={styles.list}>
