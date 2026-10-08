@@ -98,3 +98,12 @@ test('numberPreview turns into the error past a limit', () => {
   assert.equal(normalizeNumericAnswer('4k', 'mystic_trial_stages'), '4k');
   assert.equal(normalizeNumericAnswer('3b', 'total_power'), '3000000000');
 });
+
+test('server number: whole numbers 250 to 1100 only', async () => {
+  const { validateNumericAnswer } = await import('../lib/interestForm.mjs');
+  for (const ok of ['250', '512', '1100', ' 710 ']) assert.equal(validateNumericAnswer('current_server', ok).ok, true, ok);
+  for (const bad of ['249', '1101', '0', 'S512', '#512', '512a', '12.5', '5,12', '-300', '99999']) {
+    assert.equal(validateNumericAnswer('current_server', bad).ok, false, bad);
+  }
+  assert.equal(validateNumericAnswer('current_server', '512').digits, '512');
+});

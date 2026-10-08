@@ -122,8 +122,8 @@ const REQUIRED_MESSAGES = {
   currentPasses: 'Please type how many transfer passes you have. If none, type 0.',
 };
 // UI key -> stored field name that carries the numeric limits (lib/interestForm.mjs).
-const NUMERIC_FIELD = { currentTg: 'current_tg', mysticTrialStages: 'mystic_trial_stages', totalPower: 'total_power', passesRequired: 'passes_required', currentPasses: 'current_passes' };
-const NUMERIC_KEYS = ['currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'];
+const NUMERIC_FIELD = { currentServer: 'current_server', currentTg: 'current_tg', mysticTrialStages: 'mystic_trial_stages', totalPower: 'total_power', passesRequired: 'passes_required', currentPasses: 'current_passes' };
+const NUMERIC_KEYS = ['currentServer', 'currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'];
 const REQUIRED_TEXT = ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance', 'migrateAlliance', 'highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower', 'willingReducePower', 'passesRequired', 'currentPasses', 'activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'];
 
 // Pure per-field validation: returns a message or ''.
@@ -574,7 +574,7 @@ export default function InterestForm({ initialPeriod }) {
     body.append('in_game_name', form.inGameName.trim());
     body.append('player_id', normalizePlayerId(form.playerId));
     body.append('discord_username', normalizeDiscordUsername(form.discordUsername));
-    body.append('current_server', form.currentServer.trim());
+    body.append('current_server', normalizeNumericAnswer(form.currentServer, 'current_server'));
     body.append('current_alliance', form.currentAlliance.trim());
     body.append('migrate_alliance', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther.trim()}` : form.migrateAlliance);
     body.append('highest_troop_level', form.highestTroopLevel);
@@ -725,7 +725,7 @@ export default function InterestForm({ initialPeriod }) {
               <TextField ctx={ctx} k="discordUsername" label={L('discordUsername')} hint="We message you here. You can leave out the @." placeholder="yourname">
                 <Where>Open Discord and tap your picture. Your username is the short name without spaces, for example name or name#1234.</Where>
               </TextField>
-              <TextField ctx={ctx} k="currentServer" label={L('currentServer')} hint="The kingdom you play in today, before moving." mode="numeric" placeholder="for example 512" />
+              <TextField ctx={ctx} k="currentServer" label={L('currentServer')} hint="The kingdom you play in today, before moving. Numbers only, from 250 to 1,100." mode="numeric" maxLength={4} placeholder="for example 512" />
               <TextField ctx={ctx} k="currentAlliance" label={L('currentAlliance')} hint="The alliance you are in today. Type “None” if you have none." />
             </div>
           </>
