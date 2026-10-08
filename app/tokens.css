@@ -75,6 +75,8 @@
   --t-primary:       #ece3d0;
   --t-secondary:     #a9afc0;
   --t-muted:         #949bb0; /* AA (>=4.5:1) on every dark surface incl. --stone-lit; was #6a7085 (2.6-4.1:1) */
+  --t-faint:         #8a91a8; /* previously referenced but undefined */
+  --field-bg:        rgba(10, 13, 26, 0.6); /* previously referenced but undefined */
   --t-gold:          var(--gold-aged);
 
   --edge:            rgba(201, 164, 78, 0.18);

@@ -101,11 +101,6 @@
     linear-gradient(180deg, rgba(4, 5, 10, 0.55) 0%, transparent 22%, transparent 68%, rgba(4, 5, 10, 0.88) 100%);
 }
 
-.k-haze {
-  background: radial-gradient(ellipse 90% 55% at 50% 78%, rgba(226, 105, 42, 0.10), transparent 62%);
-  mix-blend-mode: screen;
-}
-
 /* ============================================================
    SURFACES — physical, not glassmorphic
    ============================================================ */
@@ -150,11 +145,6 @@
 }
 
 /* Hairline brass divider. */
-.k-rule {
-  height: 1px;
-  border: 0;
-  background: linear-gradient(90deg, transparent, var(--edge-strong) 18%, var(--edge-strong) 82%, transparent);
-}
 
 /* ============================================================
    CONTROLS
@@ -220,7 +210,6 @@
    translucent tint (illegible over leather) and the --ember orange the
    legacy stylesheet paints on public submit buttons. */
 .k-btn-struck,
-.gatehouse-submit.k-btn,
 .registry .public-form-card button[type="submit"],
 .armory .war-ledger-form button[type="submit"] {
   padding: 16px 34px;
@@ -235,14 +224,12 @@
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 240, 200, 0.55);
 }
 .k-btn-struck:hover:not(:disabled),
-.gatehouse-submit.k-btn:hover:not(:disabled),
 .registry .public-form-card button[type="submit"]:hover:not(:disabled),
 .armory .war-ledger-form button[type="submit"]:hover:not(:disabled) {
   background: linear-gradient(180deg, #eccc84, #ac8531);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 245, 210, 0.7);
 }
 .k-btn-struck:disabled,
-.gatehouse-submit.k-btn:disabled,
 .registry .public-form-card button[type="submit"]:disabled,
 .armory .war-ledger-form button[type="submit"]:disabled { opacity: 0.55; }
 
@@ -288,36 +275,6 @@
 .k-input::placeholder { color: var(--t-secondary); }
 
 /* Choice chip — radio/checkbox rendered as a struck marker. */
-.k-choice {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 44px;
-  padding: 8px 15px;
-  font-size: 13.5px;
-  color: var(--t-secondary);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(201, 164, 78, 0.16);
-  border-radius: 2px;
-  cursor: pointer;
-  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
-}
-.k-choice:hover { border-color: rgba(201, 164, 78, 0.42); color: var(--t-primary); }
-.k-choice input { position: absolute; opacity: 0; pointer-events: none; }
-.k-choice[data-on='true'] {
-  border-color: var(--gold-aged);
-  background: rgba(201, 164, 78, 0.14);
-  color: var(--parchment);
-}
-.k-choice[data-on='true']::before {
-  content: '';
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--gold-hot);
-  box-shadow: 0 0 8px var(--gold-aged);
-  flex-shrink: 0;
-}
 
 /* ============================================================
    HERALDRY
@@ -355,23 +312,13 @@
   border-radius: 2px;
 }
 
-.k-sr {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 *:focus-visible {
   outline: 2px solid var(--gold-hot);
   outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .k-btn, .k-choice, .k-input { transition: none; }
+  .k-btn, .k-input { transition: none; }
 }
 
 /* ============================================================
@@ -601,27 +548,7 @@
   padding: 0 0 90px;
   overflow: hidden;
 }
-.chamber-atmos {
-  position: absolute; inset: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 40% at 50% 6%, rgba(201,164,78,0.13), transparent 62%),
-    radial-gradient(ellipse 90% 50% at 50% 100%, rgba(226,105,42,0.07), transparent 66%);
-}
 /* light shafts from an unseen ceiling oculus */
-.chamber-shafts {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
-  background:
-    linear-gradient(101deg, transparent 42%, rgba(230,201,141,0.055) 45%, transparent 49%),
-    linear-gradient(79deg, transparent 52%, rgba(230,201,141,0.045) 55%, transparent 59%);
-}
-
-.chamber-hero {
-  position: relative; z-index: 2;
-  padding: clamp(88px, 12vh, 140px) 20px clamp(30px, 5vh, 56px);
-  text-align: center;
-}
-.chamber-title { margin: 12px 0 0; font-size: clamp(28px, 5.2vw, 62px); letter-spacing: 0.10em; }
-.chamber-lede { max-width: 56ch; margin: 18px auto 0; font-size: clamp(15px, 1.4vw, 18px); }
 
 .chrono { position: relative; margin: clamp(28px, 5vh, 56px) auto 0; max-width: 560px; }
 .chrono-dial { width: min(100%, 460px); height: auto; display: block; margin: 0 auto; }
@@ -641,10 +568,6 @@
   color: var(--parchment); letter-spacing: 0.07em;
 }
 .chrono-unit { font-size: 11.5px; color: var(--color-ink-dim); letter-spacing: 0.12em; text-transform: uppercase; }
-
-.chamber-section { position: relative; z-index: 2; max-width: 1140px; margin: 0 auto; padding: clamp(48px, 8vh, 96px) clamp(18px, 4vw, 40px) 0; }
-.chamber-head { margin-bottom: clamp(26px, 4vh, 44px); }
-.chamber-h2 { margin: 10px 0 0; font-size: clamp(21px, 3vw, 34px); letter-spacing: 0.09em; }
 
 /* --- Alliance standards ---
    Three real standards hanging in the chamber: an iron rod, cloth with a
@@ -696,18 +619,6 @@
    The numerals were previously drawn as an outline over transparent text,
    which turned every vertical stem into two strokes: I read as II. */
 .doctrine { display: grid; }
-.doctrine-entry {
-  display: grid; grid-template-columns: 86px 1fr; gap: clamp(14px, 3vw, 34px); align-items: baseline;
-  padding: clamp(20px, 3vw, 30px) 0;
-  border-bottom: 1px solid var(--color-border);
-}
-.doctrine-entry:first-child { border-top: 1px solid var(--color-border); }
-.doctrine-num {
-  font-size: clamp(28px, 4vw, 44px); line-height: 1;
-  color: var(--brass-dim); letter-spacing: 0.06em;
-}
-.doctrine-title { margin: 0; font-size: clamp(15px, 1.6vw, 19px); letter-spacing: 0.08em; color: var(--parchment); }
-.doctrine-body { margin: 9px 0 0; font-size: 15px; max-width: 62ch; }
 
 /* --- The march --- */
 .march { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 2vw, 22px); position: relative; }
@@ -716,45 +627,14 @@
   background: linear-gradient(90deg, transparent, rgba(201,164,78,0.34) 14%, rgba(201,164,78,0.34) 86%, transparent);
   box-shadow: 0 6px 18px rgba(201,164,78,0.14);
 }
-.march-stone { position: relative; padding-top: 38px; }
 /* a waystone planted on the road, not a bullet */
-.march-marker {
-  position: absolute; top: 0; left: 0;
-  width: 15px; height: 19px;
-  clip-path: polygon(50% 0, 100% 26%, 100% 100%, 0 100%, 0 26%);
-  background: linear-gradient(180deg, #8b8574, #2a2721);
-  box-shadow: 0 0 16px rgba(201,164,78,0.32);
-}
-.march-marker::after {
-  content: ''; position: absolute; left: 3px; right: 3px; top: 7px; height: 2px;
-  background: rgba(201,164,78,0.75);
-}
-.march-num { display: block; color: var(--brass); }
-.march-title { margin: 8px 0 0; font-size: 15px; letter-spacing: 0.06em; color: var(--parchment); }
-.march-body { margin: 8px 0 0; font-size: 14px; }
 
 /* --- Registry doors --- */
-.registry-doors {
-  position: relative; z-index: 2; margin: clamp(60px, 10vh, 120px) auto 0;
-  max-width: 900px; padding: clamp(46px, 7vw, 84px) 28px clamp(52px, 8vw, 92px);
-  text-align: center; overflow: hidden;
-  background: linear-gradient(180deg, rgba(20,15,8,0.5), rgba(8,10,17,0.9));
-  border-top: 1px solid var(--color-border-strong); border-bottom: 1px solid var(--color-border-strong);
-}
-.registry-doors-light {
-  position: absolute; left: 50%; top: 0; width: 60%; height: 100%; transform: translateX(-50%);
-  background: radial-gradient(ellipse 50% 60% at 50% 0%, rgba(226,150,60,0.24), transparent 70%);
-  pointer-events: none;
-}
-.registry-doors-title { position: relative; margin: 12px 0 0; font-size: clamp(22px, 3.4vw, 40px); letter-spacing: 0.10em; }
-.registry-doors-copy { position: relative; max-width: 52ch; margin: 14px auto 26px; }
-.registry-doors-cta { position: relative; }
 
 @media (max-width: 900px) {
   .standards { grid-template-columns: minmax(0, 1fr); }
   .march { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .march::before { display: none; }
-  .doctrine-entry { grid-template-columns: 54px 1fr; }
 }
 @media (max-width: 560px) {
   .march { grid-template-columns: minmax(0, 1fr); }
@@ -937,8 +817,6 @@
 }
 .registry-inner { position: relative; z-index: 2; width: min(940px, 100%); margin: 0 auto; padding: clamp(84px, 11vh, 130px) clamp(16px, 4vw, 32px) 0; }
 .registry-head .ph-inner { padding-inline: 0; }
-.registry-title { margin: 12px 0 0; font-size: clamp(26px, 4.6vw, 48px); letter-spacing: 0.10em; }
-.registry-lede { max-width: 54ch; margin: 16px auto 0; }
 .registry-head-link {
   display: inline-block;
   font-family: var(--font-body); font-size: 13px; letter-spacing: 0.04em;
@@ -1014,121 +892,19 @@
    THE GATEHOUSE — member checkpoint
    ============================================================ */
 .gatehouse { display: flex; align-items: center; justify-content: center; padding: 96px 20px 60px; }
-.gatehouse-art {
-  background:
-    radial-gradient(ellipse 50% 40% at 50% 30%, rgba(63,116,189,0.12), transparent 66%),
-    linear-gradient(180deg, #06080f 0%, #0d1220 46%, #080a12 100%);
-}
 /* interior stone: coursed blocks receding into dark */
-.gatehouse-art::after {
-  content: ''; position: absolute; inset: 0; opacity: 0.5;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 46px, rgba(255,255,255,0.028) 46px 47px),
-    repeating-linear-gradient(90deg, transparent 0 96px, rgba(255,255,255,0.022) 96px 97px);
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 78%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 78%);
-}
 /* A wall torch, not a bare glow. Previously this was a single blurred
    orange disc floating on the wall with nothing making the light.
    .k-scene-layer sets inset:0; it must be cleared or width/left conflict
    and only one torch resolves. */
-.gatehouse-torch {
-  inset: auto; position: absolute;
-  width: 34px; height: 62px; top: 20%;
-}
-.gatehouse-torch-l { left: 11%; }
-.gatehouse-torch-r { right: 11%; }
 /* the iron bracket bolted to the wall */
-.gatehouse-torch::before {
-  content: ''; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
-  width: 100%; height: 58%;
-  clip-path: polygon(34% 100%, 66% 100%, 88% 28%, 100% 0, 0 0, 12% 28%);
-  background: linear-gradient(180deg, #6a5f4c, #2b2620 58%, #131210);
-}
 /* the flame, and the light it throws on the wall */
-.gatehouse-torch::after {
-  content: ''; position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
-  width: 400%; height: 400%;
-  background:
-    radial-gradient(ellipse 4% 7% at 50% 50%, rgba(255,246,214,0.95), transparent 70%),
-    radial-gradient(ellipse 9% 14% at 50% 49%, rgba(255,201,116,0.85), rgba(232,118,40,0.4) 42%, transparent 66%),
-    radial-gradient(circle at 50% 50%, rgba(226,105,42,0.24), transparent 60%);
-  animation: torch-breathe 3.4s ease-in-out infinite;
-}
-.gatehouse-torch-r::after { animation-delay: -1.6s; }
 @keyframes torch-breathe { 0%,100% { opacity: 0.72; } 50% { opacity: 1; } }
-
-.gatehouse-guards { display: none; }
-@media (min-width: 1100px) {
-  .gatehouse-guards { display: block; }
-  .gatehouse-guard {
-    position: absolute; bottom: 0; width: 90px; height: 300px;
-    background: linear-gradient(180deg, transparent, #04050a 62%);
-    clip-path: polygon(38% 0, 62% 0, 70% 16%, 66% 100%, 34% 100%, 30% 16%);
-    opacity: 0.85;
-  }
-  .gatehouse-guard-l { left: 12%; }
-  .gatehouse-guard-r { right: 12%; }
-}
-
-.gatehouse-inner { position: relative; z-index: 6; width: min(460px, 100%); text-align: center; }
-.gatehouse-head { margin-bottom: 26px; }
-.gatehouse-title { margin: 12px 0 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: 0.12em; }
-.gatehouse-lede { margin: 12px 0 0; font-style: italic; }
-
-.gatehouse-desk {
-  position: relative; text-align: left;
-  display: flex; flex-direction: column; gap: 16px;
-  padding: 26px 24px 22px;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(120,84,52,0.26), transparent 62%),
-    linear-gradient(180deg, #3a2a1d, #241a12);
-  border: 1px solid rgba(120,84,52,0.44);
-  border-top: 2px solid rgba(63,116,189,0.44);
-  border-radius: 3px;
-  box-shadow: var(--depth-2);
-}
 /* Leather grain belongs to the desk surface. It is an absolutely
    positioned sibling, so without an explicit stacking order it painted
    over the fields and the submit button, striping both. */
-.gatehouse-desk-grain {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  opacity: 0.24; border-radius: 3px;
-  background: repeating-linear-gradient(94deg, transparent 0 3px, rgba(0,0,0,0.5) 3px 4px);
-}
-.gatehouse-desk > *:not(.gatehouse-desk-grain) { position: relative; z-index: 1; }
-.gatehouse-submit { width: 100%; margin-top: 4px; }
-.gatehouse-hint { font-size: 13px; margin: 0; color: var(--color-ink-dim); }
-
-.gatehouse-restricted {
-  display: inline-flex; flex-direction: column; gap: 2px; align-items: center;
-  margin-top: 26px; padding: 10px 18px; text-decoration: none;
-  border: 1px solid rgba(154,161,180,0.20); border-radius: 2px;
-  color: var(--color-ink-dim); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
-  transition: border-color var(--t-fast), color var(--t-fast);
-}
-.gatehouse-restricted:hover { border-color: var(--color-border-strong); color: var(--color-ink-muted); }
 
 /* inner gate opening on success */
-.gatehouse-doors { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
-.gatehouse-door {
-  position: absolute; top: 0; bottom: 0; width: 50%;
-  background: linear-gradient(180deg, #171b28, #090b12);
-  border-inline: 1px solid rgba(201,164,78,0.22);
-  transform: translateX(0); opacity: 0;
-  transition: transform 1400ms var(--ease-heavy), opacity 200ms ease;
-}
-.gatehouse-door-l { left: 0; }
-.gatehouse-door-r { right: 0; }
-.gatehouse-doorlight {
-  position: absolute; inset: 0; opacity: 0;
-  background: radial-gradient(ellipse 30% 60% at 50% 50%, rgba(245,180,102,0.9), transparent 66%);
-  transition: opacity 900ms ease;
-}
-.gatehouse-doors.is-open .gatehouse-door { opacity: 1; }
-.gatehouse-doors.is-open .gatehouse-door-l { transform: translateX(-100%); }
-.gatehouse-doors.is-open .gatehouse-door-r { transform: translateX(100%); }
-.gatehouse-doors.is-open .gatehouse-doorlight { opacity: 1; }
 /* ============================================================
    THE MUSTER HALL
    A room, not a grid. Stone pilasters frame the chamber, the
@@ -1553,48 +1329,13 @@
    Ledger (throughput). Neither changes the data or the controls.
    ============================================================ */
 .admin-shell { position: relative; }
-.warroom-atmos { position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 420ms var(--ease-cine); }
-.warroom-tablelight { position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 420ms var(--ease-cine); }
 .admin-sidebar, .admin-content { position: relative; z-index: 1; }
 
 /* --- COMMAND: the war table --- */
-.warroom-command { background: linear-gradient(180deg, #05060c 0%, #090b13 100%); }
-.warroom-command .warroom-atmos {
-  opacity: 1;
-  background:
-    radial-gradient(ellipse 70% 46% at 58% 30%, rgba(201,164,78,0.13), transparent 66%),
-    radial-gradient(ellipse 40% 30% at 12% 90%, rgba(63,116,189,0.07), transparent 70%);
-}
-.warroom-command .warroom-tablelight {
-  opacity: 1;
-  background:
-    radial-gradient(ellipse 58% 40% at 50% 34%, rgba(255,203,122,0.11), transparent 68%),
-    /* hex influence grid, faint, reading as an etched campaign table */
-    repeating-linear-gradient(60deg, transparent 0 34px, rgba(201,164,78,0.045) 34px 35px),
-    repeating-linear-gradient(-60deg, transparent 0 34px, rgba(201,164,78,0.045) 34px 35px);
-}
-.warroom-command .admin-content-body { background: linear-gradient(180deg, rgba(20,16,9,0.34), transparent 40%); }
-.warroom-command .admin-table-wrap { border-color: rgba(201,164,78,0.30); box-shadow: var(--depth-2); }
-.warroom-command .admin-topbar h1 { color: var(--parchment); }
 
 /* --- LEDGER: dense operational mode --- */
-.warroom-ledger { background: linear-gradient(180deg, #0c0f1e 0%, #10142a 100%); }
-.warroom-ledger .admin-table { font-size: 11.5px; }
-.warroom-ledger .admin-table th, .warroom-ledger .admin-table td { padding: 7px 9px; }
-.warroom-ledger .warroom-counters { padding-block: 8px; }
-.warroom-ledger .warroom-counter-val { font-size: clamp(19px, 2vw, 24px); }
 
 /* --- mode switch --- */
-.warroom-modes { display: flex; gap: 0; margin-bottom: 8px; border: 1px solid var(--edge); border-radius: 2px; overflow: hidden; }
-.warroom-mode {
-  flex: 1; min-height: 36px; padding: 0 10px; cursor: pointer;
-  background: transparent; border: 0; color: var(--t-muted);
-  font-family: var(--font-body); font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  transition: background var(--t-fast), color var(--t-fast);
-}
-.warroom-mode:hover { color: var(--parchment); }
-.warroom-mode[data-on='true'] { background: rgba(201,164,78,0.16); color: var(--gold-hot); }
 
 /* --- brass counters --- */
 .warroom-counters {
@@ -1621,9 +1362,6 @@
   .warroom-counters { margin: 0 16px; }
   .warroom-counter { flex-basis: 33%; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .warroom-atmos, .warroom-tablelight, .warroom-mode { transition: none; }
-}
 
 /* ============================================================
    HOMEPAGE (.theme-realm)
@@ -1635,49 +1373,6 @@
    surface to a warmer display face is still open, see PR 2's notes.
    ============================================================ */
 
-.home-page { background: var(--color-bg); color: var(--color-ink); }
-
-.home-hero {
-  position: relative;
-  overflow: hidden;
-  min-height: 640px;
-  display: flex;
-  align-items: center;
-  padding: var(--space-10) var(--space-6);
-}
-.home-hero-content {
-  position: relative;
-  z-index: 1;
-  max-width: 720px;
-  margin: 0 auto;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-}
-.home-hero-content .k-mark { color: var(--gold-hot); }
-.home-hero-title {
-  margin: 0;
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-weight: 800;
-  font-size: clamp(32px, 6vw, var(--text-4xl));
-  color: var(--hero-ink);
-  text-shadow: 0 4px 24px rgba(0,0,0,0.55);
-}
-.home-hero-sub {
-  margin: 0;
-  font-family: var(--font-narrative);
-  font-size: var(--text-lg);
-  line-height: 1.6;
-  color: var(--hero-ink-muted);
-  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
-  max-width: 60ch;
-}
-.home-hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-2); }
-
 /* .ui-btn-quiet's color comes from --color-ink, which is correct
    everywhere else on this page (dark text on the light cream ground) but
    wrong here: the hero's local background is always the dark Gate scene,
@@ -1686,70 +1381,3 @@
    PR 3's button/input bugs were - the fix is the same shape: an override
    scoped to where the ground actually differs from what the component
    assumed, using --hero-ink instead of --color-ink. */
-.home-hero-actions .ui-btn-quiet {
-  color: var(--hero-ink);
-  border-color: color-mix(in srgb, var(--hero-ink) 40%, transparent);
-}
-.home-hero-actions .ui-btn-quiet:hover {
-  background: color-mix(in srgb, var(--hero-ink) 12%, transparent);
-  border-color: var(--hero-ink);
-}
-.home-hero-content .k710-chronometer,
-.home-hero-content [class*="chronometer"] { margin-top: var(--space-6); }
-
-.home-section { max-width: 1080px; margin: 0 auto; padding: var(--space-9) var(--space-6); }
-.home-section-head { text-align: center; max-width: 640px; margin: 0 auto var(--space-7); display: flex; flex-direction: column; gap: var(--space-2); }
-.home-section-head .k-mark { color: var(--color-accent-strong); }
-.home-section-title {
-  margin: 0;
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-weight: 800;
-  font-size: clamp(24px, 3.4vw, var(--text-3xl));
-  color: var(--color-ink);
-}
-.home-section-sub { margin: 0; font-size: var(--text-md); color: var(--color-ink-muted); line-height: 1.6; }
-
-.home-doctrine, .home-alliances { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-5); }
-.home-doctrine-card, .home-alliance-card { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
-.home-doctrine-num { color: var(--color-accent); font-size: var(--text-lg); }
-.home-doctrine-title, .home-alliance-name { margin: 0; font-family: var(--font-display); font-size: var(--text-lg); letter-spacing: 0.02em; }
-.home-doctrine-body, .home-alliance-desc { margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); line-height: 1.55; }
-.home-alliance-card .ui-tag { align-self: flex-start; }
-
-.home-section-more {
-  display: block;
-  text-align: center;
-  margin-top: var(--space-6);
-  color: var(--color-accent-strong);
-  font-weight: 700;
-  font-size: var(--text-sm);
-  text-decoration: none;
-}
-.home-section-more:hover { text-decoration: underline; }
-
-.home-events-card { padding: var(--space-7); text-align: center; display: flex; flex-direction: column; gap: var(--space-2); align-items: center; }
-
-.home-deck { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); }
-.home-deck-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-5);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  transition: border-color 160ms, transform 160ms;
-}
-.home-deck-item:hover { border-color: var(--color-accent); transform: translateY(-2px); }
-.home-deck-label { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.02em; color: var(--color-ink); font-size: var(--text-md); }
-.home-deck-sub { font-size: var(--text-xs); color: var(--color-ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-
-.home-final-cta { text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding-bottom: var(--space-11); }
-
-@media (max-width: 640px) {
-  .home-hero { min-height: 520px; padding: var(--space-8) var(--space-4); }
-  .home-section { padding: var(--space-7) var(--space-4); }
-}
