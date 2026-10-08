@@ -100,12 +100,12 @@ function confirmCopy(action, state, eventName) {
       };
     case 'archive_reset':
       return {
-        title: `Archive ${label} and start fresh?`,
-        confirm: 'Archive & start fresh',
+        title: `End ${label} without starting a new cycle?`,
+        confirm: 'End this cycle',
         danger: true,
         body: [
-          `${label} and its ${c.applicants ?? 0} applicants move to History. The next cycle starts empty.`,
-          'Forms for the old cycle close. This cannot be undone from this page.',
+          `All forms close and ${label} moves to History with its ${c.applicants ?? 0} applicants. Nothing is deleted.`,
+          'Members will see closed forms until you use Start next cycle. If you want a new cycle straight away, use Start next cycle instead; it ends this one for you.',
         ],
       };
     default:
@@ -227,7 +227,7 @@ export default function EventControl({ type }) {
       close_forms: form ? `${form.label} is closed.` : 'Forms are closed.',
       publish: 'Schedule published.',
       unpublish: 'Schedule unpublished.',
-      archive_reset: 'Archived. A fresh cycle is ready.',
+      archive_reset: 'Cycle ended and moved to History.',
     }[action];
     const ok = await runWithErrors(action, payload, text);
     if (ok) {
@@ -446,17 +446,23 @@ export default function EventControl({ type }) {
                       <th scope="col">Cycle</th>
                       <th scope="col">Status</th>
                       <th scope="col" className="ec-num">Applicants</th>
+                      <th scope="col">Answers per form</th>
                       <th scope="col"><span className="sr-only">Actions</span></th>
                     </tr>
                   </thead>
                   <tbody>
                     {history.map((h) => (
                       <tr key={h.id}>
-                        <th scope="row" data-label="Cycle">{h.label}</th>
+                        <th scope="row" data-label="Cycle">{h.label}{h.start_date ? <span className="ec-hist-date"> {formatUtc(h.start_date)}</span> : null}</th>
                         <td data-label="Status">
                           {h.is_current ? <StatusChip kind="open">Current</StatusChip> : h.archived ? <StatusChip kind="ended">Archived</StatusChip> : <StatusChip kind="closed">Past</StatusChip>}
                         </td>
                         <td data-label="Applicants" className="ec-num">{h.applicants}</td>
+                        <td data-label="Answers per form">
+                          {Object.entries(h.forms_submitted || {}).length
+                            ? Object.entries(h.forms_submitted).map(([key, n]) => `${(state?.forms || []).find((f) => f.form_key === key)?.label || key}: ${n}`).join(' · ')
+                            : '-'}
+                        </td>
                         <td data-label="Actions">
                           <Button
                             variant="quiet"

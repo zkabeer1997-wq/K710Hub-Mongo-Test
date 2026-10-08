@@ -104,12 +104,11 @@ export async function POST(request) {
   try {
     const coll = await getCollection(COLLECTIONS.SUBMISSIONS);
     const existing = await coll.findOne({ member_id: memberId });
-    if (!existing) {
-      return NextResponse.json({ error: 'Member not found.' }, { status: 404 });
-    }
+    // First save: a signed-in member with no roster row yet gets one created below
+    // (upsert keyed on their session member id). No error, nothing for them to do.
     // PIN only required for legacy sessions that still have a pin_hash.
     // Kingshot sessions are already verified via in-game code.
-    if (session.via !== 'kingshot' && existing.pin_hash) {
+    if (existing && session.via !== 'kingshot' && existing.pin_hash) {
       if (!pin || pin.length > 120) {
         return NextResponse.json(
           { error: 'Enter your name and PIN, and select your alliance and availability.' },
@@ -126,10 +125,11 @@ export async function POST(request) {
     }
     const now = new Date();
     const cycle = await getCurrentEventCycle('kvk').catch(() => null);
-    await snapshotIfFromPastCycle('kvk', existing, cycle);
+    if (existing) await snapshotIfFromPastCycle('kvk', existing, cycle);
     await coll.updateOne(
       { member_id: memberId },
       {
+        $setOnInsert: { member_id: memberId, created_at: now },
         $set: {
           name,
           current_alliance: alliance,
@@ -138,7 +138,8 @@ export async function POST(request) {
           event_updated_at: now,
           ...(cycle ? { event_cycle_id: cycle.id, event_cycle_label: cycle.label } : {}),
         },
-      }
+      },
+      { upsert: true }
     );
     const row = await coll.findOne(
       { member_id: memberId },

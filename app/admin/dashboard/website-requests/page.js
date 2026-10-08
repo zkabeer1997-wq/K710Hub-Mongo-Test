@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
 import SectionTabs, { INBOX_TABS } from '../../../../components/admin/SectionTabs';
-import StatusBadge from '../../../../components/admin/StatusBadge';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
-import { Button, Input, Table } from '../../../../components/ui';
+import { REQUEST_STATUS_OPTIONS, normalizeRequestStatus } from '../../../../lib/adminInbox.mjs';
+import { Input, Select, Table } from '../../../../components/ui';
 
 const COLUMNS = [
   { key: 'name', label: 'Name' },
@@ -18,6 +18,8 @@ const COLUMNS = [
 ];
 
 function cellValue(row, key) {
+  if (key === 'name') return row.display_name || row.name || '';
+  if (key === 'status') return normalizeRequestStatus(row.status);
   if (key === 'created_at') return row.created_at ? new Date(row.created_at).toLocaleString() : '';
   return row[key] == null ? '' : String(row[key]);
 }
@@ -65,8 +67,7 @@ export default function AdminWebsiteRequestsPage() {
     }
   }
 
-  async function toggleStatus(row) {
-    const nextStatus = row.status === 'reviewed' ? 'new' : 'reviewed';
+  async function changeStatus(row, nextStatus) {
     setSavingId(row.id);
     try {
       const response = await fetch(`/api/admin-website-requests/${encodeURIComponent(row.id)}`, {
@@ -77,7 +78,7 @@ export default function AdminWebsiteRequestsPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not update status.');
       window.dispatchEvent(new Event('admin-tasks-changed'));
-      setRows((current) => current.map((r) => (r.id === row.id ? result.row : r)));
+      setRows((current) => current.map((r) => (r.id === row.id ? { ...r, ...result.row } : r)));
     } catch (err) {
       setError(err.message || 'Could not update status.');
     } finally {
@@ -105,7 +106,7 @@ export default function AdminWebsiteRequestsPage() {
     });
   }, [rows, query, sortKey, sortDir]);
 
-  const newCount = rows.filter((r) => r.status !== 'reviewed').length;
+  const newCount = rows.filter((r) => normalizeRequestStatus(r.status) === 'new').length;
 
   return (
     <AdminShell
@@ -134,6 +135,7 @@ export default function AdminWebsiteRequestsPage() {
       {loading ? (
         <TableSkeleton columns={COLUMNS.length} rows={7} />
       ) : (
+        <div className="admin-table-wrap">
         <Table>
           <thead>
             <tr>
@@ -142,36 +144,41 @@ export default function AdminWebsiteRequestsPage() {
                   {col.label}{sortKey === col.key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
               ))}
-              <th />
             </tr>
           </thead>
           <tbody>
             {visibleRows.length === 0 ? (
-              <tr><td colSpan={COLUMNS.length + 1}>No requests yet.</td></tr>
+              <tr><td colSpan={COLUMNS.length}>No requests yet.</td></tr>
             ) : (
               visibleRows.map((row) => (
                 <tr key={row.id}>
-                  <td>{row.name || '-'}</td>
+                  <td>
+                    {row.display_name || row.name || '-'}
+                    {row.display_name_note && <div className="admin-row-message">{row.display_name_note}</div>}
+                  </td>
                   <td className="member-id-cell">{row.member_id || '-'}</td>
                   <td><span className="unit-pill">{row.current_alliance || '-'}</span></td>
                   <td><span className="unit-pill">{row.section}</span></td>
-                  <td className="member-detail-text" style={{ maxWidth: 420, whiteSpace: 'pre-wrap' }}>{row.message}</td>
-                  <td><StatusBadge status={row.status} label={row.status === 'reviewed' ? 'Reviewed' : 'New'} /></td>
-                  <td className="updated-cell">{row.created_at ? new Date(row.created_at).toLocaleString() : '-'}</td>
+                  <td className="member-detail-text" style={{ minWidth: 240, maxWidth: 420, whiteSpace: 'pre-wrap' }}>{row.message}</td>
                   <td>
-                    <Button
-                      variant="quiet"
-                      onClick={() => toggleStatus(row)}
+                    <label className="sr-only" htmlFor={`req-status-${row.id}`}>Status for request from {row.display_name || row.member_id}</label>
+                    <Select
+                      id={`req-status-${row.id}`}
+                      tone="console"
+                      value={normalizeRequestStatus(row.status)}
                       disabled={savingId === row.id}
+                      onChange={(e) => changeStatus(row, e.target.value)}
                     >
-                      {savingId === row.id ? 'Saving...' : row.status === 'reviewed' ? 'Mark new' : 'Mark reviewed'}
-                    </Button>
+                      {REQUEST_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </Select>
                   </td>
+                  <td className="updated-cell">{row.created_at ? new Date(row.created_at).toLocaleString() : '-'}</td>
                 </tr>
               ))
             )}
           </tbody>
         </Table>
+        </div>
       )}
     </AdminShell>
   );

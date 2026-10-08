@@ -41,7 +41,7 @@ export const ACTION_LABELS = {
   open_forms: 'Open forms',
   publish: 'Publish schedule',
   unpublish: 'Unpublish schedule',
-  archive_reset: 'Archive & start fresh',
+  archive_reset: 'End this cycle (no new one)',
 };
 
 export const DESTRUCTIVE_ACTIONS = ['close_forms', 'publish', 'unpublish', 'archive_reset'];

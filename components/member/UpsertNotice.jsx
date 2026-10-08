@@ -7,7 +7,7 @@ import { useMemberFormStatus } from '../../lib/useMemberFormStatus';
 //  (a) done this cycle, (b) not done this cycle (with a carried-over hint when last cycle's
 //  answers exist), (c) never filled in. Pass `formKey` to look the state up itself, or
 //  `known` + `updatedAt` (+ optional `cycleLabel`, `previousLabel`) when the form loaded its own entry.
-export default function UpsertNotice({ formKey, updatedAt, known, cycleLabel, previousLabel }) {
+export default function UpsertNotice({ formKey, updatedAt, known, cycleLabel, previousLabel, subject }) {
   const { status, loaded } = useMemberFormStatus();
   let at = updatedAt;
   let ready = known;
@@ -22,21 +22,22 @@ export default function UpsertNotice({ formKey, updatedAt, known, cycleLabel, pr
   }
   if (!ready) return null;
   const forCycle = cycle ? ` for ${cycle}` : '';
+  const forSubject = subject ? ` (${subject})` : '';
   return (
     <p className="upsert-notice" role="status">
       {at ? (
         <>
-          <strong>Done{forCycle}. Saved <DualTime value={at} />.</strong>
+          <strong>Done{forCycle}{forSubject}. Saved <DualTime value={at} />.</strong>
           <span>You can change your answers and save again.</span>
         </>
       ) : previous ? (
         <>
-          <strong>Not done{forCycle} yet.</strong>
+          <strong>Not done{forCycle}{forSubject} yet.</strong>
           <span>We filled this in from your answers last cycle ({previous}). Please check them, then press Save.</span>
         </>
       ) : cycle ? (
         <>
-          <strong>Not done{forCycle} yet.</strong>
+          <strong>Not done{forCycle}{forSubject} yet.</strong>
           <span>You have not filled this in yet.</span>
         </>
       ) : (

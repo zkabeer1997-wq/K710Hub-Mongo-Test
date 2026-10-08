@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TableFilters from './TableFilters';
 import { searchRow, compareValues } from '../../lib/adminTable.mjs';
 import ConfirmDialog from './ConfirmDialog';
@@ -18,7 +18,7 @@ import {
   TROOP_TIERS,
 } from '../../lib/playerCombatOptions.mjs';
 import {
-  formatRallyRows,
+  hydrateRallies,
   serializeRalliesForSave,
   assignMemberToRally,
   autoAssignRallyMembers,
@@ -105,6 +105,13 @@ export default function RosterWorkspace({
   const [sortKey, setSortKey] = useState('updated_at');
   const [sortDir, setSortDir] = useState('desc');
   const [rallies, setRallies] = useState([]);
+  // Autosave only runs after a real user edit. Hydrating from the server (or
+  // normalising against the roster) must never write anything back.
+  const ralliesDirtyRef = useRef(false);
+  const updateRallies = useCallback((next) => {
+    ralliesDirtyRef.current = true;
+    setRallies(next);
+  }, []);
   const [ralliesHydrated, setRalliesHydrated] = useState(false);
   const [newMember, setNewMember] = useState({ ...EMPTY_MEMBER });
   const [addingMember, setAddingMember] = useState(false);
@@ -166,7 +173,7 @@ export default function RosterWorkspace({
         const response = await fetch(ralliesEndpoint);
         if (response.ok) {
           const result = await response.json();
-          if (!cancelled) setRallies(formatRallyRows(result.rallies || []));
+          if (!cancelled) setRallies(hydrateRallies(result.rallies || []));
         } else if (!cancelled) {
           setRallies(parseStoredRallies(window.localStorage.getItem(rallyStorageKey)));
         }
@@ -180,11 +187,12 @@ export default function RosterWorkspace({
   }, [ralliesEndpoint, rallyStorageKey]);
 
   useEffect(() => {
-    if (!ralliesHydrated) return;
+    if (!ralliesHydrated || !ralliesDirtyRef.current) return;
     try {
       window.localStorage.setItem(rallyStorageKey, JSON.stringify(rallies));
     } catch {}
     const timer = setTimeout(() => {
+      ralliesDirtyRef.current = false;
       fetch(ralliesEndpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -218,7 +226,7 @@ export default function RosterWorkspace({
         rallies,
         memberIds,
       );
-      setRallies(nextRallies);
+      updateRallies(nextRallies);
       return nextRows;
     });
   }
@@ -274,7 +282,7 @@ export default function RosterWorkspace({
   }
 
   function handleCreateRally() {
-    setRallies((current) => createNextRally(current, `rally-${current.length + 1}-${Date.now()}`));
+    updateRallies((current) => createNextRally(current, `rally-${current.length + 1}-${Date.now()}`));
   }
 
   function handleDragStart(event, memberId) {
@@ -294,11 +302,11 @@ export default function RosterWorkspace({
     setDraggingMemberId(null);
     setDragOverRallyId(null);
     if (!memberId) return;
-    setRallies((current) => assignMemberToRally(current, rallyId, memberId));
+    updateRallies((current) => assignMemberToRally(current, rallyId, memberId));
   }
 
   function handleRemoveFromRally(memberId) {
-    setRallies((current) => removeMemberFromRallies(current, memberId));
+    updateRallies((current) => removeMemberFromRallies(current, memberId));
   }
 
   function toggleRallyCollapsed(rallyId) {
@@ -313,45 +321,45 @@ export default function RosterWorkspace({
       confirmLabel: 'Delete rally',
       onConfirm: () => {
         setConfirmState(null);
-        setRallies((current) => removeRallyById(current, rally.id));
+        updateRallies((current) => removeRallyById(current, rally.id));
       },
     });
   }
 
   function handleRallyLeadChange(rallyId, memberId) {
-    setRallies((current) => setRallyLead(current, rallyId, memberId));
+    updateRallies((current) => setRallyLead(current, rallyId, memberId));
   }
 
   function handleTroopWeightChange(rallyId, troopType, value) {
-    setRallies((current) => setRallyTroopWeight(current, rallyId, troopType, value));
+    updateRallies((current) => setRallyTroopWeight(current, rallyId, troopType, value));
   }
 
   function handleIncrementLeadHero(rallyId, hero) {
-    setRallies((current) => incrementRallyLeadHero(current, rallyId, hero));
+    updateRallies((current) => incrementRallyLeadHero(current, rallyId, hero));
   }
 
   function handleDecrementLeadHero(rallyId, hero) {
-    setRallies((current) => decrementRallyLeadHero(current, rallyId, hero));
+    updateRallies((current) => decrementRallyLeadHero(current, rallyId, hero));
   }
 
   function handleAutoAssign(rallyId) {
     const eligibleRows = seasonFilteredRows;
     const result = autoAssignRallyMembers(rallies, rallyId, eligibleRows);
     if (!result.summary) return;
-    setRallies(result.rallies);
+    updateRallies(result.rallies);
     setAutoAssignSummaries((current) => ({ ...current, [rallyId]: result.summary }));
   }
 
   function handleAssignFromDropdown(memberId, rallyId) {
     if (!rallyId) {
-      setRallies((current) => removeMemberFromRallies(current, memberId));
+      updateRallies((current) => removeMemberFromRallies(current, memberId));
       return;
     }
-    setRallies((current) => assignMemberToRally(current, rallyId, memberId));
+    updateRallies((current) => assignMemberToRally(current, rallyId, memberId));
   }
 
   function handleRenameRally(rallyId, name) {
-    setRallies((current) => renameRally(current, rallyId, name));
+    updateRallies((current) => renameRally(current, rallyId, name));
   }
 
   function handleExportXlsx() {
@@ -433,6 +441,16 @@ export default function RosterWorkspace({
     return new Map(seasonFilteredRows.map((row) => [String(row.member_id), row]));
   }, [seasonFilteredRows]);
 
+  const assignedInView = useMemo(() => {
+    const ids = new Set();
+    rallies.forEach((rally) => {
+      [...(rally.memberIds || []), rally.leadMemberId].filter(Boolean).forEach((id) => {
+        if (membersById.has(String(id))) ids.add(String(id));
+      });
+    });
+    return ids.size;
+  }, [rallies, membersById]);
+
   const rallyByMemberId = useMemo(() => {
     const assignments = new Map();
     rallies.forEach((rally) => {
@@ -445,6 +463,7 @@ export default function RosterWorkspace({
     const assignments = new Map();
     rallies.forEach((rally) => {
       rally.memberIds.forEach((memberId) => assignments.set(String(memberId), rally.id));
+      if (rally.leadMemberId) assignments.set(String(rally.leadMemberId), rally.id);
     });
     return assignments;
   }, [rallies]);
@@ -542,11 +561,11 @@ export default function RosterWorkspace({
                       </button>
                       <div className="admin-row-message">{row.member_id}</div>
                     </td>
-                    <td>{getTroopLevelSummary(row)}</td>
-                    <td>{(row.heroes || []).join(', ') || '—'}</td>
+                    <td style={{ maxWidth: 150, whiteSpace: 'normal' }}>{getTroopLevelSummary(row)}</td>
+                    <td style={{ maxWidth: 190, whiteSpace: 'normal' }}>{(row.heroes || []).join(', ') || '—'}</td>
                     <td>{row.current_alliance || '—'}</td>
-                    <td>{row.availability || '—'}</td>
-                    <td>{row.updated_at ? new Date(row.updated_at).toLocaleString() : '—'}</td>
+                    <td style={{ maxWidth: 150, whiteSpace: 'normal' }}>{row.availability || '—'}</td>
+                    <td>{row.updated_at ? new Date(row.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</td>
                     <td>
                       <select
                         aria-label={`Rally for ${row.name || row.member_id}`}
@@ -582,7 +601,7 @@ export default function RosterWorkspace({
               </button>
             </div>
             <p className="ec-panel-note">
-              Auto assign uses all {seasonFilteredRows.length} applicants{cycleType && seasonFilter !== 'all' ? ' in this cycle' : ''}.
+              {assignedInView} of {seasonFilteredRows.length} applicants{cycleType && seasonFilter !== 'all' ? ' in this cycle' : ''} are in a rally. Auto assign picks from all of them.
             </p>
             <div className="rally-list">
               {rallies.length === 0 && (
@@ -610,7 +629,10 @@ export default function RosterWorkspace({
                   </div>
                   {!collapsedRallyIds.includes(rally.id) && (
                     <div className="rally-card-body">
-                      <p>{(rally.memberIds || []).filter((id) => membersById.has(String(id))).length} applicants{cycleType && seasonFilter !== 'all' ? ' this cycle' : ''}</p>
+                      <p>
+                        {rally.leadMemberId ? <>Lead: <strong>{membersById.get(String(rally.leadMemberId))?.name || rally.leadMemberId}</strong>{' · '}</> : null}
+                        {(rally.memberIds || []).filter((id) => membersById.has(String(id))).length} joiners{cycleType && seasonFilter !== 'all' ? ' this cycle' : ''}
+                      </p>
                       {autoAssignSummaries[rally.id] && (
                         <p className="admin-row-message">{autoAssignSummaries[rally.id]}</p>
                       )}

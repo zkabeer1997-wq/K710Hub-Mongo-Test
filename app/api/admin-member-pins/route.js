@@ -101,6 +101,8 @@ export async function PUT(request) {
 
   const name = String(body?.name || '').trim();
   const memberId = String(body?.memberId || '').trim();
+  // PIN sign-in is retired (members sign in with their Player ID). A PIN is
+  // still accepted for old callers but no longer required.
   const pin = String(body?.pin || '').trim();
 
   if (!name || name.length > 120) {
@@ -109,7 +111,7 @@ export async function PUT(request) {
   if (!memberId || memberId.length > 120) {
     return noStoreJson({ error: 'Enter a valid Member ID.' }, { status: 400 });
   }
-  if (!SIX_DIGIT_PIN_RE.test(pin)) {
+  if (pin && !SIX_DIGIT_PIN_RE.test(pin)) {
     return noStoreJson({ error: 'PIN must be exactly 6 digits.' }, { status: 400 });
   }
 
@@ -120,12 +122,11 @@ export async function PUT(request) {
       return noStoreJson({ error: 'That Member ID already exists.' }, { status: 409 });
     }
 
-    const pin_hash = await bcrypt.hash(pin, 10);
     const now = new Date();
     await submissions.insertOne({
       name,
       member_id: memberId,
-      pin_hash,
+      ...(pin ? { pin_hash: await bcrypt.hash(pin, 10) } : {}),
       heroes: [],
       updated_at: now,
       event_updated_at: now,
@@ -137,11 +138,10 @@ export async function PUT(request) {
       row: {
         name,
         member_id: memberId,
-        pin_status: 'secured',
+        pin_status: pin ? 'secured' : 'none',
         updated_at: now.toISOString(),
       },
-      pin,
-      message: 'Member created. The PIN is stored only as a secure hash.',
+      message: 'Member added. They sign in with their Player ID.',
     });
   } catch (error) {
     console.error('admin-member-pins PUT failed', error);

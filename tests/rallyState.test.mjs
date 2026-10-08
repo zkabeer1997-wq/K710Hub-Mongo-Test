@@ -8,6 +8,7 @@ import {
   createNextRally,
   decrementRallyLeadHero,
   formatRallyRows,
+  hydrateRallies,
   getLeadHeroTotal,
   getMatchingLeadHeroes,
   getRallyLeadMemberIds,
@@ -399,7 +400,7 @@ assert.deepEqual(saved, [{
   id: 'a',
   name: 'Bear Squad',
   position: 0,
-  member_ids: ['202', '303'],
+  member_ids: ['202', '303', '101'],
   lead_member_id: '101',
   // The DB stores weights, lead-hero counts, and hero assignments together
   // in one `formation` column.
@@ -442,3 +443,16 @@ assert.deepEqual(
 );
 
 console.log('rallyState tests passed');
+
+// --- API round trip: GET returns camelCase; hydrating must not drop members ---
+{
+  const apiPayload = formatRallyRows([
+    { id: 'r1', name: 'R1', position: 0, member_ids: ['1', '2', '9'], lead_member_id: '9', formation: {} },
+  ]);
+  const hydrated = hydrateRallies(apiPayload);
+  assert.deepEqual(hydrated[0].memberIds, ['1', '2'], 'hydrate keeps members, lead stripped from joiners');
+  assert.equal(hydrated[0].leadMemberId, '9');
+  assert.deepEqual(serializeRalliesForSave(hydrated)[0].member_ids, ['1', '2', '9'], 'lead preserved in stored set');
+  assert.deepEqual(formatRallyRows(serializeRalliesForSave(hydrated)), hydrated, 'stable round trip');
+  assert.deepEqual(formatRallyRows(apiPayload)[0].memberIds, [], 'double format loses members (why the client must not do it)');
+}

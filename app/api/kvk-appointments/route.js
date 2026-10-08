@@ -3,6 +3,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { validateApplication, APPOINTMENT_TYPES, PREFERRED_HOUR_COUNT } from '../../../lib/kvkAppointments.mjs';
+import { getCurrentEventCycle } from '../../../lib/eventCycles.server.js';
 import { loadAppointmentGate, isCyclePublished, publicApplication } from '../../../lib/kvkAppointments.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,7 @@ export async function GET(request) {
       isCyclePublished(g.cycleId),
       getCollection(COLLECTIONS.POWER_PROFILES).then((c) => c.findOne({ member_id: session.memberId }, { projection: { name: 1, _id: 0 } })),
     ]);
+    const cycle = await getCurrentEventCycle('kvk').catch(() => null);
     let assignments = [];
     if (pub.published) {
       const coll = await getCollection(COLLECTIONS.KVK_APPOINTMENT_ASSIGNMENTS);
@@ -29,6 +31,7 @@ export async function GET(request) {
       types: APPOINTMENT_TYPES,
       preferredHourCount: PREFERRED_HOUR_COUNT,
       cycle_id: g.cycleId,
+      cycleLabel: cycle?.label || null,
       window: { open: g.open, message: g.message, note: g.note },
       published: pub.published,
       publishedAt: pub.publishedAt,

@@ -10,7 +10,7 @@ registerHooks({
   resolve(s, c, next) {
     if (/\/(lib\/)?mongo(\.js)?$/.test(s)) return { url: 'test:kvk-mongo', shortCircuit: true };
     if (s === 'next/server' || s === 'next/navigation') return next(s + '.js', c);
-    if (/\/(adminAuth|memberAuth|mongoCollections)$/.test(s)) return next(s + '.js', c);
+    if (/\/(adminAuth|memberAuth|mongoCollections|eventCycles\.server)$/.test(s)) return next(s + '.js', c);
     return next(s, c);
   },
   load(u, c, next) {

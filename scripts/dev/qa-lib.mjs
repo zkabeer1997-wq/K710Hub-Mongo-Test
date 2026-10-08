@@ -70,7 +70,10 @@ export function makePng(w = 64, h = 64, rgb = [180, 120, 40]) {
 export async function mongo() {
   const env = loadEnv();
   const { MongoClient } = await import(path.join(ROOT, 'node_modules/mongodb/lib/index.js'));
-  const client = new MongoClient(env.MONGODB_URI);
+  // SAFETY: dev scripts only ever touch a LOCAL mongod. .env.local may point at Atlas; never use that here.
+  const uri = process.env.QA_MONGO_URI || 'mongodb://127.0.0.1:27017';
+  if (!/^mongodb:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(uri)) throw new Error('Refusing to run QA scripts against a non-local MongoDB: ' + uri.replace(/\/\/.*@/, '//***@'));
+  const client = new MongoClient(uri);
   await client.connect();
-  return { client, db: client.db(env.MONGODB_DB_NAME) };
+  return { client, db: client.db(process.env.QA_MONGO_DB || 'k710hub_test') };
 }

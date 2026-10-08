@@ -32,6 +32,7 @@ const GROUPS = [
 function stateOf(form) {
   if (form.state === 'closed') return { id: 'closed', label: 'Closed', icon: '🔒', cls: styles.sClosed };
   if (form.state === 'upcoming') return { id: 'soon', label: form.badge || 'Opens soon', icon: '⏳', cls: styles.sSoon };
+  if (form.submitted && form.partial) return { id: 'partial', label: `${form.appliedCount} of ${form.appliedTotal} applied`, icon: '◐', cls: styles.sCarry };
   if (form.submitted) return { id: 'done', label: 'Done', icon: '✓', cls: styles.sDone };
   if (form.carriedOver) return { id: 'carry', label: 'Check and save', icon: '↻', cls: styles.sCarry };
   return { id: 'todo', label: 'To do', icon: '●', cls: styles.sTodo };
@@ -40,6 +41,7 @@ function stateOf(form) {
 function buttonFor(st, form) {
   if (st.id === 'closed') return { text: 'Closed', disabled: true };
   if (st.id === 'soon') return { text: 'Not open yet', disabled: true };
+  if (st.id === 'partial') return { text: 'Apply for the others', primary: true };
   if (st.id === 'done') return { text: 'Change my answers', quiet: true };
   if (st.id === 'carry') return { text: 'Check and save', primary: true };
   return { text: form.key === 'lead' ? 'Open' : 'Fill in', primary: true };
@@ -48,9 +50,10 @@ function buttonFor(st, form) {
 function Row({ form }) {
   const st = stateOf(form);
   const btn = buttonFor(st, form);
-  const todo = st.id === 'todo' || st.id === 'carry';
+  const todo = st.id === 'todo' || st.id === 'carry' || st.id === 'partial';
   let hint = null;
   if (st.id === 'carry') hint = `We filled this in from your answers last time${form.previousLabel ? ` (${form.previousLabel})` : ''}. Please check them and press Save.`;
+  else if (st.id === 'partial') hint = `You applied for ${form.appliedCount} of ${form.appliedTotal} appointments (Day 1, Day 2 and Day 4 are separate). Open the form to apply for the others.`;
   else if (st.id === 'done' && form.updatedAt) hint = <>Saved <DualTime value={form.updatedAt} />.</>;
   else if (st.id === 'soon' && form.opensAt) hint = <>Opens <DualTime value={new Date(form.opensAt).toISOString()} />.</>;
   else if (st.id === 'closed') hint = 'This form is not taking answers right now.';

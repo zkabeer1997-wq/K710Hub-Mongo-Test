@@ -63,11 +63,11 @@ export async function GET(request) {
         target_alliance: publicStatus === 'accepted' ? doc.migrate_alliance || null : null,
         next_step:
           publicStatus === 'accepted'
-            ? 'Log in at /dashboard with your Kingshot Player ID. Leadership will assign your alliance.'
+            ? 'Good news, your application was accepted. Sign in with your Kingshot Player ID. Leadership will assign your alliance.'
             : publicStatus === 'waitlist'
               ? 'You are on the waitlist. Leadership will update this status when an intake window opens.'
               : publicStatus === 'rejected'
-                ? 'This application was not accepted at this time.'
+                ? 'Thank you for applying. We could not offer you a place this time. You are welcome to apply again in a later round.'
                 : 'Your application is under review.',
       },
       { headers }

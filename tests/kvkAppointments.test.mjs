@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   HOUR_OPTIONS, SLOT_OPTIONS, generateTimeOptions, contributionScore, CONTRIBUTION_WEIGHTS, validateApplication,
   allocateSlots, hasNoDoubleBooking, myAppointmentRows, slotRange, localTimeLabel, buildSchedule, slotsInHour,
-  validateManualAssignment, APPOINTMENT_TYPES, compareApplicants,
+  validateManualAssignment, APPOINTMENT_TYPES, compareApplicants, resolveAppointmentCycle,
 } from '../lib/kvkAppointments.mjs';
 
 test('hour options: 24 UTC hours, real values, in order', () => {
@@ -131,4 +131,26 @@ test('schedule grid has 48 slots per type and names filled ones', () => {
   const day4 = grid.find((d) => d.day === 4);
   assert.equal(day4.filled, 1);
   assert.equal(day4.slots.find((s) => s.slot === '10:30').name, 'Ann');
+});
+
+test('resolveAppointmentCycle: defaults to the live gate cycle and lists every KvK cycle', () => {
+  const cycles = [{ id: 'c2', label: 'KvK 2', is_current: true }, { id: 'c1', label: 'KvK 1', is_current: false }];
+  const live = resolveAppointmentCycle({ gateCycleId: 'c2', cycles });
+  assert.equal(live.cycleId, 'c2');
+  assert.equal(live.isLive, true);
+  assert.equal(live.label, 'KvK 2');
+  const past = resolveAppointmentCycle({ requested: 'c1', gateCycleId: 'c2', cycles });
+  assert.equal(past.cycleId, 'c1');
+  assert.equal(past.isLive, false);
+  assert.equal(past.label, 'KvK 1');
+  assert.deepEqual(past.options.map((o) => o.id), ['c2', 'c1']);
+});
+
+test('resolveAppointmentCycle: legacy "current" gate maps to the live event cycle', () => {
+  const cycles = [{ id: 'c2', label: 'KvK 2', is_current: true }];
+  const r = resolveAppointmentCycle({ requested: 'c2', gateCycleId: 'current', cycles });
+  assert.equal(r.cycleId, 'current');
+  assert.equal(r.label, 'KvK 2');
+  assert.equal(r.options[0].id, 'current');
+  assert.equal(r.options[0].is_current, true);
 });

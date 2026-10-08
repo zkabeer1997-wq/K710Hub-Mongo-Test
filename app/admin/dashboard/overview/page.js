@@ -7,6 +7,7 @@ import StatusChip from '../../../../components/admin/StatusChip';
 import { fetchEventState } from '../../../../components/admin/eventControlClient';
 import { formatUtc, toMs } from '../../../../lib/deadlines.mjs';
 import { Button } from '../../../../components/ui';
+import { VOTE_FORM_KEYS, FORM_GATE_LABELS } from '../../../../lib/formGates.mjs';
 
 const SOON_MS = 48 * 3600e3;
 const EVENTS = [
@@ -21,7 +22,7 @@ const CYCLE_STATUS = {
   ended: { kind: 'ended', text: 'Ended' },
 };
 
-function buildAttention(counts, events) {
+function buildAttention(counts, events, gates = []) {
   const items = [];
   const pending = Number(counts?.transfersPending || 0);
   const waitlist = Number(counts?.transfersWaitlist || 0);
@@ -36,6 +37,11 @@ function buildAttention(counts, events) {
     items.push({ id: 'website', count: web, text: `new website request${web === 1 ? '' : 's'}`, href: '/admin/dashboard/website-requests', cta: 'Read' });
   }
   const now = Date.now();
+  for (const gate of gates) {
+    if (VOTE_FORM_KEYS.includes(gate.form_key) && gate.is_open !== false && !gate.opens_at && !gate.closes_at) {
+      items.push({ id: `vote-${gate.form_key}-nowindow`, text: `${FORM_GATE_LABELS[gate.form_key]} is switched on but has no open and close times, so members cannot vote yet`, href: '/admin/dashboard/form-gates', cta: 'Set times' });
+    }
+  }
   for (const ev of events) {
     const s = ev.state;
     if (!s) continue;
@@ -59,15 +65,18 @@ function buildAttention(counts, events) {
 export default function AdminOverviewPage() {
   const [counts, setCounts] = useState(null);
   const [events, setEvents] = useState(EVENTS.map((e) => ({ ...e, state: null, error: '' })));
+  const [gates, setGates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [countsResult, ...states] = await Promise.allSettled([
+    const [countsResult, gatesResult, ...states] = await Promise.allSettled([
       fetch('/api/admin-task-counts', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error('counts')))),
+      fetch('/api/admin-form-gates', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error('gates')))),
       ...EVENTS.map((e) => fetchEventState(e.type)),
     ]);
     setCounts(countsResult.status === 'fulfilled' ? countsResult.value : null);
+    setGates(gatesResult.status === 'fulfilled' ? gatesResult.value.gates || [] : []);
     setEvents(EVENTS.map((e, i) => ({
       ...e,
       state: states[i].status === 'fulfilled' ? states[i].value : null,
@@ -78,7 +87,7 @@ export default function AdminOverviewPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const attention = buildAttention(counts, events);
+  const attention = buildAttention(counts, events, gates);
 
   return (
     <AdminShell title="Overview" subtitle="What needs you today.">

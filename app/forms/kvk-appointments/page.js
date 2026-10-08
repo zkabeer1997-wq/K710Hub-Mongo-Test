@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import PageHero from '../../../components/ui/PageHero';
 import { readMemberSession } from '../../../lib/memberAuth';
+import WhichFormNotice from '../../../components/member/WhichFormNotice';
 import Tabs, { normalizeTab } from '../../../components/member/kvk-appointments/Tabs';
 import KvkAppointments from '../../../components/member/kvk-appointments/KvkAppointments';
 
@@ -23,6 +24,7 @@ export default async function KvkAppointmentsPage({ searchParams }) {
     <main className="event-form-page appt-page">
       <Breadcrumbs items={[{ label: 'Members', href: '/dashboard' }, { label: 'Forms', href: '/forms' }]} current="KvK appointments" />
       <PageHero tone="console" eyebrow="Kingdom 710 · KvK" title="KvK appointments" lede="Apply for a minister or advisor buff, see where you stand, and find your slot once leadership publishes the schedule." />
+      <WhichFormNotice kind="appointments" />
       <Tabs current={tab} />
       <KvkAppointments tab={tab} />
     </main>

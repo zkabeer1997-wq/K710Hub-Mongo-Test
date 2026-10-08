@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { publicFlamedragonRecord, sanitizeFlamedragonInput } from '../../../lib/flamedragonForm.mjs';
+import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayload } from '../../../lib/flamedragonForm.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
@@ -58,16 +58,25 @@ export async function POST(request) {
   } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
+  let existing;
+  try {
+    const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
+    existing = await coll.findOne({ member_id: session.memberId });
+  } catch (error) {
+    console.error('flamedragon POST failed', error);
+    return NextResponse.json({ error: 'Could not save your form. Please try again.' }, { status: 500 });
+  }
   try {
     // Identity comes from the signed session, never from the request body.
-    record = sanitizeFlamedragonInput({ ...body, member_id: session.memberId, pin: 'session' });
+    // A partial body on an existing record keeps the stored name.
+    const named = existing && !('name' in body) ? { ...body, name: existing.name } : body;
+    record = sanitizeFlamedragonInput({ ...named, member_id: session.memberId, pin: 'session' });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
   try {
     const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
-    const existing = await coll.findOne({ member_id: record.member_id });
-    const payload = {
+    const fullPayload = {
       member_id: record.member_id,
       name: record.name,
       current_alliance: record.current_alliance || null,
@@ -88,6 +97,7 @@ export async function POST(request) {
       auto_help: record.auto_help || null,
       updated_at: new Date(),
     };
+    const payload = buildMergeSafePayload(fullPayload, body, existing);
     const cycle = await getCurrentEventCycle('flamedragon').catch(() => null);
     await snapshotIfFromPastCycle('flamedragon', existing, cycle);
     if (cycle) {

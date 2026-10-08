@@ -285,10 +285,28 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
     }
   }
 
+  // Signed in: Member ID is their login, so fill it in (read-only) and prefill the
+  // name from the saved profile, otherwise from their Kingshot nickname.
+  const [signedInId, setSignedInId] = useState('');
   useEffect(() => {
-    if (initialMemberId) {
-      lookup(initialMemberId);
-    }
+    let cancelled = false;
+    (async () => {
+      let profile = null;
+      try {
+        const res = await fetch('/api/session', { cache: 'no-store' });
+        const data = await res.json();
+        if (data?.state === 'authenticated') profile = data.profile;
+      } catch { /* not signed in or offline */ }
+      if (cancelled) return;
+      const id = String(profile?.memberId || profile?.playerId || initialMemberId || '').trim();
+      if (profile && id) {
+        setSignedInId(id);
+        const nick = String(profile.nickname || '').trim();
+        setForm((current) => ({ ...current, member_id: id, name: current.name || (nick && nick !== id ? nick : '') }));
+      }
+      if (id) await lookup(id);
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -385,7 +403,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
             <div className="ledger-block-head">
               <span className="ledger-block-kicker">{STEPS[0].kicker}</span>
               <h2 ref={(el) => { headingRefs.current[0] = el; }} tabIndex={-1}>Power &amp; Gift Codes</h2>
-              <p>Your name and Member ID look you up and prefill anything already on file.</p>
+              <p>{signedInId ? 'We filled in your name and Member ID from your sign-in. Check that your name is right. Your Member ID is your login, so it cannot be changed here.' : 'Your name and Member ID look you up and prefill anything already on file.'}</p>
             </div>
             <div className="identity-grid">
               <div className="wizard-field">
@@ -393,7 +411,7 @@ function PowerProfileForm({ initialMemberId = '', intro }) {
                 {fieldError('name')}
               </div>
               <div className="wizard-field">
-                <label>Member ID<input {...fieldProps('member_id')} value={form.member_id} onChange={(e) => updateField('member_id', e.target.value)} onBlur={() => lookup()} placeholder="Your Member ID" /></label>
+                <label>Member ID<input {...fieldProps('member_id')} value={form.member_id} readOnly={Boolean(signedInId)} aria-readonly={signedInId ? 'true' : undefined} onChange={(e) => updateField('member_id', e.target.value)} onBlur={() => { if (!signedInId) lookup(); }} placeholder="Your Member ID" /></label>
                 {fieldError('member_id')}
               </div>
             </div>

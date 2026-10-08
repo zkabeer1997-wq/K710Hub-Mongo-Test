@@ -245,17 +245,17 @@ export default async function HomePage() {
             <NextBearHunt alliances={bearAlliances || []} allianceTag={member.allianceTag} />
           </div>
           <div className="home-v2-member-forms">
-            <h2>Outstanding forms</h2>
+            <h2>{member.outstanding.length ? (member.outstanding.length === 1 ? '1 thing to do' : `${member.outstanding.length} things to do`) : 'Outstanding forms'}</h2>
             {member.outstanding.length ? (
               <ul>
                 {member.outstanding.map((form) => (
                   <li key={form.key}>
-                    <Link href={form.href}><span>{form.title}</span><em>Not yet submitted</em></Link>
+                    <Link href={form.href}><span>{form.title}</span><em>{form.note}</em></Link>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p>All caught up. Nothing is waiting on you.</p>
+              <p>You are up to date. Nothing is waiting on you right now.</p>
             )}
             <Link href="/forms" className="home-v2-story-link">All forms →</Link>
           </div>

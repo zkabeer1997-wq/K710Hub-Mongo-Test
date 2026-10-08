@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { FORM_GATE_KEYS, WINDOWED_GATE_KEYS } from '../../../lib/formGates.mjs';
+import { FORM_GATE_KEYS, WINDOWED_GATE_KEYS, VOTE_FORM_KEYS, newRound } from '../../../lib/formGates.mjs';
 import { parseGateWindow } from '../../../lib/formGateWindow.mjs';
 import { getFormGates } from '../../../lib/formGates.server.js';
 
@@ -53,6 +53,23 @@ export async function PATCH(request) {
 
   try {
     const coll = await getCollection(COLLECTIONS.FORM_GATES);
+
+    // Start a new round of a vote form: fresh cycle id so members vote again.
+    // Old votes stay in the database under their old cycle id.
+    if (body.start_round === true) {
+      if (!VOTE_FORM_KEYS.includes(formKey)) {
+        return NextResponse.json({ error: 'Only the event vote forms have rounds.' }, { status: 400 });
+      }
+      const round = newRound(Date.now(), body.round_label);
+      const fields = { cycle_id: round.cycle_id, round_label: round.round_label, updated_at: new Date() };
+      if (body.clear_window === true) { fields.opens_at = null; fields.closes_at = null; }
+      if (body.clear_message === true) fields.message = '';
+      await coll.updateOne({ form_key: formKey }, { $set: { form_key: formKey, ...fields } }, { upsert: true });
+      revalidatePath(ROUTE_BY_KEY[formKey]);
+      const saved = await getFormGates();
+      return NextResponse.json({ gate: saved[formKey] });
+    }
+
     const doc = {
       form_key: formKey,
       is_open: body.is_open !== false,
@@ -67,6 +84,9 @@ export async function PATCH(request) {
       const parsed = parseGateWindow(body, existing);
       if (parsed.error) return NextResponse.json({ error: parsed.error }, { status: 400 });
       Object.assign(doc, parsed.fields);
+    }
+    if (VOTE_FORM_KEYS.includes(formKey) && 'round_label' in body) {
+      doc.round_label = String(body.round_label || '').trim().slice(0, 60);
     }
 
     await coll.updateOne({ form_key: formKey }, { $set: doc }, { upsert: true });

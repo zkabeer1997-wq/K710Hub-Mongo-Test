@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { readMemberSession } from '../../../../lib/memberAuth';
 import { getFormGate } from '../../../../lib/formGates.server.js';
 import { getFormFieldMeta } from '../../../../lib/formFieldMeta.server';
+import WhichFormNotice from '../../../../components/member/WhichFormNotice';
 import UpsertNotice from '../../../../components/member/UpsertNotice';
 import FormClosedNotice from '../../../../components/FormClosedNotice';
 import NobleAdvisorForm from './NobleAdvisorForm';
@@ -27,6 +28,7 @@ export default async function NobleAdvisorPage() {
           <FormClosedNotice message={gate.message} />
         ) : (
           <>
+            <WhichFormNotice kind="noble" />
             <UpsertNotice formKey="noble" />
             <NobleAdvisorForm memberId={session.memberId} />
           </>

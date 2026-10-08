@@ -386,3 +386,5 @@
 .ec-form label.ec-check { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 10px; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 600; color: var(--text); }
 .ec-form label.ec-check span { text-align: left; }
 .ec-form label.ec-check input { flex-shrink: 0; margin: 0; }
+.ec-hist-date { display: block; font-size: 11px; font-weight: 500; color: var(--text-dim); }
+.ec-form-name .ff-message-none { display: block; margin-top: 2px; font-weight: 400; }

@@ -29,13 +29,23 @@ export async function POST(request) {
 
     const formData = await request.formData();
 
-    if (String(formData.get('website') || '').trim()) {
+    // Bots fill the hidden honeypot. A fast fill alone is NOT proof of a bot
+    // (password managers and saved drafts fill a form in under 3 seconds), so
+    // the timing rule only counts when the honeypot is also filled. A human
+    // submission is never silently dropped.
+    const honeypotFilled = Boolean(String(formData.get('website') || '').trim());
+    const renderedAt = Number(formData.get('rendered_at')) || 0;
+    const tooFast = Boolean(renderedAt) && Date.now() - renderedAt < MIN_FILL_TIME_MS;
+    if (honeypotFilled && tooFast) {
+      console.warn('interest submission dropped as spam (honeypot filled, too fast)');
       return NextResponse.json({ ok: true });
     }
-
-    const renderedAt = Number(formData.get('rendered_at')) || 0;
-    if (renderedAt && Date.now() - renderedAt < MIN_FILL_TIME_MS) {
+    if (honeypotFilled) {
+      console.warn('interest submission dropped as spam (honeypot filled)');
       return NextResponse.json({ ok: true });
+    }
+    if (tooFast) {
+      console.warn('interest submission was very fast; kept (no honeypot)');
     }
 
     const screenshots = formData

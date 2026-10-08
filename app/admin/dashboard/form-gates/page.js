@@ -31,6 +31,8 @@ export default function AdminFormGatesPage() {
   const [notice, setNotice] = useState('');
   const [savingKey, setSavingKey] = useState(null);
   const [closing, setClosing] = useState(null);
+  const [roundKey, setRoundKey] = useState(null);
+  const [roundDraft, setRoundDraft] = useState({ label: '', clearWindow: true, clearMessage: false });
   const [settingsKey, setSettingsKey] = useState(null);
   const [settingsDraft, setSettingsDraft] = useState({ message: '', opens: '', closes: '' });
   const [settingsError, setSettingsError] = useState('');
@@ -154,6 +156,32 @@ export default function AdminFormGatesPage() {
     }
   }
 
+  function openRound(formKey) {
+    setRoundKey(formKey);
+    setRoundDraft({ label: '', clearWindow: true, clearMessage: false });
+  }
+
+  async function startRound() {
+    const formKey = roundKey;
+    setSavingKey(formKey);
+    setError('');
+    setNotice('');
+    try {
+      const gate = await patchGate(formKey, {
+        start_round: true,
+        round_label: roundDraft.label,
+        clear_window: roundDraft.clearWindow,
+        clear_message: roundDraft.clearMessage,
+      });
+      setNotice(`${LABELS[formKey]}: new round started (${gate.round_label || 'new round'}). Members can vote again.`);
+    } catch (err) {
+      setError(err.message || 'Unable to start a new round.');
+    } finally {
+      setSavingKey(null);
+      setRoundKey(null);
+    }
+  }
+
   function onSwitch(formKey, next) {
     if (next) setOpen(formKey, true);
     else setClosing(formKey);
@@ -200,7 +228,12 @@ export default function AdminFormGatesPage() {
     const chip = describeFormState(win.state, win.opensAt, win.closesAt, win.reason);
     return (
       <tr key={formKey}>
-        <th scope="row" data-label="Form" className="ec-form-name">{LABELS[formKey]}</th>
+        <th scope="row" data-label="Form" className="ec-form-name">
+          <span>{LABELS[formKey]}</span>
+          {EVENT_GATE_KEYS.includes(formKey) ? (
+            <span className="ff-message-none">Round: {gate.round_label || 'First round'}</span>
+          ) : null}
+        </th>
         <td data-label="State"><StatusChip kind={chip.kind}>{chip.text}</StatusChip></td>
         <td data-label="Switch">
           <Switch
@@ -218,6 +251,9 @@ export default function AdminFormGatesPage() {
             {gate.message ? 'Message & times' : EVENT_GATE_KEYS.includes(formKey) ? 'Times & message' : 'Add message'}
           </Button>
           <Button variant="quiet" className="ec-btn-sm" onClick={() => openEditor(formKey)} aria-label={`Edit text of ${LABELS[formKey]}`}>Edit form text</Button>
+          {EVENT_GATE_KEYS.includes(formKey) ? (
+            <Button variant="quiet" className="ec-btn-sm" onClick={() => openRound(formKey)} aria-label={`Start a new round of ${LABELS[formKey]}`}>Start a new round</Button>
+          ) : null}
         </td>
       </tr>
     );
@@ -287,6 +323,35 @@ export default function AdminFormGatesPage() {
         )}
       >
         <p className="ec-confirm-line">Members will see the closed message instead of this form. Answers already sent are kept. You can switch it on again at any time.</p>
+      </AdminDialog>
+
+      <AdminDialog
+        open={Boolean(roundKey)}
+        title={roundKey ? `Start a new round of ${LABELS[roundKey]}?` : ''}
+        onClose={() => setRoundKey(null)}
+        role="alertdialog"
+        busy={Boolean(savingKey)}
+        footer={(
+          <>
+            <Button variant="quiet" onClick={() => setRoundKey(null)}>Cancel</Button>
+            <Button onClick={startRound} disabled={Boolean(savingKey)}>{savingKey ? 'Working...' : 'Start new round'}</Button>
+          </>
+        )}
+      >
+        <p className="ec-confirm-line">Members will have to vote again. Old votes are kept.</p>
+        <div className="ec-form">
+          <Field label="Round name (optional)" hint="Shown to members, e.g. Round of 20 October." htmlFor="ff-round-label">
+            <Input tone="console" id="ff-round-label" data-autofocus maxLength={60} value={roundDraft.label} onChange={(e) => setRoundDraft((d) => ({ ...d, label: e.target.value }))} />
+          </Field>
+          <label className="ec-check">
+            <input type="checkbox" checked={roundDraft.clearWindow} onChange={(e) => setRoundDraft((d) => ({ ...d, clearWindow: e.target.checked }))} />
+            <span>Clear the open and close times</span>
+          </label>
+          <label className="ec-check">
+            <input type="checkbox" checked={roundDraft.clearMessage} onChange={(e) => setRoundDraft((d) => ({ ...d, clearMessage: e.target.checked }))} />
+            <span>Clear the closed message</span>
+          </label>
+        </div>
       </AdminDialog>
 
       <AdminDialog

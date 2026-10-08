@@ -8,6 +8,7 @@ import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDriv
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Field, Input, Select, Table } from '../../../../components/ui';
 import { useEscapeToClose } from '../../../../lib/useEscapeToClose';
+import { decisionConfirmText, acceptanceMessage, findDuplicateApplicants } from '../../../../lib/adminInbox.mjs';
 
 const COMPACT_COLUMNS = [
   { key: 'in_game_name', label: 'Name' },
@@ -114,7 +115,10 @@ export default function AdminInterestPage() {
   const [sortDir, setSortDir] = useState('desc');
   const [busyId, setBusyId] = useState('');
   const [rowMessage, setRowMessage] = useState({});
-  const [credentials, setCredentials] = useState(null);
+  const [accepted, setAccepted] = useState(null);
+  const [pendingDecision, setPendingDecision] = useState(null);
+  const [decisionNote, setDecisionNote] = useState('');
+  const [copied, setCopied] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [periods, setPeriods] = useState([]);
   const [periodsLoading, setPeriodsLoading] = useState(true);
@@ -204,14 +208,14 @@ export default function AdminInterestPage() {
     router.refresh();
   }
 
-  async function updateStatus(row, status) {
+  async function updateStatus(row, status, note) {
     setBusyId(row.id);
     setRowMessage((prev) => ({ ...prev, [row.id]: '' }));
     try {
       const response = await fetch('/api/admin-interest-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: row.id, status }),
+        body: JSON.stringify({ id: row.id, status, ...(note !== undefined ? { note } : {}) }),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -219,15 +223,17 @@ export default function AdminInterestPage() {
         return;
       }
       window.dispatchEvent(new Event('admin-tasks-changed'));
-      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: result.row.status, decided_at: result.row.decided_at } : r)));
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: result.row.status, decided_at: result.row.decided_at, admin_note: result.row.admin_note } : r)));
+      setPendingDecision(null);
       if (result.account) {
-        setCredentials({
+        setAccepted({
+          rowId: row.id,
           name: result.account.name,
-          member_id: result.account.player_id,
-          message: result.account.message,
-          reused: result.account.userExisted || result.account.recordExisted || result.account.profileExisted,
+          playerId: result.account.player_id,
+          reused: Boolean(result.account.userExisted || result.account.recordExisted || result.account.profileExisted),
+          message: acceptanceMessage({ name: result.account.name, playerId: result.account.player_id, origin: window.location.origin }),
         });
-        setRowMessage((prev) => ({ ...prev, [row.id]: 'Accepted. Player record and profile ready.' }));
+        setCopied(false);
       } else {
         setRowMessage((prev) => ({ ...prev, [row.id]: 'Status updated to ' + (STATUS_LABELS[status] || status) + '.' }));
       }
@@ -249,8 +255,34 @@ export default function AdminInterestPage() {
 
   const selectedRow = useMemo(() => rows.find((r) => r.id === selectedId) || null, [rows, selectedId]);
 
-  useEscapeToClose(Boolean(selectedRow), () => setSelectedId(null));
-  useEscapeToClose(Boolean(credentials), () => setCredentials(null));
+  const duplicates = useMemo(() => findDuplicateApplicants(rows), [rows]);
+
+  function closeDrawer() {
+    setSelectedId(null);
+    setPendingDecision(null);
+    setAccepted(null);
+  }
+  function openRow(id) {
+    setSelectedId(id);
+    setPendingDecision(null);
+    setAccepted(null);
+    setCopied(false);
+  }
+  function startDecision(row, status) {
+    setPendingDecision(status);
+    setDecisionNote(row.admin_note || '');
+    setRowMessage((prev) => ({ ...prev, [row.id]: '' }));
+  }
+  async function copyMessage(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  useEscapeToClose(Boolean(selectedRow), closeDrawer);
 
   const visibleRows = useMemo(() => {
     const matcher = buildMatcher(query);
@@ -531,16 +563,6 @@ export default function AdminInterestPage() {
             ))}
           </div>
 
-          {credentials && (
-            <div className="credentials-modal-overlay" role="presentation" onClick={() => setCredentials(null)}>
-              <div className="credentials-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-                <h2>{credentials.reused ? 'Member account already existed' : 'Member account ready'}</h2>
-                <p>{credentials.name} &middot; Player ID {credentials.member_id}.</p>
-                <p>{credentials.message || 'They should log in with their Player ID and in-game verification code.'}</p>
-                <button type="button" onClick={() => setCredentials(null)} className="credentials-modal-close">Dismiss</button>
-              </div>
-            </div>
-          )}
           <div className="dashboard-stats" aria-label="Interest summary">
             <div>
               <span>Total submissions</span>
@@ -595,11 +617,21 @@ export default function AdminInterestPage() {
                 </thead>
                 <tbody>
                   {visibleRows.map((row) => (
-                    <tr key={row.id} className="admin-row-clickable" onClick={() => setSelectedId(row.id)}>
+                    <tr key={row.id} className="admin-row-clickable" onClick={() => openRow(row.id)}>
                       <td><StatusBadge status={row.status || 'pending'} label={STATUS_LABELS[row.status] || 'Pending'} /></td>
                       {COMPACT_COLUMNS.map((col) => (
                         <td key={col.key} className={col.key === 'created_at' ? 'updated-cell' : undefined}>
                           {cellValue(row, col.key)}
+                          {col.key === 'in_game_name' && duplicates.has(row.id) && (
+                            <>
+                              {' '}
+                              <span className="unit-pill" title="Another request uses the same Player ID">Duplicate</span>
+                              {' '}
+                              <button type="button" className="admin-sort-btn" onClick={(e) => { e.stopPropagation(); openRow(duplicates.get(row.id)[0]); }}>
+                                See other
+                              </button>
+                            </>
+                          )}
                         </td>
                       ))}
                     </tr>
@@ -610,29 +642,85 @@ export default function AdminInterestPage() {
             </>
           )}
 
+          <style>{`
+            .inbox-confirm,.inbox-accepted{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.03)}
+            .inbox-confirm p,.inbox-accepted p{margin:0}
+            .inbox-note-label{font-size:12px;color:var(--text-muted)}
+            .inbox-confirm textarea,.inbox-message{width:100%;font:inherit;font-size:13px;padding:8px;border-radius:6px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:inherit;resize:vertical}
+            .inbox-message{font-family:var(--font-mono-loaded),ui-monospace,monospace;font-size:12px}
+            .status-action-btn.active-confirm{border-color:var(--gold);color:var(--parchment)}
+          `}</style>
           {selectedRow && (
-            <div className="admin-drawer-overlay" role="presentation" onClick={() => setSelectedId(null)}>
+            <div className="admin-drawer-overlay" role="presentation" onClick={closeDrawer}>
               <div className="admin-drawer" role="dialog" aria-modal="true" aria-labelledby="review-drawer-title" onClick={(e) => e.stopPropagation()}>
                 <div className="admin-drawer-header">
                   <h2 id="review-drawer-title">{selectedRow.in_game_name || 'Applicant'}</h2>
-                  <button type="button" className="admin-drawer-close" onClick={() => setSelectedId(null)} aria-label="Close">&times;</button>
+                  <button type="button" className="admin-drawer-close" onClick={closeDrawer} aria-label="Close">&times;</button>
                 </div>
+
+                {duplicates.has(selectedRow.id) && (
+                  <div className="admin-drawer-section">
+                    <p className="admin-row-message" role="note">
+                      Duplicate: another request uses Player ID {selectedRow.player_id}.{' '}
+                      {duplicates.get(selectedRow.id).map((otherId) => {
+                        const other = rows.find((r) => r.id === otherId);
+                        return (
+                          <button key={otherId} type="button" className="admin-sort-btn" onClick={() => openRow(otherId)}>
+                            Open {other?.in_game_name || 'other request'} ({STATUS_LABELS[other?.status] || 'Pending'})
+                          </button>
+                        );
+                      })}
+                    </p>
+                  </div>
+                )}
 
                 <div className="admin-drawer-section">
                   <h3>Decision</h3>
-                  <div className="admin-drawer-actions">
-                    {STATUS_ACTIONS.map((action) => (
-                      <button
-                        key={action.value}
-                        type="button"
-                        disabled={busyId === selectedRow.id}
-                        onClick={() => updateStatus(selectedRow, action.value)}
-                        className={'status-action-btn' + (selectedRow.status === action.value ? ' active-' + action.value : '')}
-                      >
-                        {action.label}
-                      </button>
-                    ))}
-                  </div>
+                  <p className="admin-row-message">Current: <strong>{STATUS_LABELS[selectedRow.status] || 'Pending'}</strong></p>
+                  {accepted && accepted.rowId === selectedRow.id ? (
+                    <div className="inbox-accepted" role="status">
+                      <strong>{accepted.reused ? `${accepted.name} already had an account. Accepted.` : `${accepted.name} is accepted and can sign in.`}</strong>
+                      <p className="admin-row-message">Player ID {accepted.playerId}. Send them this message so they know how to sign in.</p>
+                      <textarea className="inbox-message" readOnly rows={8} value={accepted.message} aria-label="Message for Discord" onFocus={(e) => e.target.select()} />
+                      <div className="admin-drawer-actions">
+                        <button type="button" className="status-action-btn" onClick={() => copyMessage(accepted.message)}>
+                          {copied ? 'Copied' : 'Copy message for Discord'}
+                        </button>
+                        <button type="button" className="status-action-btn" onClick={() => setAccepted(null)}>Done</button>
+                      </div>
+                    </div>
+                  ) : pendingDecision ? (
+                    <div className="inbox-confirm" role="group" aria-label="Confirm decision">
+                      <p><strong>{decisionConfirmText(pendingDecision, selectedRow.in_game_name)}</strong></p>
+                      <label className="inbox-note-label" htmlFor="decision-note">Internal note (optional, members never see it)</label>
+                      <textarea id="decision-note" rows={2} maxLength={500} value={decisionNote} onChange={(e) => setDecisionNote(e.target.value)} />
+                      <div className="admin-drawer-actions">
+                        <button type="button" className="status-action-btn active-confirm" disabled={busyId === selectedRow.id} onClick={() => updateStatus(selectedRow, pendingDecision, decisionNote)}>
+                          {busyId === selectedRow.id ? 'Saving...' : `Yes, ${STATUS_ACTIONS.find((a) => a.value === pendingDecision)?.label.toLowerCase() || 'save'}`}
+                        </button>
+                        <button type="button" className="status-action-btn" disabled={busyId === selectedRow.id} onClick={() => setPendingDecision(null)}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="admin-drawer-actions">
+                      {STATUS_ACTIONS.map((action) => {
+                        const isCurrent = selectedRow.status === action.value;
+                        return (
+                          <button
+                            key={action.value}
+                            type="button"
+                            disabled={busyId === selectedRow.id}
+                            aria-pressed={isCurrent}
+                            onClick={() => startDecision(selectedRow, action.value)}
+                            className={'status-action-btn' + (isCurrent ? ' active-' + action.value : '')}
+                          >
+                            {action.label}{isCurrent ? ' (current)' : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {selectedRow.admin_note && !pendingDecision && <p className="admin-row-message">Note: {selectedRow.admin_note}</p>}
                   {rowMessage[selectedRow.id] && <p className="admin-row-message">{rowMessage[selectedRow.id]}</p>}
                 </div>
 

@@ -166,6 +166,11 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   async function submitPlayer(event) {
     event.preventDefault();
     clearStatus();
+    if (!/^\d{4,20}$/.test(String(playerId).trim())) {
+      setStatus('That Player ID does not look right. Use only numbers, at least 4 digits. Check the number in your Kingshot profile.');
+      document.getElementById('kingshot-player-id')?.focus();
+      return;
+    }
     setBusy(true);
     try {
       await api('/api/login/start', { method: 'POST', body: { playerId } });
@@ -341,7 +346,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
               </div>
 
               {view === 'player' && (
-                <form onSubmit={submitPlayer} className={styles.form}>
+                <form onSubmit={submitPlayer} className={styles.form} noValidate>
                   <header>
                     <h2>Your Player ID</h2>
                     <p>You can find it in Kingshot: tap your picture in the top-left corner, then look for “Player ID” (a number).</p>
@@ -356,12 +361,13 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                       inputMode="numeric"
                       autoComplete="username"
                       placeholder="123456789"
-                      minLength={4}
                       maxLength={20}
-                      required
+                      aria-describedby={status ? 'kingshot-login-status' : undefined}
+                      aria-invalid={status && view === 'player' ? 'true' : undefined}
                       autoFocus
                     />
                   </div>
+                  {status && <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div>}
                   <button className={styles.primary} type="submit" disabled={busy}>
                     <span>{busy ? 'Connecting…' : 'Continue'}</span><b aria-hidden="true">→</b>
                   </button>
@@ -446,7 +452,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                 </form>
               )}
 
-              {status && <div className={styles.error} role="alert">{status}</div>}
+              {status && view !== 'player' && <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div>}
             </>
           )}
 

@@ -168,3 +168,273 @@
 .upsert-notice strong{font-size:18px}
 .upsert-notice span{color:var(--t-secondary)}
 .carry-over-notice{margin:0 0 16px;padding:12px 16px;border:1px solid var(--edge);border-left:3px solid var(--brass);border-radius:6px;background:rgba(255,255,255,.03);color:var(--parchment);font-size:17px;line-height:1.5}
+
+/* member fixes */
+/* One column for notice + form (the page is a flex row; a bare notice used to sit beside the card) */
+.member-form-col { width: min(1180px, 100%); min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.member-form-col > .public-shell { width: 100%; }
+.review-once-note { margin: 0 0 4px; padding: 12px 14px; border: 1px solid var(--gold, #d9a94e); border-radius: 8px; font-size: 16px; line-height: 1.5; }
+.public-intro h1 { font-size: clamp(30px, 8.2vw, 68px); overflow-wrap: normal; word-break: normal; hyphens: manual; }
+@media (min-width: 961px) { .public-intro h1 { font-size: clamp(38px, 5vw, 68px); } }
+.public-intro { min-width: 0; }
+@media (max-width: 520px) { .public-intro { padding: 20px; } .public-form-card { padding-left: 16px; padding-right: 16px; } }
+.which-form-notice { margin: 0 0 16px; padding: 14px 16px; border: 2px solid var(--gold, #d9a94e); border-radius: 8px; background: rgba(217,169,78,0.08); }
+.which-form-notice p { margin: 0; font-size: 17px; line-height: 1.5; max-width: 62ch; }
+.which-form-notice p + p { margin-top: 8px; }
+.which-form-notice a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; color: var(--gold-bright, #f0c36a); text-decoration: underline; text-underline-offset: 3px; }
+.appt-explain { flex-basis: 100%; font-size: 15px; line-height: 1.5; color: var(--t-secondary); }
+
+/* Minimum text size: nothing a member reads is below 14px (labels 15px). Generated from a Playwright audit of member pages. */
+html body .about-alliance-blurb{font-size:14px}
+html body .about-alliance-facts dd{font-size:14px}
+html body .about-alliance-facts dt{font-size:14px}
+html body .about-alliance-more{font-size:14px}
+html body .about-record-matchups p{font-size:14px}
+html body .about-record-sources{font-size:14px}
+html body .about-record-sources > a{font-size:14px}
+html body .about-standard > span{font-size:14px}
+html body .about-stat-label{font-size:14px}
+html body .alliance-schedule-filter{font-size:14px}
+html body .alliance-schedule-tag{font-size:14px}
+html body .alliance-schedule-utc{font-size:14px}
+html body .appt-chip{font-size:14px}
+html body .appt-local{font-size:14px}
+html body .availability-choice > span{font-size:14px}
+html body .availability-choice.selected > span{font-size:14px}
+html body .bear-time-flag{font-size:14px}
+html body .bear-time-main{font-size:14px}
+html body .bear-time-utc{font-size:14px}
+html body .charm-grid > label{font-size:15px}
+html body .deadline-ticker-count{font-size:14px}
+html body .deadline-ticker-flag{font-size:14px}
+html body .deadline-ticker-label{font-size:14px}
+html body .ev-blurb{font-size:14px}
+html body .ev-countdown-label{font-size:14px}
+html body .ev-countdown-units span{font-size:14px}
+html body .ev-kind{font-size:14px}
+html body .ev-open-hint{font-size:14px}
+html body .ev-search-field > label{font-size:15px}
+html body .ev-status.ev-status-live{font-size:14px}
+html body .ev-status.ev-status-upcoming{font-size:14px}
+html body .ev-timing-label{font-size:14px}
+html body .ev-timing-value{font-size:14px}
+html body .ev-timing-value.muted{font-size:14px}
+html body .events-hunts-utc{font-size:14px}
+html body .events-ics-hint{font-size:14px}
+html body .form-section-header > span{font-size:14px}
+html body .form-section-header.prep-header-block > span{font-size:14px}
+html body .gallery-item small{font-size:14px}
+html body .gear-ocr-button{font-size:14px}
+html body .gear-ocr-example > summary{font-size:14px}
+html body .gear-ocr-example-content p{font-size:14px}
+html body .gear-ocr-panel.idle p{font-size:14px}
+html body .gear-ocr-privacy-note{font-size:14px}
+html body .governor-gear-grid > label{font-size:15px}
+html body .guide-entry-meta > span{font-size:14px}
+html body .guide-entry-sub{font-size:14px}
+html body .guide-tag.guide-tag-start{font-size:14px}
+html body .guides-category-tab{font-size:14px}
+html body .guides-index span{font-size:14px}
+html body .help.appt-help{font-size:14px}
+html body .hero-chip > span{font-size:14px}
+html body .hero-chip.selected > span{font-size:14px}
+html body .hint{font-size:14px}
+html body .home-gallery-embedded-link{font-size:14px}
+html body .home-hunt-label{font-size:14px}
+html body .home-v2-alliance-fragment small{font-size:14px}
+html body .home-v2-command-list b{font-size:14px}
+html body .home-v2-strip span{font-size:14px}
+html body .hour-option-local{font-size:14px}
+html body .hour-option-rank{font-size:14px}
+html body .hour-picker-count{font-size:14px}
+html body .identity-grid > label{font-size:15px}
+html body .interest-status-back{font-size:14px}
+html body .interest-status-form > label{font-size:15px}
+html body .interest-status-inner code{font-size:14px}
+html body .k-btn{font-size:14px}
+html body .k-label{font-size:14px}
+html body .k-mark{font-size:14px}
+html body .k-mark.guide-category{font-size:14px}
+html body .k-mark.hall-kicker{font-size:14px}
+html body .k-narrative.hall-line{font-size:14px}
+html body .lang-switch-code{font-size:14px}
+html body .ledger-block-head > p{font-size:14px}
+html body .ledger-block-head a{font-size:14px}
+html body .ledger-block-kicker{font-size:14px}
+html body .loss{font-size:14px}
+html body .member-sidebar-all{font-size:14px}
+html body .member-sidebar-name{font-size:14px}
+html body .member-sidebar-title{font-size:14px}
+html body .minister-day-badge{font-size:14px}
+html body .minister-day-badge.minister-day-badge-overflow{font-size:14px}
+html body .muster-back-link{font-size:14px}
+html body .muted{font-size:14px}
+html body .needs-est{font-size:14px}
+html body .needs-flag{font-size:14px}
+html body .needs-when > time{font-size:14px}
+html body .on-file{font-size:14px}
+html body .petition-act-sub{font-size:14px}
+html body .petition-group-title.k-mark{font-size:14px}
+html body .petition-index-item{font-size:14px}
+html body .petition-index-num{font-size:14px}
+html body .ph-actions > a{font-size:14px}
+html body .ph-eyebrow{font-size:14px}
+html body .power-field-grid > label{font-size:15px}
+html body .prep-slot{font-size:14px}
+html body .prep-slot-count{font-size:14px}
+html body .prep-slot-sub{font-size:14px}
+html body .prep-slot.on{font-size:14px}
+html body .public-form-card.minister-hall-form > label{font-size:15px}
+html body .public-intro-stats span{font-size:14px}
+html body .public-kicker{font-size:14px}
+html body .registry-head-link{font-size:14px}
+html body .row > label{font-size:15px}
+html body .secondary-btn{font-size:14px}
+html body .section-title-row > p{font-size:14px}
+html body .section-title-row > span{font-size:14px}
+html body .sh-eyebrow{font-size:14px}
+html body .sh-eyebrow > span{font-size:14px}
+html body .site-footer-group-heading{font-size:14px}
+html body .site-footer-support{font-size:14px}
+html body .site-footer-tag{font-size:14px}
+html body .site-nav > a{font-size:14px}
+html body .site-nav-cta{font-size:14px}
+html body .site-nav-group-trigger{font-size:14px}
+html body .site-nav-support{font-size:14px}
+html body .timeline-cat.timeline-cat-feature{font-size:14px}
+html body .timeline-cat.timeline-cat-heroes{font-size:14px}
+html body .timeline-cat.timeline-cat-pets{font-size:14px}
+html body .timeline-cat.timeline-cat-pvp{font-size:14px}
+html body .timeline-cat.timeline-cat-truegold{font-size:14px}
+html body .timeline-footer a{font-size:14px}
+html body .timeline-footer span{font-size:14px}
+html body .timeline-index{font-size:14px}
+html body .timeline-source{font-size:14px}
+html body .timeline-source > a{font-size:14px}
+html body .tool-box-badge.tool-badge-available{font-size:14px}
+html body .tool-box-badge.tool-badge-new{font-size:14px}
+html body .tool-box-category{font-size:14px}
+html body .tool-box-cta{font-size:14px}
+html body .tool-box-desc{font-size:14px}
+html body .tools-category-tab{font-size:14px}
+html body .tools-glossary-link{font-size:14px}
+html body .troop-section.public-section > label{font-size:15px}
+html body .ui-btn{font-size:14px}
+html body .ui-btn.ui-btn-quiet{font-size:14px}
+html body .ui-card-surface.about-doctrine-card > p{font-size:14px}
+html body .ui-tag{font-size:14px}
+html body .ui-tag.k-wb{font-size:14px}
+html body .ui-tag.ui-tag-accent{font-size:14px}
+html body .ui-tag.ui-tag-neutral{font-size:14px}
+html body .ui-tag.ui-tag-success{font-size:14px}
+html body .ui-term-trigger{font-size:14px}
+html body .utc-clock{font-size:14px}
+html body .win{font-size:14px}
+html body .wizard-field > label{font-size:15px}
+html body .wizard-next{font-size:14px}
+html body .wizard-stepper-index{font-size:14px}
+html body .wizard-stepper-label{font-size:14px}
+html body [class*="__assurance"] span{font-size:14px}
+html body [class*="__avatarLarge"] > span{font-size:14px}
+html body [class*="__checklistAction"]{font-size:14px}
+html body [class*="__checklistDone"]{font-size:14px}
+html body [class*="__checklistGlossaryLink"]{font-size:14px}
+html body [class*="__checklistTitle"]{font-size:14px}
+html body [class*="__connectedRow"] > span{font-size:14px}
+html body [class*="__disclaimer"]{font-size:14px}
+html body [class*="__giftCodesTitle"]{font-size:14px}
+html body [class*="__nextHint"]{font-size:14px}
+html body [class*="__profileHead"] p{font-size:14px}
+html body [class*="__profileHead"] span{font-size:14px}
+html body [class*="__role"]{font-size:14px}
+html body [class*="__stats"] span{font-size:14px}
+html body [class*="__textButton"]{font-size:14px}
+html body .site-footer a, html body .site-footer-nav a { font-size: 14px; }
+html body .home-v2-doctrine small, html body .home-v2-doctrine small span { font-size: 14px; }
+html body .ui-table td, html body .ui-table th, html body .appt-table th, html body .appt-table td { font-size: 14px; }
+html body .about-standard > span, html body .gear-ocr-button, html body .member-sidebar-all, html body .ph-actions > a,
+html body .secondary-btn, html body .cost-tool-crumbs a, html body .cost-tool-crumbs span,
+html body .home-v2-story-copy small, html body .home-v2-story-copy small span { font-size: 14px !important; }
+html body .wizard-field > label { font-size: 15px !important; }
+html body .home-v2-command-list small, html body .about-march p span, html body .about-march p { font-size: 14px; }
+html body .about-march p span { font-size: inherit; }
+
+/* Easy view: nothing below 16px */
+:root[data-easy="true"] body .about-standard > span{font-size:16px !important}
+:root[data-easy="true"] body .alliance-schedule-card > time{font-size:16px !important}
+:root[data-easy="true"] body .availability-choice.selected > span{font-size:16px !important}
+:root[data-easy="true"] body .bear-time-main{font-size:16px !important}
+:root[data-easy="true"] body .ev-status.ev-status-live{font-size:16px !important}
+:root[data-easy="true"] body .ev-status.ev-status-upcoming{font-size:16px !important}
+:root[data-easy="true"] body .ev-timing-value.muted{font-size:16px !important}
+:root[data-easy="true"] body .form-section-header.prep-header-block > span{font-size:16px !important}
+:root[data-easy="true"] body .gallery-item strong{font-size:16px !important}
+:root[data-easy="true"] body .gear-ocr-button{font-size:16px !important}
+:root[data-easy="true"] body .gear-ocr-example > summary{font-size:16px !important}
+:root[data-easy="true"] body .gear-ocr-example-content p{font-size:16px !important}
+:root[data-easy="true"] body .gear-ocr-example-content strong{font-size:16px !important}
+:root[data-easy="true"] body .gear-ocr-panel.idle p{font-size:16px !important}
+:root[data-easy="true"] body .gear-ocr-panel.idle strong{font-size:16px !important}
+:root[data-easy="true"] body .gear-ocr-privacy-note{font-size:16px !important}
+:root[data-easy="true"] body .guide-tag.guide-tag-start{font-size:16px !important}
+:root[data-easy="true"] body .help.appt-help{font-size:16px !important}
+:root[data-easy="true"] body .hero-chip.selected > span{font-size:16px !important}
+:root[data-easy="true"] body .home-v2-command-list b{font-size:16px !important}
+:root[data-easy="true"] body .hour-picker > legend{font-size:16px !important}
+:root[data-easy="true"] body .interest-status-inner code{font-size:16px !important}
+:root[data-easy="true"] body .k-mark.guide-category{font-size:16px !important}
+:root[data-easy="true"] body .k-mark.hall-kicker{font-size:16px !important}
+:root[data-easy="true"] body .ledger-block-head > h2{font-size:16px !important}
+:root[data-easy="true"] body .member-sidebar-all{font-size:16px !important}
+:root[data-easy="true"] body .minister-day-badge.minister-day-badge-overflow{font-size:16px !important}
+:root[data-easy="true"] body .needs-when > time{font-size:16px !important}
+:root[data-easy="true"] body .on-file{font-size:16px !important}
+:root[data-easy="true"] body .petition-group-title.k-mark{font-size:16px !important}
+:root[data-easy="true"] body .ph-actions > a{font-size:16px !important}
+:root[data-easy="true"] body .power-subheader{font-size:16px !important}
+:root[data-easy="true"] body .prep-slot.on{font-size:16px !important}
+:root[data-easy="true"] body .public-form-card.minister-hall-form > label{font-size:16px !important}
+:root[data-easy="true"] body .registry-head-link{font-size:16px !important}
+:root[data-easy="true"] body .secondary-btn{font-size:16px !important}
+:root[data-easy="true"] body .site-footer-group-heading{font-size:16px !important}
+:root[data-easy="true"] body .timeline-cat.timeline-cat-feature{font-size:16px !important}
+:root[data-easy="true"] body .timeline-cat.timeline-cat-heroes{font-size:16px !important}
+:root[data-easy="true"] body .timeline-cat.timeline-cat-pets{font-size:16px !important}
+:root[data-easy="true"] body .timeline-cat.timeline-cat-pvp{font-size:16px !important}
+:root[data-easy="true"] body .timeline-cat.timeline-cat-truegold{font-size:16px !important}
+:root[data-easy="true"] body .tool-box-badge.tool-badge-available{font-size:16px !important}
+:root[data-easy="true"] body .tool-box-badge.tool-badge-new{font-size:16px !important}
+:root[data-easy="true"] body .tools-glossary-link{font-size:16px !important}
+:root[data-easy="true"] body .troop-section.public-section > label{font-size:16px !important}
+:root[data-easy="true"] body .ui-btn.ui-btn-quiet{font-size:16px !important}
+:root[data-easy="true"] body .ui-card-surface.about-doctrine-card > p{font-size:16px !important}
+:root[data-easy="true"] body .ui-tag.k-wb{font-size:16px !important}
+:root[data-easy="true"] body .ui-tag.ui-tag-accent{font-size:16px !important}
+:root[data-easy="true"] body .ui-tag.ui-tag-neutral{font-size:16px !important}
+:root[data-easy="true"] body .ui-tag.ui-tag-success{font-size:16px !important}
+:root[data-easy="true"] body .unit-card.archer > h4{font-size:16px !important}
+:root[data-easy="true"] body .unit-card.cavalry > h4{font-size:16px !important}
+:root[data-easy="true"] body .unit-card.infantry > h4{font-size:16px !important}
+:root[data-easy="true"] body .where-help > summary{font-size:16px !important}
+:root[data-easy="true"] body .wizard-field > label{font-size:16px !important}
+:root[data-easy="true"] body [class*="__checklistTitle"]{font-size:16px !important}
+:root[data-easy="true"] body [class*="__giftCodesTitle"]{font-size:16px !important}
+:root[data-easy="true"] body [class*="__stats"] strong{font-size:16px !important}
+:root[data-easy="true"] body .home-v2-doctrine small, :root[data-easy="true"] body .home-v2-doctrine small span, :root[data-easy="true"] body .cost-tool-crumbs a, :root[data-easy="true"] body .cost-tool-crumbs span, :root[data-easy="true"] body .home-v2-command-list small{font-size:16px !important}
+html body .form-status-badge{font-size:14px !important}
+:root[data-easy="true"] body .form-status-badge{font-size:16px !important}
+
+/* Radios and checkboxes: 24px mark, whole row is the 44px+ tap area */
+html body .vote-option input, html body .radio-option input[type="radio"], html body .radio-option input[type="checkbox"] { width: 24px; height: 24px; flex: none; margin: 0; }
+html body .vote-option { min-height: 48px; }
+html body .radio-option { min-height: 48px; padding: 8px 6px; gap: 12px; font-size: 16px; }
+html body .hour-option { min-height: 56px; padding-left: 50px; }
+html body .hour-option input { width: 24px; height: 24px; margin: -12px 0 0; left: 14px; }
+html body .hour-option-local { font-size: 14px; }
+html body .hour-option-utc { font-size: 15px; }
+html body .availability-choice, html body .hero-chip { min-height: 48px; }
+html body .availability-choice.selected > span::before, html body .hero-chip.selected > span::before { content: "\2713\00a0"; }
+html body .hero-chip:has(input:focus-visible), html body .availability-choice:has(input:focus-visible) { outline: 2px solid var(--gold-hot); outline-offset: 2px; }
+/* Tool tile badge sits above the icon instead of overlapping it once text is 14px */
+html body .tool-box-badge { position: static; order: -1; letter-spacing: 0.02em; text-transform: none; text-align: center; }
+html body .tool-box { padding-top: 20px; }

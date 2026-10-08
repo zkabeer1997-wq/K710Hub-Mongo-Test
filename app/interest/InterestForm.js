@@ -349,6 +349,10 @@ function removeScreenshot(index) {
 
 async function handleSubmit(e) {
 e.preventDefault();
+// Only the last step ("Check and send") may submit. Anything else (Enter in a
+// text field, a re-used DOM button) just moves to the next step.
+if (step !== ACTS.length - 1) { goNext(); return; }
+if (loading) return;
 const bad = firstInvalidStep(ACTS.length + 1, (i) => computeErrors(Math.min(i, ACTS.length - 1), form, screenshots, labelRef.current));
 if (bad !== -1 && bad < step) { setStep(bad); setErrors(computeErrors(bad, form, screenshots, labelRef.current)); setErrorSignal((n) => n + 1); return; }
 if (!validateStep(step)) return;
@@ -743,6 +747,7 @@ return (
 </header>
 <p className="petition-act-sub">Step 6 · Look everything over, then press “Send my application”.</p>
 <div className="petition-act-body review-groups">
+<p className="review-once-note"><strong>Send this only once.</strong> If you already applied, do not send it again. Use “Check my application” instead.</p>
 {[
   { stepIndex: 0, title: 'Your account', rows: [['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord username', form.discordUsername], ['Current server', form.currentServer], ['Current alliance', form.currentAlliance]] },
   { stepIndex: 1, title: 'Your move', rows: [['Alliance you want to join', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance]] },
@@ -783,9 +788,9 @@ return (
       <button type="button" className="k-btn k-btn-quiet" onClick={goBack}>Back</button>
     )}
     {isFinalStep ? (
-      <button type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages || (activePeriodLoaded && !activePeriod)}>{processingImages ? 'Preparing images…' : loading ? 'Sending…' : 'Send my application'}</button>
+      <button key="send" type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages || (activePeriodLoaded && !activePeriod)}>{processingImages ? 'Preparing images…' : loading ? 'Sending…' : 'Send my application'}</button>
     ) : (
-      <button type="button" className="k-btn" onClick={goNext}>Continue</button>
+      <button key="continue" type="button" className="k-btn" onClick={(e) => { e.preventDefault(); goNext(); }}>Continue</button>
     )}
   </div>
 </div>

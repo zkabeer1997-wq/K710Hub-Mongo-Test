@@ -383,6 +383,24 @@ return [];
 }
 }
 
+function storedMemberIds(rally) {
+  const ids = Array.isArray(rally.memberIds) ? rally.memberIds.map(String) : [];
+  const lead = rally.leadMemberId ? String(rally.leadMemberId) : '';
+  return lead && !ids.includes(lead) ? [...ids, lead] : ids;
+}
+
+/**
+ * Normalise rallies that are ALREADY in the in-memory camelCase shape
+ * (what GET /api/admin-rallies returns). Never run formatRallyRows over this:
+ * it expects raw DB rows (snake_case) and would drop every member.
+ */
+export function hydrateRallies(rallies) {
+  if (!Array.isArray(rallies)) return [];
+  return rallies
+    .filter((rally) => rally && rally.id != null)
+    .map((rally) => normalizeRally({ ...rally, id: String(rally.id), name: typeof rally.name === 'string' ? rally.name : 'Rally' }));
+}
+
 const RALLY_DB_DEFAULT_FORMATION = { infantry: 0, cavalry: 0, archer: 0 };
 
 export function serializeRalliesForSave(rallies) {
@@ -396,7 +414,9 @@ export function serializeRalliesForSave(rallies) {
       id: String(rally.id),
       name: typeof rally.name === 'string' ? rally.name : `Rally ${index + 1}`,
       position: index,
-      member_ids: Array.isArray(rally.memberIds) ? rally.memberIds.map(String) : [],
+      // The stored set includes the lead so server-side "assigned" counts see
+      // them; formatRallyRows/normalizeRally strips the lead back out in memory.
+      member_ids: storedMemberIds(rally),
       lead_member_id: rally.leadMemberId ? String(rally.leadMemberId) : null,
       formation: {
         ...troopWeights,

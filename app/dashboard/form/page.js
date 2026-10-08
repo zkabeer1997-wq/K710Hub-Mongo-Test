@@ -18,10 +18,12 @@ export default async function PlayerRecordFormPage() {
 
   return (
     <main className="page public-page">
-      <UpsertNotice formKey="joiner" />
-      <Suspense fallback={null}>
-        <PlayerRecordFormClient />
-      </Suspense>
+      <div className="member-form-col">
+        <UpsertNotice formKey="joiner" />
+        <Suspense fallback={null}>
+          <PlayerRecordFormClient />
+        </Suspense>
+      </div>
     </main>
   );
 }

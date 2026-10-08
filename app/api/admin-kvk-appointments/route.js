@@ -3,8 +3,9 @@ import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import {
-  APPOINTMENT_TYPES, findType, allocateSlots, contributionScore, compareApplicants, validateManualAssignment, slotRange,
+  APPOINTMENT_TYPES, resolveAppointmentCycle, findType, allocateSlots, contributionScore, compareApplicants, validateManualAssignment, slotRange,
 } from '../../../lib/kvkAppointments.mjs';
+import { listEventCycles } from '../../../lib/eventCycles.server.js';
 import { loadAppointmentGate, isCyclePublished, iso, replaceAutoAssignments } from '../../../lib/kvkAppointments.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -16,10 +17,16 @@ export async function GET(request) {
   if (!(await isAdminRequest(request))) return json({ error: 'Unauthorized' }, 401);
   try {
     const g = await loadAppointmentGate();
+    const cycles = await listEventCycles('kvk').catch(() => []);
+    const picked = resolveAppointmentCycle({
+      requested: new URL(request.url).searchParams.get('cycle') || '',
+      gateCycleId: g.cycleId,
+      cycles,
+    });
     const [apps, asg, pub] = await Promise.all([
-      getCollection(COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS).then((c) => c.find({ cycle_id: g.cycleId }).toArray()),
-      getCollection(COLLECTIONS.KVK_APPOINTMENT_ASSIGNMENTS).then((c) => c.find({ cycle_id: g.cycleId }).toArray()),
-      isCyclePublished(g.cycleId),
+      getCollection(COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS).then((c) => c.find({ cycle_id: picked.cycleId }).toArray()),
+      getCollection(COLLECTIONS.KVK_APPOINTMENT_ASSIGNMENTS).then((c) => c.find({ cycle_id: picked.cycleId }).toArray()),
+      isCyclePublished(picked.cycleId),
     ]);
     const applications = apps
       .map((a) => ({
@@ -32,7 +39,7 @@ export async function GET(request) {
     const assignments = asg.map((a) => ({
       member_id: a.member_id, name: a.name || '', day: a.day, buff: a.buff, slot: a.slot, manual: a.manual === true,
     }));
-    return json({ cycle_id: g.cycleId, types: APPOINTMENT_TYPES, applications, assignments, ...pub });
+    return json({ cycle_id: picked.cycleId, cycle_label: picked.label, is_live: picked.isLive, cycles: picked.options, types: APPOINTMENT_TYPES, applications, assignments, ...pub });
   } catch (error) {
     console.error('admin-kvk-appointments GET failed', error);
     return json({ error: 'Could not load appointments.' }, 500);

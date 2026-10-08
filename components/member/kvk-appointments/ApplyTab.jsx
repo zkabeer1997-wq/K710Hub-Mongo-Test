@@ -23,6 +23,7 @@ export default function ApplyTab({ appts }) {
 
   const type = APPOINTMENT_TYPES.find((t) => typeKey(t) === selected);
   const existing = data?.applications?.find((a) => a.day === type.day && a.buff === type.buff) || null;
+  const selectedTitle = typeTitle(type);
   const closed = data ? !data.window.open : false;
 
   // Load the saved entry into the form whenever the type (or the data) changes.
@@ -57,7 +58,7 @@ export default function ApplyTab({ appts }) {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || 'Could not save your application.');
-      setMessage({ type: 'ok', text: 'Saved. Your previous entry for this day was replaced.' });
+      setMessage({ type: 'ok', text: `Saved for ${data?.cycleLabel || 'this KvK'}: ${selectedTitle}. Your earlier answers for this one were replaced.` });
       refreshMemberFormStatus();
       reload();
     } catch (err) {
@@ -75,7 +76,7 @@ export default function ApplyTab({ appts }) {
           <span>{closed ? (data.window.note || data.window.message || 'Applications are closed.') : 'Applications are open.'}</span>
         </p>
       )}
-      <UpsertNotice known={Boolean(data)} updatedAt={existing?.updated_at || null} />
+      <UpsertNotice known={Boolean(data)} updatedAt={existing?.updated_at || null} cycleLabel={data?.cycleLabel || null} subject={selectedTitle} />
       <form onSubmit={submit} noValidate aria-describedby={`${uid}-status`}>
         <div className="event-form-field">
           <label htmlFor={`${uid}-type`}>Day and buff</label>

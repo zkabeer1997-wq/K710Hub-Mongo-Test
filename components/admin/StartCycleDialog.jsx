@@ -5,19 +5,22 @@ import AdminDialog from './AdminDialog';
 import { Button, Field, Input } from '../ui';
 import { fromLocalInput, localZoneName } from './adminDates';
 
-// "KvK Season 12" -> "KvK Season 13". Falls back to "<fallback> 1".
+// Next name from the CURRENT label: "KvK Season 12" -> "KvK Season 13".
+// Only when the current label has no number do we look at earlier cycles.
 export function suggestNextLabel(history, cycle, fallback) {
-  const labels = [cycle?.label, ...(history || []).map((h) => h.label)].filter(Boolean);
+  const bump = (label) => {
+    const m = String(label || '').match(/^(.*?)(\d+)\s*$/);
+    return m ? `${m[1]}${Number(m[2]) + 1}` : null;
+  };
+  const fromCurrent = bump(cycle?.label);
+  if (fromCurrent) return fromCurrent;
   let best = null;
-  for (const label of labels) {
+  for (const label of (history || []).map((h) => h.label).filter(Boolean)) {
     const m = String(label).match(/^(.*?)(\d+)\s*$/);
-    if (m) {
-      const n = Number(m[2]);
-      if (!best || n > best.n) best = { prefix: m[1], n };
-    }
+    if (m && (!best || Number(m[2]) > best.n)) best = { prefix: m[1], n: Number(m[2]) };
   }
   if (best) return `${best.prefix}${best.n + 1}`;
-  if (labels.length) return `${labels[0]} 2`;
+  if (cycle?.label) return `${cycle.label} 2`;
   return `${fallback} 1`;
 }
 
@@ -32,7 +35,7 @@ export default function StartCycleDialog({ open, onClose, onSubmit, suggestion, 
   const [wasOpen, setWasOpen] = useState(false);
   if (open && !wasOpen) {
     setWasOpen(true);
-    setForm({ label: suggestion, start: '', end: '', opens: '', closes: '', keep: true, closePrev: true });
+    setForm({ label: suggestion, start: '', end: '', opens: '', closes: ''});
     setErrors({});
     setServerError('');
   } else if (!open && wasOpen) {
@@ -65,8 +68,10 @@ export default function StartCycleDialog({ open, onClose, onSubmit, suggestion, 
         end_date: fromLocalInput(form.end),
         opens_at: fromLocalInput(form.opens),
         closes_at: fromLocalInput(form.closes),
-        copy_settings: form.keep,
-        close_previous: hasPrevious ? form.closePrev : false,
+        // Fixed sensible defaults: the previous cycle is always closed and the
+        // form messages carry over.
+        copy_settings: true,
+        close_previous: true,
       });
     } catch (err) {
       setServerError(err.message || 'Could not start the cycle.');
@@ -110,14 +115,11 @@ export default function StartCycleDialog({ open, onClose, onSubmit, suggestion, 
           </Field>
         </div>
         <p className="ec-hint">Times are in your local time ({zone}) and saved in UTC.</p>
-        <label className="ec-check">
-          <input type="checkbox" checked={form.keep} onChange={(e) => set('keep', e.target.checked)} />
-          <span>Keep the previous form messages</span>
-        </label>
-        <label className="ec-check">
-          <input type="checkbox" checked={hasPrevious ? form.closePrev : false} disabled={!hasPrevious} onChange={(e) => set('closePrev', e.target.checked)} />
-          <span>Close the previous cycle{hasPrevious ? '' : ' (there is none yet)'}</span>
-        </label>
+        <p className="ec-hint">
+          {hasPrevious
+            ? 'Starting a new cycle closes the current one and moves it to History. All forms open again with your messages kept, and members start with fresh forms. Nothing is deleted.'
+            : 'All forms open for the new cycle. Members start with fresh forms.'}
+        </p>
       </form>
     </AdminDialog>
   );

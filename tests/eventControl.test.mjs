@@ -179,7 +179,8 @@ test('close_forms, open_forms and set_window', async () => {
   let s = (await (await post({ type: 'flamedragon', action: 'close_forms' })).json()).state;
   assert.equal(s.cycle.status, 'closed');
   assert.ok(s.forms.every((f) => f.state === 'closed'));
-  assert.equal(s.next_actions[0], 'archive_reset');
+  assert.equal(s.next_actions[0], 'start_cycle');
+  assert.equal(s.next_actions.at(-1), 'archive_reset', 'ending without a new cycle is never the first suggestion');
   s = (await (await post({ type: 'flamedragon', action: 'open_forms', form_key: 'noble' })).json()).state;
   assert.deepEqual(s.forms.map((f) => f.is_open), [false, true]);
   assert.equal(s.cycle.status, 'collecting');

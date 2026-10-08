@@ -1,0 +1,51 @@
+import { launch, newCtx, visit, OUT } from './qa-browse.mjs';
+const vp = process.argv[2] || 'phone';
+const browser = await launch();
+const ctx = await newCtx(browser, { vp, memberId: '920000024' });
+const page = await ctx.newPage();
+const log = (...a) => console.log(...a);
+const bodyText = async () => (await page.locator('main').first().innerText()).replace(/\n+/g, ' | ').slice(0, 600);
+await page.goto('http://localhost:3000/dashboard/form'); await page.waitForTimeout(1500);
+log('INITIAL', await bodyText());
+// try submitting empty
+await page.getByRole('button', { name: /save kvk availability/i }).click({force:true}); await page.waitForTimeout(800);
+log('EMPTY SUBMIT ->', await bodyText());
+await page.screenshot({ path: `${OUT}/flow-${vp}-avail-empty.png`, fullPage: true });
+const sel = page.locator('select').first(); await sel.selectOption({ label: 'SKY' }).catch(async () => sel.selectOption('SKY'));
+await page.getByLabel(/second half/i).check({force:true}).catch(async () => page.locator('input[type=radio]').nth(1).check({force:true}));
+await page.getByRole('button', { name: /save kvk availability/i }).click({force:true}); await page.waitForTimeout(1500);
+log('AFTER SAVE ->', await bodyText());
+await page.screenshot({ path: `${OUT}/flow-${vp}-avail-saved.png`, fullPage: true });
+// appointments
+await page.goto('http://localhost:3000/forms/kvk-appointments'); await page.waitForTimeout(1500);
+await page.locator('select').first().selectOption({ index: 1 });
+const nums = page.locator('input[inputmode], input[type=text], input[type=number]');
+log('inputs', await nums.count());
+await page.getByLabel(/^TG/i).fill('500'); await page.getByLabel(/^TTG/i).fill('300'); await page.getByLabel(/speedup/i).fill('42');
+const boxes = page.locator('input[type=checkbox]');
+await page.getByRole('button', { name: /submit my application/i }).click({force:true}); await page.waitForTimeout(800);
+log('APPT NO HOURS ->', await bodyText());
+for (const i of [12, 13, 14]) await boxes.nth(i).check({ force: true });
+await page.getByRole('button', { name: /submit my application/i }).click({force:true}); await page.waitForTimeout(1500);
+log('APPT SAVED ->', await bodyText());
+await page.screenshot({ path: `${OUT}/flow-${vp}-appt-saved.png`, fullPage: true });
+await page.goto('http://localhost:3000/forms/kvk-appointments?tab=mine'); await page.waitForTimeout(1200);
+log('MINE ->', await bodyText());
+// vote
+await page.goto('http://localhost:3000/forms/tri-alliance-clash'); await page.waitForTimeout(1200);
+await page.getByRole('button', { name: /save|submit|vote/i }).last().click({force:true}); await page.waitForTimeout(700);
+log('VOTE EMPTY ->', await bodyText());
+await page.locator('input[type=radio]').nth(1).check({ force: true });
+await page.locator('input[name=power], input[inputmode=numeric], input[type=text]').first().fill('abc');
+await page.getByRole('button', { name: /save|submit|vote/i }).last().click({force:true}); await page.waitForTimeout(700);
+log('VOTE BAD POWER ->', await bodyText());
+await page.locator('input[name=power], input[inputmode=numeric], input[type=text]').first().fill('95,500,000');
+await page.getByRole('button', { name: /save|submit|vote/i }).last().click({force:true}); await page.waitForTimeout(1200);
+log('VOTE SAVED ->', await bodyText());
+await page.screenshot({ path: `${OUT}/flow-${vp}-vote-saved.png`, fullPage: true });
+// status after
+await page.goto('http://localhost:3000/dashboard'); await page.waitForTimeout(1500);
+log('DASH ->', (await page.locator('text=/Still needs your input/').first().innerText().catch(() => 'no needs-input text')));
+await page.goto('http://localhost:3000/forms'); await page.waitForTimeout(1500);
+log('FORMS ->', (await page.locator('main').innerText()).replace(/\n+/g, ' | ').slice(0, 900));
+await browser.close();
