@@ -13,13 +13,13 @@ export function normalizeTab(value) {
 // Each tab is a real link (?tab=...) so it is shareable, works without JS and
 // the browser Back button moves between tabs. Not an ARIA tablist on purpose:
 // links navigating between URLs are semantically a nav with aria-current.
-export default function Tabs({ current }) {
+export default function Tabs({ current, basePath = '/forms/kvk-appointments' }) {
   return (
     <nav className="appt-tabs" aria-label="Appointment sections">
       {TABS.map((tab) => (
         <Link
           key={tab.id}
-          href={`/forms/kvk-appointments?tab=${tab.id}`}
+          href={`${basePath}?tab=${tab.id}`}
           aria-current={tab.id === current ? 'page' : undefined}
           className={tab.id === current ? 'is-current' : ''}
           scroll={false}

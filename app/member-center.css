@@ -38,6 +38,8 @@
   .member-sidebar a.active{background:rgba(217,169,78,.12);color:var(--gold-hot);box-shadow:inset 2px 0 0 var(--brass)}
   .member-sidebar a:focus-visible{outline:2px solid var(--gold-hot);outline-offset:1px}
   .member-sidebar svg{flex:none;color:var(--brass)}
+  .member-sidebar-result{padding-left:20px!important}
+  .member-sidebar-tag{margin-left:auto;font:700 11px/1 var(--font-body,sans-serif);letter-spacing:.06em;text-transform:uppercase;color:var(--brass-bright)}
   .member-sidebar-all{margin-top:8px;font-size:12px!important;color:var(--brass-bright)!important}
 }
 
@@ -132,7 +134,7 @@
 .appt-notice{margin:0 0 14px;padding:12px 14px;border:1px solid var(--brass);border-radius:8px;background:rgba(217,169,78,.08);font-size:15px}
 .appt-status{align-items:flex-start;flex-direction:column;gap:6px}
 .appt-status-text{flex:none;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
-.appt-role{font-size:13px;font-weight:400;color:var(--t-secondary)}
+.appt-role{font-size:14px;font-weight:400;color:var(--t-secondary)}
 .appt-when{margin:0;font-size:18px}
 .appt-time{font-family:var(--font-mono,monospace);font-weight:700;font-variant-numeric:tabular-nums}
 .appt-explain{margin:0;font-size:15px}

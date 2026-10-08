@@ -33,6 +33,14 @@ Bookable buffs: in KvK Prep the Chief Minister (Day 1 Construction, Day 2 Resear
 
 `lib/kvkScheduleBridge.mjs` holds the mapping, text/Excel sheets and the "not placed" reasons; `lib/kvkSchedule.server.js` the server build. `allocateSlots()` / contribution score below are kept only for cycles that used the old Appointments form (view-only in the admin; the legacy `auto_allocate` action never touches days without old applications).
 
+## Where members find "My appointment" (results, not forms)
+
+`GET /api/member-form-status` returns an additive `results` array next to `forms` (`lib/memberResults.mjs`, `getMemberResults` in `lib/memberFormStatus.server.js`). Result rows have `kind:'result'`, never count as "to do", have no red dot and are not in `MEMBER_FORMS`. `withResults(forms, results)` puts each directly under its form (`after`): `my-appointment` under KvK Prep & Appointments, `my-noble-appointment` under Noble Advisor (only while a Flamedragon cycle is current). States: `needs_form`, `waiting` (not published), `placed` (actual lines), `not_placed`, `not_asked`. A placed result shows "New: your appointment is ready" with a gold border on the dashboard until the member opens the page (localStorage `k710-result-seen:<key>:<publishedAt>`). Shown in: dashboard My Forms list, member sidebar, header Members menu (desktop and mobile), `/forms` checklist ("Results" under the KvK and Flamedragon groups), and the Noble form page and its save confirmation.
+
+## Flamedragon Noble Advisor schedule
+
+Member page `/forms/flamedragon-tyrant/my-appointment` (tabs `mine`, `schedule`), `GET /api/noble-appointment` (session; returns cycle, published, saved, asked, status, mine, and `schedule` (48 slots, names only) only when published). Admin: Flamedragon event page, "Noble advisor schedule" tab, the same five steps (`NobleAppointmentsFlow.jsx`), API `/api/admin-noble-advisor/appointments` (`build_schedule`, `assign`, `unassign`, `publish`; always the current Flamedragon cycle). Storage reuses the KvK collections: `kvk_appointment_assignments {cycle_id: <Flamedragon event cycle id>, day: 4, buff: 'noble', slot, member_id, name, manual}` (existing unique indexes give one member per slot and one slot per member) and `kvk_appointment_cycles {cycle_id, published}`. Event cycle ids never collide between KvK and Flamedragon. Build uses the Prep scheduler for Day 4 on the 48 half-hours (`lib/nobleAppointment.server.js`, atomic `replaceAutoAssignments`, hand placements locked). The date shown next to the time is the Flamedragon cycle start date (assumption). Tests: `tests/nobleAppointment.test.mjs`.
+
 ---
 
 ## Legacy (old separate Appointments form, kept for older cycles)

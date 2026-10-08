@@ -56,7 +56,7 @@ function daysAsText(days, title) {
   return lines.join('\n').trim();
 }
 
-export default function PrepMinistersTable({ noble = false }) {
+export default function PrepMinistersTable({ noble = false, hideSchedule = false }) {
   const api = noble ? '/api/admin-noble-advisor' : '/api/admin-prep-backpack';
   const COLUMNS = noble ? ALL_COLUMNS.filter(col => ['in_game_name','member_id','want_troop_training','is_transfer','promoting_t11','troop_speedup_days','avail_day4','created_at'].includes(col.key)) : ALL_COLUMNS;
   const [transferFilter,setTransferFilter] = useState('');
@@ -214,6 +214,11 @@ export default function PrepMinistersTable({ noble = false }) {
               The schedule uses all {rows.length} answers saved in {cycle ? cycle.label : 'this cycle'}. Members start every new cycle with a fresh form.
             </p>
           </div>
+          {hideSchedule ? (
+            <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:18,alignItems:'center'}}>
+              {saveStatus && <span role="status">{saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : 'Save failed — correct the edited value before building.'}</span>}
+            </div>
+          ) : (
           <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:18,alignItems:'center'}}>
             <Button variant="quiet" onClick={handleGenerate} disabled={loading || Boolean(error) || saveStatus==='saving' || saveStatus==='error'}>Generate full schedule</Button>
             <Button variant="quiet" onClick={exportExcel} disabled={loading || Boolean(error) || saveStatus==='saving' || saveStatus==='error'}>Download Excel</Button>
@@ -232,6 +237,7 @@ export default function PrepMinistersTable({ noble = false }) {
             <span>Uses every answer in the chosen cycle, regardless of table filters.</span>
             {saveStatus && <span role="status">{saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : 'Save failed — correct the edited value before generating.'}</span>}
           </div>
+          )}
           {loading && <TableSkeleton columns={COLUMNS.length} rows={7} />}
           {error && <div className="status error">{error}</div>}
           {!loading && !error && (

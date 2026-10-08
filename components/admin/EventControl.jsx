@@ -13,7 +13,7 @@ import { formatLocal } from './adminDates';
 import { formatUtc } from '../../lib/deadlines.mjs';
 import { Button } from '../ui';
 import AppointmentsFlow from '../../app/admin/dashboard/kvk-appointments/AppointmentsFlow';
-import PrepMinistersTable from '../../app/admin/dashboard/prep-ministers/PrepMinistersTable';
+import NobleAppointmentsFlow from '../../app/admin/dashboard/prep-ministers/NobleAppointmentsFlow';
 
 const EVENTS = {
   kvk: {
@@ -411,14 +411,7 @@ export default function EventControl({ type }) {
         ) : null}
         {tab === 'noble' && type === 'flamedragon' ? (
           <div role="tabpanel" id="ec-panel-noble" aria-labelledby="ec-tab-noble">
-            {state?.appointments ? (
-              <p className="ec-panel-note">
-                <StatusChip kind={state.appointments.published ? 'published' : 'warn'}>
-                  {state.appointments.published ? 'Published to members' : 'Not published yet'}
-                </StatusChip>
-              </p>
-            ) : null}
-            <AdminEmbedContext.Provider value><PrepMinistersTable noble /></AdminEmbedContext.Provider>
+            <AdminEmbedContext.Provider value><NobleAppointmentsFlow /></AdminEmbedContext.Provider>
           </div>
         ) : null}
 

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { SUPPORT_URL } from '../lib/supportLink';
 import { useMemberFormStatus } from '../lib/useMemberFormStatus';
+import { withResults } from '../lib/memberResults.mjs';
 import UtcClock from './member/UtcClock';
 import FormStatusMark from './member/FormStatusMark';
 import LanguageSwitcher from './i18n/LanguageSwitcher';
@@ -47,7 +48,9 @@ function membersChildren(base, status) {
   return [
     ...base,
     { separator: true, label: 'My forms' },
-    ...status.forms.map((f) => ({ href: f.href, label: f.shortLabel, status: f })),
+    ...withResults(status.forms, status.results).map((f) => (f.kind === 'result'
+      ? { href: f.href, label: f.shortLabel, status: { badge: 'Result', state: 'result' } }
+      : { href: f.href, label: f.shortLabel, status: f })),
   ];
 }
 

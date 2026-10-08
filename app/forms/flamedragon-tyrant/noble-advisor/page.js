@@ -24,6 +24,7 @@ export default async function NobleAdvisorPage() {
       <div className="public-shell single-form prep-wide">
         <Link href="/forms/flamedragon-tyrant">← Flamedragon forms</Link>
         <h1>{intro.heading}</h1>
+        <p><Link href="/forms/flamedragon-tyrant/my-appointment">See My Noble Advisor appointment</Link></p>
         {gate.is_open === false ? (
           <FormClosedNotice message={gate.message} />
         ) : (

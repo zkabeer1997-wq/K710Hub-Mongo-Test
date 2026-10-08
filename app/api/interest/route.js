@@ -10,7 +10,12 @@ import {
   isAcceptedInterestImage,
   validateProcessedInterestFiles,
 } from '../../../lib/interestUploadLimits.mjs';
-import { normalizeDiscordUsername, normalizeNumericAnswer } from '../../../lib/interestForm.mjs';
+import {
+  NUMERIC_RULES,
+  REQUIRED_FIELD_LABELS,
+  normalizeDiscordUsername,
+  validateNumericAnswer,
+} from '../../../lib/interestForm.mjs';
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
@@ -93,13 +98,13 @@ export async function POST(request) {
       current_alliance: cap(formData.get('current_alliance')),
       migrate_alliance: cap(formData.get('migrate_alliance')),
       highest_troop_level: cap(formData.get('highest_troop_level')),
-      current_tg: cap(normalizeNumericAnswer(formData.get('current_tg'))),
+      current_tg: cap(formData.get('current_tg')),
       t11_units: formData.getAll('t11_units').slice(0, 20).map((v) => cap(v, 100)),
-      mystic_trial_stages: cap(normalizeNumericAnswer(formData.get('mystic_trial_stages'))),
-      total_power: cap(normalizeNumericAnswer(formData.get('total_power'))),
+      mystic_trial_stages: cap(formData.get('mystic_trial_stages')),
+      total_power: cap(formData.get('total_power')),
       willing_reduce_power: cap(formData.get('willing_reduce_power')),
-      passes_required: cap(normalizeNumericAnswer(formData.get('passes_required'))),
-      current_passes: cap(normalizeNumericAnswer(formData.get('current_passes'))),
+      passes_required: cap(formData.get('passes_required')),
+      current_passes: cap(formData.get('current_passes')),
       active_commit: cap(formData.get('active_commit')),
       willing_save_resources: cap(formData.get('willing_save_resources')),
       participates_battles: cap(formData.get('participates_battles')),
@@ -107,6 +112,8 @@ export async function POST(request) {
       main_language: cap(formData.get('main_language')),
     };
 
+    // Every question is required. The server is the authority: it names the
+    // first missing answer in plain words.
     const REQUIRED_FIELDS = [
       'in_game_name',
       'player_id',
@@ -116,20 +123,30 @@ export async function POST(request) {
       'migrate_alliance',
       'highest_troop_level',
       'current_tg',
+      't11_units',
       'mystic_trial_stages',
       'total_power',
+      'willing_reduce_power',
+      'passes_required',
+      'current_passes',
       'active_commit',
       'willing_save_resources',
       'participates_battles',
       'spending_archetype',
       'main_language',
     ];
-    const missingField = REQUIRED_FIELDS.find((key) => !fields[key]);
+    const isMissing = (key) => (key === 't11_units' ? !fields.t11_units.length : !fields[key]);
+    const missingField = REQUIRED_FIELDS.find(isMissing);
     if (missingField) {
-      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
-    }
-    if (!fields.t11_units.length) {
-      return NextResponse.json({ error: 'Select at least one T11 option.' }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: missingField === 't11_units'
+            ? 'Select at least one T11 option.'
+            : `Missing required answer: ${REQUIRED_FIELD_LABELS[missingField]}.`,
+          field: missingField,
+        },
+        { status: 400 }
+      );
     }
 
     const OTHER_MISSING_DETAIL = /^other:\s*$/i;
@@ -143,22 +160,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Please specify your main language.' }, { status: 400 });
     }
 
-    const NUMERIC_FIELDS = [
-      'current_tg',
-      'mystic_trial_stages',
-      'total_power',
-      'passes_required',
-      'current_passes',
-    ];
-    const NUMERIC_RE = /^[0-9][0-9,]*$/;
-    const invalidNumericField = NUMERIC_FIELDS.find(
-      (key) => fields[key] && !NUMERIC_RE.test(fields[key].trim())
-    );
-    if (invalidNumericField) {
-      return NextResponse.json(
-        { error: 'Troop and power fields should contain numbers only.' },
-        { status: 400 }
-      );
+    // Numbers: parsed, range-checked and stored as plain digits.
+    for (const key of Object.keys(NUMERIC_RULES)) {
+      const checked = validateNumericAnswer(key, fields[key]);
+      if (!checked.ok) {
+        return NextResponse.json({ error: checked.error || 'Please check the numbers.', field: key }, { status: 400 });
+      }
+      fields[key] = checked.digits;
     }
 
     const screenshotUrls = [];

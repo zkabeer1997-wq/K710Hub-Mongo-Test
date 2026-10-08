@@ -16,12 +16,14 @@ import {
   formatFileSize,
   normalizeDiscordUsername,
   normalizeNumericAnswer,
+  NUMBER_INPUT_MAX_LENGTH,
   normalizePlayerId,
   numberPreview,
   parseNumberInput,
   playerIdHint,
   readDraftSavedAt,
   shouldOfferResume,
+  validateNumericAnswer,
 } from '../../lib/interestForm.mjs';
 
 // Values are what leadership receives in the Inbox - keep the strings stable.
@@ -54,7 +56,7 @@ const LANGUAGE_OPTIONS = [{ value: 'English', label: 'English' }, { value: 'Othe
 const ACTS = [
   { id: 'identity', label: 'Your account', short: 'Account', fields: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
   { id: 'intake', label: 'Your move', short: 'Move', fields: ['migrateAlliance', 'migrateAllianceOther'] },
-  { id: 'troops', label: 'Your power', short: 'Power', fields: ['highestTroopLevel', 'currentTg', 't11', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'] },
+  { id: 'troops', label: 'Your power', short: 'Power', fields: ['highestTroopLevel', 'currentTg', 't11', 'mysticTrialStages', 'totalPower', 'willingReducePower', 'passesRequired', 'currentPasses'] },
   { id: 'commitment', label: 'Your play style', short: 'Play style', fields: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage', 'mainLanguageOther'] },
   { id: 'battle-report', label: 'Screenshots', short: 'Pictures', fields: ['screenshots'] },
   { id: 'review', label: 'Check and send', short: 'Send', fields: [] },
@@ -95,8 +97,8 @@ const DEFAULT_LABELS = {
   currentTg: 'How much TrueGold (TG) do you have now?',
   mysticTrialStages: 'Mystic Trial: total stages cleared',
   totalPower: 'Total power',
-  passesRequired: 'Transfer passes you need (optional)',
-  currentPasses: 'Transfer passes you have now (optional)',
+  passesRequired: 'Transfer passes you need',
+  currentPasses: 'Transfer passes you have now',
 };
 
 const REQUIRED_MESSAGES = {
@@ -115,9 +117,14 @@ const REQUIRED_MESSAGES = {
   participatesBattles: 'Please answer Yes or No.',
   spendingArchetype: 'Please choose the answer closest to you.',
   mainLanguage: 'Please choose your main language.',
+  willingReducePower: 'Please answer Yes or No.',
+  passesRequired: 'Please type how many transfer passes you need. If you are not sure, type 0.',
+  currentPasses: 'Please type how many transfer passes you have. If none, type 0.',
 };
+// UI key -> stored field name that carries the numeric limits (lib/interestForm.mjs).
+const NUMERIC_FIELD = { currentTg: 'current_tg', mysticTrialStages: 'mystic_trial_stages', totalPower: 'total_power', passesRequired: 'passes_required', currentPasses: 'current_passes' };
 const NUMERIC_KEYS = ['currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'];
-const REQUIRED_TEXT = ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance', 'migrateAlliance', 'highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower', 'activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'];
+const REQUIRED_TEXT = ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance', 'migrateAlliance', 'highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower', 'willingReducePower', 'passesRequired', 'currentPasses', 'activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'];
 
 // Pure per-field validation: returns a message or ''.
 function fieldError(key, form, screenshots) {
@@ -131,11 +138,7 @@ function fieldError(key, form, screenshots) {
     return normalizePlayerId(value) ? '' : 'A Player ID only has numbers. Please check it.';
   }
   if (REQUIRED_TEXT.includes(key) && !value) return REQUIRED_MESSAGES[key];
-  if (NUMERIC_KEYS.includes(key) && value && !parseNumberInput(value).ok) {
-    return key === 'totalPower' || key === 'currentTg'
-      ? 'Please type a number, for example 12,345,678 or 12.3M.'
-      : 'Please type a number, for example 120.';
-  }
+  if (NUMERIC_KEYS.includes(key)) return validateNumericAnswer(NUMERIC_FIELD[key], value).error;
   return '';
 }
 
@@ -212,7 +215,7 @@ function Choices({ legend, hint, name, options, value, onChange, multiple = fals
 
 // Text/number field with persistent label, hint and live feedback. Module
 // level so React keeps the same input mounted while typing.
-function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, autoComplete = 'off', live, children }) {
+function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, autoComplete = 'off', live, liveBad = false, maxLength, children }) {
   const { form, updateField, gp, errMsg, fe } = ctx;
   return (
     <div className="wizard-field apply-field">
@@ -228,10 +231,11 @@ function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, auto
         autoCorrect="off"
         spellCheck={false}
         placeholder={placeholder}
+        maxLength={maxLength}
         value={form[k]}
         onChange={(e) => updateField(k, e.target.value)}
       />
-      {live && !errMsg(k) && <p className="apply-live" aria-live="polite">{live}</p>}
+      {live && !errMsg(k) && <p className={`apply-live${liveBad ? ' is-bad' : ''}`} aria-live="polite">{live}</p>}
       {fe(k)}
       {children}
     </div>
@@ -313,7 +317,7 @@ export default function InterestForm({ initialPeriod }) {
   const [activePeriod, setActivePeriod] = useState(hasInitial ? initialPeriod : null);
   const [activePeriodLoaded, setActivePeriodLoaded] = useState(hasInitial);
   const { fields: editableFields } = useFormFieldMeta('interest');
-  const editableLabel = (key, fallback) => editableFields.find((f) => f.key === key)?.label || fallback;
+  const editableLabel = (key, fallback) => String(editableFields.find((f) => f.key === key)?.label || fallback).replace(/\s*\(optional\)\s*$/i, '');
   const L = (key) => editableLabel(key, DEFAULT_LABELS[key] || key);
   useEffect(() => {
     formRef.current = form;
@@ -418,7 +422,7 @@ export default function InterestForm({ initialPeriod }) {
     let value = form[key];
     if (key === 'discordUsername') value = normalizeDiscordUsername(value);
     else if (key === 'playerId') value = normalizePlayerId(value);
-    else if (NUMERIC_KEYS.includes(key)) value = normalizeNumericAnswer(value);
+    else if (NUMERIC_KEYS.includes(key)) value = normalizeNumericAnswer(value, NUMERIC_FIELD[key]);
     else if (typeof value === 'string') value = value.trim();
     const next = { ...form, [key]: value };
     if (value !== form[key]) setForm(next);
@@ -574,13 +578,13 @@ export default function InterestForm({ initialPeriod }) {
     body.append('current_alliance', form.currentAlliance.trim());
     body.append('migrate_alliance', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther.trim()}` : form.migrateAlliance);
     body.append('highest_troop_level', form.highestTroopLevel);
-    body.append('current_tg', normalizeNumericAnswer(form.currentTg));
+    body.append('current_tg', normalizeNumericAnswer(form.currentTg, 'current_tg'));
     form.t11.forEach((option) => body.append('t11_units', option));
-    body.append('mystic_trial_stages', normalizeNumericAnswer(form.mysticTrialStages));
-    body.append('total_power', normalizeNumericAnswer(form.totalPower));
+    body.append('mystic_trial_stages', normalizeNumericAnswer(form.mysticTrialStages, 'mystic_trial_stages'));
+    body.append('total_power', normalizeNumericAnswer(form.totalPower, 'total_power'));
     body.append('willing_reduce_power', form.willingReducePower);
-    body.append('passes_required', normalizeNumericAnswer(form.passesRequired));
-    body.append('current_passes', normalizeNumericAnswer(form.currentPasses));
+    body.append('passes_required', normalizeNumericAnswer(form.passesRequired, 'passes_required'));
+    body.append('current_passes', normalizeNumericAnswer(form.currentPasses, 'current_passes'));
     body.append('active_commit', form.activeCommit);
     body.append('willing_save_resources', form.willingSaveResources);
     body.append('participates_battles', form.participatesBattles);
@@ -655,6 +659,7 @@ export default function InterestForm({ initialPeriod }) {
     );
   }
 
+  const liveBad = (k) => Boolean(form[k]) && !validateNumericAnswer(NUMERIC_FIELD[k], form[k]).ok && !errMsg(k);
   const ctx = { form, updateField, gp, errMsg, fe };
   const isFinalStep = step === ACTS.length - 1;
   const act = ACTS[step];
@@ -667,7 +672,7 @@ export default function InterestForm({ initialPeriod }) {
   const reviewGroups = [
     { stepIndex: 0, title: 'Your account', rows: [['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord username', form.discordUsername], ['Current server', form.currentServer], ['Current alliance', form.currentAlliance]] },
     { stepIndex: 1, title: 'Your move', rows: [['Alliance you want to join', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance]] },
-    { stepIndex: 2, title: 'Your power', rows: [['Highest troop level', form.highestTroopLevel], ['TrueGold (TG)', form.currentTg ? formatNum(form.currentTg) : ''], ['T11 troops', form.t11.join(', ')], ['Mystic Trial stages', formatNum(form.mysticTrialStages)], ['Total power', formatNum(form.totalPower)], ['Would lower power if needed', form.willingReducePower, true], ['Passes needed', formatNum(form.passesRequired), true], ['Passes you have', formatNum(form.currentPasses), true]] },
+    { stepIndex: 2, title: 'Your power', rows: [['Highest troop level', form.highestTroopLevel], ['TrueGold (TG)', form.currentTg ? formatNum(form.currentTg) : ''], ['T11 troops', form.t11.join(', ')], ['Mystic Trial stages', formatNum(form.mysticTrialStages)], ['Total power', formatNum(form.totalPower)], ['Would lower power if needed', form.willingReducePower], ['Passes needed', formatNum(form.passesRequired)], ['Passes you have', formatNum(form.currentPasses)]] },
     { stepIndex: 3, title: 'Your play style', rows: [['Active in alliance events', form.activeCommit], ['Saves resources for KvK prep', form.willingSaveResources], ['Joins Sanctuary, Castle and KvK battles', form.participatesBattles], ['Spending', form.spendingArchetype], ['Main language', form.mainLanguage === 'Other' ? `Other: ${form.mainLanguageOther}` : form.mainLanguage]] },
     { stepIndex: 4, title: 'Screenshots', rows: [['Screenshots added', String(screenshots.length)]] },
   ];
@@ -782,29 +787,27 @@ export default function InterestForm({ initialPeriod }) {
               errorId="f-t11-error"
             />
             <div className="apply-fields">
-              <TextField ctx={ctx} k="totalPower" label={L('totalPower')} hint="The big number on your profile. Type it like 12,345,678." mode="decimal" placeholder="12,345,678" live={numberPreview(form.totalPower)}>
+              <TextField ctx={ctx} k="totalPower" label={L('totalPower')} hint="The big number on your profile. Type it like 12,345,678. The most we accept is 3,000,000,000." mode="decimal" placeholder="12,345,678" maxLength={NUMBER_INPUT_MAX_LENGTH} live={numberPreview(form.totalPower, 'total_power')} liveBad={liveBad('totalPower')}>
                 <Where>In Kingshot tap your picture in the top-left corner. Your power is the big number on your profile.</Where>
               </TextField>
-              <TextField ctx={ctx} k="currentTg" label={L('currentTg')} hint="TrueGold is a late-game upgrade material. We want to know how far you can push your troops. Type 0 if none." mode="decimal" live={numberPreview(form.currentTg)} />
-              <TextField ctx={ctx} k="mysticTrialStages" label={L('mysticTrialStages')} hint="Add up all the stages you have cleared in Mystic Trial. Type 0 if none." mode="numeric" live={numberPreview(form.mysticTrialStages)} />
+              <TextField ctx={ctx} k="currentTg" label={L('currentTg')} hint="TrueGold is a late-game upgrade material. We want to know how far you can push your troops. Type 0 if none." mode="decimal" maxLength={NUMBER_INPUT_MAX_LENGTH} live={numberPreview(form.currentTg, 'current_tg')} liveBad={liveBad('currentTg')} />
+              <TextField ctx={ctx} k="mysticTrialStages" label={L('mysticTrialStages')} hint="Add up all the stages you have cleared in Mystic Trial. Whole number from 0 to 4,000. Type 0 if none." mode="numeric" maxLength={5} live={numberPreview(form.mysticTrialStages, 'mystic_trial_stages')} liveBad={liveBad('mysticTrialStages')} />
             </div>
-            <fieldset className="apply-group apply-optional">
-              <legend>Optional questions</legend>
-              <p className="apply-hint">You can skip these. They help us plan your move.</p>
-              <Choices
-                legend="Would you lower your power if needed to join?"
-                hint="Some invites have a power limit."
-                name="willingReducePower"
-                id="f-willingReducePower"
-                options={YES_NO}
-                value={form.willingReducePower}
-                onChange={(v) => updateField('willingReducePower', form.willingReducePower === v ? '' : v)}
-              />
-              <div className="apply-fields">
-                <TextField ctx={ctx} k="passesRequired" label={L('passesRequired')} hint="How many transfer passes the move needs. Leave empty if you do not know." mode="numeric" />
-                <TextField ctx={ctx} k="currentPasses" label={L('currentPasses')} hint="How many transfer passes you hold today." mode="numeric" />
-              </div>
-            </fieldset>
+            <Choices
+              legend="Would you lower your power if needed to join?"
+              hint="Some invites have a power limit."
+              name="willingReducePower"
+              id="f-willingReducePower"
+              options={YES_NO}
+              value={form.willingReducePower}
+              onChange={(v) => updateField('willingReducePower', v)}
+              error={errMsg('willingReducePower')}
+              errorId="f-willingReducePower-error"
+            />
+            <div className="apply-fields">
+              <TextField ctx={ctx} k="passesRequired" label={L('passesRequired')} hint="How many transfer passes the move needs. If you are not sure, type 0." mode="numeric" maxLength={7} live={numberPreview(form.passesRequired, 'passes_required')} liveBad={liveBad('passesRequired')} />
+              <TextField ctx={ctx} k="currentPasses" label={L('currentPasses')} hint="How many transfer passes you hold today. Type 0 if none." mode="numeric" maxLength={7} live={numberPreview(form.currentPasses, 'current_passes')} liveBad={liveBad('currentPasses')} />
+            </div>
           </>
         )}
 
@@ -899,8 +902,8 @@ export default function InterestForm({ initialPeriod }) {
                     <button type="button" className="k-btn k-btn-quiet" onClick={() => { setErrors([]); setStep(group.stepIndex); }} aria-label={`Change ${group.title}`}>Change</button>
                   </div>
                   <dl>
-                    {group.rows.map(([k, v, optional]) => (
-                      <div key={k}><dt>{k}</dt><dd>{String(v || '').trim() || (optional ? 'Skipped' : 'Not answered')}</dd></div>
+                    {group.rows.map(([k, v]) => (
+                      <div key={k}><dt>{k}</dt><dd>{String(v || '').trim() || 'Not answered'}</dd></div>
                     ))}
                   </dl>
                 </section>

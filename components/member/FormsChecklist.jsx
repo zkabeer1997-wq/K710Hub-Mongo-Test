@@ -57,9 +57,6 @@ function Row({ form }) {
         </div>
         <p className={styles.desc}>{PLAIN[form.key] || ''}</p>
         {hint && <p className={styles.hint}>{hint}</p>}
-        {form.appointmentsSummary?.length > 0 && (
-          <p className={styles.hint}>Your appointment: {form.appointmentsSummary.join('; ')}. <Link href="/forms/kvk-appointments">See My appointment</Link></p>
-        )}
       </div>
       {btn.disabled ? (
         <span className={`${styles.bigBtn} ${styles.disabledBtn}`} aria-disabled="true">{btn.text}</span>
@@ -68,6 +65,30 @@ function Row({ form }) {
           {btn.text}<span className="sr-only">: {form.label}</span>
         </Link>
       )}
+    </li>
+  );
+}
+
+const RESULT_BUTTON = { placed: 'See my appointment', not_placed: 'See my appointment' };
+
+// Results are not forms: a "Result" label, no To do state, own sentence.
+function ResultItem({ result }) {
+  return (
+    <li className={`${styles.item} ${styles.itemResult}`}>
+      <div className={styles.itemMain}>
+        <div className={styles.itemTop}>
+          <h3 className={styles.title}>{result.label}</h3>
+          <span className={`${styles.status} ${styles.sResult}`}><span aria-hidden="true">📅</span>Result</span>
+        </div>
+        {result.lines.length > 0 ? (
+          <ul className={styles.resultLines}>{result.lines.map((line) => <li key={line}>{line}</li>)}</ul>
+        ) : (
+          <p className={styles.desc}>{result.message}</p>
+        )}
+      </div>
+      <Link href={result.href} className={`${styles.bigBtn} ${result.ready ? '' : styles.quietBtn}`}>
+        {RESULT_BUTTON[result.state] || 'Open'}<span className="sr-only">: {result.label}</span>
+      </Link>
     </li>
   );
 }
@@ -92,6 +113,7 @@ export default function FormsChecklist() {
     .filter(({ rows }) => rows.length > 0)
     .sort((a, b) => position[a.rows[0].key] - position[b.rows[0].key]);
   const todo = forms.filter((f) => f.needsInput);
+  const resultsFor = (group) => (status.results || []).filter((r) => r.group === group.id);
   const first = status.firstIncomplete;
   return (
     <div className={styles.wrap}>
@@ -121,6 +143,14 @@ export default function FormsChecklist() {
             <ul className={styles.list}>
               {rows.map((form) => <Row key={form.key} form={form} />)}
             </ul>
+            {resultsFor(group).length > 0 && (
+              <>
+                <h3 className={styles.resultsHead} id={`r-${group.id}`}>Results</h3>
+                <ul className={styles.list} aria-labelledby={`r-${group.id}`}>
+                  {resultsFor(group).map((r) => <ResultItem key={r.key} result={r} />)}
+                </ul>
+              </>
+            )}
           </section>
         );
       })}

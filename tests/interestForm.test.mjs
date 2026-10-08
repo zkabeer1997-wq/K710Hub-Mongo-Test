@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   describeAge, draftFilledCount, formatFileSize, formatWithCommas, normalizeDiscordUsername,
   normalizeNumericAnswer, normalizePlayerId, numberPreview, parseNumberInput, playerIdHint,
-  readDraftSavedAt, shouldOfferResume, statusCopy,
+  readDraftSavedAt, shouldOfferResume, statusCopy, validateNumericAnswer,
 } from '../lib/interestForm.mjs';
 
 test('parseNumberInput accepts plain, comma, space, dot-thousands and suffix formats', () => {
@@ -63,4 +63,38 @@ test('file sizes and status copy', () => {
   assert.equal(formatFileSize(1.5 * 1024 * 1024), '1.5 MB');
   for (const s of ['pending', 'accepted', 'waitlist', 'rejected']) assert.ok(statusCopy(s).next.length > 10);
   assert.equal(statusCopy('weird').title, 'Waiting for review');
+});
+
+test('total power boundaries', () => {
+  const ok = (v) => validateNumericAnswer('total_power', v);
+  assert.equal(ok('3000000000').ok, true);
+  assert.equal(ok('3,000,000,000').ok, true);
+  assert.equal(ok('3b').digits, '3000000000');
+  assert.equal(ok('2.9b').digits, '2900000000');
+  assert.equal(ok('3000000001').ok, false);
+  assert.equal(ok('3.1b').error, 'Total power cannot be more than 3,000,000,000. Check the number and try again.');
+  assert.equal(ok('1'.repeat(30)).error, 'Total power cannot be more than 3,000,000,000. Check the number and try again.');
+  assert.equal(ok('0').ok, false);
+  assert.equal(ok('').empty, true);
+  assert.equal(ok('abc').ok, false);
+  assert.equal(ok('12.3M').digits, '12300000');
+});
+
+test('Mystic Trial stages boundaries are plain integers only', () => {
+  const m = (v) => validateNumericAnswer('mystic_trial_stages', v);
+  assert.equal(m('0').ok, true);
+  assert.equal(m('4000').ok, true);
+  assert.equal(m('4,000').ok, true);
+  assert.equal(m('4001').error, 'Mystic Trial stages cannot be more than 4,000.');
+  assert.equal(m('4k').ok, false);
+  assert.equal(m('1m').ok, false);
+  assert.equal(m('12.5').ok, false);
+});
+
+test('numberPreview turns into the error past a limit', () => {
+  assert.equal(numberPreview('12345', 'total_power'), 'You typed: 12,345');
+  assert.match(numberPreview('3100000000', 'total_power'), /cannot be more than 3,000,000,000/);
+  assert.equal(numberPreview('', 'total_power'), '');
+  assert.equal(normalizeNumericAnswer('4k', 'mystic_trial_stages'), '4k');
+  assert.equal(normalizeNumericAnswer('3b', 'total_power'), '3000000000');
 });

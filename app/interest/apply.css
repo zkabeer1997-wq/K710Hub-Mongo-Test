@@ -45,6 +45,7 @@
 .apply-hint { margin: 0; font-size: 16px; line-height: 1.5; color: var(--color-ink-muted); max-width: 62ch; }
 .apply-hint a { color: var(--color-link, var(--gold-bright)); font-weight: 700; }
 .apply-live { margin: 0; font-size: 16px; font-weight: 700; color: var(--brass-bright, var(--gold-bright)); font-variant-numeric: tabular-nums; }
+.apply-live.is-bad { color: #ffb4a8; }
 .registry .apply-form .field-error { margin: 0; font-size: 16px; font-weight: 600; color: #ffb4a8; display: flex; gap: 6px; }
 .registry .apply-form .field-error::before { content: '!'; flex: none; width: 20px; height: 20px; border-radius: 50%; background: #ffb4a8; color: #2a0a05; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-top: 2px; }
 .apply-form input[aria-invalid='true'] { border-color: #ff8a78 !important; }
@@ -144,4 +145,7 @@
   .apply-step-name { display: none; }
   .apply-step { min-height: 44px; }
 }
-:root[data-easy="true"] .apply-step-name { font-size: 14px !important; }
+:root[data-easy="true"] .apply-step-name { font-size: 16px !important; }
+:root[data-easy="true"] .registry .apply-form .apply-field input,
+:root[data-easy="true"] .registry .apply-form .apply-reveal input { min-height: 52px !important; }
+:root[data-easy="true"] .registry .registry-head-link { display: inline-flex; align-items: center; min-height: 48px; }

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { myAppointmentView, slotInstant } from '../../../lib/myAppointment.mjs';
 import { localTimeLabel } from '../../../lib/kvkAppointments.mjs';
 import DualTime from '../../ui/DualTime';
+import { resultSeenKey } from '../../../lib/memberResults.mjs';
 
 const PREP_HREF = '/prep-phase-backpack';
 
@@ -14,6 +15,11 @@ export default function MineTab({ appts }) {
   const { data, error } = appts;
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  // Opening the page clears the dashboard's "New: your appointment is ready" highlight for this publication.
+  useEffect(() => {
+    if (!data?.published) return;
+    try { window.localStorage.setItem(resultSeenKey({ key: 'my-appointment', publishedAt: data.publishedAt }), '1'); } catch { /* storage unavailable */ }
+  }, [data?.published, data?.publishedAt]);
   if (error) return <p className="event-form-error" role="alert">{error}</p>;
   if (!data) return <p role="status">Loading…</p>;
   const rows = myAppointmentView({ prep: data.prep, assignments: data.assignments, published: data.published, cycleStart: data.cycleStart });

@@ -58,6 +58,13 @@
 .formBtnQuiet:hover { background: rgba(217, 169, 78, 0.14); }
 .formBtnOff { background: transparent; color: var(--t-muted, #a3aabf); border-color: var(--edge, #3a3630); cursor: not-allowed; }
 .formBtnOff:hover { background: transparent; }
+/* Result rows (My appointment): calendar label, no "To do" dot; a placed, unseen result gets a gold border. */
+.resultRow { padding-left: 12px; padding-right: 12px; margin-left: -12px; margin-right: -12px; background: rgba(217, 169, 78, 0.05); border-left: 3px solid var(--edge, #3a3630); }
+.resultRow[data-new='true'] { border: 1px solid var(--gold, #d9a94e); border-left-width: 3px; border-radius: 8px; background: rgba(217, 169, 78, 0.1); }
+.resultRow .formBtn { white-space: normal; text-align: center; padding: 6px 10px; line-height: 1.25; }
+.formStatus[data-state='result'] { color: var(--gold-bright, #f0c669); }
+.resultNew { color: var(--gold-bright, #f0c669) !important; font-weight: 800; margin-bottom: 4px !important; }
+.resultLines { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; font-size: 15px; line-height: 1.5; color: var(--t-primary, #ece6d8); }
 @media (min-width: 640px) { .formRow { grid-template-columns: minmax(0, 1fr) minmax(170px, 230px) 150px; } .formBtn { justify-self: stretch; } }
 
 .side { position: relative; min-width: 0; }
@@ -72,7 +79,7 @@
 .deadlineTop a:hover { color: var(--gold-hot, #f3d99a); text-decoration: underline; }
 .deadlineTop a:focus-visible { outline: 2px solid var(--gold-hot, #f3d99a); outline-offset: 2px; }
 .deadlineCount { display: inline-flex; align-items: center; gap: 6px; font: 600 14px var(--font-mono, monospace); color: var(--t-secondary, #a9afc0); }
-.dueChip { font: 700 12px var(--font-body, sans-serif); letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: rgba(255, 107, 94, 0.2); color: #ffb0a8; border: 1px solid rgba(255, 107, 94, 0.5); }
+.dueChip { font: 700 14px var(--font-body, sans-serif); letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: rgba(255, 107, 94, 0.2); color: #ffb0a8; border: 1px solid rgba(255, 107, 94, 0.5); }
 .deadlineWhen { margin-top: 2px; font-size: 14px; line-height: 1.4; color: var(--t-secondary, #a9afc0); }
 
 .links { display: grid; gap: 8px; }
@@ -91,6 +98,7 @@
 :global(:root[data-easy='true']) .who span,
 :global(:root[data-easy='true']) .stats span,
 :global(:root[data-easy='true']) .formMain p,
+:global(:root[data-easy='true']) .resultLines,
 :global(:root[data-easy='true']) .formMeta,
 :global(:root[data-easy='true']) .formDeadline,
 :global(:root[data-easy='true']) .deadlineWhen,
@@ -104,3 +112,7 @@
 :global(:root[data-easy='true']) .formBtn,
 :global(:root[data-easy='true']) .links a { font-size: 18px; }
 @media (prefers-reduced-motion: reduce) { .formBtn { transition: none; } }
+
+:global(:root[data-easy='true']) .assurance strong,
+:global(:root[data-easy='true']) .gifts h2,
+:global(:root[data-easy='true']) .dueChip { font-size: 16px; }

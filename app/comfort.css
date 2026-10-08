@@ -264,6 +264,8 @@ html body .ledger-block-kicker{font-size:14px}
 html body .loss{font-size:14px}
 html body .member-sidebar-all{font-size:14px}
 html body .member-sidebar-name{font-size:14px}
+html body .member-sidebar-tag{font-size:14px;letter-spacing:0}
+:root[data-easy="true"] body .member-sidebar-tag{font-size:16px}
 html body .member-sidebar-title{font-size:14px}
 html body .minister-day-badge{font-size:14px}
 html body .minister-day-badge.minister-day-badge-overflow{font-size:14px}
@@ -465,3 +467,4 @@ html body .prep-header-block p { font-size: 14px !important; }
 html body .prep2-block p.prep2-day { font-size: 14px !important; }
 html body .prep2-day p, html body .prep2-day > p, html body section.prep2-day p { font-size: 14px !important; }
 :root[data-easy="true"] body .prep2-day p { font-size: 16px !important; }
+:root[data-easy="true"] body .interest-status-back{display:inline-flex;align-items:center;min-height:48px}

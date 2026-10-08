@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
-import { getOrderedMemberForms, getDeadlineEntries } from '../../../lib/memberFormStatus.server.js';
+import { getOrderedMemberForms, getDeadlineEntries, getMemberResults } from '../../../lib/memberFormStatus.server.js';
 import { firstIncomplete, stillNeedsSummary } from '../../../lib/memberForms.mjs';
 import { describeEntry } from '../../../lib/deadlines.mjs';
 
@@ -18,10 +18,12 @@ export async function GET(request) {
       getDeadlineEntries(now),
     ]);
     const first = firstIncomplete(forms);
+    const results = await getMemberResults(session.memberId, forms, now).catch(() => []);
     return NextResponse.json({
       signedIn: true,
       memberId: session.memberId,
       forms,
+      results,
       cycles,
       entries: entries.map((entry) => describeEntry(entry, now)),
       summary: stillNeedsSummary(forms),
