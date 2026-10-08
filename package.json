@@ -12,11 +12,15 @@
     "test": "node --test 'tests/**/*.test.mjs'",
     "lint": "eslint .",
     "qa": "node scripts/qa-routes.js",
+    "scan:eval": "node scripts/scan-eval.mjs",
     "qa:smoke": "node scripts/qa-smoke.js",
     "qa:visual": "node scripts/qa-visual-diff.js",
     "qa:visual:baseline": "node scripts/qa-visual-diff.js --baseline",
     "analyze": "ANALYZE=true npm run build",
-    "lint:css": "stylelint 'app/**/*.css' 'components/**/*.css' --allow-empty-input"
+    "lint:css": "stylelint 'app/**/*.css' 'components/**/*.css' --allow-empty-input",
+    "scan:charms": "node scripts/build-charm-templates.mjs && node scripts/build-charm-exemplars.mjs",
+    "scan:charms:eval": "node scripts/charm-eval.mjs",
+    "scan:gear": "node scripts/build-gear-templates.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "6.1.0",
@@ -35,7 +39,8 @@
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.3.3",
