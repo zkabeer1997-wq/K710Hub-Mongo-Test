@@ -2,7 +2,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CharmLevelSelect, QualitySelect, StarsSelect, TierSelect } from './LoadoutFields';
-import { placePopover } from '../../lib/loadout.mjs';
+import LoadoutArt from './LoadoutArt';
+import { HAS_GEAR_ART, charmImageFor, gearImageFor, placePopover } from '../../lib/loadout.mjs';
 
 /**
  * Small non-modal editor anchored to a board slot (bottom sheet on phones, see loadout.css).
@@ -17,6 +18,7 @@ export default function LoadoutPopover({ piece, target, anchorId, gear, charms, 
   const titleId = `lo-pop-title-${piece.id}-${isGear ? 'gear' : target}`;
   const title = isGear ? `${piece.troopName} ${piece.name.toLowerCase()}` : `${piece.troopName} ${piece.name.toLowerCase()} charm ${target + 1}`;
   const value = gear[piece.gearKey] || '';
+  const previewSrc = isGear ? gearImageFor(piece.gearKey, value) : charmImageFor(piece.troop, charms[piece.charmKeys[target]]);
 
   function close(returnFocus) {
     onClose();
@@ -87,6 +89,12 @@ export default function LoadoutPopover({ piece, target, anchorId, gear, charms, 
       onBlur={onBlur}
     >
       <p className="lo-pop-title" id={titleId}>{title}</p>
+      {!isGear || HAS_GEAR_ART[piece.gearKey] ? (
+        <div className="lo-pop-preview" data-empty={previewSrc ? undefined : 'true'}>
+          <LoadoutArt src={previewSrc} alt={isGear ? `${title} preview` : `${title} level ${String(charms[piece.charmKeys[target]]).replace(/^Level\s*/, '')} preview`} className="lo-pop-art" />
+          {previewSrc ? null : <span className="lo-pop-preview-note">{isGear ? 'No gear' : 'Not set'}</span>}
+        </div>
+      ) : null}
       {isGear ? (
         <div className="lo-pop-fields">
           <label className="lo-pop-field">

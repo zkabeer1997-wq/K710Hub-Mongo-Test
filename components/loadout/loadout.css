@@ -77,25 +77,14 @@
 .lo .lo-tile[data-active="true"], .lo .lo-charm[data-active="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--brass-bright); }
 
 .lo-charms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding-left: 26px; }
-.lo .lo-charm { padding: 2px; min-height: 0; aspect-ratio: 1.1 / 1; background: transparent; border: 0; border-radius: 6px; cursor: pointer; color: var(--t-muted); transition: transform var(--lo-fast) ease; }
+.lo .lo-charm { position: relative; padding: 2px; min-height: 44px; min-width: 44px; aspect-ratio: 1.1 / 1; background: transparent; border: 0; border-radius: 6px; cursor: pointer; color: var(--t-muted); transition: transform var(--lo-fast) ease; }
 .lo .lo-charm:active { transform: scale(0.94); }
 .lo-gem { display: block; width: 100%; height: 100%; }
 .lo-gem-shape { fill: rgba(255, 255, 255, 0.03); stroke: var(--steel-bright); stroke-dasharray: 4 3; }
 .lo .lo-charm[data-filled="true"] .lo-gem-shape { fill: color-mix(in srgb, var(--lo-gold) 22%, #11141d); stroke: var(--lo-gold); stroke-dasharray: none; }
 .lo-gem-num { font-family: var(--font-mono); font-size: 17px; font-weight: 700; fill: var(--t-primary); }
 
-/* ---- table ---- */
-.lo-table-wrap { width: 100%; max-width: 1000px; margin: 8px auto 0; }
-.lo-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.lo-table th, .lo-table td { padding: 8px 6px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border-soft); font-size: 14px; color: var(--parchment); }
-.lo-table thead th { font-size: 13px; font-weight: 700; color: var(--brass-bright); text-transform: uppercase; letter-spacing: 0.05em; }
-.lo-table tbody th { font-weight: 700; }
-.lo-table col { width: auto; }
-.lo-table th:nth-child(1) { width: 11%; }
-.lo-table th:nth-child(2) { width: 10%; }
-.lo-table tbody tr[data-active="true"] { background: rgba(217, 169, 78, 0.08); }
-.lo .lo-table select { width: 100%; min-height: 44px; font-size: 14px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--lo-line); background: rgba(10, 14, 22, 0.55); color: var(--text); }
-.lo .lo-table select:disabled { opacity: 0.5; }
+@media (max-width: 640px) { .lo-charms { padding-left: 8px; } }
 
 @media (max-width: 860px) {
   .lo-board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 12px; padding: 8px 0 4px; }
@@ -104,42 +93,22 @@
   .lo-col-right { align-items: flex-start; }
   .lo-col { gap: 16px; }
   .lo-tile-text { font-size: 12px; }
-  .lo-table th:nth-child(n) { width: auto; }
-}
-
-/* Phones: rows become stacked cards, labels from data-label. */
-@media (max-width: 640px) {
-  .lo-table, .lo-table tbody, .lo-table tr, .lo-table th[scope="row"], .lo-table td { display: block; }
-  .lo-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .lo-table tr { padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .lo-table tr:last-child { border-bottom: 0; }
-  .lo-table th, .lo-table td { border: 0; padding: 0; }
-  .lo-table tbody th[scope="row"] { grid-column: 1 / 3; font-family: var(--font-display); font-size: 17px; color: var(--parchment); align-self: end; }
-  .lo-table td[data-label="Troop"] { grid-column: 3; text-align: right; color: var(--text-muted); align-self: end; }
-  .lo-table td[data-label="Quality"] { grid-column: 1 / -1; }
-  .lo-table td::before { content: attr(data-label); display: block; font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 2px; }
-  .lo-table td[data-label="Troop"]::before { content: none; }
-  .lo-table td[data-label="Tier"], .lo-table td[data-label="Stars"] { grid-column: auto; }
-  .lo-table td[data-label="Tier"] { grid-column: 1 / 2; }
-  .lo-table td[data-label="Stars"] { grid-column: 2 / 4; }
-  .lo-table td[data-label^="Charm"] { grid-column: auto; }
 }
 
 /* Easy view: larger text and controls, no animation. Specificity beats the site-wide Easy view form rules. */
 html[data-easy="true"] body form .lo .lo-btn { min-height: 52px; font-size: 18px; }
-html[data-easy="true"] body form .lo .lo-tile, html[data-easy="true"] body form .lo .lo-charm { min-height: 0; font-size: 16px; }
+html[data-easy="true"] body form .lo .lo-tile { min-height: 0; font-size: 16px; }
+html[data-easy="true"] body form .lo .lo-charm { min-height: 48px; min-width: 44px; font-size: 16px; }
 html[data-easy="true"] body .lo .lo-tile-text { font-size: 16px; }
 html[data-easy="true"] body .lo .lo-tile-tier { font-size: 16px; }
 html[data-easy="true"] body .lo .lo-stars { font-size: 16px; }
 html[data-easy="true"] body .lo .lo-help, html[data-easy="true"] body .lo .lo-note, html[data-easy="true"] body .lo .lo-count,
-html[data-easy="true"] body .lo .lo-confirm, html[data-easy="true"] body .lo .lo-table th, html[data-easy="true"] body .lo .lo-table td { font-size: 18px; }
-html[data-easy="true"] body form .lo .lo-table select { min-height: 52px; font-size: 18px; }
+html[data-easy="true"] body .lo .lo-confirm { font-size: 18px; }
 html[data-easy="true"] body .lo .lo-gem-num { font-size: 19px; }
 html[data-easy="true"] body .lo * { transition: none !important; animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .lo * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
-html[data-easy="true"] body .lo .lo-table td::before { font-size: 16px; }
 .lo .lo-bar .lo-btn-text:only-child, .lo .lo-bar > .lo-btn-text { margin-right: -10px; }
 
 /* ---- board popover (small non-modal editor; bottom sheet on phones) ---- */
@@ -180,3 +149,31 @@ html[data-easy="true"] body form .lo .lo-pop select, html[data-easy="true"] body
 html[data-easy="true"] body form .lo .lo-pop .lo-btn { min-height: 52px; font-size: 18px; }
 @media (min-width: 641px) { html[data-easy="true"] .lo-pop { width: 340px; } }
 html[data-easy="true"] body .lo .lo-pop-field { grid-template-columns: 88px minmax(0, 1fr); }
+
+/* ---- owner art (hat, shirt, ring tiles; charm gems) ---- */
+.lo-art { display: block; object-fit: contain; animation: lo-art-in 140ms ease-out; }
+@keyframes lo-art-in { from { opacity: 0; } to { opacity: 1; } }
+.lo .lo-tile[data-art="true"] { border: 0; background: transparent; border-radius: 10px; }
+.lo .lo-tile[data-art="true"]:hover { background: transparent; filter: brightness(1.08); }
+.lo-tile-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lo-gear-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.lo-tile-caption { min-height: 17px; font-size: 13px; font-weight: 700; line-height: 17px; text-align: center; color: var(--t-primary); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.lo .lo-tile[data-art="true"][data-active="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--brass-bright); }
+/* gem: art fills the 44px+ hit area; the number sits in a small badge so it stays readable on any gem colour */
+.lo .lo-charm[data-art="true"] { padding: 0; }
+.lo-gem-art { position: absolute; inset: 1px; width: calc(100% - 2px); height: calc(100% - 2px); }
+.lo-gem-badge {
+  position: absolute; right: 0; bottom: 0; min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(8, 10, 16, 0.88); color: var(--t-primary); border: 1px solid var(--lo-line);
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+}
+.lo .lo-charm[data-art="true"]:hover { filter: brightness(1.12); }
+.lo-pop-preview { position: relative; display: flex; align-items: center; justify-content: center; height: 104px; }
+.lo-pop-art { width: 104px; height: 104px; }
+.lo-pop-preview[data-empty="true"] { border: 1px dashed var(--steel-bright); border-radius: 8px; color: var(--t-muted); font-size: 14px; }
+@media (max-width: 640px) { .lo-pop-preview { height: 84px; } .lo-pop-art { width: 84px; height: 84px; } }
+html[data-easy="true"] body .lo .lo-tile-caption { font-size: 16px; line-height: 20px; min-height: 20px; }
+html[data-easy="true"] body .lo .lo-gem-badge { font-size: 16px; min-width: 24px; height: 24px; }
+html[data-easy="true"] body .lo .lo-art { animation: none; }
+@media (prefers-reduced-motion: reduce) { .lo .lo-art { animation: none !important; } }

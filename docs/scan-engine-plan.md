@@ -193,3 +193,7 @@ Explicitly still UNKNOWN / blocking phases 2-4:
 - The on-screen word for Forgery (`FORGERY_ON_SCREEN_WORD_STATUS = 'unknown'`; reference site says "Mastery").
 - Tier label look (including tier 0), star row look, hero gear rarities below gold/red on the backpack tab.
 - Full-resolution labelled screenshots from several devices; the best `STANDARD_WIDTH`.
+
+## Update 3: owner art for the loadout board
+
+Owner-supplied game art (Governor Gear for hat/shirt/ring, charms per troop) is imported by `scripts/import-loadout-images.mjs` into `public/images/loadout/` (384px WebP with the white background removed, plus `manifest.json`). It is shown on the Power Profile board now and is kept at full size so it can serve as OCR templates later. No art exists yet for pendant, pants and baton. The table editor was removed: the board popovers are the only editors, with a screen-reader-only summary list.

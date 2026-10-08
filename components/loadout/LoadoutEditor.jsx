@@ -2,13 +2,12 @@
 
 import { useRef, useState } from 'react';
 import LoadoutBoard from './LoadoutBoard';
-import LoadoutTable from './LoadoutTable';
 import ScanLauncher from './ScanLauncher';
-import { charmAnnouncement, completionText, gearAnnouncement } from '../../lib/loadout.mjs';
+import { charmAnnouncement, completionText, gearAnnouncement, loadoutSummaryLines } from '../../lib/loadout.mjs';
 import './loadout.css';
 
 /**
- * Governor Gear and Charms: board + table over ONE state (the form's gear / charms maps).
+ * Governor Gear and Charms: the board (popovers are the only editors) over ONE state (the form's gear / charms maps).
  * onGearChange(key, storedValue) / onCharmChange(key, storedValue) / onClear() are owned by the form,
  * which serialises them with the existing lib/powerProfiles.mjs helpers.
  */
@@ -49,7 +48,7 @@ export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChang
     <div className="lo">
       <div className="lo-head">
         <div className="lo-head-copy">
-          <p className="lo-help">Tap a slot on the board to edit it, or use the table below. Both show the same values.</p>
+          <p className="lo-help">Tap a gear tile or a charm on the board to set it.</p>
         </div>
         <ScanLauncher />
       </div>
@@ -68,7 +67,12 @@ export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChang
       </div>
 
       <LoadoutBoard gear={gear} charms={charms} active={active} open={open} onActivate={activate} onClose={closePopover} onGearChange={changeGear} onCharmChange={changeCharm} />
-      <LoadoutTable gear={gear} charms={charms} active={active} onGearChange={changeGear} onCharmChange={changeCharm} />
+      <section className="lo-sr-only" aria-labelledby="lo-summary-title">
+        <h4 id="lo-summary-title">Current gear and charms</h4>
+        <ul>
+          {loadoutSummaryLines(gear, charms).map((line) => <li key={line}>{line}</li>)}
+        </ul>
+      </section>
 
       <p className="lo-sr-only" role="status" aria-live="polite">{announce}</p>
     </div>

@@ -12,7 +12,7 @@ export default function ScanLauncher({ enabled = false, onLaunch }) {
       >
         Scan a screenshot
       </button>
-      <p id="lo-scan-note" className="lo-note">Screenshot scanning is coming soon. Fill in your gear below.</p>
+      <p id="lo-scan-note" className="lo-note">Screenshot scanning is coming soon. Set your gear on the board.</p>
     </div>
   );
 }
