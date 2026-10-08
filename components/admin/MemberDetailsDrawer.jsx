@@ -31,7 +31,7 @@ export default function MemberDetailsDrawer({ open, member, rallyName, onClose, 
     function onKeyDown(event) {
       if (event.key === 'Escape') onCloseRef.current();
       if (event.key !== 'Tab') return;
-      const controls = [...drawerRef.current.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]')];
+      const controls = [...(drawerRef.current?.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]') || [])];
       const first = controls[0];
       const last = controls.at(-1);
       if (event.shiftKey && document.activeElement === first) {

@@ -906,20 +906,22 @@ tr.row-dragging { opacity: 0.5; }
 .command-hall-toggle:hover { color: var(--gold-bright); }
 .command-hall-submit { background: var(--gold); color: var(--ink); border: none; border-radius: 8px; padding: 12px; font-weight: 800; letter-spacing: 0.03em; cursor: pointer; text-transform: uppercase; font-size: 13px; }
 .command-hall-submit:hover { background: var(--gold-bright); }
+.command-hall-card .sub a { color: var(--gold-bright); text-decoration: underline; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
+.command-hall-card .sub a:hover { color: var(--parchment); }
 .command-hall-submit:disabled { opacity: 0.6; cursor: default; }
 
 /* Inner Gate (player-record) + Command Deck hub */
-.inner-gate-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(ellipse 50% 40% at 50% 15%, rgba(92,134,201,0.12), transparent 60%), linear-gradient(180deg, #0b0e1e, #171c33); }
+.inner-gate-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(ellipse 50% 40% at 50% 15%, rgba(217,169,78,0.1), transparent 60%), linear-gradient(180deg, #0b0e1e, #171c33); }
 .inner-gate-card { width: min(420px, 100%); text-align: center; }
-.inner-gate-crest { width: 54px; height: 54px; color: #7fa3de; margin: 0 auto 16px; }
+.inner-gate-crest { width: 54px; height: 54px; color: var(--gold); margin: 0 auto 16px; }
 .inner-gate-card h1 { font-size: 22px; letter-spacing: 0.06em; color: var(--parchment); margin: 0 0 6px; }
 .inner-gate-card .sub { font-size: 13.5px; color: var(--text-muted); margin: 0 0 28px; line-height: 1.5; }
 .inner-gate-form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
 .inner-gate-form label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; }
 .inner-gate-form input { padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); background: rgba(10,13,26,0.6); color: var(--parchment); font-size: 14px; font-weight: 400; text-transform: none; }
-.inner-gate-form input:focus { outline: none; border-color: #7fa3de; box-shadow: 0 0 0 3px rgba(92,134,201,0.2); }
-.inner-gate-submit { background: #5c86c9; color: #0a0e1c; border: none; border-radius: 8px; padding: 12px; font-weight: 800; letter-spacing: 0.03em; cursor: pointer; text-transform: uppercase; font-size: 13px; }
-.inner-gate-submit:hover { background: #7fa3de; }
+.inner-gate-form input:focus { outline: none; border-color: var(--gold-bright); box-shadow: 0 0 0 3px rgba(217,169,78,0.25); }
+.inner-gate-submit { background: var(--gold); color: var(--ink); border: none; border-radius: 8px; padding: 12px; font-weight: 800; letter-spacing: 0.03em; cursor: pointer; text-transform: uppercase; font-size: 13px; }
+.inner-gate-submit:hover { background: var(--gold-bright); }
 .inner-gate-submit:disabled { opacity: 0.6; cursor: default; }
 .inner-gate-hint { margin-top: 12px; font-size: 12px; color: var(--text-dim); }
 

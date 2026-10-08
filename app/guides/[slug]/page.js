@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import GuideArticle from './GuideArticle';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
@@ -88,6 +89,9 @@ export default async function GuidePage({ params }) {
   } catch {
     loadError = 'This guide could not be loaded. Please try again.';
   }
+
+  // Unknown slug (nothing loaded and no load error): return a real 404.
+  if (!guide && !loadError) notFound();
 
   if (!canReadGuide(guide, { admin, member: Boolean(session) })) {
     const membersOnly = guide?.is_published && guide.access_level === 'members';

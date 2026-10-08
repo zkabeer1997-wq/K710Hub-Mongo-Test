@@ -235,7 +235,7 @@ export default function AdminShell({ title, subtitle, actions, onLogout, counter
             {actions}
           </div>
         </header>
-        <div className="admin-content-body">{children}</div>
+        <main id="main" tabIndex={-1} className="admin-content-body">{children}</main>
       </div>
     </div>
   );

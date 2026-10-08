@@ -14,7 +14,7 @@ export default function NotFound() {
         <h1>Lost in the Kingdom</h1>
         <p className="sub">This path doesn&rsquo;t lead anywhere inside Kingdom 710. The page you&rsquo;re looking for may have moved or never existed.</p>
         <Link href="/" className="inner-gate-submit" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
-          Return to the Gate
+          Go to the home page
         </Link>
       </div>
     </main>

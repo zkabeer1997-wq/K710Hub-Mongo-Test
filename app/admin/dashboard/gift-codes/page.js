@@ -155,7 +155,7 @@ export default function AdminGiftCodesPage() {
             <Input
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
-              placeholder="e.g. Kingshot888 (exact spelling matters)"
+              aria-label="e.g. Kingshot888 (exact spelling matters)" placeholder="e.g. Kingshot888 (exact spelling matters)"
             />
           </Field>
           <Button
@@ -173,7 +173,7 @@ export default function AdminGiftCodesPage() {
       <Panel title="Enroll existing member">
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <Field label="Member ID / Player ID">
-            <Input value={enrollId} onChange={(e) => setEnrollId(e.target.value)} placeholder="In-game ID" />
+            <Input value={enrollId} onChange={(e) => setEnrollId(e.target.value)} aria-label="In-game ID" placeholder="In-game ID" />
           </Field>
           <Button
             disabled={!!busy || !enrollId.trim()}
@@ -192,7 +192,7 @@ export default function AdminGiftCodesPage() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Player ID or code"
+            aria-label="Player ID or code" placeholder="Player ID or code"
             onKeyDown={(e) => {
               if (e.key === 'Enter') load(query);
             }}

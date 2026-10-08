@@ -206,7 +206,7 @@ export default function AdminFormGatesPage() {
                     <Field label="">
                       <Input
                         tone="console"
-                        placeholder="Optional message shown while closed"
+                        aria-label={`Message shown while ${LABELS[formKey]} is closed (optional)`} placeholder="Optional message shown while closed"
                         value={drafts[formKey] ?? ''}
                         onChange={(e) => setDrafts((d) => ({ ...d, [formKey]: e.target.value }))}
                         onBlur={() => saveMessage(formKey)}

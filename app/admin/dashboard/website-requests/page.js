@@ -123,7 +123,7 @@ export default function AdminWebsiteRequestsPage() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, ID, section, request..."
+          aria-label="Search by name, ID, section, request..." placeholder="Search by name, ID, section, request..."
         />
         <span className="admin-count">{visibleRows.length} of {rows.length}</span>
       </div>

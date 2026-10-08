@@ -502,7 +502,7 @@ export default function AdminInterestPage() {
             <form onSubmit={createPeriod} className="intake-period-form">
               {periodError && <p className="guide-message error" role="alert">{periodError}</p>}
               <Field label="New intake period label" hint="e.g. November 2026">
-                <Input tone="console" value={newPeriodLabel} onChange={(e) => setNewPeriodLabel(e.target.value)} placeholder="November 2026" autoFocus />
+                <Input tone="console" value={newPeriodLabel} onChange={(e) => setNewPeriodLabel(e.target.value)} aria-label="November 2026" placeholder="November 2026" autoFocus />
               </Field>
               <label className="intake-period-activate">
                 <input type="checkbox" checked={newPeriodActivate} onChange={(e) => setNewPeriodActivate(e.target.checked)} />
@@ -552,7 +552,7 @@ export default function AdminInterestPage() {
           </div>
           <div className="admin-filter-bar">
             <Field label="Search (Name, server, player ID, alliance) — use % as wildcard">
-              <Input tone="console" className="narrow" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. Legend%" />
+              <Input tone="console" className="narrow" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="e.g. Legend%" placeholder="e.g. Legend%" />
             </Field>
             <Field label="Migrating to">
               <Select tone="console" value={migrateFilter} onChange={(e) => setMigrateFilter(e.target.value)}>

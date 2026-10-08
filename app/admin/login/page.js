@@ -62,17 +62,17 @@ export default function AdminLoginPage() {
 
   if (checkingSession) {
     return (
-      <div className="command-hall-page">
+      <main id="main" className="command-hall-page">
         <div className="command-hall-card">
           <h1>ADMIN SIGN IN</h1>
           <p className="sub">Checking session…</p>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="command-hall-page">
+    <main id="main" className="command-hall-page">
       <div className="command-hall-card">
         <svg className="command-hall-crest" viewBox="0 0 40 40" fill="none" aria-hidden="true">
           <path d="M20 3 L35 8 V19 C35 28 29 34 20 37 C11 34 5 28 5 19 V8 Z" stroke="currentColor" strokeWidth="1.6" />
@@ -121,6 +121,6 @@ export default function AdminLoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }
