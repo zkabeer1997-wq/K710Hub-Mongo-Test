@@ -146,3 +146,32 @@ Three images were supplied (small UI screenshots, not usable as test fixtures):
 - Should the loadout page also store charms (18) and hero gear from these scans, or only the 6 Governor
   Gear slots for now?
 - Full-resolution original screenshots for both screens (many devices) with true values, as in fixtures request.
+
+## Update 2: owner answers and game data (read from the owner's reference pages)
+Owner decisions: stars are shown on the Governor Profile to the LEFT of each gear tile; first version saves all 6
+Governor Gear slots, all 18 charms, and Backpack hero gear; the third-party scanner is REPLACED.
+
+Backpack Gear tab = HERO GEAR pieces. Per piece: top-left icon = troop type (shield = infantry, horse = cavalry,
+crossbow = archer); top-right number = hero gear level (gold pieces 1-100, red pieces 101-200); bottom-right number
+= Forgery 0-20 (the reference site calls this "Mastery Level"; CONFIRM which word the game shows).
+
+Game data confirmed from the reference pages (labels and ranges only; cost tables are not needed and not copied):
+- Governor Gear (https://beta.kingshotoptimizer.com/governor-gear/references/), 58 states per piece:
+  Green 0-1 stars; Blue 0-3; Purple 0-3; Purple T1 0-3; Gold T0-T3, each 0-3; Red T0-T6, each 0-3.
+  Legend on the page: Green = Uncommon, Blue = Rare, Purple = Epic, Gold = Mythic (Red label not shown in the text we read).
+  This matches `lib/equipmentOptions.mjs` (58 options). Frame COLOURS are not in the page text: they will be measured
+  from labelled screenshots (palette per quality), not guessed.
+- Charms (https://beta.kingshotoptimizer.com/charms/references/): levels 1-22 per charm, 18 charms (3 per gear
+  piece). The level is shown as a SHAPE (a "shape ladder"); matching shapes needs template images or the
+  existing `lib/charmVisionClient.js` approach: needs fixtures.
+- Hero gear (https://beta.kingshotoptimizer.com/hero-gear/references/xp-costs): enhancement level 0-200; epic max 80,
+  mythic (gold) max 100, red 101-200; mastery 0-20 (mastery 11-20 needs mythic gear).
+
+Usage note: that site's robots.txt carries "Content-Signal: search=yes, ai-train=no, use=reference" and blocks named AI
+crawlers. We fetched three reference pages once, for labels and ranges only, and will store only those facts in our own
+game-data modules with a source comment. The owner should confirm this use is fine with the data owner.
+
+Still blocking phases 2-4 (need owner): full-resolution labelled screenshots (profile and backpack gear), the anchor
+element, tier-label look on screen, the exact on-screen word for "Forgery".
+Phase 1 (foundations: image check, coordinate maths, colour maths, Otsu, zod schemas, game data, kind registry)
+does not need fixtures and can start now.
