@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
+import { ObjectId } from 'mongodb';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { NOBLE_FIELDS, validateNobleAdvisor } from '../../../lib/nobleAdvisor.mjs';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
+
+// Rows may carry a string `id` (new) or only a Mongo _id (older rows); the admin
+// list hands back String(_id), so cast it before matching.
+function idFilter(id) {
+  const value = String(id);
+  if (ObjectId.isValid(value) && String(new ObjectId(value)) === value) {
+    return { $or: [{ id: value }, { _id: new ObjectId(value) }] };
+  }
+  return { id: value };
+}
 
 export async function GET(request) {
   if (!(await isAdminRequest(request))) {
@@ -39,7 +50,7 @@ export async function PATCH(request) {
   }
   try {
     const coll = await getCollection('noble_advisor_submissions');
-    const existing = await coll.findOne({ $or: [{ id: body.id }, { _id: body.id }] });
+    const existing = await coll.findOne(idFilter(body.id));
     if (!existing) {
       return NextResponse.json({ error: 'Booking not found.' }, { status: 404, headers });
     }
@@ -47,7 +58,7 @@ export async function PATCH(request) {
     const { record, error } = validateNobleAdvisor({ ...rest, [body.key]: body.value });
     if (error) return NextResponse.json({ error }, { status: 400, headers });
     await coll.updateOne(
-      { $or: [{ id: body.id }, { _id: body.id }] },
+      idFilter(body.id),
       { $set: { [body.key]: record[body.key], updated_at: new Date() } }
     );
     return NextResponse.json({ ok: true }, { headers });

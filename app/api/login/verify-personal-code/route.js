@@ -33,7 +33,7 @@ export async function POST(request) {
   if (!flow) {
     return json({ error: 'Your login attempt expired. Enter your Player ID again.' }, { status: 401 });
   }
-  if (flow.state !== 'awaiting_personal_code' && flow.state !== 'awaiting_game_confirmation') {
+  if (flow.state !== 'awaiting_personal_code') {
     return json({ error: 'Personal code is not available for this login step.' }, { status: 409 });
   }
 

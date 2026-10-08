@@ -1,9 +1,9 @@
-import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { publicFlamedragonRecord, sanitizeFlamedragonInput } from '../../../lib/flamedragonForm.mjs';
 import { getCurrentEventCycle } from '../../../lib/eventCycles.server';
+import { readMemberSession } from '../../../lib/memberAuth';
 
 const PUBLIC_PROJECT = {
   member_id: 1,
@@ -28,30 +28,29 @@ const PUBLIC_PROJECT = {
   _id: 0,
 };
 
-function pinHash(pin) {
-  return createHash('sha256').update('kvk-flamedragon-v1:' + pin).digest('hex');
-}
+const UNAUTHORIZED = () => NextResponse.json({ error: 'Please sign in first.' }, { status: 401 });
 
 export async function GET(request) {
-  const url = new URL(request.url);
-  const memberId = String(url.searchParams.get('member_id') || '').trim();
-  if (!memberId) {
-    return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
-  }
+  const session = await readMemberSession(request);
+  if (!session) return UNAUTHORIZED();
   try {
     const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
-    const data = await coll.findOne({ member_id: memberId }, { projection: PUBLIC_PROJECT });
-    return NextResponse.json({ record: publicFlamedragonRecord(data) });
+    const data = await coll.findOne({ member_id: session.memberId }, { projection: PUBLIC_PROJECT });
+    return NextResponse.json({ member_id: session.memberId, record: publicFlamedragonRecord(data) });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('flamedragon GET failed', error);
+    return NextResponse.json({ error: 'Could not load your form. Please try again.' }, { status: 500 });
   }
 }
 
 export async function POST(request) {
+  const session = await readMemberSession(request);
+  if (!session) return UNAUTHORIZED();
   let record;
   try {
     const body = await request.json();
-    record = sanitizeFlamedragonInput(body);
+    // Identity comes from the signed session, never from the request body.
+    record = sanitizeFlamedragonInput({ ...body, member_id: session.memberId, pin: 'session' });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
@@ -59,15 +58,8 @@ export async function POST(request) {
     const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
     const existing = await coll.findOne(
       { member_id: record.member_id },
-      { projection: { member_id: 1, pin_hash: 1 } }
+      { projection: { member_id: 1 } }
     );
-    const nextHash = pinHash(record.pin);
-    if (existing && existing.pin_hash !== nextHash) {
-      return NextResponse.json(
-        { error: 'Incorrect PIN for this Member ID. Please try again.' },
-        { status: 403 }
-      );
-    }
     const payload = {
       member_id: record.member_id,
       name: record.name,
@@ -87,7 +79,6 @@ export async function POST(request) {
       availability: record.availability || null,
       voice_chat: record.voice_chat || null,
       auto_help: record.auto_help || null,
-      pin_hash: nextHash,
       updated_at: new Date(),
     };
     const cycle = await getCurrentEventCycle('flamedragon').catch(() => null);
@@ -102,6 +93,7 @@ export async function POST(request) {
       record: publicFlamedragonRecord(data),
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('flamedragon POST failed', error);
+    return NextResponse.json({ error: 'Could not save your form. Please try again.' }, { status: 500 });
   }
 }

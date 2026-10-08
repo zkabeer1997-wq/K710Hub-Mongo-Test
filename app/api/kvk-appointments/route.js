@@ -61,7 +61,10 @@ export async function POST(request) {
     const coll = await getCollection(COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS);
     const filter = { member_id: session.memberId, day: value.day, buff: value.buff, cycle_id: g.cycleId };
     const now = new Date();
-    const update = { $set: { ...value, updated_at: now }, $setOnInsert: { ...filter, created_at: now } };
+    // day/buff/member_id/cycle_id come from the filter on insert; setting them in
+    // $set or $setOnInsert as well makes MongoDB reject the update with a path conflict.
+    const { day: _day, buff: _buff, ...fields } = value;
+    const update = { $set: { ...fields, updated_at: now }, $setOnInsert: { created_at: now } };
     try {
       await coll.updateOne(filter, update, { upsert: true });
     } catch (err) {

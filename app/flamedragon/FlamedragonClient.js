@@ -91,15 +91,14 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
     setHeroes((prev) => (prev.includes(hero) ? prev.filter((h) => h !== hero) : [...prev, hero]));
   }
 
-  async function lookup(overrideMemberId) {
-    const memberId = (overrideMemberId !== undefined ? overrideMemberId : form.member_id).trim();
-    if (!memberId) return;
-    const response = await fetch(`/api/flamedragon?member_id=${encodeURIComponent(memberId)}`);
+  async function lookup() {
+    const response = await fetch('/api/flamedragon');
     const result = await response.json();
     if (!response.ok) {
       setOnFile(null);
       return;
     }
+    if (result.member_id) setForm((current) => ({ ...current, member_id: result.member_id }));
     if (result.record) {
       const r = result.record;
       const charmSelections = parseCharmSelections(r.charms);
@@ -133,9 +132,7 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
   }
 
   useEffect(() => {
-    if (initialMemberId) {
-      lookup(initialMemberId);
-    }
+    lookup();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -143,9 +140,9 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
     event.preventDefault();
     setStatus('');
     setIsError(false);
-    if (!form.name || !form.member_id || !form.pin) {
+    if (!form.name) {
       setIsError(true);
-      setStatus('Please fill in your name, member ID, and PIN.');
+      setStatus('Please type your name.');
       return;
     }
     setLoading(true);
@@ -177,7 +174,7 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
 
           <section className="identity-grid">
             <label>In Game Name<input value={form.name} onChange={(e) => updateField('name', e.target.value)} placeholder="Your in-game name" /></label>
-            <label>Player ID<input value={form.member_id} onChange={(e) => updateField('member_id', e.target.value)} onBlur={() => lookup()} placeholder="Your Player ID" /></label>
+            <label>Player ID<input value={form.member_id} readOnly placeholder="Filled in when you sign in" /></label>
           </section>
 
           <section className="troop-section public-section">
@@ -299,11 +296,6 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
                 </select>
               </label>
             </div>
-          </section>
-
-          <section className="pin-panel">
-            <label>Enter your PIN<input type="password" value={form.pin} onChange={(e) => updateField('pin', e.target.value)} placeholder="Your PIN" /></label>
-            <p className="hint">First submission sets your PIN. Enter the same PIN next time to update your entry.</p>
           </section>
 
           {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
