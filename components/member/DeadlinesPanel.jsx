@@ -31,7 +31,9 @@ export default function DeadlinesPanel({ status, loaded }) {
             return (
               <li key={entry.id} className={styles.deadlineRow} data-soon={soon || undefined}>
                 <div className={styles.deadlineTop}>
-                  <Link href={entry.href} prefetch={false}>{entry.label}</Link>
+                  {entry.kind === 'opens'
+                    ? <span className={styles.deadlineInfo}>{entry.label}</span>
+                    : <Link href={entry.href} prefetch={false}>{entry.label}</Link>}
                   <span className={styles.deadlineCount}>
                     {soon && <b className={styles.dueChip}>Due soon</b>}
                     <span>{formatCountdown(entry.at - clock)}</span>

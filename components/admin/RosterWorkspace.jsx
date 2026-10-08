@@ -425,6 +425,9 @@ export default function RosterWorkspace({
     setShowAddMember(false);
   }
 
+  // Built-in heroes plus any hero name a member saved (including heroes since switched off or added in Admin > Heroes).
+  const heroFilterOptions = useMemo(() => [...new Set([...HEROES, ...seasonFilteredRows.flatMap((row) => (Array.isArray(row.heroes) ? row.heroes : []))])], [seasonFilteredRows]);
+
   const filteredSorted = useMemo(() => {
     const result = seasonFilteredRows.filter(row =>
       (!allianceFilter || row.current_alliance===allianceFilter) && (!availabilityFilter || row.availability===availabilityFilter) &&
@@ -521,7 +524,7 @@ export default function RosterWorkspace({
           <TableFilters query={search} onQuery={setSearch} placeholder="Name, player ID, hero, or equipment" shown={filteredSorted.length} total={seasonFilteredRows.length} onReset={()=>{setSearch('');setAllianceFilter('');setAvailabilityFilter('');setHeroFilter('');setTierFilter('');setSortKey('updated_at');setSortDir('desc');}} filters={[
             {key:'alliance',label:'Alliance',value:allianceFilter,onChange:setAllianceFilter,options:[...new Set(seasonFilteredRows.map(r=>r.current_alliance).filter(Boolean))].sort()},
             {key:'availability',label:'Availability',value:availabilityFilter,onChange:setAvailabilityFilter,options:[...new Set(seasonFilteredRows.map(r=>r.availability).filter(Boolean))].sort()},
-            {key:'hero',label:'Hero',value:heroFilter,onChange:setHeroFilter,options:HEROES},
+            {key:'hero',label:'Hero',value:heroFilter,onChange:setHeroFilter,options:heroFilterOptions},
             {key:'tier',label:'Any troop tier',value:tierFilter,onChange:setTierFilter,options:TROOP_TIERS},
           ]}/>
 

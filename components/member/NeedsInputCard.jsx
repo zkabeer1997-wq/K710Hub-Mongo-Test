@@ -48,7 +48,7 @@ export default function NeedsInputCard() {
             return (
               <li key={entry.id} className={`needs-row${soon ? ' is-soon' : ''}`}>
                 <div>
-                  <Link href={entry.href}>{entry.label}</Link>
+                  {entry.kind === 'opens' ? <span>{entry.label}</span> : <Link href={entry.href}>{entry.label}</Link>}
                   <div className="needs-when"><DualTime value={iso} />{entry.estimated && <span className="needs-est"> · estimated date, not confirmed</span>}</div>
                 </div>
                 <div className="needs-count">

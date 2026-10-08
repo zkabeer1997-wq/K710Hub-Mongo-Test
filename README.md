@@ -40,7 +40,8 @@ Admin surface (shared password, or a Kingshot session with admin/superadmin role
 | `KINGSHOT_API_BASE_URL`, `KINGSHOT_PLAYER_API_URL`, `KINGSHOT_PLAYER_SEARCH_URL` | Upstream endpoints for the Kingshot login flow (`lib/kingshotLogin.js`) |
 | `CHARM_OCR_ENDPOINT`, `GOVERNOR_CHARM_OCR_ENDPOINT`, `GOVERNOR_GEAR_OCR_ENDPOINT` | Screenshot-scanning tools; those features degrade gracefully without them |
 | `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` | OAuth client for the Google Drive export (`lib/googleDrive.server.js`, `app/api/google-drive/*`, `app/api/export-to-drive`). Both must be set or the export reports "not configured". Authorized redirect URI: `<SITE_URL>/api/google-drive/callback`. |
-| `GALLERY_TOKEN_KEY` | `lib/driveCrypto.mjs` | Optional. Key material for AES-256-GCM encryption of the stored Google Drive refresh token (`integration_tokens`). Falls back to HKDF from `MEMBER_SESSION_SECRET`. Changing either later means reconnecting Drive. Gallery images are stored in Google Drive (Admin > Gallery > Connect Google Drive); the same `GOOGLE_DRIVE_CLIENT_*` pair is used. |
+| `GALLERY_TOKEN_KEY` | `lib/driveCrypto.mjs` | Optional. Key material for AES-256-GCM encryption of the stored Google Drive refresh token (`integration_tokens`). Falls back to HKDF from `MEMBER_SESSION_SECRET`. Changing either later means reconnecting Drive. Site images (gallery, guides, hero, tools, application screenshots) are stored in Google Drive under `K710 Website/` (Admin > Gallery > Connect Google Drive); the same `GOOGLE_DRIVE_CLIENT_*` pair is used. |
+| `GOOGLE_PICKER_API_KEY`, `GOOGLE_PICKER_APP_ID` | `lib/pickerConfig.mjs`, `app/api/admin-drive/picker-config` | Optional. Enable "Google Picker" in the Cloud project, create an API key restricted to HTTP referrers (your domain) and set it here; `APP_ID` is the Cloud project number. Without them admin pages show "Google Picker is not set up yet" (computer uploads still work). |
 | `VERCEL_ENV` | Set automatically by Vercel. `preview` makes guides read from the `kingdom_guides_preview` collection instead of `kingdom_guides` (`lib/guideAccess.mjs`). Do not set by hand. |
 | `QA_NO_DB` | Set to `1` for QA/test runs without a database: skips the boot-time index sync and the shared rate-limit store. |
 | `K710_LIBRETRANSLATE_URLS` | Comma-separated LibreTranslate mirrors for `/api/translate-ui`; falls back to public mirrors |
@@ -86,3 +87,8 @@ Uploaded images (gallery, guide attachments) are stored as base64 data URLs dire
 - `docs/PERF-BASELINE.md` — bundle and route weights
 - `docs/CUTOVER.md` — env parity, data migration checklist, image storage notes
 - `docs/DEPLOYMENT_READINESS_AUDIT.md` — deployment readiness audit and fix history
+
+
+## Site images in Google Drive (short guide for developers)
+
+All images are stored in Drive (`K710 Website/<Gallery images|Guides images|Hero images|Tools and calculators images|Applications/<Player ID>>`); MongoDB keeps metadata in `site_images`. Server code: `storeSiteImage({ folder, subfolder?, file, name, alt })` / `copyPickedImage({ folder, fileId })` from `lib/siteImages.server.js`, display with `siteImageUrl(id)` (`/api/site-image/<id>`). Admin forms: drop in `<ImageUploadField folder="hero" value={img} onChange={setImg} />` (`components/admin/ImageUploadField.jsx`). Full API, fallback behaviour and Google setup: `docs/CUTOVER.md` > Image storage.

@@ -1,19 +1,22 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { registerHooks } from 'node:module';
+import { driveHookLoad, driveHookResolve, tmpFakeDrive } from './helpers/driveTestHooks.mjs';
 import { mintAdminToken } from '../lib/adminAuth.js';
 
 const state = { tables: { kingdom_guides: [], guide_attachments: [] }, paths: [] };
 globalThis.__guideBuilderTest = state;
 registerHooks({
   resolve(specifier, context, nextResolve) {
-    if (specifier.endsWith('/lib/mongo')) return { url: 'test:builder-mongo', shortCircuit: true };
+    { const r = driveHookResolve(specifier, context, nextResolve); if (r) return r; }
+    if (/\/mongo(\.js)?$/.test(specifier)) return { url: 'test:builder-mongo', shortCircuit: true };
     if (specifier === 'next/cache') return { url: 'test:builder-cache', shortCircuit: true };
     if (specifier === 'next/server') return nextResolve('next/server.js', context);
     if (/\/(adminAuth|mongoCollections|memberAuth)$/.test(specifier)) return nextResolve(`${specifier}.js`, context);
     return nextResolve(specifier, context);
   },
   load(url, context, nextLoad) {
+    { const l = driveHookLoad(url); if (l) return l; }
     if (url === 'test:builder-mongo') {
       const helperUrl = new URL('./helpers/fakeMongo.mjs', import.meta.url).href;
       return { format: 'module', shortCircuit: true, source: `import { createFakeMongo } from ${JSON.stringify(helperUrl)}; export const { getCollection, ensureIndexes } = createFakeMongo(globalThis.__guideBuilderTest.tables, { kingdom_guides: ['slug'] });` };
@@ -28,6 +31,9 @@ const { POST: createGuide } = await import('../app/api/admin-guides/route.js');
 const { POST: upload, GET: library } = await import('../app/api/admin-guide-images/route.js');
 const { GET: serveImage } = await import('../app/api/guide-images/[file]/route.js');
 const { PUT: publicPut } = await import('../app/api/guides/[slug]/route.js');
+const { setDriveStorageFactory } = await import('../lib/driveStorage.server.js');
+const fakeDrive = await tmpFakeDrive();
+setDriveStorageFactory(() => fakeDrive);
 process.env.ADMIN_PASSWORD = 'guide-builder-test-only';
 const token = await mintAdminToken();
 const request = (body, authenticated = true, url = 'http://localhost/api/x') => ({ url, cookies: { get: () => (authenticated ? { value: token } : undefined) }, json: async () => body, formData: async () => body });

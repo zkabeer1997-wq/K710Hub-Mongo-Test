@@ -19,7 +19,8 @@ import AreaDrop, { areaDropId } from './AreaDrop';
 import Inspector from './Inspector';
 import Palette from './Palette';
 import TemplatePicker from './TemplatePicker';
-import { checkImageFile, uploadGuideImage } from './uploadImage';
+import { checkImageFile, uploadGuideImage, pickGuideImageFromDrive } from './uploadImage';
+import DriveImagePicker from '../DriveImagePicker';
 import styles from './builder.module.css';
 
 const META_KEYS = ['title', 'slug', 'category', 'description', 'access_level', 'reviewed_by', 'position', 'f2p_content', 'spender_content'];
@@ -35,7 +36,15 @@ function collision(args) {
   return closestCorners(args);
 }
 
-function LibraryModal({ library, onPick, onClose }) {
+function LibraryModal({ library, guideSlug, onPick, onClose }) {
+  const [driveError, setDriveError] = useState('');
+  const [driveBusy, setDriveBusy] = useState(false);
+  async function pickFromDrive(files) {
+    if (!files?.[0]) return;
+    setDriveBusy(true); setDriveError('');
+    try { onPick((await pickGuideImageFromDrive(files[0].id, guideSlug)).src, true); }
+    catch (e) { setDriveError(e.message); } finally { setDriveBusy(false); }
+  }
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -55,7 +64,9 @@ function LibraryModal({ library, onPick, onClose }) {
             ))}
           </div>
         ) : <p>No images yet. Upload one first.</p>}
-        <div className={styles.modalActions}><button type="button" className={styles.btn} onClick={onClose} autoFocus>Close</button></div>
+        {driveError ? <p role="alert" className={styles.hintLine}>{driveError}</p> : null}
+        <div className={styles.modalActions}>
+          <DriveImagePicker onPick={pickFromDrive} onError={setDriveError} disabled={driveBusy} label={driveBusy ? 'Copying from Google Drive…' : 'Choose from Google Drive'} /><button type="button" className={styles.btn} onClick={onClose} autoFocus>Close</button></div>
       </div>
     </div>
   );
@@ -825,7 +836,7 @@ export default function GuideBuilder({ slug: initialSlug }) {
           />
         ) : null}
         {picker ? <TemplatePicker first={picker === 'first'} current={layout?.template} onPick={pickTemplate} onClose={picker === 'switch' ? () => setPicker(null) : undefined} /> : null}
-        {libraryPicker ? <LibraryModal library={fullLibrary} onPick={applyLibraryImage} onClose={() => setLibraryPicker(null)} /> : null}
+        {libraryPicker ? <LibraryModal library={fullLibrary} guideSlug={latest.current.slugKey || slugKey} onPick={(src, isNew) => { if (isNew) setLibrary(lib => [{ src }, ...lib.filter(i => i.src !== src)]); applyLibraryImage(src); }} onClose={() => setLibraryPicker(null)} /> : null}
       </div>
     </BuilderContext.Provider>
   );

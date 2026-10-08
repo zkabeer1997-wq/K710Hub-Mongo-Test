@@ -17,11 +17,24 @@ function matches(doc, filter) {
     if (key === '$or') return cond.some((sub) => matches(doc, sub));
     if (key === '$and') return cond.every((sub) => matches(doc, sub));
     const value = doc[key];
+    // RegExp / { $regex } match a string, or any string element of an array (as MongoDB does).
+    const regexOf = cond instanceof RegExp ? cond : cond && typeof cond === 'object' && '$regex' in cond ? new RegExp(cond.$regex, cond.$options || '') : null;
+    if (regexOf) return (Array.isArray(value) ? value : [value]).some((v) => typeof v === 'string' && regexOf.test(v));
     if (cond && typeof cond === 'object' && !Array.isArray(cond) && !(cond instanceof ObjectId)) {
       if ('$exists' in cond) return cond.$exists ? value !== undefined : value === undefined;
       if ('$ne' in cond) return !equalsLoose(value, cond.$ne);
       if ('$nin' in cond) return !(cond.$nin || []).some((v) => equalsLoose(value, v));
-      if ('$in' in cond) return (cond.$in || []).some((v) => equalsLoose(value, v));
+      if ('$in' in cond) return (cond.$in || []).some((v) => equalsLoose(value, v) || (v === null && value === undefined));
+      if ('$lt' in cond || '$lte' in cond || '$gt' in cond || '$gte' in cond) {
+        const cmp = (x) => (x instanceof Date ? x.getTime() : x);
+        const v = cmp(value);
+        if (value === undefined || value === null) return false;
+        if ('$lt' in cond && !(v < cmp(cond.$lt))) return false;
+        if ('$lte' in cond && !(v <= cmp(cond.$lte))) return false;
+        if ('$gt' in cond && !(v > cmp(cond.$gt))) return false;
+        if ('$gte' in cond && !(v >= cmp(cond.$gte))) return false;
+        return true;
+      }
       if ('$type' in cond) return typeof value === (cond.$type === 'string' ? 'string' : typeof value);
     }
     return equalsLoose(value, cond);

@@ -6,6 +6,7 @@ import { validateApplication, validateApplicationBatch, listTypeTitles, APPOINTM
 import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
 import { ObjectId } from 'mongodb';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
+import { getResultPagesVisible } from '../../../lib/memberFormStatus.server.js';
 import { loadAppointmentGate, isCyclePublished, publicApplication } from '../../../lib/kvkAppointments.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,10 @@ export async function GET(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401, headers: HEADERS });
   try {
+    // Visibility rule: while the KvK Prep & Appointments form is closed, no slots and no schedule are returned.
+    if (!(await getResultPagesVisible()).kvk) {
+      return NextResponse.json({ unavailable: true, published: false, assignments: [], applications: [], prep: { saved: false } }, { headers: HEADERS });
+    }
     const g = await loadAppointmentGate();
     const [apps, pub, profiles] = await Promise.all([
       getCollection(COLLECTIONS.KVK_APPOINTMENT_APPLICATIONS).then((c) => c.find({ member_id: session.memberId, cycle_id: g.cycleId }).toArray()),

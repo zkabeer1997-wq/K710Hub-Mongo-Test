@@ -1,0 +1,24 @@
+/* Hero roster picker cards (KvK Availability + Flamedragon Tyrant forms). */
+.hero-chip.hero-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  min-height: 112px;
+  padding: 8px 6px 10px;
+}
+.hero-card .hero-portrait {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 88px;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.hero-card .hero-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-card .hero-portrait-letter { font-size: 28px; font-weight: 700; color: var(--text-muted); }
+.hero-card .hero-name { overflow-wrap: anywhere; line-height: 1.2; }
+.hero-empty { color: var(--text-muted); margin: 0; }

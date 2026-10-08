@@ -15,6 +15,7 @@ export const INBOX_TABS = [
 export const TOOL_TABS = [
   { href: '/admin/dashboard/tool-editing', label: 'Pack editing' },
   { href: '/admin/dashboard/tool-database', label: 'Tool database' },
+  { href: '/admin/dashboard/tool-images', label: 'Tool images' },
 ];
 
 export default function SectionTabs({ tabs, label }) {

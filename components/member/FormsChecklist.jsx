@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemberFormStatus } from '../../lib/useMemberFormStatus';
 import DualTime from '../ui/DualTime';
 import { FORM_PLAIN, formDisplayState } from '../../lib/memberForms.mjs';
+import { NOTHING_OPEN_MESSAGE } from '../../lib/memberResults.mjs';
 import styles from './FormsChecklist.module.css';
 
 // One flat to-do list of every member form, grouped by event, with a plain
@@ -118,7 +119,12 @@ export default function FormsChecklist() {
   return (
     <div className={styles.wrap}>
       <section className={`${styles.summary} ${todo.length === 0 ? styles.summaryDone : ''}`} aria-live="polite">
-        {todo.length > 0 ? (
+        {forms.length === 0 ? (
+          <>
+            <h2>Nothing to fill in</h2>
+            <p>{NOTHING_OPEN_MESSAGE}</p>
+          </>
+        ) : todo.length > 0 ? (
           <>
             <h2>{todo.length === 1 ? '1 thing to do' : `${todo.length} things to do`}</h2>
             <p>Start with the first one. It only takes a few minutes. You can come back at any time.</p>

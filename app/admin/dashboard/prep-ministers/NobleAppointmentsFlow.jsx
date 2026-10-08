@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDialog from '../../../../components/admin/AdminDialog';
 import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
+import useResultGate from '../../../../components/admin/useResultGate';
+import { visibilityStatusLine, publishFormClosedWarning } from '../../../../lib/resultVisibility.mjs';
 import StatusChip from '../../../../components/admin/StatusChip';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { Button, Select, Table } from '../../../../components/ui';
@@ -33,6 +35,7 @@ export default function NobleAppointmentsFlow() {
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState('review');
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const gate = useResultGate('noble');
   const [copied, setCopied] = useState('');
 
   const load = useCallback(async () => {
@@ -119,6 +122,7 @@ export default function NobleAppointmentsFlow() {
             <span className="help">{readOnly ? 'Earlier cycle: you can look and share, not change.' : 'Current cycle. One Noble Advisor slot per person on the 30-minute UTC grid.'}</span>
             <span className="apx-spacer" />
             <StatusChip kind={data.published ? 'published' : 'warn'}>{data.published ? 'Published to members' : 'Not published yet'}</StatusChip>
+            {gate.open !== null && <span className="help" role="status" data-testid="result-visibility">{visibilityStatusLine('noble', gate.open)}</span>}
           </div>
 
           <ol className="apx-steps" aria-label="Noble Advisor steps">
@@ -269,6 +273,12 @@ export default function NobleAppointmentsFlow() {
       >
         <p className="ec-confirm-line">{assignments.length} slots for {new Set(assignments.map((a) => String(a.member_id))).size} people will be visible to members straight away.</p>
         {unplaced.length > 0 && <p className="ec-confirm-line">{unplaced.length} {unplaced.length === 1 ? 'person has' : 'people have'} no slot and will be told they were not placed.</p>}
+        {publishFormClosedWarning('noble', gate.open) && (
+          <p className="ec-confirm-line" role="alert">
+            <strong>{publishFormClosedWarning('noble', gate.open)}</strong>{' '}
+            <Button variant="quiet" disabled={busy} onClick={async () => { try { await gate.openNow(); setStatus('The form is open. Members can now see My Noble Advisor appointment.'); } catch (err) { setError(err.message); } }}>Open the form now</Button>
+          </p>
+        )}
       </AdminDialog>
     </section>
   );

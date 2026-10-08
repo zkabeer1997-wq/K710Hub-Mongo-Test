@@ -31,3 +31,15 @@ export function uploadGuideImage(file, guideSlug, onProgress) {
     xhr.send(data);
   });
 }
+
+// "Choose from Google Drive": the server copies the picked file into Drive
+// "K710 Website/Guides images" and returns the same short /api/guide-images address.
+export async function pickGuideImageFromDrive(driveFileId, guideSlug) {
+  const response = await fetch('/api/admin-guide-images', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ driveFileId, guide: guideSlug }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !body.src) throw new Error(body.error || 'That file could not be copied from Google Drive.');
+  return { src: body.src };
+}

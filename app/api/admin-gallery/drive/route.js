@@ -5,6 +5,8 @@ import { COLLECTIONS } from '../../../../lib/mongoCollections';
 import { clearDriveAccessCache, getDriveStorage, getTokenStore, isDriveOAuthConfigured } from '../../../../lib/driveStorage.server';
 import { revokeToken } from '../../../../lib/driveClient.mjs';
 import { countLegacyImages } from '../../../../lib/galleryMigration.mjs';
+import { guideLegacyFilter } from '../../../../lib/guideImageStore.mjs';
+import { WAITING_FILTER } from '../../../../lib/interestScreenshots.mjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +23,11 @@ export async function GET(request) {
     const status = await drive.getStatus();
     const coll = await getCollection(COLLECTIONS.GALLERY_IMAGES);
     const legacyCount = await countLegacyImages(coll);
+    let legacyGuideImages = 0; let waitingApplications = 0;
+    try { legacyGuideImages = await (await getCollection('guide_attachments')).countDocuments(guideLegacyFilter()); } catch { /* optional */ }
+    try { waitingApplications = await (await getCollection(COLLECTIONS.INTEREST_SUBMISSIONS)).countDocuments(WAITING_FILTER); } catch { /* optional */ }
     return NextResponse.json(
-      { configured: drive.fake ? true : isDriveOAuthConfigured(), connected: Boolean(status.connected), fake: Boolean(status.fake), email: status.email || '', folderName: status.folderName || '', legacyCount },
+      { configured: drive.fake ? true : isDriveOAuthConfigured(), connected: Boolean(status.connected), fake: Boolean(status.fake), email: status.email || '', folderName: status.folderName || '', legacyCount, legacyGuideImages, waitingApplications },
       { headers: { 'Cache-Control': 'no-store' } }
     );
   } catch (error) {

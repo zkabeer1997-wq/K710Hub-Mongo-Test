@@ -6,6 +6,7 @@ import SectionTabs, { INBOX_TABS } from '../../../../components/admin/SectionTab
 import StatusBadge from '../../../../components/admin/StatusBadge';
 import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
+import DriveStatusBanner from '../../../../components/admin/DriveStatusBanner';
 import { Button, Field, Input, Select, Table } from '../../../../components/ui';
 import { useEscapeToClose } from '../../../../lib/useEscapeToClose';
 import { decisionConfirmText, acceptanceMessage, findDuplicateApplicants } from '../../../../lib/adminInbox.mjs';
@@ -127,6 +128,8 @@ export default function AdminInterestPage() {
   const [newPeriodActivate, setNewPeriodActivate] = useState(true);
   const [savingPeriod, setSavingPeriod] = useState(false);
   const [periodError, setPeriodError] = useState('');
+  const [waitingForDrive, setWaitingForDrive] = useState(0);
+  const [moveState, setMoveState] = useState({ running: false, message: '' });
   const router = useRouter();
 
   useEffect(() => {
@@ -138,11 +141,31 @@ export default function AdminInterestPage() {
         setError(result.error || 'Unable to load submissions.');
       } else {
         setRows(result.rows || []);
+        setWaitingForDrive(result.waitingForDrive || 0);
       }
       setLoading(false);
     }
     load();
   }, []);
+
+  // Applications whose screenshots could not reach Drive wait in MongoDB (temporary fallback).
+  async function moveScreenshotsToDrive() {
+    const skipIds = []; let moved = 0;
+    setMoveState({ running: true, message: '' });
+    try {
+      for (let guard = 0; guard < 200; guard += 1) {
+        const response = await fetch('/api/admin-interest-submissions/migrate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ skipIds }) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Moving screenshots failed.');
+        moved += result.migrated.length;
+        result.failed.forEach((item) => skipIds.push(item.id));
+        if (!result.remaining || (!result.migrated.length && !result.failed.length)) break;
+      }
+      const listed = await (await fetch('/api/admin-interest-submissions')).json();
+      if (listed.rows) { setRows(listed.rows); setWaitingForDrive(listed.waitingForDrive || 0); }
+      setMoveState({ running: false, message: `Moved screenshots for ${moved} application${moved === 1 ? '' : 's'} to Google Drive.${skipIds.length ? ` ${skipIds.length} could not be moved; try again later.` : ''}` });
+    } catch (err) { setMoveState({ running: false, message: err.message }); }
+  }
 
   async function loadPeriods() {
     setPeriodsLoading(true);
@@ -600,6 +623,14 @@ export default function AdminInterestPage() {
           </div>
           {loading && <TableSkeleton columns={COMPACT_COLUMNS.length + 1} rows={7} />}
           {error && <div className="status error">{error}</div>}
+          <DriveStatusBanner />
+          {waitingForDrive > 0 && (
+            <div className="status error" role="status" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+              <span>{waitingForDrive} application{waitingForDrive === 1 ? ' has' : 's have'} screenshots waiting to move to Drive.</span>
+              <Button onClick={moveScreenshotsToDrive} disabled={moveState.running} style={{ minHeight: 44 }}>{moveState.running ? 'Moving…' : 'Move to Drive'}</Button>
+            </div>
+          )}
+          {moveState.message && <div className="status" role="status">{moveState.message}</div>}
           {!loading && !error && (
             <>
               <Table className="admin-compact-table stack-table">
@@ -741,9 +772,21 @@ export default function AdminInterestPage() {
                     <h3>Screenshots</h3>
                     <div className="admin-drawer-actions">
                       {selectedRow.screenshot_urls.map((url, index) => (
-                        <a key={url} href={url} target="_blank" rel="noreferrer" className="status-action-btn">Image {index + 1}</a>
+                        <a key={url} href={url} target="_blank" rel="noreferrer" className="status-action-btn">Image {index + 1}{selectedRow.screenshot_names?.[index] ? ` (${selectedRow.screenshot_names[index]})` : ''}</a>
+                      ))}
+                      {selectedRow.drive_folder_link && (
+                        <a href={selectedRow.drive_folder_link} target="_blank" rel="noreferrer" className="status-action-btn">Open applicant folder in Drive</a>
+                      )}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 8, marginTop: 10 }}>
+                      {selectedRow.screenshot_urls.map((url, index) => (
+                        <a key={`thumb-${url}`} href={url} target="_blank" rel="noreferrer" aria-label={`Open screenshot ${index + 1}`}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt={`Screenshot ${index + 1} of ${selectedRow.in_game_name || 'the applicant'}`} loading="lazy" style={{ width: '100%', maxHeight: 220, objectFit: 'contain', background: '#090b0f', borderRadius: 4 }} />
+                        </a>
                       ))}
                     </div>
+                    {selectedRow.screenshots_in_db > 0 && <p className="hint">{selectedRow.screenshots_in_db} screenshot{selectedRow.screenshots_in_db === 1 ? ' is' : 's are'} still stored in the database and will move to Drive.</p>}
                   </div>
                 )}
               </div>

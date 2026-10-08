@@ -1,0 +1,125 @@
+'use client';
+
+import { useId, useRef, useState } from 'react';
+import DriveImagePicker from './DriveImagePicker';
+import styles from './ImageUploadField.module.css';
+
+/**
+ * Shared admin image field: "Upload from this computer" + "Choose from Google
+ * Drive", preview, replace, remove, progress and plain-language errors. Images
+ * are stored in Google Drive (K710 Website/<folder>) by POST /api/admin-drive/images;
+ * the value is a same-origin URL (/api/site-image/<id>), safe to save in your
+ * own record.
+ *
+ * Props
+ *  - folder        'hero' | 'tool'          which Drive folder (required)
+ *  - value         { id?, url, alt? } | null  current image
+ *  - onChange      (image | null) => void   called after upload/pick (image = {id,url,alt,name,width,height,...}) or remove
+ *  - label         visible label (default "Image")
+ *  - altRequired   require a description (default true; accessibility)
+ *  - subfolder     optional Drive subfolder name (letters, numbers, spaces, - _)
+ *  - deleteOnRemove  also move the Drive file to the Drive trash on Remove (default false: only clears)
+ *  - endpoint      override the save endpoint (same JSON/multipart contract)
+ *  - maxMb         client-side size check (default 8, server enforces)
+ *  - onAltChange   (text) => void   called as the description is edited (optional)
+ *  - disabled
+ */
+const TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+function postForm(endpoint, form, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+    xhr.onerror = () => reject(new Error('The upload could not reach the server. Check your connection and try again.'));
+    xhr.onload = () => {
+      let body = {};
+      try { body = JSON.parse(xhr.responseText); } catch { /* keep empty */ }
+      if (xhr.status >= 200 && xhr.status < 300 && body.image) resolve(body.image);
+      else if (xhr.status === 401) reject(new Error('Your admin session expired. Sign in again, then retry.'));
+      else reject(new Error(body.error || 'The image could not be saved. Please try again.'));
+    };
+    xhr.send(form);
+  });
+}
+
+export default function ImageUploadField({ onAltChange, folder, value = null, onChange, label = 'Image', altRequired = true, subfolder, deleteOnRemove = false, endpoint = '/api/admin-drive/images', maxMb = 8, disabled = false }) {
+  const id = useId();
+  const inputRef = useRef(null);
+  const [alt, setAlt] = useState(value?.alt || '');
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState('');
+
+  function needAlt() {
+    if (altRequired && !alt.trim()) { setError('Describe the image first (for people using screen readers).'); return true; }
+    return false;
+  }
+
+  async function uploadFile(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setError('');
+    if (!TYPES.includes(file.type)) { setError(`"${file.name}" is not a JPG, PNG, WebP or GIF image.`); return; }
+    if (file.size > maxMb * 1024 * 1024) { setError(`"${file.name}" is larger than ${maxMb} MB. Resize it and try again.`); return; }
+    if (needAlt()) return;
+    const form = new FormData();
+    form.append('file', file); form.append('folder', folder); form.append('alt', alt.trim());
+    if (subfolder) form.append('subfolder', subfolder);
+    setBusy(true); setProgress(0);
+    try { onChange?.(await postForm(endpoint, form, setProgress)); }
+    catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+
+  async function pickFromDrive(files) {
+    const picked = files?.[0];
+    if (!picked) return;
+    setError('');
+    if (needAlt()) return;
+    setBusy(true); setProgress(0);
+    try {
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder, driveFileId: picked.id, alt: alt.trim(), ...(subfolder ? { subfolder } : {}) }) });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || 'That file could not be copied from Google Drive.');
+      onChange?.(body.image);
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+
+  async function remove() {
+    setError('');
+    if (deleteOnRemove && value?.id) {
+      try { await fetch(`${endpoint}?id=${encodeURIComponent(value.id)}`, { method: 'DELETE' }); } catch { /* clearing is what matters */ }
+    }
+    onChange?.(null);
+  }
+
+  return (
+    <div className={styles.field}>
+      <span className={styles.label} id={`${id}-label`}>{label}</span>
+      <div className={styles.row}>
+        <div className={styles.preview}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {value?.url ? <img src={value.url} alt={value.alt || alt || ''} /> : <span>No image yet</span>}
+        </div>
+        <div className={styles.field}>
+          <div className={styles.alt}>
+            <label htmlFor={`${id}-alt`}>Image description{altRequired ? ' (required)' : ''}</label>
+            <input id={`${id}-alt`} value={alt} maxLength={240} disabled={disabled || busy} onChange={(e) => { setAlt(e.target.value); onAltChange?.(e.target.value); }} aria-describedby={error ? `${id}-err` : undefined} />
+          </div>
+          <div className={styles.actions} role="group" aria-labelledby={`${id}-label`}>
+            <button type="button" className={`${styles.btn} ${styles.primary}`} disabled={disabled || busy} onClick={() => inputRef.current?.click()}>
+              {value?.url ? 'Replace from this computer' : 'Upload from this computer'}
+            </button>
+            <DriveImagePicker disabled={disabled || busy} onPick={pickFromDrive} onError={setError} />
+            {value?.url ? <button type="button" className={`${styles.btn} ${styles.danger}`} disabled={disabled || busy} onClick={remove}>Remove</button> : null}
+          </div>
+          <input ref={inputRef} type="file" hidden accept={TYPES.join(',')} onChange={uploadFile} tabIndex={-1} />
+          {busy ? <progress className={styles.progress} max="1" value={progress || undefined} aria-label="Saving image to Google Drive" /> : null}
+          <p className={styles.hint}>JPG, PNG, WebP or GIF, up to {maxMb} MB. Saved to Google Drive, not the database.</p>
+          {error ? <p className={styles.error} id={`${id}-err`} role="alert">{error}</p> : null}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -69,7 +69,7 @@ export async function PATCH(request, { params: paramsPromise }) {
     if (!doc) {
       return NextResponse.json({ error: 'Unable to update this image.' }, { status: 500 });
     }
-    const { _id, image_url: _blob, drive_file_id, drive_md5, ...image } = doc;
+    const { _id, image_url: _blob, drive_file_id, drive_md5, site_image_id, ...image } = doc;
     image.image_url = `/api/gallery/image/${doc.id}`;
     revalidatePath('/');
     revalidatePath('/gallery');
@@ -97,7 +97,9 @@ export async function DELETE(request, { params: paramsPromise }) {
     // 30 days), never a permanent delete. A Drive failure does not block
     // removing the record; the response says so.
     let driveTrashed = null;
-    if (image.drive_file_id) {
+    if (image.drive_file_id && image.drive_reference) {
+      driveTrashed = null; // picked file kept as a reference: never trash someone else's file
+    } else if (image.drive_file_id) {
       try {
         const drive = await getDriveStorage();
         await drive.trashFile(image.drive_file_id);
@@ -108,12 +110,15 @@ export async function DELETE(request, { params: paramsPromise }) {
       }
     }
     await coll.deleteOne({ id });
+    if (image.site_image_id) {
+      try { await (await getCollection(COLLECTIONS.SITE_IMAGES)).deleteOne({ _id: image.site_image_id }); } catch { /* metadata only */ }
+    }
     revalidatePath('/');
     revalidatePath('/gallery');
     return NextResponse.json({
       ok: true,
       driveTrashed,
-      ...(driveTrashed === false ? { warning: 'The gallery record was removed, but the Drive file could not be moved to the trash. You can delete it from the K710 Gallery folder in Drive.' } : {}),
+      ...(driveTrashed === false ? { warning: 'The gallery record was removed, but the Drive file could not be moved to the trash. You can delete it from the K710 Website / Gallery images folder in Drive.' } : {}),
     });
   } catch {
     return NextResponse.json({ error: 'The gallery record could not be removed.' }, { status: 500 });

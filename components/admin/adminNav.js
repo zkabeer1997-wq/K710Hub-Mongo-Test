@@ -46,10 +46,11 @@ export const ADMIN_NAV = [
     items: [
       { href: '/admin/dashboard/guides', label: 'Guides', match: ['/admin/dashboard/guides'] },
       { href: '/admin/dashboard/gallery', label: 'Gallery', match: ['/admin/dashboard/gallery'] },
+      { href: '/admin/dashboard/heroes', label: 'Heroes', match: ['/admin/dashboard/heroes'] },
       {
         href: '/admin/dashboard/tool-editing',
         label: 'Tools',
-        match: ['/admin/dashboard/tool-editing', '/admin/dashboard/tool-database'],
+        match: ['/admin/dashboard/tool-editing', '/admin/dashboard/tool-database', '/admin/dashboard/tool-images'],
       },
     ],
   },

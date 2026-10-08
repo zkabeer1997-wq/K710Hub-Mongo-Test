@@ -78,6 +78,7 @@
 .deadlineTop a { color: var(--parchment, #e8dcc0); font-weight: 600; font-size: 15px; text-decoration: none; }
 .deadlineTop a:hover { color: var(--gold-hot, #f3d99a); text-decoration: underline; }
 .deadlineTop a:focus-visible { outline: 2px solid var(--gold-hot, #f3d99a); outline-offset: 2px; }
+.deadlineInfo { color: var(--parchment, #e8dcc0); font-weight: 600; font-size: 15px; }
 .deadlineCount { display: inline-flex; align-items: center; gap: 6px; font: 600 14px var(--font-mono, monospace); color: var(--t-secondary, #a9afc0); }
 .dueChip { font: 700 14px var(--font-body, sans-serif); letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: rgba(255, 107, 94, 0.2); color: #ffb0a8; border: 1px solid rgba(255, 107, 94, 0.5); }
 .deadlineWhen { margin-top: 2px; font-size: 14px; line-height: 1.4; color: var(--t-secondary, #a9afc0); }
@@ -108,6 +109,7 @@
 :global(:root[data-easy='true']) .panel h2,
 :global(:root[data-easy='true']) .deadlines h2 { font-size: 16px; }
 :global(:root[data-easy='true']) .formMain h3,
+:global(:root[data-easy='true']) .deadlineInfo,
 :global(:root[data-easy='true']) .deadlineTop a,
 :global(:root[data-easy='true']) .formBtn,
 :global(:root[data-easy='true']) .links a { font-size: 18px; }

@@ -35,40 +35,115 @@ Run: `MONGODB_URI=... node scripts/seed-public-content.mjs` after migration to f
 
 ## Image storage
 
-**Gallery images live in Google Drive** (guide images still use base64 in Mongo, 3 MB cap).
-`gallery_images` documents hold metadata only (`storage: 'drive'`, `drive_file_id`, `drive_md5`,
-`mime_type`, `size`, `width`/`height`, title/alt/caption/position/is_published).
-Legacy rows (`storage: 'db'` / no field) keep their base64 `image_url` until migrated.
+**Every image the website stores lives in Google Drive; MongoDB keeps metadata only.** One root folder
+`K710 Website` (find-or-create, ids cached in memory + `drive_folders`) with this tree, created on first use:
 
-Design:
-- One-time **Connect Google Drive** in Admin > Gallery (any admin / superadmin). Uses the existing OAuth
-  client with `access_type=offline`, `prompt=consent`, scope `drive.file`. It reuses the existing redirect
-  URI `<SITE_URL>/api/google-drive/callback` (the callback recognises the gallery flow by its own state cookie).
-- The refresh token is stored in Mongo `integration_tokens` (`_id: google_drive_gallery`), encrypted with
-  AES-256-GCM; key = `GALLERY_TOKEN_KEY` or HKDF(`MEMBER_SESSION_SECRET`). It never reaches the browser.
-  Rotating that secret requires reconnecting. A service account is NOT supported (the repo had none, and
-  service accounts have no Drive quota on personal accounts).
-- App creates/finds a Drive folder `K710 Gallery`; files stay private.
-- Public delivery: `GET /api/gallery/image/<gallery id>` streams from Drive (published only; admins can
-  preview unpublished). `Cache-Control: public, max-age=86400, stale-while-revalidate`, ETag from the Drive
-  md5, 304 without calling Drive, small-file in-memory LRU. Drive/outage -> placeholder SVG with 404/502.
-- Not connected: uploads return 409 "Connect Google Drive first (one-time setup)"; there is no fallback to Mongo.
-- Delete moves the Drive file to the Drive trash (recoverable), then removes the record.
-- Migration: Admin > Gallery > "Move existing images to Drive" (batches of 5, verifies size, then drops
-  base64), or `MONGODB_URI=... node scripts/migrate-gallery-to-drive.mjs [--yes]` (dry run without `--yes`).
-- Local dev without Google: `NODE_ENV=development` only, set `DRIVE_STORAGE_FAKE_DIR` or create
-  `.data/drive-fake/.enable` (gitignored); files are stored under `.data/drive-fake/`. Ignored in production.
+```
+K710 Website/
+  Gallery images/
+  Guides images/
+  Hero images/
+  Tools and calculators images/
+  Applications/<Player ID>/     (one subfolder per applicant, digits only)
+```
+
+| Path | What happens |
+| --- | --- |
+| Admin > Gallery, "Upload from this computer" | file -> server -> `Gallery images`; `gallery_images` row has `drive_file_id` etc. |
+| Admin > Gallery, "Choose from Google Drive" | Google Picker -> server **copies** the file into `Gallery images` (owned by the connected account) |
+| Guide builder upload / "Choose from library" > "Choose from Google Drive" | `Guides images`; `guide_attachments` row (metadata) keeps the public URL `/api/guide-images/<uuid>.<ext>` (same-origin proxy, `public, max-age=31536000, immutable`, ETag/304) |
+| Apply form (/interest) | each validated screenshot -> `Applications/<Player ID>/screenshot-<n>-<timestamp>.<ext>`; `interest_submissions` keeps `screenshot_files` (`drive_file_id`, name, mime, size, md5, folder id), `drive_folder_id`, `drive_folder_link` |
+| Hero / tool images (next work) | `storeSiteImage({ folder: 'hero' \| 'tool', ... })` or the shared `ImageUploadField`, see below |
+
+Legacy rows keep working: gallery rows via their stored `drive_file_id` (the old `K710 Gallery` folder is left
+alone; `drive.file` cannot rename folders the app did not create, new gallery uploads go to
+`K710 Website/Gallery images`), guide rows and application rows with base64 still render until migrated.
+
+### Applications: Drive is the destination, with a documented fallback
+
+Honest trade-off: the owner asked for no database storage, but silently rejecting (or losing) an applicant
+because Drive is disconnected or down is worse. So `POST /api/interest`:
+
+1. validates everything as before (magic bytes, size, field rules);
+2. inserts the application first (`screenshot_state: 'pending'`), then uploads each file to the applicant folder
+   (`client_request_id` makes a retry resume the same row, reuse the same folder and skip finished files, never
+   duplicating rows, folders or files);
+3. if Drive is **not connected or fails**, the screenshots that could not be uploaded are kept as base64 in
+   `screenshot_urls` (`screenshot_storage: 'db'` or `'mixed'`) and the application is still saved;
+4. Admin > Inbox shows **"N applications have screenshots waiting to move to Drive"** with a **Move to Drive**
+   button (`POST /api/admin-interest-submissions/migrate`, batches of 3, verifies size, then drops base64);
+   the same button exists in Admin > Gallery. The next submission that reaches Drive also moves up to 2 waiting
+   rows in the background (`after()`).
+
+Admin Inbox drawer shows screenshots through the admin-only proxy `GET /api/admin-interest-submissions/<id>/screenshot/<n>`
+(no public access, Drive ids never reach the browser) plus **Open applicant folder in Drive** (`webViewLink`).
+Rows with a non-numeric Player ID (legacy) go to `Applications/unknown-player-id`; path tricks are rejected.
+
+### Shared API for later work (hero images, tool images)
+
+Server (`lib/siteImages.server.js`, admin routes only; authorise first):
+
+```js
+import { getSiteImages, storeSiteImage, copyPickedImage, siteImageUrl, publicSiteImage } from '<rel>/lib/siteImages.server';
+const doc = await storeSiteImage({ folder: 'hero', subfolder: 'Home page' /* optional */, file /* File or {bytes,type} */, name, alt, createdBy, maxBytes });
+const doc2 = await copyPickedImage({ folder: 'tool', fileId /* from the Picker */, alt });
+publicSiteImage(doc)  // { id, folder, url: '/api/site-image/<id>', name, mime, size, width, height, alt }
+siteImageUrl(id)      // '/api/site-image/<id>'  (client-safe, from lib/siteImages.mjs)
+```
+
+`folder` is one of `gallery | guide | hero | tool | application` (`SITE_FOLDERS` in `lib/driveFolders.mjs`; `application`
+requires a numeric `subfolder` = Player ID). Errors are `SiteImageError` with a plain `message`/`status` (409 +
+`needsConnect` when Drive is not connected). Metadata lives in `site_images`: `{ _id, folder, subfolder?, storage:
+'drive'|'reference', drive_file_id, drive_folder_id, name, mime, size, md5, width, height, alt, created_at, created_by }`.
+Store `url` (or the id) in your own record, never a Drive id. `GET /api/site-image/<id>` streams from Drive
+(`hero`, `tool`, `guide`: public, `public, max-age=86400, stale-while-revalidate`, ETag/304; `gallery`/`application`:
+admin only); Drive failure gives a placeholder SVG (404/502). `images.remove(id)` moves the file to the Drive trash.
+Pure/injectable core (testable with the fake Drive): `createSiteImages({ drive, tree, coll })` in `lib/siteImages.mjs`.
+
+Admin UI: `components/admin/ImageUploadField.jsx` (`folder`, `value`, `onChange`, `label`, `altRequired`, `subfolder`,
+`deleteOnRemove`) gives "Upload from this computer" + "Choose from Google Drive", preview, replace, remove, progress,
+plain errors, 48px targets (works at 390px); it talks to `POST /api/admin-drive/images` (folders `hero`, `tool`).
+`components/admin/DriveImagePicker.jsx` is the bare picker button; `components/admin/DriveStatusBanner.jsx` is the
+"Google Drive connected" strip for admin pages that use images.
+
+### Connecting Google Drive and the Google Picker
+
+- One-time **Connect Google Drive** in Admin > Gallery (any admin). Existing OAuth client, `access_type=offline`,
+  `prompt=consent`, scope `drive.file`, redirect URI `<SITE_URL>/api/google-drive/callback`.
+- The refresh token is stored in Mongo `integration_tokens` (`_id: google_drive_gallery`), AES-256-GCM, key =
+  `GALLERY_TOKEN_KEY` or HKDF(`MEMBER_SESSION_SECRET`); it never reaches the browser. No service account (no quota).
+- **Choose from Google Drive** uses the Google Picker. `GET /api/admin-drive/picker-config` (admin only, no-store)
+  returns `{ accessToken (short-lived, drive.file), developerKey, appId }`; the component lazy-loads
+  `https://apis.google.com/js/api.js`, opens the Picker restricted to image types, and the server copies the picked
+  file into the destination folder (`files.copy`, owned by the connected account; if copy is impossible for a
+  non-permission reason a reference is recorded and never trashed on delete). A file the Picker did not grant gives
+  the plain message "Google Drive did not give this site access to that file...".
+- Without the keys the UI shows **"Google Picker is not set up yet"** with the steps; uploading from the computer
+  still works.
+- CSP: `proxy.js` adds `script-src https://apis.google.com https://www.gstatic.com`, `frame-src https://docs.google.com
+  https://drive.google.com https://apis.google.com`, `connect-src https://www.googleapis.com`, `img-src
+  https://*.googleusercontent.com https://drive.google.com` **only for `/admin` pages**. Public CSP is unchanged.
+  This is a proxy change: restart the server after deploying.
+- Delete moves the Drive file to the Drive trash (recoverable).
+- Migration (idempotent, legacy data is never dropped before the Drive copy verifies): Admin > Gallery > "Move existing
+  images / guide images / applications to Drive", or `node scripts/migrate-gallery-to-drive.mjs [--yes]` and
+  `node scripts/migrate-site-images-to-drive.mjs [--yes]` (guides + applications; dry run without `--yes`).
+- Local dev without Google: `NODE_ENV=development` only, `DRIVE_STORAGE_FAKE_DIR` or `.data/drive-fake/.enable`
+  (gitignored). Files mirror the folder tree under `.data/drive-fake/tree/K710 Website/...`; "Choose from Google Drive"
+  opens a built-in fake picker listing those images. Ignored in production.
 
 Owner setup checklist (cannot be done by the code):
-1. Google Cloud console: enable the **Google Drive API** for the project that owns the OAuth client.
-2. OAuth consent screen: add scope `.../auth/drive.file`; while in "Testing", add the kingdom Google account
-   as a test user (refresh tokens for Testing apps expire after 7 days: publish the app to "In production").
-3. OAuth client (Web): authorized redirect URI `https://<production domain>/api/google-drive/callback`
-   (plus any preview/localhost origins you use).
-4. Vercel env: `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `MEMBER_SESSION_SECRET`,
-   optionally `GALLERY_TOKEN_KEY` (long random).
-5. Deploy, open Admin > Gallery > Connect Google Drive, sign in with the kingdom account, consent.
-6. Run "Move existing images to Drive"; check the `K710 Gallery` folder appears in that Drive.
+1. Google Cloud console: enable the **Google Drive API** and the **Google Picker API** for the project that owns the OAuth client.
+2. OAuth consent screen: add scope `.../auth/drive.file`; while in "Testing", add the kingdom Google account as a test
+   user (refresh tokens for Testing apps expire after 7 days: publish the app to "In production").
+3. OAuth client (Web): authorized redirect URI `https://<production domain>/api/google-drive/callback`; **authorized
+   JavaScript origins** `https://<production domain>` (the Picker runs in the browser).
+4. Create an **API key** (Credentials), restrict it to HTTP referrers (`https://<production domain>/*`) and to the
+   Google Picker API. Note the **project number** (Dashboard > Project info).
+5. Vercel env: `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `MEMBER_SESSION_SECRET`, `GOOGLE_PICKER_API_KEY`,
+   `GOOGLE_PICKER_APP_ID` (project number); optionally `GALLERY_TOKEN_KEY` (long random).
+6. Deploy (restart: proxy.js changed), open Admin > Gallery > Connect Google Drive, sign in with the kingdom account.
+7. Run the "Move ..." actions; check the `K710 Website` folder tree appears in that Drive.
 
 ## Smoke checklist (prod vs Mongo-Test)
 
@@ -179,3 +254,24 @@ On cutover:
 ## Page addresses (route aliases)
 
 SuperAdmins can rename public pages in Admin > Settings > Page addresses (collection `route_aliases`, created on first save; indexes in lib/mongoCollections.js). proxy.js rewrites the new address to the canonical page and 308-redirects (Cache-Control: no-store) the old one. The proxy reads the map from `/api/route-aliases` on its own origin (cached 15s, fails open). After deploying or changing proxy.js, restart the server.
+
+## External data (Kingshot Optimizer timeline + KvK record)
+
+- Code: `lib/external/**`; pages `/timeline`, `/about` (KvkRecord), home stats strip; routes `/api/timeline`, `/api/cron/refresh-external`, `/api/admin-external-data`.
+- Env: `CRON_SECRET` (required for the cron route, same as gift-codes), `SITE_URL` (put in the User-Agent `K710Hub-KingdomSite/1.0 (+SITE_URL)`). No other config.
+- Mongo: collection `external_snapshots`, `_id` = key (no index needed). Safe to delete any document: it is re-fetched on the next view/cron.
+- Freshness: pages read the snapshot; a request only fetches when the snapshot is older than 60 min AND it wins a per-source 30 min attempt claim (`last_attempt_at`). Vercel Hobby crons run once a day (`20 5 * * *`, in vercel.json); on Pro change it to `*/30 * * * *`.
+- Sources are fetched with robots.txt checked first, 8 s timeout, fixed URLs, https and two allow-listed hosts only. A 401/403/429 or robots disallow is treated as "blocked": we keep the last snapshot and never retry around it.
+- KS Atlas cannot be read automatically (client-rendered; its data API is `Disallow: /api/`). Set the Atlas figures by POSTing `{ "atlas": { "rank": 107, "score": 57.59, "tier": "S-Tier", "topPercent": "5.0%", "asOf": "2026-10-01" } }` to `/api/admin-external-data` as admin (`{ "atlas": null }` clears).
+
+## Tool images (Tools & Calculators tiles)
+
+Admin > Tools > Tool images lets an admin replace the icon on each /tools tile with an image stored in the Drive folder "K710 Website/Tools and calculators images". Mongo `tool_images` holds `{tool_key (unique), site_image_id, alt, updated_at, updated_by}`; the image is a `site_images` record (folder `tool`) served at `/api/site-image/<id>`. No override means the built-in icon. Reads are cached 30 s (invalidated on admin writes) and fail open to the built-in icons. Valid tool keys are the tiles in `lib/toolHubTools.mjs`. APIs: `/api/admin-tool-images` (GET/PUT/DELETE, admin), `/api/tool-images` (public, same-origin urls only). Limits: PNG/JPG/WebP/GIF, 4 MB, alt text required; no server-side downscale.
+
+
+### Hero catalog (KvK Availability + Flamedragon forms)
+
+- Mongo `hero_catalog` `{ key (unique slug), name, image: {site_image_id}|null, active, order, created_at, updated_at, updated_by }`, seeded lazily from `lib/playerCombatOptions.mjs` (the ten retired heroes are seeded `active: false`). Default portrait when no Drive image: `public/heroes/<key>.webp`, else an initial-letter placeholder.
+- Admin: Admin > Content > Heroes (`/admin/dashboard/heroes`, API `/api/admin-heroes` GET/POST/PATCH/DELETE): add, show/hide, reorder, picture (shared `ImageUploadField`, Drive folder `Hero images`), bulk "Upload many images" (file name = hero name/key). Heroes that members saved cannot be renamed or deleted (forms store the name): add a new hero and switch the old one off.
+- Public: `GET /api/heroes` (no Drive ids; images are `/api/site-image/<id>`); the member form pages also receive the list as server props. Reads are cached 30 s per server process, invalidated on admin writes, and fall back to the code defaults when MongoDB is unavailable.
+- Validation uses the active heroes; saved heroes that are now inactive are dropped silently on load/prefill and on re-save (never a 400). Stored values remain hero names.

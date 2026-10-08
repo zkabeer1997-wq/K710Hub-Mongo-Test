@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AdminShell from './AdminShell';
 import AdminDialog from './AdminDialog';
+import { resultKindForEvent, closeFormsWarning, publishFormClosedWarning } from '../../lib/resultVisibility.mjs';
 import EventForms from './EventForms';
 import RosterWorkspace from './RosterWorkspace';
 import StartCycleDialog, { suggestNextLabel } from './StartCycleDialog';
@@ -275,6 +276,19 @@ export default function EventControl({ type }) {
         body: ['Members will see the closed message instead of this form. Answers already sent are kept. You can open it again at any time.'],
       }
     : copy;
+  // Owner rule: My appointment is hidden from members while its form is closed.
+  const resultKind = resultKindForEvent(type);
+  const ownerOpen = (key) => (state?.forms || []).some((f) => f.form_key === key && f.is_open);
+  const publishWarn = confirm && confirm.action === 'publish' && resultKind
+    ? publishFormClosedWarning(resultKind, ownerOpen(resultKind === 'kvk' ? 'prep' : 'noble'))
+    : null;
+  const closeWarn = confirm && confirm.action === 'close_forms' && confirmCopyFinal && resultKind
+    ? closeFormsWarning(resultKind, {
+      formKey: confirm.form?.form_key || '',
+      published: state?.results_published === true,
+      formOpen: ownerOpen(resultKind === 'kvk' ? 'prep' : 'noble'),
+    })
+    : null;
 
   const pastFilter = cycleFilter !== 'current' ? history.find((h) => h.id === cycleFilter) : null;
   const inRoster = tab === 'participants' || tab === 'rallies';
@@ -486,6 +500,8 @@ export default function EventControl({ type }) {
         )}
       >
         {confirmCopyFinal?.body.map((line) => <p key={line} className="ec-confirm-line">{line}</p>)}
+        {publishWarn && <p className="ec-confirm-line" role="alert"><strong>{publishWarn}</strong> Use the Forms list below to open it.</p>}
+        {closeWarn && <p className="ec-confirm-line" role="alert"><strong>{closeWarn}</strong></p>}
       </AdminDialog>
 
       <StartCycleDialog

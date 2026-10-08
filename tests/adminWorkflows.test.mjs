@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {registerHooks} from 'node:module';
+import { driveHookLoad, driveHookResolve, tmpFakeDrive } from './helpers/driveTestHooks.mjs';
 import {mintAdminToken} from '../lib/adminAuth.js';
 import {createMemberToken} from '../lib/memberAuth.js';
 import {TOOL_CATALOG,defaultQuantities,validateToolQuantities,toolConfiguration} from '../lib/toolCatalog.mjs';
@@ -15,6 +16,7 @@ import {schedule} from '../app/admin/dashboard/prepScheduler.mjs';
 const state={tables:{},paths:[]};globalThis.__workflowTest=state;
 registerHooks({
  resolve(s,c,next){
+    { const r = driveHookResolve(s, c, next); if (r) return r; }
   if(/\/(lib\/)?mongo(\.js)?$/.test(s))return {url:'test:workflow-mongo',shortCircuit:true};
   if(s==='next/cache')return {url:'test:workflow-cache',shortCircuit:true};
   if(s==='next/server')return next('next/server.js',c);
@@ -22,6 +24,7 @@ registerHooks({
   return next(s,c);
  },
  load(u,c,next){
+    { const l = driveHookLoad(u); if (l) return l; }
   if(u==='test:workflow-mongo'){
    const helperUrl=new URL('./helpers/fakeMongo.mjs',import.meta.url).href;
    return {format:'module',shortCircuit:true,source:`import {createFakeMongo} from ${JSON.stringify(helperUrl)}; export const {getCollection,ensureIndexes}=createFakeMongo(globalThis.__workflowTest.tables);`};
@@ -38,6 +41,8 @@ const adminNoble=await import('../app/api/admin-noble-advisor/route.js');
 const guides=await import('../app/api/guides/route.js');
 const detail=await import('../app/api/guides/[slug]/route.js');
 const images=await import('../app/api/guide-images/[file]/route.js');
+const {setDriveStorageFactory}=await import('../lib/driveStorage.server.js');
+const fakeDrive=await tmpFakeDrive();setDriveStorageFactory(()=>fakeDrive);
 const profiles=await import('../app/api/admin-member-pins/route.js');
 process.env.ADMIN_PASSWORD='workflow-test-only';process.env.MEMBER_SESSION_SECRET='workflow-members-only';
 const adminToken=await mintAdminToken(),memberToken=await createMemberToken('member-a');

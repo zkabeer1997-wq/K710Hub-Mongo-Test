@@ -10,7 +10,7 @@ import GalleryCarousel from '../components/gallery/GalleryCarousel';
 import { getGalleryImages } from '../lib/gallery';
 import NextBearHunt from '../components/NextBearHunt';
 import { getMemberHome } from '../lib/memberHome.server';
-import { OPTIMIZER_RECORD } from '../lib/kingdomExternalData.mjs';
+import { getKvkRecord } from '../lib/external/index.mjs';
 import SectionHeader from '../components/ui/SectionHeader';
 import { jsonLdString, organizationJsonLd, websiteJsonLd } from '../lib/jsonLd';
 import './home-extras.css';
@@ -180,7 +180,8 @@ export default async function HomePage() {
     member = null;
   }
   const isMember = !!member;
-  const rec = OPTIMIZER_RECORD;
+  // Live KvK figures (Optimizer snapshot); falls back to the dated defaults in lib/kingdomExternalData.mjs.
+  const kvk = isMember ? null : await getKvkRecord();
   let galleryImages = [];
   try { galleryImages = await getGalleryImages({ limit: 10 }); } catch (error) { console.error('homepage gallery load failed', error); }
   const field = (key, props = {}) => {
@@ -228,8 +229,8 @@ export default async function HomePage() {
               </div>
               <dl className="home-v2-facts" aria-label="Kingdom 710 at a glance">
                 <div><dt>Alliances</dt><dd>3</dd></div>
-                <div><dt>KvK battle record</dt><dd>{rec.battle.wins}–{rec.battle.losses}</dd></div>
-                <div><dt>Optimizer rank</dt><dd>#{rec.rank}</dd></div>
+                <div><dt>KvK battle record</dt><dd>{kvk.record.wins}–{kvk.record.losses}</dd></div>
+                <div><dt>Optimizer rank</dt><dd>#{kvk.ranking.rank}</dd></div>
               </dl>
             </>
           )}

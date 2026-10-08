@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDialog from '../../../../components/admin/AdminDialog';
 import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
+import useResultGate from '../../../../components/admin/useResultGate';
+import { visibilityStatusLine, publishFormClosedWarning } from '../../../../lib/resultVisibility.mjs';
 import StatusChip from '../../../../components/admin/StatusChip';
 import TableFilters from '../../../../components/admin/TableFilters';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
@@ -63,6 +65,7 @@ export default function AppointmentsFlow({ onChanged = null }) {
   const [adjustDay, setAdjustDay] = useState(1);
   const [built, setBuilt] = useState(null);
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const gate = useResultGate('kvk');
   const [copied, setCopied] = useState('');
 
   const load = useCallback(async () => {
@@ -181,6 +184,7 @@ export default function AppointmentsFlow({ onChanged = null }) {
             <span className="help">{readOnly ? 'Earlier cycle: you can look and share, not change.' : 'Current cycle.'}</span>
             <span className="apx-spacer" />
             <StatusChip kind={data.published ? 'published' : 'warn'}>{data.published ? 'Published to members' : 'Not published yet'}</StatusChip>
+            {gate.open !== null && <span className="help" role="status" data-testid="result-visibility">{visibilityStatusLine('kvk', gate.open)}</span>}
           </div>
 
           <ol className="apx-steps" aria-label="Appointment steps">
@@ -378,6 +382,12 @@ export default function AppointmentsFlow({ onChanged = null }) {
       >
         <p className="ec-confirm-line">{assignments.length} slots for {people} people will be visible to members straight away.</p>
         {unplaced.length > 0 && <p className="ec-confirm-line">{unplaced.length} {unplaced.length === 1 ? 'person has' : 'people have'} no slot yet and will see Pending.</p>}
+        {publishFormClosedWarning('kvk', gate.open) && (
+          <p className="ec-confirm-line" role="alert">
+            <strong>{publishFormClosedWarning('kvk', gate.open)}</strong>{' '}
+            <Button variant="quiet" disabled={busy} onClick={async () => { try { await gate.openNow(); setStatus('The form is open. Members can now see My appointment.'); } catch (err) { setError(err.message); } }}>Open the form now</Button>
+          </p>
+        )}
       </AdminDialog>
     </section>
   );

@@ -3,8 +3,8 @@
 import { useSearchParams } from 'next/navigation';
 import PlayerRecordForm from '../PlayerRecordForm';
 
-export default function PlayerRecordFormClient() {
+export default function PlayerRecordFormClient({ heroCatalog }) {
   const searchParams = useSearchParams();
   const memberId = searchParams.get('member_id') || '';
-  return <PlayerRecordForm initialMemberId={memberId} />;
+  return <PlayerRecordForm initialMemberId={memberId} heroCatalog={heroCatalog} />;
 }

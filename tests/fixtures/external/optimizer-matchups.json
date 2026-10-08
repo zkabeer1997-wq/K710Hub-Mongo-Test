@@ -1,0 +1,134 @@
+{
+ "success": true,
+ "result": {
+  "metadata": {
+   "generated_at": "2026-09-12T21:37:27.788324",
+   "total_kvks": 18,
+   "total_kingdoms": 2263,
+   "total_matchups": 10503,
+   "kvk_dates": {
+    "1": "2025-05-24",
+    "2": "2025-06-21",
+    "3": "2025-07-19",
+    "4": "2025-08-16",
+    "5": "2025-09-13",
+    "6": "2025-10-11",
+    "7": "2025-11-08",
+    "8": "2025-12-06",
+    "9": "2026-01-03",
+    "10": "2026-01-31",
+    "11": "2026-02-28",
+    "12": "2026-03-28",
+    "13": "2026-04-25",
+    "14": "2026-05-23",
+    "15": "2026-06-20",
+    "16": "2026-07-18",
+    "17": "2026-08-15",
+    "18": "2026-09-12"
+   },
+   "model": {
+    "method": "bradley-terry",
+    "regularization": "empirical_bayes",
+    "params": {
+     "lambda": {
+      "overall": 2.5914,
+      "prep": 0.6664,
+      "battle": 2.5914
+     },
+     "decay": {
+      "overall": 0.0519,
+      "prep": 0.0429,
+      "battle": 0.0795
+     },
+     "sigma2": {
+      "overall": 0.0209,
+      "prep": 0.069888,
+      "battle": 0.014826
+     }
+    }
+   }
+  },
+  "upsets": [
+   {
+    "kvk": 18,
+    "date": "2026-09-12",
+    "winner": 732,
+    "loser": 917,
+    "winner_rank": 2055,
+    "loser_rank": 100,
+    "rank_diff": 1955,
+    "phase": "battle",
+    "winner_rating": 0.5113,
+    "loser_rating": 2.0597
+   },
+   {
+    "kvk": 18,
+    "date": "2026-09-12",
+    "winner": 1407,
+    "loser": 1465,
+    "winner_rank": 2035,
+    "loser_rank": 129,
+    "rank_diff": 1906,
+    "phase": "battle",
+    "winner_rating": 0.5299,
+    "loser_rating": 1.9143
+   }
+  ],
+  "sweeps": [
+   {
+    "kvk": 18,
+    "date": "2026-09-12",
+    "sweeper": 356,
+    "swept": 405,
+    "sweeper_rank": 102,
+    "swept_rank": 2082,
+    "sweeper_rating": 2.0421,
+    "swept_rating": 0.4796,
+    "dominance": 1980
+   },
+   {
+    "kvk": 17,
+    "date": "2026-08-15",
+    "sweeper": 1358,
+    "swept": 1323,
+    "sweeper_rank": 34,
+    "swept_rank": 1958,
+    "sweeper_rating": 2.4505,
+    "swept_rating": 0.5006,
+    "dominance": 1924
+   }
+  ],
+  "competitive": [
+   {
+    "kvk": 15,
+    "date": "2026-06-20",
+    "k1": 1670,
+    "k2": 1681,
+    "k1_rating": 1.3238,
+    "k2_rating": 1.3238,
+    "k1_rank": 377,
+    "k2_rank": 382,
+    "combined_rating": 2.6476,
+    "prep_winner": 1670,
+    "battle_winner": 1670,
+    "outcome": "sweep",
+    "rating_diff": 0.0
+   },
+   {
+    "kvk": 15,
+    "date": "2026-06-20",
+    "k1": 1692,
+    "k2": 1710,
+    "k1_rating": 1.3238,
+    "k2_rating": 1.3238,
+    "k1_rank": 384,
+    "k2_rank": 391,
+    "combined_rating": 2.6476,
+    "prep_winner": 1692,
+    "battle_winner": 1710,
+    "outcome": "split",
+    "rating_diff": 0.0
+   }
+  ]
+ }
+}

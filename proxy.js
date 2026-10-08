@@ -58,25 +58,41 @@ function matchesPrefix(pathname, prefixes) {
 // stays blocked (no other frame-src, default-src still 'self').
 const VIDEO_FRAME_SRC = 'frame-src https://www.youtube-nocookie.com https://drive.google.com';
 
-function buildCsp(nonce) {
+// Admin pages only: the Google Picker ("Choose from Google Drive"). The loader
+// script comes from apis.google.com / www.gstatic.com, the picker itself is an
+// iframe on docs.google.com, and the picker talks to www.googleapis.com. Public
+// pages never get any of this.
+const ADMIN_PICKER = Object.freeze({
+  script: ['https://apis.google.com', 'https://www.gstatic.com'],
+  frame: ['https://docs.google.com', 'https://drive.google.com', 'https://apis.google.com'],
+  connect: ['https://www.googleapis.com'],
+  img: ['https://*.googleusercontent.com', 'https://drive.google.com'],
+});
+
+function isAdminPage(pathname) {
+  return pathname === '/admin' || pathname.startsWith('/admin/');
+}
+
+function buildCsp(nonce, pathname = '') {
   const dev = process.env.NODE_ENV === 'development';
+  const admin = isAdminPage(pathname);
   return [
     "default-src 'self'",
     // Nonce for every inline script; no 'unsafe-inline'. 'strict-dynamic' is
     // deliberately NOT used: Next 16 emits the segment chunk <script> for
     // loading.js boundaries without a nonce, and strict-dynamic would make
     // browsers block it ('self' covers same-origin chunks instead).
-    `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''}${admin ? ` ${ADMIN_PICKER.script.join(' ')}` : ''}`,
     // Inline <style> blocks are used across many pages; styles cannot run code.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    `img-src 'self' data: blob: https:${admin ? ` ${ADMIN_PICKER.img.join(' ')}` : ''}`,
     "font-src 'self' data:",
-    "connect-src 'self'",
+    `connect-src 'self'${admin ? ` ${ADMIN_PICKER.connect.join(' ')}` : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    VIDEO_FRAME_SRC,
+    admin ? `${VIDEO_FRAME_SRC} ${ADMIN_PICKER.frame.filter((h) => !VIDEO_FRAME_SRC.includes(h)).join(' ')}` : VIDEO_FRAME_SRC,
   ].join('; ');
 }
 
@@ -122,7 +138,7 @@ export async function proxy(request) {
   }
 
   const nonce = btoa(crypto.randomUUID());
-  const csp = buildCsp(nonce);
+  const csp = buildCsp(nonce, pathname);
 
   let rewriteTo = null;
   if (!matchesPrefix(pathname, ADMIN_PREFIXES) && pathname !== '/admin' && !pathname.startsWith('/admin/')) {

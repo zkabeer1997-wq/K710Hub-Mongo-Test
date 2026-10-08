@@ -7,6 +7,7 @@ import { readKingshotSession } from '../../../lib/memberAuthKingshot';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
+import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
 import { resolveTroopPrefill, sanitizeKvkTroops, troopFieldsOf } from '../../../lib/kvkAvailability.mjs';
 
 const ALLIANCES = ['710', 'RED', 'SKY'];
@@ -17,10 +18,10 @@ const AVAILABILITY = [
   'Not Available',
 ];
 
-function pickJoiner(row) {
+function pickJoiner(row, heroList) {
   if (!row) return null;
   const { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label } = row;
-  return { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label, ...troopFieldsOf(row) };
+  return { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label, ...troopFieldsOf(row, heroList) };
 }
 
 async function resolveSession(request) {
@@ -61,16 +62,17 @@ export async function GET(request) {
     // for THIS KvK cycle (null until saved) and `previous` the latest earlier-cycle answer.
     const { cycle, record, previous } = await loadMemberCycleRecord('joiner', session.memberId);
     const base = await loadMemberBase(session.memberId);
+    const heroList = await getActiveHeroNames(); // inactive heroes are dropped from what the form shows
     // Troop levels + heroes are per KvK cycle. Prefill: this cycle's answer, else the latest earlier
     // cycle's, else the old Power Profile values (where they used to be entered).
     const prefill = resolveTroopPrefill([
       { row: record, from: 'record' },
       { row: previous, from: 'previous' },
       { row: base.profile, from: 'profile' },
-    ]);
+    ], heroList);
     return NextResponse.json(
       {
-        row: data, auth: session.via, record: pickJoiner(record), previous: pickJoiner(previous), cycle,
+        row: data, auth: session.via, record: pickJoiner(record, heroList), previous: pickJoiner(previous, heroList), cycle,
         prefill,
         base: { name: base.name, current_alliance: base.current_alliance, from: base.from },
       },
@@ -100,8 +102,6 @@ export async function POST(request) {
   const alliance = String(body?.current_alliance || '').trim();
   const availability = String(body?.availability || '').trim();
   const pin = String(body?.pin || '');
-  const troops = sanitizeKvkTroops(body);
-  if (troops.error) return NextResponse.json({ error: troops.error }, { status: 400 });
   if (memberId !== session.memberId) {
     return NextResponse.json(
       { error: 'Sign in with this Player ID to update its availability.' },
@@ -122,6 +122,8 @@ export async function POST(request) {
   try {
     const coll = await getCollection(COLLECTIONS.SUBMISSIONS);
     const existing = await coll.findOne({ member_id: memberId });
+    const troops = sanitizeKvkTroops(body, { allowedHeroes: await getActiveHeroNames(), existingHeroes: existing?.heroes });
+    if (troops.error) return NextResponse.json({ error: troops.error }, { status: 400 });
     // First save: a signed-in member with no roster row yet gets one created below
     // (upsert keyed on their session member id). No error, nothing for them to do.
     // PIN only required for legacy sessions that still have a pin_hash.

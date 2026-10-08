@@ -42,7 +42,8 @@ const NAV_ITEMS = [
 // The signed-in Members menu also lists every form with its live status
 // (red dot = open and not yet submitted, badge = outside its window).
 function membersChildren(base, status) {
-  if (!status?.signedIn || !status.forms?.length) {
+  if (status?.signedIn && !status.forms?.length) return base;
+  if (!status?.signedIn) {
     return base.flatMap((c) => (c.href === '/forms' ? [{ href: '/power-profile', label: 'Power Profile' }, c] : [c]));
   }
   return [

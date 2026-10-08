@@ -25,7 +25,7 @@ import {
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 
-function FlamedragonForm({ initialMemberId = '', intro }) {
+function FlamedragonForm({ initialMemberId = '', intro, heroCatalog }) {
   const { intro: fieldMetaIntro } = useFormFieldMeta('dragon');
   const [form, setForm] = useState({
     name: '',
@@ -102,7 +102,8 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
       const gearSelections = parseGovernorGearSelections(r.governor_gear);
       setCharms(charmSelections);
       setGovernorGear(gearSelections);
-      setHeroes(currentHeroesOnly(r.heroes));
+      // The server already drops heroes that are switched off; this also covers a catalog passed as props.
+      setHeroes(currentHeroesOnly(r.heroes, heroCatalog ? heroCatalog.map((h) => h.name) : undefined));
       setOnFile(result.record || null);
       setForm((current) => ({
         ...current,
@@ -197,7 +198,7 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
 
           <section className="troop-section public-section">
             <div className="section-title-row"><span>Heroes</span><h3>Hero roster</h3><p>Select the heroes you have available for this battle.</p></div>
-            <HeroRosterPicker heroes={heroes} onToggle={toggleHero} />
+            <HeroRosterPicker catalog={heroCatalog} heroes={heroes} onToggle={toggleHero} />
           </section>
 
           <section className="troop-section public-section">
@@ -290,16 +291,16 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
   );
 }
 
-function FlamedragonPageInner({ intro }) {
+function FlamedragonPageInner({ intro, heroCatalog }) {
   const searchParams = useSearchParams();
   const memberId = searchParams.get('member_id') || '';
-  return <FlamedragonForm initialMemberId={memberId} intro={intro} />;
+  return <FlamedragonForm initialMemberId={memberId} intro={intro} heroCatalog={heroCatalog} />;
 }
 
-export default function FlamedragonClient({ intro }) {
+export default function FlamedragonClient({ intro, heroCatalog }) {
   return (
     <Suspense fallback={null}>
-      <FlamedragonPageInner intro={intro} />
+      <FlamedragonPageInner intro={intro} heroCatalog={heroCatalog} />
     </Suspense>
   );
 }

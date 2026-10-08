@@ -3,6 +3,7 @@ import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
 import { readMemberSession } from '../../../../lib/memberAuth';
 import { buildSchedule } from '../../../../lib/kvkAppointments.mjs';
+import { getResultPagesVisible } from '../../../../lib/memberFormStatus.server.js';
 import { loadAppointmentGate, isCyclePublished } from '../../../../lib/kvkAppointments.server.js';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,7 @@ export async function GET(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401, headers: HEADERS });
   try {
+    if (!(await getResultPagesVisible()).kvk) return NextResponse.json({ unavailable: true, published: false, days: [] }, { headers: HEADERS });
     const g = await loadAppointmentGate();
     const pub = await isCyclePublished(g.cycleId);
     if (!pub.published) return NextResponse.json({ published: false, days: [] }, { headers: HEADERS });

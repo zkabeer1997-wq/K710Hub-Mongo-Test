@@ -11,7 +11,7 @@ import { HeroRosterPicker, TroopLevelFields } from '../../components/member/Troo
 const AVAILABILITY_OPTIONS = KVK_AVAILABILITY_OPTIONS;
 const ALLIANCES = KVK_ALLIANCES;
 
-export default function PlayerRecordForm({ initialMemberId = '' }) {
+export default function PlayerRecordForm({ initialMemberId = '', heroCatalog }) {
   const { intro } = useFormFieldMeta('joiner');
   const [name, setName] = useState('');
   const [memberId, setMemberId] = useState(initialMemberId);
@@ -205,6 +205,7 @@ export default function PlayerRecordForm({ initialMemberId = '' }) {
             <p>Select the heroes you have available for this KvK.</p>
           </div>
           <HeroRosterPicker
+            catalog={heroCatalog}
             heroes={heroes}
             onToggle={(hero) => setHeroes((current) => (current.includes(hero) ? current.filter((h) => h !== hero) : [...current, hero]))}
           />

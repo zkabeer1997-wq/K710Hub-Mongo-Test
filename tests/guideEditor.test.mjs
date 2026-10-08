@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { registerHooks } from 'node:module';
+import { driveHookLoad, driveHookResolve, tmpFakeDrive } from './helpers/driveTestHooks.mjs';
 import { mintAdminToken } from '../lib/adminAuth.js';
 import { guideCategories } from '../lib/guideValidation.mjs';
 
@@ -9,13 +10,15 @@ const state = { tables: { kingdom_guides: [], guide_categories: [], guide_attach
 globalThis.__guideTest = state;
 registerHooks({
   resolve(specifier, context, nextResolve) {
-    if (specifier.endsWith('/lib/mongo')) return { url: 'test:guide-mongo', shortCircuit: true };
+    { const r = driveHookResolve(specifier, context, nextResolve); if (r) return r; }
+    if (/\/mongo(\.js)?$/.test(specifier)) return { url: 'test:guide-mongo', shortCircuit: true };
     if (specifier === 'next/cache') return { url: 'test:cache', shortCircuit: true };
     if (specifier === 'next/server') return nextResolve('next/server.js', context);
     if (/\/(adminAuth|mongoCollections)$/.test(specifier)) return nextResolve(`${specifier}.js`, context);
     return nextResolve(specifier, context);
   },
   load(url, context, nextLoad) {
+    { const l = driveHookLoad(url); if (l) return l; }
     if (url === 'test:guide-mongo') {
       const helperUrl = new URL('./helpers/fakeMongo.mjs', import.meta.url).href;
       return {
@@ -31,6 +34,9 @@ registerHooks({
 const { PUT } = await import('../app/api/admin-guides/[slug]/route.js');
 const { POST: categoryPost } = await import('../app/api/admin-guide-categories/route.js');
 const { POST: photoPost } = await import('../app/api/admin-guide-images/route.js');
+const { setDriveStorageFactory } = await import('../lib/driveStorage.server.js');
+const fakeDrive = await tmpFakeDrive();
+setDriveStorageFactory(() => fakeDrive);
 process.env.ADMIN_PASSWORD = 'guide-editor-test-only';
 const token = await mintAdminToken();
 function request(body, authenticated = true) {
@@ -87,13 +93,18 @@ test('image validation rejects oversized or disguised files before storage', asy
   }
   assert.equal(state.tables.guide_attachments.length, 0);
 });
-test('valid photo uploads are stored and returned as a self-contained data URL', async () => {
+test('valid photo uploads go to Drive; Mongo keeps metadata only (no base64)', async () => {
   const form = new FormData();
   form.set('file', new File([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN3sAAAAASUVORK5CYII=', 'base64')], 'photo.png', { type: 'image/png' }));
   const response = await photoPost(request(form));
   assert.equal(response.status, 201);
-  const { url } = await response.json();
-  assert.match(url, /^data:image\/png;base64,/);
+  const { url, src } = await response.json();
+  assert.match(url, /^\/api\/guide-images\/[0-9a-f-]{36}\.png$/);
+  assert.equal(url, src);
   assert.equal(state.tables.guide_attachments.length, 1);
-  assert.equal(state.tables.guide_attachments[0].data_url, url);
+  const row = state.tables.guide_attachments[0];
+  assert.equal(row.data_url, undefined);
+  assert.equal(row.storage, 'drive');
+  assert.ok(row.drive_file_id);
+  assert.ok(!JSON.stringify(row).includes('base64'));
 });

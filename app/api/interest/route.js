@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
@@ -10,6 +10,7 @@ import {
   isAcceptedInterestImage,
   validateProcessedInterestFiles,
 } from '../../../lib/interestUploadLimits.mjs';
+import { migrateInterestBatch, storageLabel, uploadApplicantScreenshots } from '../../../lib/interestScreenshots.mjs';
 import {
   NUMERIC_RULES,
   REQUIRED_FIELD_LABELS,
@@ -25,6 +26,56 @@ const MAX_TEXT_FIELD_LENGTH = 300;
 /** Text answers are short; cap them so a hostile body cannot store huge strings. */
 function cap(value, max = MAX_TEXT_FIELD_LENGTH) {
   return String(value || '').trim().slice(0, max);
+}
+
+
+/** Uploads screenshots to Drive, falls back to base64 for whatever could not be uploaded. */
+async function storeScreenshots({ coll, id, playerId, prepared, existing }) {
+  let files = existing;
+  let failedIdx = prepared.map((_, i) => i).filter((i) => !existing.some((f) => f.idx === i));
+  let folderId = existing[0]?.folder_id || '';
+  let folderLink = '';
+  let driveWorked = false;
+  try {
+    const { getDriveStorage } = await import('../../../lib/driveStorage.server');
+    const { getFolderTree } = await import('../../../lib/siteImages.server');
+    const drive = await getDriveStorage();
+    if ((await drive.getStatus()).connected) {
+      const tree = await getFolderTree(drive);
+      const result = await uploadApplicantScreenshots({
+        drive, tree, playerId, files: prepared, existing,
+        onProgress: (done) => coll.updateOne({ id }, { $set: { screenshot_files: done } }),
+      });
+      files = result.files; failedIdx = result.failed; folderId = result.folderId || folderId;
+      driveWorked = result.files.length > 0 || !result.failed.length;
+      if (folderId) folderLink = await tree.webViewLink(folderId);
+    }
+  } catch (error) {
+    console.error('interest screenshots: Drive unavailable, using the temporary database fallback', error?.code || error?.message);
+  }
+  const urls = failedIdx.map((i) => `data:${prepared[i].type};base64,${prepared[i].bytes.toString('base64')}`);
+  await coll.updateOne({ id }, { $set: {
+    screenshot_files: files,
+    screenshot_urls: urls,
+    screenshot_storage: storageLabel({ filesCount: files.length, dbCount: urls.length }),
+    screenshot_state: 'done',
+    ...(folderId ? { drive_folder_id: folderId } : {}),
+    ...(folderLink ? { drive_folder_link: folderLink } : {}),
+  } });
+  return { driveWorked, files, urls };
+}
+
+/** After a successful Drive upload, move older fallback screenshots too (never delays or fails this request). */
+function scheduleWaitingRetry(coll) {
+  const run = async () => {
+    try {
+      const { getDriveStorage } = await import('../../../lib/driveStorage.server');
+      const { getFolderTree } = await import('../../../lib/siteImages.server');
+      const drive = await getDriveStorage();
+      await migrateInterestBatch({ coll, drive, tree: await getFolderTree(drive), batchSize: 2 });
+    } catch (error) { console.error('interest screenshot retry failed', error?.message); }
+  };
+  try { after(run); } catch { /* no request scope (tests); the admin button still works */ }
 }
 
 export async function POST(request) {
@@ -169,10 +220,10 @@ export async function POST(request) {
       fields[key] = checked.digits;
     }
 
-    const screenshotUrls = [];
+    // Validated, ready-to-store screenshots (bytes are checked once, here).
+    const prepared = [];
     for (const file of screenshots) {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      const buffer = Buffer.from(await file.arrayBuffer());
       // The client converts HEIC and recompresses, so what arrives must be a
       // genuine JPEG/PNG/WebP whose header matches its declared type.
       if (!bytesMatchImageType(buffer, file.type)) {
@@ -181,30 +232,46 @@ export async function POST(request) {
           { status: 415 }
         );
       }
-      screenshotUrls.push(`data:${file.type};base64,${buffer.toString('base64')}`);
+      prepared.push({ bytes: buffer, type: file.type });
     }
 
     const coll = await getCollection(COLLECTIONS.INTEREST_SUBMISSIONS);
     // Idempotent retry: the form sends one random id per application. If the
     // first attempt was stored but the reply was lost (bad connection), the
-    // retry gets the same reference instead of creating a duplicate row.
+    // retry gets the same reference instead of creating a duplicate row. A row
+    // still marked 'pending' (the first attempt died while uploading) resumes
+    // its uploads into the same Drive folder instead of starting over.
     const clientRequestId = cap(formData.get('client_request_id'), 64);
+    let doc = null;
     if (clientRequestId) {
       const existing = await coll.findOne({ client_request_id: clientRequestId });
-      if (existing?.id) {
+      if (existing?.id && existing.screenshot_state !== 'pending') {
         return NextResponse.json({ ok: true, reference: 'K710-' + String(existing.id).replace(/-/g, '').slice(0, 8).toUpperCase() });
       }
+      doc = existing || null;
     }
 
-    const id = randomUUID();
-    await coll.insertOne({
-      id,
-      ...fields,
-      ...(clientRequestId ? { client_request_id: clientRequestId } : {}),
-      screenshot_urls: screenshotUrls,
-      status: 'pending',
-      created_at: new Date(),
-    });
+    const id = doc?.id || randomUUID();
+    if (!doc) {
+      await coll.insertOne({
+        id,
+        ...fields,
+        ...(clientRequestId ? { client_request_id: clientRequestId } : {}),
+        screenshot_urls: [],
+        screenshot_files: [],
+        screenshot_state: 'pending',
+        status: 'pending',
+        created_at: new Date(),
+      });
+    }
+
+    // Screenshots go to Google Drive (K710 Website/Applications/<Player ID>/).
+    // If Drive is not connected or is down the application must NOT be lost:
+    // the screenshots that could not be uploaded are kept in MongoDB as base64
+    // (storage 'db', a temporary fallback) and the admin sees a warning with a
+    // "Move to Drive" action. They are retried on the next submission.
+    const stored = await storeScreenshots({ coll, id, playerId: fields.player_id, prepared, existing: doc?.screenshot_files || [] });
+    if (stored.driveWorked) scheduleWaitingRetry(coll);
 
     const reference = 'K710-' + String(id).replace(/-/g, '').slice(0, 8).toUpperCase();
     return NextResponse.json({ ok: true, reference });

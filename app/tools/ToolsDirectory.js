@@ -2,40 +2,11 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import Icon from '../../components/ui/icons';
+import { TOOLS, TOOL_ICON } from '../../lib/toolHubTools.mjs';
+import ToolTileArt from '../../components/tools/ToolTileArt';
 import { TOOL_CATEGORIES, resolveToolCategory, toolFreshness } from '../../lib/toolCategories.mjs';
 
 const CATEGORY_LABEL = Object.fromEntries(TOOL_CATEGORIES.map((c) => [c.id, c.label]));
-
-const TOOLS = [
-  { key: 'hero-gear', category: 'gear', event: 'Stats + KvK Preparation', title: 'Hero Gear Optimizer', description: 'Optimize Enhancement, Mastery, Red ascension, imbuement, reforging, and the exact four-resource shortfall.' },
-  { key: 'governor-gear', category: 'gear', event: 'Stats + KvK Preparation', title: 'Governor Gear Optimizer', description: 'Rank all six pieces with squared scarcity, troop priorities, set bonuses, and sourced KvK upgrade points.' },
-  { key: 'governor-gear-sailing-tool', category: 'gear', event: "Governor's Expedition", title: 'Governor Gear Sailing Tool', description: 'Calculate Governor Gear chest merges for a target tier, including Exquisite and Majestic outcomes.', status: 'New' },
-  { key: 'charms', category: 'charms', event: 'Stats + KvK Preparation', title: 'Charms Optimizer', description: 'Optimize all 18 charms with exact level costs, shared inventory, target planning, and connected weekly packs.' },
-  { key: 'charm-sailing-optimizer', category: 'charms', event: 'Wavebound Voyage', title: 'Charm Sailing Optimizer', description: 'Calculate Tidal Treasure merges for a target Charm level, including Exquisite and Majestic outcomes.', status: 'Available' },
-  { key: 'pets', category: 'pets-masters', event: 'Progression + weekly packs', title: 'Pets Optimizer', description: 'Plan every pet from the complete dataset and turn the combined shortfall into a weekly pack schedule.' },
-  { key: 'masters', category: 'pets-masters', event: 'Progression + monthly packs', title: 'Masters Optimizer', description: 'Combine multiple relationship and skill targets, partial Affinity progress, inventory, and purchase scheduling.' },
-  { key: 'construction', category: 'construction-research', event: 'TG1–TG10 + refining', title: 'Construction Planner', description: 'Combine eight building targets, supplied TG and TTG tier totals, inventory shortfalls, and a daily Tempered True Gold schedule.' },
-  { key: 'research', category: 'construction-research', event: 'Academy + War Academy', title: 'Unified Research Planner', description: 'Plan exact Academy, War Academy, and Advanced Research levels with prerequisites, inventory shortfalls, adjusted time, and exports.' },
-  { key: 'dragons-caravan-optimizer', category: 'event-shops', event: 'Flamedragon Tyrant', title: 'Dragon’s Caravan Optimizer', description: 'Build a reward cart, prioritize the best-value shop items, and calculate the cheapest Dragon Essence pack combination.', status: 'New' },
-  { key: 'adventure-stall', category: 'event-shops', event: 'Adventure Stall', title: 'Adventure Stall Optimizer', description: 'Choose your event rewards and calculate the lowest-cost daily pack plan after using the Shells already in your inventory.', status: 'New' },
-  { key: 'account-progression', category: 'planning', event: 'Whole-account roadmap', title: 'Account Progression Planner', description: 'Combine your saved gear, charm, pet, Master, construction, research, True Gold, and event-shop plans into one ranked weekly roadmap.', status: 'New' },
-];
-
-const TOOL_ICON = {
-  'hero-gear': 'gear',
-  'governor-gear': 'gear',
-  'governor-gear-sailing-tool': 'sail',
-  charms: 'charms',
-  masters: 'masters',
-  pets: 'pets',
-  construction: 'construction',
-  research: 'research',
-  'account-progression': 'roadmap',
-  'charm-sailing-optimizer': 'sail',
-  'dragons-caravan-optimizer': 'shop',
-  'adventure-stall': 'shop',
-};
 
 const STATUS_TONE = {
   New: 'tool-badge-new',
@@ -43,16 +14,14 @@ const STATUS_TONE = {
   Updated: 'tool-badge-available',
 };
 
-function ToolBox({ tool, query, saved }) {
+function ToolBox({ tool, query, saved, image }) {
   // Freshness comes from the dataset manifest; tools without a verified date fall back to their status.
   const freshness = toolFreshness(tool.key);
   const badge = freshness ? `Updated ${freshness.label}` : tool.status;
   return (
     <Link key={tool.key} href={`/tools/${tool.key}${query}`} className="tool-box">
       {badge ? <span className={`tool-box-badge ${freshness ? STATUS_TONE.Updated : STATUS_TONE[tool.status] || ''}`}>{badge}</span> : null}
-      <span className="tool-box-icon" aria-hidden="true">
-        <Icon name={TOOL_ICON[tool.key] || 'gear'} size={26} />
-      </span>
+      <ToolTileArt title={tool.title} iconName={TOOL_ICON[tool.key] || 'gear'} image={image} />
       <span className="tool-box-category">{CATEGORY_LABEL[tool.category]}</span>
       <strong className="k-display tool-box-title">{tool.title}</strong>
       <span className="tool-box-desc">{tool.description}</span>
@@ -64,7 +33,7 @@ function ToolBox({ tool, query, saved }) {
   );
 }
 
-export default function ToolsDirectory({ memberId, category, savedPlans = {} }) {
+export default function ToolsDirectory({ memberId, category, savedPlans = {}, toolImages = {} }) {
   const query = memberId ? `?member_id=${encodeURIComponent(memberId)}` : '';
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(() => resolveToolCategory(category));
@@ -119,7 +88,7 @@ export default function ToolsDirectory({ memberId, category, savedPlans = {} }) 
         </div>
       ) : (
         <div className="tools-grid">
-          {filtered.map((tool) => <ToolBox key={tool.key} tool={tool} query={query} saved={Object.hasOwn(savedPlans, tool.key)} />)}
+          {filtered.map((tool) => <ToolBox key={tool.key} tool={tool} query={query} saved={Object.hasOwn(savedPlans, tool.key)} image={toolImages[tool.key] || null} />)}
         </div>
       )}
 
@@ -165,6 +134,12 @@ export default function ToolsDirectory({ memberId, category, savedPlans = {} }) 
 
         .tool-box-icon{width:48px;height:48px;display:grid;place-items:center;border:1px solid rgba(201,164,78,.34);border-radius:var(--radius-md);color:var(--gold-hot);background:rgba(201,164,78,.07);transition:color .18s ease,border-color .18s ease,background .18s ease}
         .tool-box:hover .tool-box-icon,.tool-box:focus-visible .tool-box-icon{border-color:var(--gold-aged);background:rgba(201,164,78,.14)}
+        .tool-box-icon.is-custom{width:64px;height:64px;overflow:hidden;padding:0;position:relative}
+        .tool-box-icon.is-custom img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .2s ease}
+        .tool-box-icon.is-custom.is-loaded img{opacity:1}
+        .tool-box-icon.is-custom:not(.is-loaded){background:linear-gradient(110deg,rgba(201,164,78,.07) 30%,rgba(201,164,78,.16) 50%,rgba(201,164,78,.07) 70%);background-size:200% 100%}
+        @media(prefers-reduced-motion:no-preference){.tool-box-icon.is-custom:not(.is-loaded){animation:tool-art-shimmer 1.4s linear infinite}}
+        @keyframes tool-art-shimmer{to{background-position:-200% 0}}
 
         .tool-box-category{
           font-family:var(--font-mono);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import DualTime from '../ui/DualTime';
 import { FORM_PLAIN, formDisplayState } from '../../lib/memberForms.mjs';
-import { withResults, todoCount, resultSeenKey, isResultNew } from '../../lib/memberResults.mjs';
+import { withResults, todoCount, NOTHING_OPEN_MESSAGE, resultSeenKey, isResultNew } from '../../lib/memberResults.mjs';
 import styles from './MemberDashboard.module.css';
 
 // "My forms" list for the dashboard. `forms` arrive already ordered by the ongoing cycle
@@ -104,7 +104,7 @@ export default function MyFormsList({ status, loaded }) {
       ) : !status?.signedIn || status?.degraded ? (
         <p className={styles.note} role="status">We could not load your forms just now. <Link href="/forms">Open the forms page</Link> or try again in a moment.</p>
       ) : forms.length === 0 ? (
-        <p className={styles.note}>No forms are listed right now.</p>
+        <p className={styles.note} role="status">{NOTHING_OPEN_MESSAGE}</p>
       ) : (
         <>
           {todo === 0 && <p className={styles.caughtUp} role="status"><span aria-hidden="true">✓</span> You are all caught up. You can still open a form to change your answers.</p>}
