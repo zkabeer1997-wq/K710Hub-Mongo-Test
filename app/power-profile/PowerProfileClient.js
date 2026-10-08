@@ -3,13 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import IdentityFields from '../../components/member/IdentityFields';
 import PageHero from '../../components/ui/PageHero';
-import GovernorGearOcr from '../../components/GovernorGearOcr';
+import LoadoutEditor from '../../components/loadout/LoadoutEditor';
 import '../../components/member/easy-view-fixes.css';
 import {
-CHARM_LEVEL_OPTIONS,
-CHARM_SLOTS,
-GOVERNOR_GEAR_OPTIONS,
-GOVERNOR_GEAR_SLOTS,
 POWER_PROFILE_FIELDS,
 blankCharmSelections,
 blankGovernorGearSelections,
@@ -23,6 +19,7 @@ import { saveStatusLabel } from '../../lib/powerProfileWizard.mjs';
 import { LoadingRow } from '../../components/ui';
 import FormErrorSummary from '../../components/FormErrorSummary';
 import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
+import { completionText, reviewLines } from '../../lib/loadout.mjs';
 import { draftKey, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
 
 const DRAFT_KEY = draftKey('power-profile');
@@ -55,18 +52,6 @@ const STEPS = [
   { id: 'gear', kicker: 'Power Data', label: 'Gear & Charms' },
   { id: 'review', kicker: 'Final Check', label: 'Review & Submit' },
 ];
-
-// CHARM_SLOTS is [...archer(6), ...infantry(6), ...cavalry(6)] - see
-// lib/powerProfiles.mjs. Group them by unit for step 4's sub-sections
-// without touching the slot list, keys, or serialize/parse order.
-const CHARM_GROUPS = [
-  { id: 'archer', label: 'Archer' },
-  { id: 'infantry', label: 'Infantry' },
-  { id: 'cavalry', label: 'Cavalry' },
-].map((group) => ({
-  ...group,
-  slots: CHARM_SLOTS.filter((slot) => slot.key.startsWith(`${group.id}_`)),
-}));
 
 function PowerProfileForm({ identity, intro }) {
   const memberId = identity?.memberId || '';
@@ -201,32 +186,19 @@ function PowerProfileForm({ identity, intro }) {
     setDirty(true);
   }
 
-  /** Apply OCR results for gear and/or charms in one pass. */
-  function applyPowerDataScan({ gear, charms: charmSelections }) {
-    if (gear && Object.keys(gear).length) {
-      setGovernorGear((current) => {
-        const next = { ...current, ...gear };
-        setForm((currentForm) => ({ ...currentForm, governor_gear: serializeGovernorGearSelections(next) }));
-        return next;
-      });
-      setDirty(true);
-    }
-    if (charmSelections && Object.keys(charmSelections).length) {
-      setCharms((current) => {
-        const next = { ...current, ...charmSelections };
-        setForm((currentForm) => ({ ...currentForm, charms: serializeCharmSelections(next) }));
-        return next;
-      });
-      setDirty(true);
-    }
-  }
-
   function updateCharm(key, value) {
     setCharms((current) => {
       const next = { ...current, [key]: value };
       setForm((currentForm) => ({ ...currentForm, charms: serializeCharmSelections(next) }));
       return next;
     });
+    setDirty(true);
+  }
+
+  function clearLoadout() {
+    setGovernorGear(blankGovernorGearSelections());
+    setCharms(blankCharmSelections());
+    setForm((current) => ({ ...current, governor_gear: '', charms: '' }));
     setDirty(true);
   }
 
@@ -397,50 +369,16 @@ function PowerProfileForm({ identity, intro }) {
             <div className="ledger-block-head">
               <span className="ledger-block-kicker">{STEPS[1].kicker}</span>
               <h2 ref={(el) => { headingRefs.current[1] = el; }} tabIndex={-1}>Governor Gear &amp; Charms</h2>
-              <p>Upload a screenshot to auto-fill gear pieces and charm levels, then verify the dropdowns.</p>
+              <p>Set the quality, tier and stars of each gear piece and the level of its three charms.</p>
             </div>
             {statusLine && <p className="save-status-line" aria-live="polite">{statusLine}</p>}
-            <GovernorGearOcr onApply={applyPowerDataScan} />
-            <h3 className="power-subheader">Governor Gear</h3>
-            <div className="ledger-gear-grid">
-              {GOVERNOR_GEAR_SLOTS.map((slot) => (
-                <label key={slot.key} className="ledger-select">
-                  <span>{slot.label}</span>
-                  <select
-                    value={governorGear[slot.key]}
-                    onChange={(event) => updateGovernorGear(slot.key, event.target.value)}
-                  >
-                    <option value="">Select gear</option>
-                    {GOVERNOR_GEAR_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
-              ))}
-            </div>
-            <h3 className="power-subheader">Charms</h3>
-            <p className="hint" style={{ marginTop: 0 }}>Levels 1–22 (Kingshot Optimizer charm reference).</p>
-            {CHARM_GROUPS.map((group) => (
-              <div key={group.id} className="charm-subsection">
-                <h4 className="charm-subsection-head">{group.label}</h4>
-                <div className="ledger-charm-grid">
-                  {group.slots.map((slot) => (
-                    <label key={slot.key} className="ledger-select">
-                      <span>{slot.label}</span>
-                      <select
-                        value={charms[slot.key]}
-                        onChange={(event) => updateCharm(slot.key, event.target.value)}
-                      >
-                        <option value="">Select level</option>
-                        {CHARM_LEVEL_OPTIONS.map((option) => (
-                          <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
+            <LoadoutEditor
+              gear={governorGear}
+              charms={charms}
+              onGearChange={updateGovernorGear}
+              onCharmChange={updateCharm}
+              onClear={clearLoadout}
+            />
             <div className="wizard-nav">
               <button type="button" className="wizard-back" onClick={() => goToStep(0)}>Back</button>
               <button type="button" className="wizard-next" onClick={() => goToStep(2)}>Next: Review &amp; Submit</button>
@@ -466,13 +404,13 @@ function PowerProfileForm({ identity, intro }) {
               </div>
 
               <div className="wizard-review-card">
-                <h4>Governor Gear</h4>
-                <p className="wizard-review-text">{form.governor_gear || 'No gear selected.'}</p>
-              </div>
-
-              <div className="wizard-review-card">
-                <h4>Charms</h4>
-                <p className="wizard-review-text">{form.charms || 'No charms selected.'}</p>
+                <h4>Governor Gear and Charms</h4>
+                <p className="wizard-review-text">{completionText(governorGear, charms)}</p>
+                <dl>
+                  {reviewLines(governorGear, charms).map((line) => (
+                    <div key={line.id}><dt>{line.name}</dt><dd>{line.gear}<br />Charms {line.charms}</dd></div>
+                  ))}
+                </dl>
                 <button type="button" className="wizard-review-edit" onClick={() => goToStep(1)}>Edit</button>
               </div>
 
