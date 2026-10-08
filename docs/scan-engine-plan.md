@@ -119,3 +119,30 @@ Later scan kinds: add a profile JSON, readers config and game data module under 
 ## Acceptance
 Per-field accuracy reported by `scan:eval` on the labelled fixtures, target agreed with the owner once
 the first baseline exists (suggested: quality and tier >= 98%, stars >= 95% on clean fixtures).
+
+## Update: reference screens received from the owner
+Three images were supplied (small UI screenshots, not usable as test fixtures):
+1. **"My Loadout" page** (reference design): left menu Overview / Backpack (Resources, SpeedUps, Gear, Other) /
+   Governor Gear (0 of 6 slots) / Charms (0 of 18 charms) / Build & settings; a 6-slot gear grid around a
+   character with 3 charm slots under each gear slot; a header strip "Saved on this device only" with
+   "Scan a screenshot" and "Sign in to sync". We have no such page today; the scan UI will live on a new
+   loadout page. Do not reuse the reference site's artwork or branding: our own visuals only.
+2. **"Screenshot your Governor Profile"** guidance modal: the member screenshots the Governor Profile screen with
+   all six gear pieces visible; one scan fills Governor Gear AND Charms. The modal warns "Do not crop the image"
+   and "Always double-check imported values".
+3. **"Screenshot your Backpack, Gear tab"** guidance modal: a grid of gear items on the Backpack Gear tab.
+
+### What this changes in the plan
+- Scan kinds become: `governor_profile` (6 gear slots + 18 charm slots, first), `backpack_gear` (items grid,
+  second), then `backpack_resources`, `backpack_speedups` later. The engine stays the same; each kind is a
+  profile JSON + readers + game data.
+- The scan flow gets a guidance step per kind (which screen to open, correct/incorrect example, "do not crop").
+- Stars: the Governor Profile example shows NO star row on the gear tiles. Where stars are visible (profile
+  zoom, gear detail, backpack tab) must be confirmed before the stars reader is designed.
+
+### Open questions added
+- Is the Backpack Gear tab list HERO gear pieces (helm/gloves/chest/boots) or spare Governor gear? The items
+  look like hero equipment with level numbers; confirm what each field means (level, +N, icons).
+- Should the loadout page also store charms (18) and hero gear from these scans, or only the 6 Governor
+  Gear slots for now?
+- Full-resolution original screenshots for both screens (many devices) with true values, as in fixtures request.
