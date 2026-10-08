@@ -5,6 +5,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { BLOCK_LABELS, BLOCK_TYPES } from '../../../lib/guideLayout.mjs';
 import { BLOCK_HINTS } from './blockHints';
 import { useBuilder } from './BuilderContext';
+import GuideAddImage from './GuideAddImage';
 import styles from './builder.module.css';
 
 function PaletteItem({ type }) {
@@ -59,7 +60,7 @@ export default function Palette({ library, uploads, tab, setTab }) {
           </>
         ) : (
           <>
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => requestUpload(null, null)}>Upload images…</button>
+            <GuideAddImage blockId={null} index={null} tone="dark" />
             <div
               className={styles.libDrop}
               data-over={dragOver ? 'true' : undefined}
@@ -67,7 +68,7 @@ export default function Palette({ library, uploads, tab, setTab }) {
               onDragLeave={() => setDragOver(false)}
               onDrop={e => { setDragOver(false); if (e.dataTransfer.files?.length) { e.preventDefault(); e.stopPropagation(); requestUpload(null, null, [...e.dataTransfer.files]); } }}
             >
-              Drop image files here to upload. JPG, PNG, WebP, GIF - up to 3 MB.
+              You can also drop image files here. JPG, PNG, WebP, GIF - up to 3 MB.
             </div>
             {busy.map((u, i) => <div key={i} className={styles.progressWrap} role="status"><span>Uploading {u.name}…</span><progress value={Math.round(u.progress * 100)} max="100" /></div>)}
             {libraryError ? <p className={styles.errorText} role="alert">{libraryError}</p> : null}

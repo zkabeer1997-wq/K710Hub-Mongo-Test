@@ -3,18 +3,16 @@
 import { MAX_GRID_IMAGES } from '../../../lib/guideLayout.mjs';
 import { AltField, Row, Segmented } from './fields';
 import { useBuilder } from './BuilderContext';
+import GuideAddImage from './GuideAddImage';
 import styles from './builder.module.css';
 
 // Shown right under a selected picture: replace it, describe it, caption it.
 export function ImageTextFields({ block, idPrefix }) {
-  const { update, requestUpload, openLibrary, focusAlt } = useBuilder();
+  const { update, focusAlt } = useBuilder();
   const set = (patch, key) => update(block.id, patch, key);
   return (
     <div className={styles.imageTools} onClick={e => e.stopPropagation()}>
-      <div className={styles.inline}>
-        <button type="button" className={styles.btn} onClick={() => requestUpload(block.id, null)}>Replace image</button>
-        <button type="button" className={styles.btn} onClick={() => openLibrary(block.id, null)}>Choose from library</button>
-      </div>
+      <GuideAddImage blockId={block.id} index={null} library tone="dark" />
       <AltField item={block} idPrefix={idPrefix} autoFocus={focusAlt === block.id} onChange={patch => set(patch, `img:${block.id}`)} />
       <Row label="Caption (optional)" htmlFor={`${idPrefix}-cap`}>
         <input id={`${idPrefix}-cap`} value={block.caption} maxLength={300} onChange={e => set({ caption: e.target.value }, `cap:${block.id}`)} />
@@ -25,14 +23,10 @@ export function ImageTextFields({ block, idPrefix }) {
 
 // Side panel: how big the picture is and where it sits.
 export function ImageLayoutFields({ block }) {
-  const { update, requestUpload, openLibrary } = useBuilder();
+  const { update } = useBuilder();
   const set = patch => update(block.id, patch);
   return (
     <>
-      <div className={styles.inline}>
-        <button type="button" className={styles.btn} onClick={() => requestUpload(block.id, null)}>Replace image</button>
-        <button type="button" className={styles.btn} onClick={() => openLibrary(block.id, null)}>Library</button>
-      </div>
       <Segmented label="Size" value={block.width} options={[['small', 'Small'], ['medium', 'Medium'], ['full', 'Full width']]} onChange={v => set({ width: v })} />
       <Segmented label="Position" value={block.align} options={[['left', 'Left'], ['center', 'Center'], ['right', 'Right']]} onChange={v => set({ align: v })} />
       <p className={styles.hintLine}>Describe and caption the picture in the box under it on the page.</p>
@@ -42,7 +36,7 @@ export function ImageLayoutFields({ block }) {
 
 // Thumbnails for an image grid: reorder, remove and describe each picture.
 export function GridManager({ block }) {
-  const { update, requestUpload, openLibrary, focusAlt } = useBuilder();
+  const { update, focusAlt } = useBuilder();
   const images = block.images;
   const setImages = (next, key) => update(block.id, { images: next }, key);
   const move = (i, dir) => {
@@ -80,10 +74,7 @@ export function GridManager({ block }) {
         ))}
       </ul>
       {images.length < MAX_GRID_IMAGES ? (
-        <div className={styles.inline}>
-          <button type="button" className={styles.btn} onClick={() => requestUpload(block.id, images.length)}>Add picture</button>
-          <button type="button" className={styles.btn} onClick={() => openLibrary(block.id, images.length)}>Add from library</button>
-        </div>
+        <GuideAddImage blockId={block.id} index={images.length} library tone="dark" />
       ) : <p className={styles.hintLine}>This grid is full (4 pictures).</p>}
     </div>
   );

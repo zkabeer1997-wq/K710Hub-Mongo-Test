@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
 import ConfirmDialog from '../../../../components/admin/ConfirmDialog';
 import { Button, Field, Input, Select, Textarea } from '../../../../components/ui';
-import DriveImagePicker from '../../../../components/admin/DriveImagePicker';
+import AddImageButtons from '../../../../components/admin/AddImageButtons';
 
 const EMPTY = { title: '', caption: '', alt_text: '', position: '0', is_published: true };
 
@@ -102,15 +102,15 @@ export default function AdminGalleryPage() {
 
   async function logout() { await fetch('/api/admin-logout', { method: 'POST' }); router.push('/admin/login'); router.refresh(); }
 
-  function chooseFile(event) {
-    const next = event.target.files?.[0] || null;
+  function chooseFiles(files) {
+    const next = files?.[0] || null;
     if (preview) URL.revokeObjectURL(preview);
     setFile(next); setPicked(null); setPreview(next ? URL.createObjectURL(next) : ''); setError('');
   }
 
   async function upload(event) {
     event.preventDefault();
-    if (!file && !picked) { setError('Choose an image to upload, or choose one from Google Drive.'); return; }
+    if (!file && !picked) { setError('Choose an image first: Upload Image or Choose from Drive.'); return; }
     setSaving(true); setError(''); setStatus('');
     const body = new FormData();
     if (picked) body.append('drive_file_id', picked.id); else body.append('file', file);
@@ -121,7 +121,6 @@ export default function AdminGalleryPage() {
       if (!response.ok) throw new Error(result.error || 'Unable to upload image.');
       setStatus('Image added to the gallery.'); setForm(EMPTY); setFile(null); setPicked(null);
       if (preview) URL.revokeObjectURL(preview); setPreview('');
-      document.getElementById('gallery-file').value = '';
       await loadImages();
     } catch (err) { setError(err.message); } finally { setSaving(false); }
   }
@@ -192,11 +191,9 @@ export default function AdminGalleryPage() {
         <div className="gallery-admin-preview">{preview ? <img src={preview} alt="New image preview" /> : picked ? (drive?.fake ? <img src={`/api/admin-drive/preview/${picked.id}`} alt="Picked image preview" /> : <span>{picked.name}</span>) : <span>Image preview</span>}</div>
         <div className="gallery-admin-fields">
           <h2>Add an image</h2>
-          <Field label="Image" hint="JPG, PNG, WebP, or GIF · maximum 4 MB. Saved to Google Drive: K710 Website / Gallery images."><Input id="gallery-file" tone="console" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={chooseFile} aria-label="Upload from this computer" /></Field>
-          <div className="gallery-admin-actions" role="group" aria-label="Or choose from Google Drive">
-            <DriveImagePicker disabled={saving || (drive && !drive.connected)} onError={setError} onPick={(files) => { const next = files[0]; if (!next) return; if (preview) URL.revokeObjectURL(preview); setPreview(''); setFile(null); const input = document.getElementById('gallery-file'); if (input) input.value = ''; setPicked(next); setError(''); }} />
-            {picked && <span className="gallery-admin-pill ok" role="status">Picked from Drive: {picked.name} <button type="button" className="gallery-admin-clear" onClick={() => setPicked(null)} aria-label="Clear the picked Drive image">Clear</button></span>}
-          </div>
+          <p className="gallery-admin-hint">JPG, PNG, WebP, or GIF · maximum 4 MB. Saved to Google Drive: K710 Website / Gallery images.</p>
+          <AddImageButtons disabled={saving} onError={setError} onFiles={chooseFiles} onPick={(files) => { const next = files[0]; if (!next) return; if (preview) URL.revokeObjectURL(preview); setPreview(''); setFile(null); setPicked(next); setError(''); }} />
+          {(file || picked) && <span className="gallery-admin-pill ok" role="status">{picked ? `Picked from Drive: ${picked.name}` : `Ready to save: ${file.name}`} <button type="button" className="gallery-admin-clear" onClick={() => { if (preview) URL.revokeObjectURL(preview); setPreview(''); setFile(null); setPicked(null); }} aria-label="Clear the chosen image">Clear</button></span>}
           <div className="gallery-admin-field-grid">
             <Field label="Title" hint="Optional"><Input tone="console" value={form.title} maxLength={120} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field>
             <Field label="Display order" hint="Lower numbers appear first"><Input tone="console" type="number" min="0" max="100000" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} /></Field>
@@ -204,7 +201,7 @@ export default function AdminGalleryPage() {
           <Field label="Image description" hint="Required for screen readers"><Input tone="console" value={form.alt_text} maxLength={240} onChange={(e) => setForm({ ...form, alt_text: e.target.value })} /></Field>
           <Field label="Caption" hint="Optional"><Textarea tone="console" rows={2} value={form.caption} maxLength={500} onChange={(e) => setForm({ ...form, caption: e.target.value })} /></Field>
           <Field label="Visibility"><Select tone="console" value={form.is_published ? 'published' : 'hidden'} onChange={(e) => setForm({ ...form, is_published: e.target.value === 'published' })}><option value="published">Published</option><option value="hidden">Hidden</option></Select></Field>
-          <Button type="submit" disabled={saving || (drive && !drive.connected)} style={{ minHeight: 48 }}>{saving ? 'Uploading…' : 'Upload image'}</Button>{drive && !drive.connected && <p className="gallery-admin-hint" role="status">Connect Google Drive first (one-time setup) to upload images.</p>}
+          <Button type="submit" disabled={saving || (drive && !drive.connected)} style={{ minHeight: 48 }}>{saving ? 'Saving…' : 'Save to gallery'}</Button>{drive && !drive.connected && <p className="gallery-admin-hint" role="status">Connect Google Drive first (one-time setup) to add images.</p>}
         </div>
       </form>
 

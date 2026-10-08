@@ -10,6 +10,7 @@ import { VideoLinkField } from './fields';
 import { GridManager, ImageTextFields } from './ImageTools';
 import RichTextEditor from './RichTextEditor';
 import { useBuilder } from './BuilderContext';
+import GuideAddImage from './GuideAddImage';
 import styles from './builder.module.css';
 
 function AutoTextarea({ value, onChange, className, label, ...rest }) {
@@ -22,7 +23,7 @@ function AutoTextarea({ value, onChange, className, label, ...rest }) {
 }
 
 function ImagePlaceholder({ block, index = null }) {
-  const { requestUpload, openLibrary, uploads } = useBuilder();
+  const { uploads } = useBuilder();
   const up = uploads[block.id];
   return (
     <div className={styles.dropZone} data-busy={up && !up.error ? 'true' : undefined}>
@@ -33,12 +34,9 @@ function ImagePlaceholder({ block, index = null }) {
         </div>
       ) : (
         <>
-          <strong>Drop a picture here</strong>
-          <span>or choose one. JPG, PNG, WebP or GIF, up to 3 MB.</span>
-          <span className={styles.dropButtons}>
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={e => { e.stopPropagation(); requestUpload(block.id, index); }}>Upload image</button>
-            <button type="button" className={styles.btn} onClick={e => { e.stopPropagation(); openLibrary(block.id, index); }}>Choose from library</button>
-          </span>
+          <strong>Add a picture</strong>
+          <span>JPG, PNG, WebP or GIF, up to 3 MB. You can also drop a file here.</span>
+          <GuideAddImage blockId={block.id} index={index} library />
         </>
       )}
       {up?.error ? <p className={styles.errorText} role="alert">{up.error}</p> : null}

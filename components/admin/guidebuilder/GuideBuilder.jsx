@@ -20,7 +20,7 @@ import Inspector from './Inspector';
 import Palette from './Palette';
 import TemplatePicker from './TemplatePicker';
 import { checkImageFile, uploadGuideImage, pickGuideImageFromDrive } from './uploadImage';
-import DriveImagePicker from '../DriveImagePicker';
+import AddImageButtons from '../AddImageButtons';
 import styles from './builder.module.css';
 
 const META_KEYS = ['title', 'slug', 'category', 'description', 'access_level', 'reviewed_by', 'position', 'f2p_content', 'spender_content'];
@@ -45,6 +45,15 @@ function LibraryModal({ library, guideSlug, onPick, onClose }) {
     try { onPick((await pickGuideImageFromDrive(files[0].id, guideSlug)).src, true); }
     catch (e) { setDriveError(e.message); } finally { setDriveBusy(false); }
   }
+  async function uploadHere(files) {
+    const file = files?.[0];
+    if (!file) return;
+    const problem = checkImageFile(file);
+    if (problem) { setDriveError(problem); return; }
+    setDriveBusy(true); setDriveError('');
+    try { onPick((await uploadGuideImage(file, guideSlug, () => {})).src, true); }
+    catch (e) { setDriveError(e.message); } finally { setDriveBusy(false); }
+  }
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -64,9 +73,8 @@ function LibraryModal({ library, guideSlug, onPick, onClose }) {
             ))}
           </div>
         ) : <p>No images yet. Upload one first.</p>}
-        {driveError ? <p role="alert" className={styles.hintLine}>{driveError}</p> : null}
-        <div className={styles.modalActions}>
-          <DriveImagePicker onPick={pickFromDrive} onError={setDriveError} disabled={driveBusy} label={driveBusy ? 'Copying from Google Drive…' : 'Choose from Google Drive'} /><button type="button" className={styles.btn} onClick={onClose} autoFocus>Close</button></div>
+        <AddImageButtons busy={driveBusy} error={driveError} onFiles={uploadHere} onPick={pickFromDrive} onError={setDriveError} />
+        <div className={styles.modalActions}><button type="button" className={styles.btn} onClick={onClose} autoFocus>Close</button></div>
       </div>
     </div>
   );
@@ -424,7 +432,7 @@ export default function GuideBuilder({ slug: initialSlug }) {
       }
     }
     for (const file of list) {
-      const problem = checkImageFile(file);
+      const problem = file.driveId ? '' : checkImageFile(file);
       if (problem) { setNotice({ kind: 'error', text: problem }); continue; }
       let key = target?.blockId || null;
       let gridIndex = target?.index ?? null;
@@ -438,7 +446,9 @@ export default function GuideBuilder({ slug: initialSlug }) {
       }
       setUploads(u => ({ ...u, [key]: { name: file.name, progress: 0 } }));
       try {
-        const { src } = await uploadGuideImage(file, latest.current.slugKey || slugKey, p => setUploads(u => ({ ...u, [key]: { name: file.name, progress: p } })));
+        const { src } = file.driveId
+          ? await pickGuideImageFromDrive(file.driveId, latest.current.slugKey || slugKey)
+          : await uploadGuideImage(file, latest.current.slugKey || slugKey, p => setUploads(u => ({ ...u, [key]: { name: file.name, progress: p } })));
         setLibrary(lib => [{ src }, ...lib.filter(i => i.src !== src)]);
         commit(l => {
           const found = findBlock(l, key);
@@ -467,6 +477,12 @@ export default function GuideBuilder({ slug: initialSlug }) {
     uploadTarget.current = { blockId, index };
     // Several files at once for the page and for image grids; one for a single picture.
     if (fileRef.current) { fileRef.current.multiple = !blockId || index != null; fileRef.current.click(); }
+  }, [startFileUpload]);
+
+  // Same flow as a file upload, but the picture comes from the Google Picker (copied into Drive by the server).
+  const requestDrivePick = useCallback((blockId, index, picks) => {
+    const items = (picks || []).map(p => ({ driveId: p.id, name: p.name || 'Picture from Drive' }));
+    if (items.length) startFileUpload(items, { blockId, index });
   }, [startFileUpload]);
 
   const actions = useMemo(() => ({
@@ -542,9 +558,9 @@ export default function GuideBuilder({ slug: initialSlug }) {
 
   const ctx = useMemo(() => ({
     selectedId, select: setSelectedId, update: (id, patch, key) => commit(l => updateBlock(l, id, patch), key),
-    actions, areas: template.areas, template, uploads, requestUpload, openLibrary: (blockId, index) => setLibraryPicker({ blockId, index }),
+    actions, areas: template.areas, template, uploads, requestUpload, requestDrivePick, openLibrary: (blockId, index) => setLibraryPicker({ blockId, index }),
     focusAlt, libraryError, anchors: {},
-  }), [selectedId, commit, actions, template, uploads, requestUpload, focusAlt, libraryError]);
+  }), [selectedId, commit, actions, template, uploads, requestUpload, requestDrivePick, focusAlt, libraryError]);
 
   // ---------------------------------------------------------------- drag and drop
   const sensors = useSensors(

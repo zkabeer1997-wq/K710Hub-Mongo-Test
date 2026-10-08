@@ -1,5 +1,12 @@
 import Link from 'next/link';
 import PageHero from '../../components/ui/PageHero';
+import { HELP_SECTIONS, chunkRows } from '../../lib/helpSections.mjs';
+import { planHelpSections } from '../../lib/helpImages.mjs';
+import { getHelpImageMap } from '../../lib/helpImages.server';
+import './help.css';
+
+// Pictures are read per request (cached ~30 s in memory, fail open to text only).
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Help',
@@ -8,10 +15,9 @@ export const metadata = {
   alternates: { canonical: '/help' },
 };
 
-const SECTIONS = [
+const BODIES = [
   {
     id: 'what',
-    title: 'What is Kingdom 710?',
     body: (
       <>
         <p>
@@ -24,7 +30,6 @@ const SECTIONS = [
   },
   {
     id: 'join',
-    title: 'How do I join?',
     body: (
       <>
         <ol>
@@ -39,7 +44,6 @@ const SECTIONS = [
   },
   {
     id: 'signin',
-    title: 'How do I sign in?',
     body: (
       <>
         <ol>
@@ -57,7 +61,6 @@ const SECTIONS = [
   },
   {
     id: 'nocode',
-    title: 'My code did not arrive',
     body: (
       <>
         <p>
@@ -70,7 +73,6 @@ const SECTIONS = [
   },
   {
     id: 'words',
-    title: 'What do these words mean?',
     body: (
       <>
         <p>
@@ -87,7 +89,6 @@ const SECTIONS = [
   },
   {
     id: 'settings',
-    title: 'Make the text bigger or change the language',
     body: (
       <>
         <p>
@@ -102,7 +103,6 @@ const SECTIONS = [
   },
   {
     id: 'mistake',
-    title: 'I made a mistake',
     body: (
       <>
         <p>
@@ -115,7 +115,6 @@ const SECTIONS = [
   },
   {
     id: 'ask',
-    title: 'Who do I ask?',
     body: (
       <>
         <p>
@@ -128,7 +127,6 @@ const SECTIONS = [
   },
   {
     id: 'safe',
-    title: 'Is my information safe?',
     body: (
       <>
         <p>
@@ -139,8 +137,13 @@ const SECTIONS = [
     ),
   },
 ];
+const BODY_BY_ID = Object.fromEntries(BODIES.map((b) => [b.id, b.body]));
 
-export default function HelpPage() {
+export default async function HelpPage() {
+  const images = await getHelpImageMap();
+  const sections = planHelpSections(HELP_SECTIONS, images);
+  const rows = chunkRows(sections, 3);
+  let number = 0;
   return (
     <main className="theme-realm help-page">
       <PageHero
@@ -151,16 +154,28 @@ export default function HelpPage() {
       <div className="help-inner">
         <nav className="help-toc" aria-label="Help topics">
           <h2>Jump to</h2>
-          <ul>
-            {SECTIONS.map((s) => (
-              <li key={s.id}><a href={`#${s.id}`}>{s.title}</a></li>
-            ))}
+          <ul className="help-toc-grid">
+            {rows.flatMap((row) => row.map((s) => {
+              number += 1;
+              return (
+                <li key={s.id}>
+                  <a href={`#${s.id}`}><span className="help-toc-num" aria-hidden="true">{number}</span><span>{s.title}</span></a>
+                </li>
+              );
+            }))}
           </ul>
         </nav>
-        {SECTIONS.map((s) => (
-          <section key={s.id} id={s.id} className="help-section" aria-labelledby={`${s.id}-title`}>
+        {sections.map((s) => (
+          <section key={s.id} id={s.id} className={`help-section${s.image ? ` has-image image-${s.image.side}` : ''}`} aria-labelledby={`${s.id}-title`}>
             <h2 id={`${s.id}-title`}>{s.title}</h2>
-            {s.body}
+            <div className="help-text">{BODY_BY_ID[s.id]}</div>
+            {s.image ? (
+              <figure className="help-figure">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={s.image.url} alt={s.image.alt} loading="lazy" decoding="async" {...(s.image.width && s.image.height ? { width: s.image.width, height: s.image.height } : { width: 640, height: 480 })} />
+                {s.image.caption ? <figcaption>{s.image.caption}</figcaption> : null}
+              </figure>
+            ) : null}
           </section>
         ))}
         <p className="help-back"><Link href="/">← Back to the home page</Link></p>

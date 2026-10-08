@@ -1,0 +1,50 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; max-width: 860px; }
+.top { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; }
+.pagePick { display: flex; flex-direction: column; gap: 4px; }
+.pagePick label, .field label, .fieldTitle { font-size: 14px; font-weight: 600; }
+.wrap select, .wrap input[type='text'], .wrap textarea { min-height: 44px; padding: 8px 12px; border-radius: 6px; border: 1px solid #3a414c; background: #0e1218; color: inherit; font: inherit; font-size: 15px; width: 100%; box-sizing: border-box; }
+.wrap select { min-width: 220px; width: auto; }
+.wrap textarea { resize: vertical; line-height: 1.5; }
+.wrap input:focus-visible, .wrap textarea:focus-visible, .wrap select:focus-visible, .wrap a:focus-visible, .wrap button:focus-visible { outline: 2px solid #e2ad68; outline-offset: 2px; }
+.intro, .lastEdit, .sectionHelp, .help { margin: 0; color: #9aa3ad; font-size: 14px; line-height: 1.55; max-width: 70ch; }
+.lastEdit { font-size: 13px; }
+.jump { display: flex; flex-wrap: wrap; gap: 8px; }
+.jump a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; border: 1px solid #2a2f38; border-radius: 6px; color: inherit; text-decoration: none; font-size: 14px; }
+.jump a:hover { border-color: #e2ad68; }
+.section { display: flex; flex-direction: column; gap: 14px; padding-top: 18px; border-top: 1px solid #2a2f38; scroll-margin-top: 80px; }
+.section h2 { margin: 0; font-size: 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid #2a2f38; border-radius: 8px; background: rgba(255, 255, 255, .02); }
+.fieldEdited { border-color: #e2ad68; }
+.dot { color: #fde68a; font-weight: 400; font-size: 13px; }
+.fieldHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.meta { display: flex; justify-content: flex-end; }
+.counter { font-size: 12px; color: #9aa3ad; font-variant-numeric: tabular-nums; }
+.counterNear { color: #fde68a; }
+.preview { margin-top: 4px; padding: 10px 12px; border-radius: 6px; background: #0a0d12; border-left: 3px solid #3a414c; }
+.preview p { margin: 4px 0 0; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+.previewLabel { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #9aa3ad; }
+.muted { color: #9aa3ad; }
+.error { margin: 0; padding: 8px 12px; border-radius: 6px; background: #3c1717; color: #fecaca; font-size: 14px; }
+.errorText { color: #fecaca; }
+.okText { color: #bbf7d0; }
+.warnText { color: #fde68a; }
+.linkBtn { min-height: 44px; padding: 0 8px; background: none; border: 0; color: #e2ad68; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+.linkBtn:disabled { color: #6b7380; text-decoration: none; cursor: default; }
+.primary, .secondary { min-height: 44px; padding: 0 16px; border-radius: 6px; font: inherit; font-size: 14px; cursor: pointer; border: 1px solid #3a414c; background: rgba(255, 255, 255, .04); color: inherit; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.primary { background: #e2ad68; border-color: #e2ad68; color: #17100a; font-weight: 600; }
+.primary:disabled, .secondary:disabled { opacity: .5; cursor: not-allowed; }
+.danger { color: #fecaca; }
+.faqList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.faqItem fieldset { margin: 0; padding: 12px; border: 1px solid #2a2f38; border-radius: 6px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.faqItem legend { font-size: 13px; font-weight: 700; color: #e2ad68; padding: 0 6px; }
+.faqActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.bar { position: sticky; bottom: 0; z-index: 30; margin-top: 8px; border-radius: 8px 8px 0 0; padding-right: 72px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; padding: 10px 16px; background: #10141b; border-top: 1px solid #2a2f38; }
+.status { margin: 0 auto 0 0; font-size: 14px; }
+@media (max-width: 640px) {
+  .top { flex-direction: column; align-items: stretch; }
+  .wrap select { width: 100%; }
+  .top .secondary, .faqActions > button { flex: 1 1 100%; }
+  .bar { padding-right: 64px; padding-bottom: 12px; }
+  .bar .status { flex: 1 1 100%; margin: 0; }
+  .bar .primary, .bar .secondary { flex: 1 1 0; }
+}

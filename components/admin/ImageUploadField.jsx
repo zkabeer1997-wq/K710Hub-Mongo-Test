@@ -1,12 +1,12 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
-import DriveImagePicker from './DriveImagePicker';
+import { useId, useState } from 'react';
+import AddImageButtons from './AddImageButtons';
 import styles from './ImageUploadField.module.css';
 
 /**
- * Shared admin image field: "Upload from this computer" + "Choose from Google
- * Drive", preview, replace, remove, progress and plain-language errors. Images
+ * Shared admin image field: the two AddImageButtons ("Upload Image" +
+ * "Choose from Drive"), preview, replace, remove, progress and plain-language errors. Images
  * are stored in Google Drive (K710 Website/<folder>) by POST /api/admin-drive/images;
  * the value is a same-origin URL (/api/site-image/<id>), safe to save in your
  * own record.
@@ -45,7 +45,6 @@ function postForm(endpoint, form, onProgress) {
 
 export default function ImageUploadField({ onAltChange, folder, value = null, onChange, label = 'Image', altRequired = true, subfolder, deleteOnRemove = false, endpoint = '/api/admin-drive/images', maxMb = 8, disabled = false }) {
   const id = useId();
-  const inputRef = useRef(null);
   const [alt, setAlt] = useState(value?.alt || '');
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -56,9 +55,8 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
     return false;
   }
 
-  async function uploadFile(event) {
-    const file = event.target.files?.[0];
-    event.target.value = '';
+  async function uploadFile(files) {
+    const file = files?.[0];
     if (!file) return;
     setError('');
     if (!TYPES.includes(file.type)) { setError(`"${file.name}" is not a JPG, PNG, WebP or GIF image.`); return; }
@@ -107,15 +105,8 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
             <label htmlFor={`${id}-alt`}>Image description{altRequired ? ' (required)' : ''}</label>
             <input id={`${id}-alt`} value={alt} maxLength={240} disabled={disabled || busy} onChange={(e) => { setAlt(e.target.value); onAltChange?.(e.target.value); }} aria-describedby={error ? `${id}-err` : undefined} />
           </div>
-          <div className={styles.actions} role="group" aria-labelledby={`${id}-label`}>
-            <button type="button" className={`${styles.btn} ${styles.primary}`} disabled={disabled || busy} onClick={() => inputRef.current?.click()}>
-              {value?.url ? 'Replace from this computer' : 'Upload from this computer'}
-            </button>
-            <DriveImagePicker disabled={disabled || busy} onPick={pickFromDrive} onError={setError} />
-            {value?.url ? <button type="button" className={`${styles.btn} ${styles.danger}`} disabled={disabled || busy} onClick={remove}>Remove</button> : null}
-          </div>
-          <input ref={inputRef} type="file" hidden accept={TYPES.join(',')} onChange={uploadFile} tabIndex={-1} />
-          {busy ? <progress className={styles.progress} max="1" value={progress || undefined} aria-label="Saving image to Google Drive" /> : null}
+          <AddImageButtons onFiles={uploadFile} onPick={pickFromDrive} onError={setError} busy={busy} progress={progress} disabled={disabled} />
+          {value?.url ? <div className={styles.actions}><button type="button" className={`${styles.btn} ${styles.danger}`} disabled={disabled || busy} onClick={remove}>Remove image</button></div> : null}
           <p className={styles.hint}>JPG, PNG, WebP or GIF, up to {maxMb} MB. Saved to Google Drive, not the database.</p>
           {error ? <p className={styles.error} id={`${id}-err`} role="alert">{error}</p> : null}
         </div>

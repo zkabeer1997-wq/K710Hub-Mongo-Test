@@ -105,7 +105,7 @@ test('shared ImageUploadField endpoint: upload from computer and copy a picked f
   assert.equal(bad.status, 400);
   const noAccess = await imagesRoute.POST(as(true, { folder: 'hero', driveFileId: 'nope-nope-nope' }, 'http://localhost/api/x', { 'content-type': 'application/json' }));
   assert.equal(noAccess.status, 403);
-  assert.match((await noAccess.json()).error, /Choose from Google Drive/);
+  assert.match((await noAccess.json()).error, /Choose from Drive/);
 
   // public proxy
   const served = await siteImageRoute.GET(as(false), { params: Promise.resolve({ id: image.id }) });

@@ -26,3 +26,15 @@
 .banner.warn { background: #3b2d12; color: #fde68a; }
 .banner a, .banner button { color: inherit; }
 @media (max-width: 600px) { .row { grid-template-columns: 1fr; } .actions .btn { flex: 1 1 100%; } }
+.add { display: flex; flex-direction: column; gap: 8px; min-width: 0; container-type: inline-size; }
+.addButtons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.addBtn { min-height: 48px; width: 100%; padding: 0 8px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.addDrive { background: #1f2530; color: #f1ebdd; border-color: #3a414c; }
+.toneLight .hint { color: #5b4a35; }
+.toneLight .addNote { color: #7a4a00; }
+.toneLight .error { background: #fde8e8; color: #7f1d1d; }
+.addNote { margin: 0; font-size: 14px; color: #fde68a; }
+.addNote a, .linkBtn { color: inherit; text-decoration: underline; }
+.linkBtn { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; min-height: 24px; }
+@media (max-width: 600px) { .addButtons { grid-template-columns: 1fr; } }
+@container (max-width: 360px) { .addButtons { grid-template-columns: 1fr; } }

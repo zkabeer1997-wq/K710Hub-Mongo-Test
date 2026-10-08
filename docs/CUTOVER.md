@@ -44,14 +44,15 @@ K710 Website/
   Guides images/
   Hero images/
   Tools and calculators images/
+  Help images/
   Applications/<Player ID>/     (one subfolder per applicant, digits only)
 ```
 
 | Path | What happens |
 | --- | --- |
-| Admin > Gallery, "Upload from this computer" | file -> server -> `Gallery images`; `gallery_images` row has `drive_file_id` etc. |
-| Admin > Gallery, "Choose from Google Drive" | Google Picker -> server **copies** the file into `Gallery images` (owned by the connected account) |
-| Guide builder upload / "Choose from library" > "Choose from Google Drive" | `Guides images`; `guide_attachments` row (metadata) keeps the public URL `/api/guide-images/<uuid>.<ext>` (same-origin proxy, `public, max-age=31536000, immutable`, ETag/304) |
+| Admin > Gallery, "Upload Image" | file -> server -> `Gallery images`; `gallery_images` row has `drive_file_id` etc. |
+| Admin > Gallery, "Choose from Drive" | Google Picker -> server **copies** the file into `Gallery images` (owned by the connected account) |
+| Guide builder upload / "Choose from Drive" or "Upload Image" | `Guides images`; `guide_attachments` row (metadata) keeps the public URL `/api/guide-images/<uuid>.<ext>` (same-origin proxy, `public, max-age=31536000, immutable`, ETag/304) |
 | Apply form (/interest) | each validated screenshot -> `Applications/<Player ID>/screenshot-<n>-<timestamp>.<ext>`; `interest_submissions` keeps `screenshot_files` (`drive_file_id`, name, mime, size, md5, folder id), `drive_folder_id`, `drive_folder_link` |
 | Hero / tool images (next work) | `storeSiteImage({ folder: 'hero' \| 'tool', ... })` or the shared `ImageUploadField`, see below |
 
@@ -91,7 +92,7 @@ publicSiteImage(doc)  // { id, folder, url: '/api/site-image/<id>', name, mime, 
 siteImageUrl(id)      // '/api/site-image/<id>'  (client-safe, from lib/siteImages.mjs)
 ```
 
-`folder` is one of `gallery | guide | hero | tool | application` (`SITE_FOLDERS` in `lib/driveFolders.mjs`; `application`
+`folder` is one of `gallery | guide | hero | tool | help | application` (`SITE_FOLDERS` in `lib/driveFolders.mjs`; `application`
 requires a numeric `subfolder` = Player ID). Errors are `SiteImageError` with a plain `message`/`status` (409 +
 `needsConnect` when Drive is not connected). Metadata lives in `site_images`: `{ _id, folder, subfolder?, storage:
 'drive'|'reference', drive_file_id, drive_folder_id, name, mime, size, md5, width, height, alt, created_at, created_by }`.
@@ -100,11 +101,27 @@ Store `url` (or the id) in your own record, never a Drive id. `GET /api/site-ima
 admin only); Drive failure gives a placeholder SVG (404/502). `images.remove(id)` moves the file to the Drive trash.
 Pure/injectable core (testable with the fake Drive): `createSiteImages({ drive, tree, coll })` in `lib/siteImages.mjs`.
 
-Admin UI: `components/admin/ImageUploadField.jsx` (`folder`, `value`, `onChange`, `label`, `altRequired`, `subfolder`,
-`deleteOnRemove`) gives "Upload from this computer" + "Choose from Google Drive", preview, replace, remove, progress,
-plain errors, 48px targets (works at 390px); it talks to `POST /api/admin-drive/images` (folders `hero`, `tool`).
-`components/admin/DriveImagePicker.jsx` is the bare picker button; `components/admin/DriveStatusBanner.jsx` is the
-"Google Drive connected" strip for admin pages that use images.
+Admin UI: every place an admin adds or replaces an image shows exactly two side-by-side 48px buttons from the shared
+`components/admin/AddImageButtons.jsx` (wording and enable rules in `lib/addImageUi.mjs`): **Upload Image** (file chooser)
+and **Choose from Drive** (Google Picker, or the fake picker in local dev), with the helper line "Upload Image: pick a
+picture from this computer. Choose from Drive: pick one already in Google Drive." Drive not connected disables both
+("Connect Google Drive first"); Picker keys missing disables only Choose from Drive ("Google Picker is not set up yet" +
+setup steps). They stack on phones. Places: Admin > Gallery, Heroes (per-hero picture and bulk "name each file after the
+hero"), Tools > Tool images, **Help images**, and the guide builder (image block, image grid, selected picture, Images tab,
+"reuse a picture" modal). `ImageUploadField.jsx` (`folder`, `value`, `onChange`, `label`, `altRequired`, `subfolder`,
+`deleteOnRemove`) wraps AddImageButtons with preview, description and Remove for hero/tool/help
+(`POST /api/admin-drive/images`, folders `hero`, `tool`, `help`). `DriveImagePicker.jsx` is the bare picker;
+`DriveStatusBanner.jsx` is the "Google Drive connected" strip.
+
+### Help page images
+
+`lib/helpSections.mjs` holds the Help sections (id + title, shared by `/help` and the admin screen). Admin > Content >
+**Help images** (`/admin/dashboard/help-images`, `GET/PUT/DELETE /api/admin-help-images`, admin only, section id validated)
+sets one picture per section in Mongo `help_section_images` `{ section_id (unique), site_image_id, alt (required), caption,
+side: 'right'|'left', updated_at, updated_by }`; the file lives in Drive `K710 Website/Help images` and is served by the
+public `/api/site-image/<id>`. `/help` reads the rows through `lib/helpImages.server.js` (cached ~30 s, invalidated on
+writes, fails open to text only). Two columns (text <= 65ch + picture ~40%) on wide screens, picture under the heading on
+phones. New index `section_id_unique` (applied by `ensureIndexes` on boot).
 
 ### Connecting Google Drive and the Google Picker
 
@@ -112,13 +129,13 @@ plain errors, 48px targets (works at 390px); it talks to `POST /api/admin-drive/
   `prompt=consent`, scope `drive.file`, redirect URI `<SITE_URL>/api/google-drive/callback`.
 - The refresh token is stored in Mongo `integration_tokens` (`_id: google_drive_gallery`), AES-256-GCM, key =
   `GALLERY_TOKEN_KEY` or HKDF(`MEMBER_SESSION_SECRET`); it never reaches the browser. No service account (no quota).
-- **Choose from Google Drive** uses the Google Picker. `GET /api/admin-drive/picker-config` (admin only, no-store)
+- **Choose from Drive** uses the Google Picker. `GET /api/admin-drive/picker-config` (admin only, no-store)
   returns `{ accessToken (short-lived, drive.file), developerKey, appId }`; the component lazy-loads
   `https://apis.google.com/js/api.js`, opens the Picker restricted to image types, and the server copies the picked
   file into the destination folder (`files.copy`, owned by the connected account; if copy is impossible for a
   non-permission reason a reference is recorded and never trashed on delete). A file the Picker did not grant gives
   the plain message "Google Drive did not give this site access to that file...".
-- Without the keys the UI shows **"Google Picker is not set up yet"** with the steps; uploading from the computer
+- Without the keys Choose from Drive is disabled with **"Google Picker is not set up yet"** and the steps; Upload Image
   still works.
 - CSP: `proxy.js` adds `script-src https://apis.google.com https://www.gstatic.com`, `frame-src https://docs.google.com
   https://drive.google.com https://apis.google.com`, `connect-src https://www.googleapis.com`, `img-src
@@ -129,7 +146,7 @@ plain errors, 48px targets (works at 390px); it talks to `POST /api/admin-drive/
   images / guide images / applications to Drive", or `node scripts/migrate-gallery-to-drive.mjs [--yes]` and
   `node scripts/migrate-site-images-to-drive.mjs [--yes]` (guides + applications; dry run without `--yes`).
 - Local dev without Google: `NODE_ENV=development` only, `DRIVE_STORAGE_FAKE_DIR` or `.data/drive-fake/.enable`
-  (gitignored). Files mirror the folder tree under `.data/drive-fake/tree/K710 Website/...`; "Choose from Google Drive"
+  (gitignored). Files mirror the folder tree under `.data/drive-fake/tree/K710 Website/...`; "Choose from Drive"
   opens a built-in fake picker listing those images. Ignored in production.
 
 Owner setup checklist (cannot be done by the code):
@@ -275,3 +292,9 @@ Admin > Tools > Tool images lets an admin replace the icon on each /tools tile w
 - Admin: Admin > Content > Heroes (`/admin/dashboard/heroes`, API `/api/admin-heroes` GET/POST/PATCH/DELETE): add, show/hide, reorder, picture (shared `ImageUploadField`, Drive folder `Hero images`), bulk "Upload many images" (file name = hero name/key). Heroes that members saved cannot be renamed or deleted (forms store the name): add a new hero and switch the old one off.
 - Public: `GET /api/heroes` (no Drive ids; images are `/api/site-image/<id>`); the member form pages also receive the list as server props. Reads are cached 30 s per server process, invalidated on admin writes, and fall back to the code defaults when MongoDB is unavailable.
 - Validation uses the active heroes; saved heroes that are now inactive are dropped silently on load/prefill and on re-save (never a 400). Stored values remain hero names.
+
+### Page text (About page words)
+
+- Admin > Content > Page text (`/admin/dashboard/page-text`, API `/api/admin-page-text` GET/PUT, admin only). Mongo `page_text`: one document per page `{ page (unique), values: { key: text | faq list }, updated_at, updated_by }`. Defaults and field limits live in `lib/pageText.mjs` (add another page by registering it in `PAGE_TEXT_PAGES`).
+- A blank or whitespace-only value, or a value equal to the default, is not stored: the page shows the default. "Reset to default" in the screen does exactly that. FAQ: max 12 items, question <= 140, answer <= 800 characters; saving an empty list restores the default list.
+- The About page reads it server-side (`lib/pageText.server.js`), cached 30 s, invalidated on admin writes, and falls back to the code defaults if MongoDB is unavailable. Plain text only (blank line = new paragraph). Alliances, KvK numbers and the two home-page paragraphs are not editable here.

@@ -7,7 +7,7 @@ import { useBuilder } from './BuilderContext';
 import styles from './builder.module.css';
 
 export default function Inspector({ block, areaId }) {
-  const { update, actions, areas, requestUpload, openLibrary, template } = useBuilder();
+  const { update, actions, areas, template } = useBuilder();
   if (!block) {
     return (
       <div className={styles.inspEmpty}>
@@ -39,21 +39,12 @@ export default function Inspector({ block, areaId }) {
       ) : null}
 
       {block.type === 'image' ? (block.src ? <ImageLayoutFields block={block} /> : (
-        <div className={styles.inline}>
-          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => requestUpload(block.id, null)}>Upload image</button>
-          <button type="button" className={styles.btn} onClick={() => openLibrary(block.id, null)}>Choose from library</button>
-        </div>
+        <p className={styles.hintLine}>Add the picture with Upload Image or Choose from Drive in the block on the page.</p>
       )) : null}
 
       {block.type === 'imagegrid' ? (
         <>
           <p className={styles.hintLine}>{block.images.length} of {MAX_GRID_IMAGES} pictures. Reorder, describe or remove them in the box under the grid on the page.</p>
-          {block.images.length < MAX_GRID_IMAGES ? (
-            <div className={styles.inline}>
-              <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => requestUpload(block.id, block.images.length)}>Add picture</button>
-              <button type="button" className={styles.btn} onClick={() => openLibrary(block.id, block.images.length)}>From library</button>
-            </div>
-          ) : null}
         </>
       ) : null}
 

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // Gallery and guide images have their own routes (extra metadata) but use the
 // same store. POST multipart { folder, file, alt?, subfolder? }
 //            or JSON      { folder, driveFileId, alt?, subfolder? } (Google Picker copy)
-const ALLOWED = ['hero', 'tool'];
+const ALLOWED = ['hero', 'tool', 'help'];
 
 function fail(error) {
   if (error instanceof SiteImageError || error?.name === 'FolderNameError') {

@@ -1,6 +1,8 @@
 import { stripLegacyBearCopy } from '../../lib/publicBearSchedule';
 import Link from 'next/link';
 import { AllianceBearTimes } from '../../components/BearScheduleProvider';
+import { getPageText } from '../../lib/pageText.server';
+import { splitParagraphs } from '../../lib/pageText.mjs';
 import EditableSection from '../../components/EditableSection';
 import './about.css';
 import { getBlocks } from '../../lib/contentBlocks';
@@ -18,36 +20,19 @@ export const metadata = {
   alternates: { canonical: '/about' },
 };
 
-const STEPS = [
-  { title: 'Send your application', body: 'Fill in the transfer form with your battle report screenshots and the details it asks for.', href: '/interest', link: 'Open the form' },
-  { title: 'Get reviewed', body: 'The council checks your account, preferred event times and KvK plans, then tells you which alliance fits.' },
-  { title: 'Move in when a window opens', body: 'Transfer when your intake window lands and get added to your alliance’s Bear Hunt schedule.', href: '/help', link: 'Read the help guide' },
-];
+// Where each step's link goes (the words come from Admin > Content > Page text).
+const STEP_HREFS = { 1: '/interest', 3: '/help' };
+
+// Plain text from the admin screen: blank line = new paragraph. React escapes it.
+function Paras({ text, className }) {
+  return splitParagraphs(text).map((p, i) => <p key={i} className={className}>{p}</p>);
+}
 
 // Leader line lives in the editable home copy as "R5: Name". Only shown if present.
 function leaderOf(text) {
   const m = /R5\s*:\s*([^\n]+)/i.exec(text || '');
   return m ? m[1].trim() : '';
 }
-
-const FAQ = [
-  {
-    q: 'How long does the transfer take?',
-    a: 'Most transfers are reviewed within a day or two. New intake windows open regularly — apply now and we will confirm your place when the next window lands.',
-  },
-  {
-    q: 'Do I need to leave my current alliance first?',
-    a: 'No. Send your application first. Leadership will walk you through the timing so you do not lose progress or leave before there is a spot ready for you.',
-  },
-  {
-    q: 'What happens after I apply?',
-    a: 'Your application goes to the council, who review your account, preferred event times, and KvK plans. You will be contacted about migration and which of the three alliances fits you best.',
-  },
-  {
-    q: 'Who do I contact if I have questions?',
-    a: 'The transfer form has a contact field, and our leadership monitors it daily. Ask anything there — no question is too small before you commit to moving.',
-  },
-];
 
 const STATUS_LABEL = { open: 'Recruiting', selective: 'Selective', closed: 'Closed' };
 const STATUS_TONE = { open: 'success', selective: 'accent', closed: 'neutral' };
@@ -79,13 +64,15 @@ async function loadAlliances() {
 }
 
 export default async function AboutPage() {
-  const [recordBlocks, sourcesBlocks, homeContent, alliances, kvkRecord] = await Promise.all([
+  const [recordBlocks, sourcesBlocks, homeContent, alliances, kvkRecord, t] = await Promise.all([
     getBlocks('about-record'),
     getBlocks('about-sources'),
     getHomeContent(),
     loadAlliances(),
     getKvkRecord(),
+    getPageText('about'),
   ]);
+  const steps = [1, 2, 3].map((n) => ({ n, title: t[`step${n}_title`], body: t[`step${n}_body`], href: STEP_HREFS[n], link: t[`step${n}_link`] }));
 
   const leaders = { '710': leaderOf(homeContent['wb-1-desc']?.text), RED: leaderOf(homeContent['wb-2-desc']?.text), SKY: leaderOf(homeContent['wb-3-desc']?.text) };
   const hasSources = sourcesBlocks.length > 0;
@@ -93,26 +80,26 @@ export default async function AboutPage() {
   return (
     <main className="theme-realm about-page">
       <PageHero
-        eyebrow="About Kingdom 710"
-        title="Three alliances. One kingdom."
-        lede="Kingdom 710 is a multilingual Kingshot kingdom made up of three alliances: 710, RED and SKY. We prepare for KvK together, run daily Bear Hunts, and share the same events, guides, forms and member tools."
-        actions={<><Link href="/interest" className="about-cta-primary">Apply to join</Link><Link href="/timeline">See the timeline</Link></>}
+        eyebrow={t.hero_eyebrow}
+        title={t.hero_title}
+        lede={t.hero_lede}
+        actions={<><Link href="/interest" className="about-cta-primary">{t.hero_apply_label}</Link><Link href="/timeline">{t.hero_timeline_label}</Link></>}
         aside={
-          <div className="about-standard" role="img" aria-label="Kingdom 710 banner: 710, RED, SKY">
-            <strong aria-hidden="true">710</strong>
-            <span aria-hidden="true">710 · RED · SKY</span>
+          <div className="about-standard" role="img" aria-label={`Kingdom 710 banner: ${t.banner_big}, ${t.banner_small}`}>
+            <strong aria-hidden="true">{t.banner_big}</strong>
+            <span aria-hidden="true">{t.banner_small}</span>
           </div>
         }
       />
 
       <section className="about-story about-wrap" aria-labelledby="about-story-h">
         <div className="about-story-head">
-          <p className="about-kicker">The kingdom</p>
-          <h2 id="about-story-h">How we run things</h2>
+          <p className="about-kicker">{t.story_kicker}</p>
+          <h2 id="about-story-h">{t.story_heading}</h2>
         </div>
         <div className="about-story-body">
-          <p className="about-story-lead">We coordinate across three alliances so every player can find a Bear Hunt time that fits their day, and so KvK is fought as one kingdom.</p>
-          <p>Each alliance has its own Bear Hunt schedule, shown below in UTC and in your local time. Pick the one that works for you.</p>
+          <Paras className="about-story-lead" text={t.story_lead} />
+          <Paras text={t.story_second} />
           {homeContent['why-2-body']?.text && <p>{homeContent['why-2-body'].text}</p>}
           {homeContent['why-3-body']?.text && <p>{homeContent['why-3-body'].text}</p>}
         </div>
@@ -122,9 +109,9 @@ export default async function AboutPage() {
         <span id="kingdom-rankings" aria-hidden="true" />
         <div className="about-wrap">
           <div className="about-record-head">
-            <p className="about-kicker">Proof on the field</p>
-            <h2 id="about-record-h">Our KvK record</h2>
-            <p>Kingdom vs Kingdom results and rankings, updated automatically from public Kingshot sites.</p>
+            <p className="about-kicker">{t.record_kicker}</p>
+            <h2 id="about-record-h">{t.record_heading}</h2>
+            <Paras text={t.record_intro} />
           </div>
           <KvkRecord data={kvkRecord} headingId="about-record-sr" />
           {recordBlocks.length > 0 && <EditableSection page="about-record" initialBlocks={recordBlocks} as="div" className="about-editable" />}
@@ -133,9 +120,9 @@ export default async function AboutPage() {
 
       <section className="about-alliances about-wrap" id="alliances" aria-labelledby="about-alliances-h">
         <div className="about-section-head">
-          <p className="about-kicker">The alliances</p>
-          <h2 id="about-alliances-h">710, RED and SKY</h2>
-          <p>Each alliance has its own Bear Hunt times, languages and recruiting status. Open one to see its schedule and leadership.</p>
+          <p className="about-kicker">{t.alliances_kicker}</p>
+          <h2 id="about-alliances-h">{t.alliances_heading}</h2>
+          <Paras text={t.alliances_intro} />
         </div>
         {alliances.length === 0 ? (
           <p className="about-empty">The alliance directory is unavailable right now. Please try again shortly.</p>
@@ -178,36 +165,36 @@ export default async function AboutPage() {
 
       <section className="about-join about-wrap" id="how-to-transfer" aria-labelledby="about-join-h">
         <div className="about-join-intro">
-          <p className="about-kicker">Join us</p>
-          <h2 id="about-join-h">How to join in three steps</h2>
+          <p className="about-kicker">{t.join_kicker}</p>
+          <h2 id="about-join-h">{t.join_heading}</h2>
           <ol className="about-steps">
-            {STEPS.map((s, i) => (
-              <li key={s.title}>
+            {steps.map((s, i) => (
+              <li key={s.n}>
                 <span className="about-step-n" aria-hidden="true">{i + 1}</span>
                 <div>
                   <h3>{s.title}</h3>
-                  <p>{s.body}</p>
-                  {s.href && <Link className="about-more" href={s.href}>{s.link}<span aria-hidden="true"> →</span></Link>}
+                  <Paras text={s.body} />
+                  {s.href && s.link && <Link className="about-more" href={s.href}>{s.link}<span aria-hidden="true"> →</span></Link>}
                 </div>
               </li>
             ))}
           </ol>
         </div>
         <div className="about-faq" aria-labelledby="about-faq-h">
-          <h3 id="about-faq-h" className="about-h-small">Common questions</h3>
-          {FAQ.map((item) => (
-            <details key={item.q}>
+          <h3 id="about-faq-h" className="about-h-small">{t.faq_heading}</h3>
+          {t.faq.map((item, i) => (
+            <details key={i}>
               <summary>{item.q}</summary>
-              <p>{item.a}</p>
+              <Paras text={item.a} />
             </details>
           ))}
         </div>
       </section>
 
       <section className="about-close about-wrap" aria-labelledby="about-close-h">
-        <h2 id="about-close-h">Ready to move?</h2>
-        <p>The council reviews every application.</p>
-        <Link href="/interest" className="ui-btn">Apply to join</Link>
+        <h2 id="about-close-h">{t.close_heading}</h2>
+        <Paras text={t.close_line} />
+        <Link href="/interest" className="ui-btn">{t.close_button}</Link>
       </section>
     </main>
   );

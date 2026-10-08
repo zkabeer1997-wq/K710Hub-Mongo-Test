@@ -5,7 +5,7 @@ import AdminDialog from './AdminDialog';
 import styles from './ImageUploadField.module.css';
 
 /**
- * "Choose from Google Drive" button (reusable, admin pages only).
+ * "Choose from Drive" button (reusable, admin pages only).
  *
  * Opens the Google Picker with the connected Drive account (restricted to
  * image types) and calls `onPick([{ id, name, mimeType, size }])` with the
@@ -41,7 +41,7 @@ function loadPickerApi() {
   return pickerScript;
 }
 
-export default function DriveImagePicker({ onPick, onError, label = 'Choose from Google Drive', disabled = false, multiple = false, className = '' }) {
+export default function DriveImagePicker({ onPick, onError, label = 'Choose from Drive', disabled = false, multiple = false, className = '' }) {
   const [busy, setBusy] = useState(false);
   const [setup, setSetup] = useState(null);
   const [fakeFiles, setFakeFiles] = useState(null);
@@ -100,17 +100,17 @@ export default function DriveImagePicker({ onPick, onError, label = 'Choose from
   return (
     <>
       <button ref={buttonRef} type="button" className={`${styles.btn} ${className}`} onClick={open} disabled={disabled || busy}>
-        {busy ? 'Opening Google Drive…' : label}
+        {busy ? 'Opening Drive…' : label}
       </button>
 
       <AdminDialog open={Boolean(setup)} title="Google Picker is not set up yet" onClose={() => setSetup(null)}
         footer={<button type="button" className={styles.btn} onClick={() => setSetup(null)}>Close</button>}>
-        <p>Uploading from this computer works. To also choose files from Google Drive, finish this one-time setup:</p>
+        <p>Upload Image still works. To also use Choose from Drive, finish this one-time setup:</p>
         <ol className={styles.steps}>{(setup?.steps || []).map((step) => <li key={step}>{step}</li>)}</ol>
         {setup?.missing?.length ? <p className={styles.hint}>Missing: {setup.missing.join(', ')}</p> : null}
       </AdminDialog>
 
-      <AdminDialog open={Array.isArray(fakeFiles)} title="Choose from Google Drive (local test picker)" onClose={() => setFakeFiles(null)}
+      <AdminDialog open={Array.isArray(fakeFiles)} title="Choose from Drive (local test picker)" onClose={() => setFakeFiles(null)}
         footer={<><button type="button" className={styles.btn} onClick={() => setFakeFiles(null)}>Cancel</button><button type="button" className={`${styles.btn} ${styles.primary}`} disabled={!selected.length} onClick={confirmFake}>Select</button></>}>
         <p className={styles.hint}>Local development only: this lists images in the fake Drive. The real site uses the Google Picker.</p>
         {fakeFiles?.length ? (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
 import ConfirmDialog from '../../../../components/admin/ConfirmDialog';
 import DriveStatusBanner from '../../../../components/admin/DriveStatusBanner';
+import AddImageButtons from '../../../../components/admin/AddImageButtons';
 import ImageUploadField from '../../../../components/admin/ImageUploadField';
 import Switch from '../../../../components/admin/Switch';
 import { useToast } from '../../../../components/ui';
@@ -48,7 +49,6 @@ export default function AdminHeroesPage() {
   const [imageFor, setImageFor] = useState(null);
   const [removeTarget, setRemoveTarget] = useState(null);
   const [bulk, setBulk] = useState(null);
-  const bulkRef = useRef(null);
 
   const load = useCallback(async () => {
     try { setHeroes((await api('GET')).heroes); setError(''); }
@@ -115,32 +115,38 @@ export default function AdminHeroesPage() {
   }
 
   // Many images at once: a file named after a hero ("chenko.png", "Long Fei.webp") attaches to that hero.
-  async function bulkUpload(event) {
-    const files = [...(event.target.files || [])];
-    event.target.value = '';
-    if (!files.length) return;
+  async function bulkAttach(items) {
+    if (!items.length) return;
     const results = { done: [], skipped: [] };
     setBulk({ running: true, ...results });
     let latest = heroes;
-    for (const file of files) {
-      const stem = file.name.replace(/\.[^.]+$/, '');
+    for (const item of items) {
+      const stem = item.name.replace(/\.[^.]+$/, '');
       const hero = latest.find((h) => h.key === heroKey(stem) || h.name.toLowerCase() === stem.toLowerCase());
-      if (!hero) { results.skipped.push(`${file.name} (no hero with that name)`); continue; }
-      if (!IMAGE_TYPES.includes(file.type)) { results.skipped.push(`${file.name} (not a JPG, PNG, WebP or GIF)`); continue; }
+      if (!hero) { results.skipped.push(`${item.name} (no hero with that name)`); continue; }
+      if (item.type && !IMAGE_TYPES.includes(item.type)) { results.skipped.push(`${item.name} (not a JPG, PNG, WebP or GIF)`); continue; }
       try {
-        const form = new FormData();
-        form.append('file', file); form.append('folder', 'hero'); form.append('alt', hero.name);
-        const up = await fetch('/api/admin-drive/images', { method: 'POST', body: form });
+        let up;
+        if (item.file) {
+          const form = new FormData();
+          form.append('file', item.file); form.append('folder', 'hero'); form.append('alt', hero.name);
+          up = await fetch('/api/admin-drive/images', { method: 'POST', body: form });
+        } else {
+          up = await fetch('/api/admin-drive/images', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder: 'hero', driveFileId: item.driveFileId, alt: hero.name }) });
+        }
         const upJson = await up.json().catch(() => ({}));
         if (!up.ok) throw new Error(upJson.error || 'upload failed');
         latest = (await api('PATCH', { key: hero.key, image_id: upJson.image.id })).heroes;
         results.done.push(hero.name);
-      } catch (e) { results.skipped.push(`${file.name} (${e.message})`); }
+      } catch (e) { results.skipped.push(`${item.name} (${e.message})`); }
     }
     setHeroes(latest);
     setBulk({ running: false, ...results });
     if (results.done.length) toast(`${results.done.length} image${results.done.length === 1 ? '' : 's'} saved`, { type: 'success', duration: 3000 });
   }
+  // Many images at once: a file named after a hero ("chenko.png", "Long Fei.webp") attaches to that hero.
+  const bulkUpload = (files) => bulkAttach(files.map((file) => ({ name: file.name, type: file.type, file })));
+  const bulkPick = (files) => bulkAttach(files.map((f) => ({ name: f.name || '', driveFileId: f.id })));
 
   async function handleLogout() {
     await fetch('/api/admin-logout', { method: 'POST' });
@@ -169,11 +175,10 @@ export default function AdminHeroesPage() {
         <div className={styles.addControls}>
           <input id="new-hero" value={newName} maxLength={30} autoComplete="off" placeholder="Hero name" onChange={(e) => { setNewName(e.target.value); setRowError((c) => ({ ...c, _new: '' })); }} aria-invalid={rowError._new ? 'true' : undefined} aria-describedby={rowError._new ? 'new-hero-err' : undefined} />
           <button type="submit" className={styles.primary} disabled={adding}>{adding ? 'Adding...' : 'Add hero'}</button>
-          <button type="button" className={styles.secondary} disabled={!driveReady || bulk?.running} onClick={() => bulkRef.current?.click()} title={driveReady ? undefined : 'Connect Google Drive first'}>Upload many images</button>
-          <input ref={bulkRef} type="file" hidden multiple accept={IMAGE_TYPES.join(',')} onChange={bulkUpload} tabIndex={-1} />
         </div>
         {rowError._new ? <p className={styles.error} id="new-hero-err" role="alert">{rowError._new}</p> : null}
-        <p className={styles.hint}>Upload many images: name each file after the hero (for example <code>chenko.png</code> or <code>long-fei.webp</code>) and it is attached automatically.</p>
+        <p className={styles.hint}>Add many pictures at once: name each file after the hero (for example <code>chenko.png</code> or <code>long-fei.webp</code>) and it is attached automatically.</p>
+        <AddImageButtons multiple onFiles={bulkUpload} onPick={bulkPick} busy={Boolean(bulk?.running)} disabled={!driveReady} />
         {bulk ? (
           <div className={styles.bulk} role="status">
             {bulk.running ? 'Uploading images...' : `${bulk.done.length} attached${bulk.skipped.length ? `, ${bulk.skipped.length} skipped` : ''}.`}
