@@ -14,9 +14,12 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const DIR = path.join(ROOT, 'tests/fixtures/scan/governor_profile');
 const OUT = path.join(ROOT, 'lib/scan/kinds/governorProfile/charmExemplars.json');
 const PER_IMAGE_LEVEL = 2;
+// Cap per level (any troop: the silhouette is the same for all three). Round-robin over troops and images so the
+// few kept examples cover different backgrounds, and the bundle stays small.
+const PER_LEVEL = 12;
 
 const labels = JSON.parse(fs.readFileSync(path.join(DIR, 'labels.json'), 'utf8'));
-const items = [];
+const candidates = [];
 for (const [file, lab] of Object.entries(labels.images)) {
   const src = path.join(DIR, file);
   if (!fs.existsSync(src) || !lab.charms) continue;
@@ -31,7 +34,21 @@ for (const [file, lab] of Object.entries(labels.images)) {
     const ex = harvestExemplar(crop(px, region.rect), region.troop, level);
     if (!ex) continue;
     taken.set(key, (taken.get(key) || 0) + 1);
-    items.push({ ...ex, source: file });
+    candidates.push({ ...ex, source: file });
+  }
+}
+const items = [];
+const byLevel = new Map();
+for (const c of candidates) { if (!byLevel.has(c.level)) byLevel.set(c.level, []); byLevel.get(c.level).push(c); }
+for (const [, list] of [...byLevel].sort((a, b) => a[0] - b[0])) {
+  const queues = new Map();
+  for (const c of list) { const k = `${c.troop}|${c.source}`; if (!queues.has(k)) queues.set(k, []); queues.get(k).push(c); }
+  const order = [...queues.values()];
+  let picked = 0;
+  for (let round = 0; picked < PER_LEVEL; round += 1) {
+    let any = false;
+    for (const q of order) { if (q[round] && picked < PER_LEVEL) { items.push(q[round]); picked += 1; any = true; } }
+    if (!any) break;
   }
 }
 fs.writeFileSync(OUT, `${JSON.stringify({ version: 1, grid: CHARM_GRID, items })}\n`);

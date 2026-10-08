@@ -4,32 +4,953 @@
   "images": {
     "profile-001.png": {
       "gear": {
-        "hat": { "quality": "gold", "tier": 3, "stars": 1 },
-        "pendant": { "quality": "gold", "tier": 3, "stars": 0 },
-        "shirt": { "quality": "red", "tier": 1, "stars": 1 },
-        "pants": { "quality": "red", "tier": 1, "stars": 0 },
-        "ring": { "quality": "red", "tier": 1, "stars": 0 },
-        "baton": { "quality": "red", "tier": 1, "stars": 0 }
+        "hat": {
+          "quality": "gold",
+          "tier": 3,
+          "stars": 1
+        },
+        "pendant": {
+          "quality": "gold",
+          "tier": 3,
+          "stars": 0
+        },
+        "shirt": {
+          "quality": "red",
+          "tier": 1,
+          "stars": 1
+        },
+        "pants": {
+          "quality": "red",
+          "tier": 1,
+          "stars": 0
+        },
+        "ring": {
+          "quality": "red",
+          "tier": 1,
+          "stars": 0
+        },
+        "baton": {
+          "quality": "red",
+          "tier": 1,
+          "stars": 0
+        }
       },
       "charms": {
-        "cavalry_1": 5, "cavalry_2": 5, "cavalry_3": 5, "cavalry_4": 5, "cavalry_5": 5, "cavalry_6": 5,
-        "infantry_1": 13, "infantry_2": 12, "infantry_3": 12, "infantry_4": 12, "infantry_5": 12, "infantry_6": 12,
-        "archer_1": 12, "archer_2": 12, "archer_3": 12, "archer_4": 12, "archer_5": 12, "archer_6": 12
+        "cavalry_1": 5,
+        "cavalry_2": 5,
+        "cavalry_3": 5,
+        "cavalry_4": 5,
+        "cavalry_5": 5,
+        "cavalry_6": 5,
+        "infantry_1": 13,
+        "infantry_2": 12,
+        "infantry_3": 12,
+        "infantry_4": 12,
+        "infantry_5": 12,
+        "infantry_6": 12,
+        "archer_1": 12,
+        "archer_2": 12,
+        "archer_3": 12,
+        "archer_4": 12,
+        "archer_5": 12,
+        "archer_6": 12
       }
     },
     "profile-002.png": {
       "gear": {
-        "hat": { "quality": "gold", "tier": 0, "stars": 1 },
-        "pendant": { "quality": "gold", "tier": 0, "stars": 0 },
-        "shirt": { "quality": "gold", "tier": 3, "stars": 0 },
-        "pants": { "quality": "gold", "tier": 3, "stars": 0 },
-        "ring": { "quality": "gold", "tier": 1, "stars": 2 },
-        "baton": { "quality": "gold", "tier": 1, "stars": 1 }
+        "hat": {
+          "quality": "gold",
+          "tier": 0,
+          "stars": 1
+        },
+        "pendant": {
+          "quality": "gold",
+          "tier": 0,
+          "stars": 0
+        },
+        "shirt": {
+          "quality": "gold",
+          "tier": 3,
+          "stars": 0
+        },
+        "pants": {
+          "quality": "gold",
+          "tier": 3,
+          "stars": 0
+        },
+        "ring": {
+          "quality": "gold",
+          "tier": 1,
+          "stars": 2
+        },
+        "baton": {
+          "quality": "gold",
+          "tier": 1,
+          "stars": 1
+        }
       },
       "charms": {
-        "cavalry_1": 4, "cavalry_2": 4, "cavalry_3": 4, "cavalry_4": 3, "cavalry_5": 3, "cavalry_6": 3,
-        "infantry_1": 5, "infantry_2": 5, "infantry_3": 5, "infantry_4": 5, "infantry_5": 5, "infantry_6": 5,
-        "archer_1": 6, "archer_2": 5, "archer_3": 5, "archer_4": 5, "archer_5": 5, "archer_6": 5
+        "cavalry_1": 4,
+        "cavalry_2": 4,
+        "cavalry_3": 4,
+        "cavalry_4": 3,
+        "cavalry_5": 3,
+        "cavalry_6": 3,
+        "infantry_1": 5,
+        "infantry_2": 5,
+        "infantry_3": 5,
+        "infantry_4": 5,
+        "infantry_5": 5,
+        "infantry_6": 5,
+        "archer_1": 6,
+        "archer_2": 5,
+        "archer_3": 5,
+        "archer_4": 5,
+        "archer_5": 5,
+        "archer_6": 5
+      }
+    },
+    "acct-01.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_1": 6,
+        "infantry_6": 6,
+        "cavalry_6": 6,
+        "cavalry_2": 6,
+        "infantry_5": 6,
+        "archer_1": 7,
+        "infantry_4": 7,
+        "infantry_2": 10,
+        "infantry_3": 11,
+        "infantry_1": 10,
+        "archer_2": 6,
+        "archer_5": 6,
+        "archer_6": 6,
+        "archer_3": 6,
+        "archer_4": 6,
+        "cavalry_5": 6,
+        "cavalry_4": 6,
+        "cavalry_3": 6
+      }
+    },
+    "acct-02.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_6": 5,
+        "infantry_1": 5,
+        "infantry_3": 5,
+        "infantry_4": 5,
+        "infantry_2": 5,
+        "infantry_5": 5,
+        "cavalry_2": 5,
+        "cavalry_6": 4,
+        "cavalry_5": 4,
+        "archer_1": 5,
+        "archer_6": 5,
+        "cavalry_1": 5,
+        "cavalry_4": 5,
+        "archer_5": 5,
+        "archer_2": 5,
+        "archer_4": 5,
+        "archer_3": 5,
+        "cavalry_3": 5
+      }
+    },
+    "acct-03.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_5": 6,
+        "infantry_4": 7,
+        "infantry_1": 7,
+        "infantry_2": 7,
+        "infantry_3": 7,
+        "cavalry_1": 7,
+        "cavalry_2": 7,
+        "archer_1": 7,
+        "cavalry_3": 7,
+        "cavalry_5": 4,
+        "cavalry_4": 4,
+        "archer_6": 6,
+        "archer_2": 6,
+        "archer_3": 6,
+        "infantry_6": 6,
+        "cavalry_6": 6,
+        "archer_5": 6,
+        "archer_4": 6
+      }
+    },
+    "acct-04.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_5": 6,
+        "infantry_6": 6,
+        "infantry_4": 6,
+        "archer_2": 6,
+        "archer_3": 6,
+        "archer_6": 5,
+        "archer_1": 6,
+        "archer_5": 5,
+        "infantry_3": 8,
+        "cavalry_2": 5,
+        "archer_4": 5,
+        "cavalry_4": 5,
+        "infantry_1": 8,
+        "cavalry_3": 5,
+        "cavalry_1": 5,
+        "cavalry_5": 5,
+        "cavalry_6": 5,
+        "infantry_2": 8
+      }
+    },
+    "acct-05.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_4": 7,
+        "cavalry_6": 7,
+        "cavalry_5": 7,
+        "archer_6": 9,
+        "archer_2": 9,
+        "infantry_3": 8,
+        "infantry_1": 8,
+        "cavalry_3": 8,
+        "infantry_2": 8,
+        "archer_1": 10,
+        "archer_4": 10,
+        "cavalry_1": 8,
+        "infantry_4": 8,
+        "infantry_5": 8,
+        "cavalry_2": 8,
+        "infantry_6": 8
+      }
+    },
+    "acct-06.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_3": 7,
+        "infantry_4": 5,
+        "cavalry_4": 5,
+        "infantry_6": 5,
+        "cavalry_2": 5,
+        "cavalry_6": 5,
+        "archer_1": 6,
+        "archer_5": 5,
+        "infantry_1": 6,
+        "cavalry_5": 5,
+        "infantry_5": 5,
+        "archer_6": 5,
+        "infantry_2": 6,
+        "archer_3": 6,
+        "archer_2": 7,
+        "cavalry_3": 6,
+        "cavalry_1": 5,
+        "archer_4": 6
+      }
+    },
+    "acct-07.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_3": 11,
+        "cavalry_1": 11,
+        "cavalry_2": 11,
+        "cavalry_6": 11,
+        "infantry_3": 17,
+        "infantry_6": 17,
+        "archer_3": 16,
+        "archer_6": 16,
+        "archer_2": 16,
+        "archer_1": 16,
+        "infantry_5": 17,
+        "infantry_1": 17,
+        "infantry_4": 17,
+        "archer_4": 16,
+        "archer_5": 16,
+        "cavalry_5": 11,
+        "cavalry_4": 11,
+        "infantry_2": 17
+      }
+    },
+    "acct-08.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "archer_4": 9,
+        "archer_3": 9,
+        "infantry_2": 11,
+        "infantry_5": 11,
+        "infantry_4": 10,
+        "infantry_3": 10,
+        "infantry_1": 10,
+        "infantry_6": 10,
+        "cavalry_3": 8,
+        "cavalry_1": 8,
+        "cavalry_6": 8,
+        "archer_1": 10,
+        "archer_2": 10,
+        "cavalry_5": 8,
+        "cavalry_4": 8,
+        "cavalry_2": 8
+      }
+    },
+    "acct-09.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_2": 11,
+        "infantry_1": 11,
+        "cavalry_5": 11,
+        "infantry_5": 11,
+        "infantry_4": 11,
+        "cavalry_2": 10,
+        "cavalry_1": 11,
+        "cavalry_4": 10,
+        "cavalry_6": 11,
+        "infantry_3": 11,
+        "cavalry_3": 11,
+        "archer_5": 11,
+        "archer_2": 11,
+        "archer_3": 11,
+        "archer_1": 11,
+        "infantry_6": 11,
+        "archer_6": 10,
+        "archer_4": 11
+      }
+    },
+    "acct-10.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_1": 6,
+        "cavalry_2": 6,
+        "archer_2": 7,
+        "cavalry_6": 5,
+        "infantry_6": 8,
+        "archer_6": 8,
+        "cavalry_3": 6,
+        "infantry_4": 8,
+        "infantry_3": 8,
+        "infantry_2": 8,
+        "infantry_1": 8,
+        "cavalry_5": 5,
+        "archer_1": 7,
+        "archer_3": 7,
+        "cavalry_4": 5,
+        "infantry_5": 8,
+        "archer_4": 8,
+        "archer_5": 8
+      }
+    },
+    "acct-11.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_5": 6,
+        "cavalry_4": 6,
+        "cavalry_2": 6,
+        "cavalry_1": 6,
+        "cavalry_3": 6,
+        "archer_5": 6,
+        "infantry_2": 7,
+        "infantry_5": 7,
+        "infantry_3": 7,
+        "infantry_1": 7,
+        "archer_1": 7,
+        "archer_3": 7,
+        "archer_2": 7,
+        "infantry_6": 6,
+        "infantry_4": 6,
+        "cavalry_6": 5,
+        "archer_4": 6,
+        "archer_6": 6
+      }
+    },
+    "acct-12.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_2": 6,
+        "infantry_5": 6,
+        "cavalry_3": 6,
+        "infantry_1": 7,
+        "archer_5": 7,
+        "infantry_2": 7,
+        "archer_4": 7,
+        "archer_2": 7,
+        "archer_3": 7,
+        "archer_6": 7,
+        "cavalry_5": 5,
+        "infantry_6": 6,
+        "infantry_4": 6,
+        "cavalry_4": 5,
+        "cavalry_6": 5,
+        "archer_1": 8,
+        "cavalry_1": 6,
+        "infantry_3": 6
+      }
+    },
+    "acct-13.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_6": 5,
+        "infantry_3": 5,
+        "infantry_4": 5,
+        "cavalry_2": 5,
+        "infantry_5": 5,
+        "cavalry_1": 5,
+        "infantry_2": 5,
+        "archer_3": 5,
+        "cavalry_6": 4,
+        "cavalry_3": 4,
+        "cavalry_4": 4,
+        "cavalry_5": 4,
+        "archer_1": 6,
+        "archer_6": 5,
+        "infantry_1": 6,
+        "archer_5": 5,
+        "archer_4": 5,
+        "archer_2": 6
+      }
+    },
+    "acct-14.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_1": 4,
+        "cavalry_1": 3,
+        "cavalry_4": 3,
+        "cavalry_3": 3,
+        "cavalry_2": 3,
+        "cavalry_6": 3,
+        "infantry_5": 3,
+        "cavalry_5": 3,
+        "infantry_4": 3,
+        "archer_2": 3,
+        "infantry_6": 3,
+        "infantry_2": 3,
+        "infantry_3": 3,
+        "archer_5": 3,
+        "archer_3": 3,
+        "archer_1": 3,
+        "archer_6": 3,
+        "archer_4": 3
+      }
+    },
+    "acct-15.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_3": 6,
+        "cavalry_2": 6,
+        "infantry_5": 6,
+        "infantry_4": 6,
+        "infantry_2": 6,
+        "infantry_3": 6,
+        "infantry_6": 5,
+        "cavalry_6": 5,
+        "archer_1": 6,
+        "archer_5": 6,
+        "archer_4": 6,
+        "archer_6": 5,
+        "cavalry_1": 6,
+        "infantry_1": 6,
+        "archer_3": 6,
+        "archer_2": 6,
+        "cavalry_4": 6
+      }
+    },
+    "acct-16.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "archer_3": 13,
+        "cavalry_4": 13,
+        "archer_1": 13,
+        "archer_5": 13,
+        "archer_6": 13,
+        "archer_2": 13,
+        "archer_4": 13,
+        "cavalry_5": 13,
+        "infantry_1": 13,
+        "cavalry_6": 14,
+        "cavalry_3": 14,
+        "infantry_5": 14,
+        "infantry_4": 14,
+        "cavalry_1": 14,
+        "cavalry_2": 14,
+        "infantry_2": 15,
+        "infantry_3": 15,
+        "infantry_6": 14
+      }
+    },
+    "acct-17.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_2": 3,
+        "archer_5": 3,
+        "archer_2": 3,
+        "infantry_5": 13,
+        "infantry_3": 13,
+        "infantry_1": 12,
+        "cavalry_3": 8,
+        "cavalry_1": 8,
+        "archer_6": 12,
+        "archer_3": 12,
+        "infantry_6": 13,
+        "archer_1": 12,
+        "archer_4": 12,
+        "cavalry_4": 8,
+        "cavalry_6": 8,
+        "cavalry_5": 8,
+        "cavalry_2": 8,
+        "infantry_4": 13
+      }
+    },
+    "acct-18.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_6": 6,
+        "cavalry_3": 6,
+        "cavalry_2": 6,
+        "cavalry_5": 6,
+        "cavalry_4": 6,
+        "archer_2": 7,
+        "archer_3": 7,
+        "archer_5": 7,
+        "archer_1": 7,
+        "archer_6": 7,
+        "infantry_5": 11,
+        "infantry_1": 10,
+        "infantry_3": 10,
+        "infantry_6": 10,
+        "infantry_4": 10,
+        "infantry_2": 10,
+        "cavalry_1": 6,
+        "archer_4": 6
+      }
+    },
+    "acct-19.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "archer_5": 6,
+        "infantry_3": 5,
+        "infantry_1": 5,
+        "infantry_6": 5,
+        "infantry_4": 5,
+        "cavalry_4": 5,
+        "cavalry_3": 5,
+        "cavalry_2": 5,
+        "infantry_5": 5,
+        "archer_6": 6,
+        "cavalry_1": 5,
+        "cavalry_6": 5,
+        "infantry_2": 5,
+        "archer_4": 6,
+        "archer_3": 5,
+        "archer_2": 5,
+        "cavalry_5": 5,
+        "archer_1": 6
+      }
+    },
+    "acct-20.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_6": 3,
+        "cavalry_3": 3,
+        "cavalry_2": 3,
+        "cavalry_5": 3,
+        "archer_5": 3,
+        "archer_2": 3,
+        "infantry_3": 5,
+        "infantry_1": 5,
+        "infantry_4": 5,
+        "infantry_6": 5,
+        "infantry_2": 5,
+        "infantry_5": 5,
+        "cavalry_1": 4,
+        "archer_6": 3,
+        "archer_3": 3,
+        "archer_4": 3,
+        "archer_1": 3,
+        "cavalry_4": 4
+      }
+    },
+    "acct-21.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_4": 6,
+        "cavalry_3": 6,
+        "cavalry_2": 6,
+        "cavalry_1": 6,
+        "infantry_5": 6,
+        "cavalry_6": 7,
+        "infantry_4": 7,
+        "archer_4": 7,
+        "infantry_2": 7,
+        "infantry_1": 7,
+        "archer_2": 7,
+        "archer_1": 7,
+        "infantry_3": 7,
+        "archer_3": 7,
+        "infantry_6": 6,
+        "cavalry_5": 6,
+        "archer_5": 7,
+        "archer_6": 7
+      }
+    },
+    "acct-22.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_3": 4,
+        "archer_1": 4,
+        "cavalry_6": 3,
+        "cavalry_3": 3,
+        "cavalry_1": 3,
+        "cavalry_5": 3,
+        "cavalry_2": 3,
+        "archer_4": 4,
+        "infantry_5": 4,
+        "archer_2": 4,
+        "cavalry_4": 3
+      }
+    },
+    "acct-23.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "archer_5": 7,
+        "infantry_6": 7,
+        "archer_4": 7,
+        "infantry_5": 7,
+        "archer_6": 7,
+        "cavalry_1": 7,
+        "cavalry_2": 7,
+        "cavalry_6": 4,
+        "cavalry_4": 7,
+        "cavalry_5": 4,
+        "infantry_3": 8,
+        "infantry_2": 8,
+        "infantry_1": 8,
+        "infantry_4": 9,
+        "cavalry_3": 7,
+        "archer_1": 8,
+        "archer_3": 8,
+        "archer_2": 8
+      }
+    },
+    "acct-24.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_6": 5,
+        "infantry_2": 5,
+        "cavalry_3": 4,
+        "cavalry_6": 4,
+        "cavalry_2": 4,
+        "archer_4": 6,
+        "archer_3": 5,
+        "archer_6": 5,
+        "archer_5": 5,
+        "infantry_1": 6,
+        "infantry_4": 6,
+        "cavalry_4": 5,
+        "infantry_3": 5,
+        "cavalry_5": 4,
+        "archer_2": 5,
+        "archer_1": 6,
+        "cavalry_1": 5,
+        "infantry_5": 6
+      }
+    },
+    "acct-27.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_4": 9,
+        "cavalry_1": 9,
+        "cavalry_2": 9,
+        "infantry_4": 10,
+        "infantry_6": 10,
+        "infantry_3": 10,
+        "infantry_2": 10,
+        "infantry_1": 10,
+        "infantry_5": 10,
+        "archer_1": 10
+      }
+    },
+    "acct-28.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_4": 3,
+        "cavalry_3": 3,
+        "cavalry_6": 3,
+        "infantry_2": 3,
+        "cavalry_5": 3,
+        "infantry_5": 3,
+        "cavalry_1": 3,
+        "infantry_4": 3,
+        "infantry_3": 3,
+        "infantry_6": 3,
+        "infantry_1": 5,
+        "cavalry_2": 4,
+        "archer_5": 3,
+        "archer_6": 3,
+        "archer_2": 5,
+        "archer_3": 3,
+        "archer_4": 3,
+        "archer_1": 3
+      }
+    },
+    "acct-31.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_6": 3,
+        "archer_5": 3,
+        "cavalry_6": 3,
+        "archer_3": 3,
+        "infantry_5": 3,
+        "archer_2": 3,
+        "archer_4": 3,
+        "cavalry_2": 4,
+        "infantry_3": 4,
+        "infantry_2": 4,
+        "infantry_1": 4,
+        "cavalry_1": 4,
+        "archer_6": 4,
+        "archer_1": 4,
+        "cavalry_4": 4,
+        "infantry_4": 4
+      }
+    },
+    "acct-32.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_5": 7,
+        "cavalry_3": 10,
+        "cavalry_2": 11,
+        "cavalry_5": 11,
+        "cavalry_6": 10,
+        "infantry_6": 11,
+        "infantry_3": 11,
+        "archer_6": 11,
+        "infantry_2": 11,
+        "cavalry_4": 11,
+        "cavalry_1": 10,
+        "archer_1": 11,
+        "archer_2": 10,
+        "archer_3": 10,
+        "infantry_4": 3,
+        "archer_4": 3,
+        "archer_5": 11
+      }
+    },
+    "acct-33.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_2": 6,
+        "infantry_4": 6,
+        "cavalry_2": 6,
+        "cavalry_5": 6,
+        "cavalry_3": 6,
+        "archer_6": 6,
+        "archer_1": 6,
+        "archer_3": 6,
+        "archer_4": 6,
+        "cavalry_6": 5,
+        "infantry_1": 6,
+        "infantry_3": 6,
+        "infantry_6": 6,
+        "cavalry_1": 6,
+        "archer_5": 6,
+        "archer_2": 6,
+        "cavalry_4": 6,
+        "infantry_5": 6
+      }
+    },
+    "acct-34.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_4": 5,
+        "cavalry_1": 5,
+        "infantry_4": 5,
+        "infantry_6": 5,
+        "cavalry_3": 5,
+        "infantry_3": 5,
+        "infantry_1": 5,
+        "cavalry_6": 5,
+        "cavalry_2": 5,
+        "infantry_5": 5,
+        "infantry_2": 5,
+        "archer_1": 6,
+        "archer_6": 5,
+        "archer_5": 6,
+        "archer_2": 6,
+        "archer_4": 5,
+        "archer_3": 7,
+        "cavalry_5": 5
+      }
+    },
+    "acct-35.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_1": 11,
+        "cavalry_3": 11,
+        "cavalry_5": 11,
+        "cavalry_4": 11,
+        "archer_4": 11,
+        "archer_6": 11,
+        "cavalry_2": 11,
+        "archer_5": 11,
+        "archer_2": 10,
+        "infantry_6": 10,
+        "archer_3": 12,
+        "archer_1": 3,
+        "infantry_5": 3,
+        "infantry_1": 13,
+        "infantry_2": 13,
+        "infantry_3": 13,
+        "infantry_4": 12,
+        "cavalry_6": 11
+      }
+    },
+    "acct-36.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_3": 6,
+        "infantry_5": 6,
+        "cavalry_2": 5,
+        "cavalry_5": 5,
+        "archer_4": 5,
+        "archer_5": 5,
+        "archer_6": 5,
+        "infantry_1": 6,
+        "infantry_6": 6,
+        "archer_2": 5,
+        "cavalry_4": 5,
+        "archer_1": 5,
+        "infantry_4": 6,
+        "infantry_2": 6,
+        "archer_3": 5,
+        "cavalry_1": 5,
+        "cavalry_6": 5,
+        "cavalry_3": 5
+      }
+    },
+    "acct-38.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "cavalry_6": 6,
+        "cavalry_5": 6,
+        "cavalry_4": 6,
+        "cavalry_1": 7,
+        "archer_6": 7,
+        "cavalry_2": 7,
+        "infantry_6": 9,
+        "infantry_5": 9,
+        "infantry_3": 5,
+        "archer_3": 8,
+        "cavalry_3": 6,
+        "archer_4": 8,
+        "archer_5": 8,
+        "archer_1": 8,
+        "archer_2": 8
+      }
+    },
+    "acct-39.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_6": 6,
+        "infantry_2": 6,
+        "infantry_1": 6,
+        "infantry_4": 6,
+        "infantry_3": 6,
+        "cavalry_6": 5,
+        "cavalry_2": 5,
+        "archer_3": 6,
+        "archer_2": 6,
+        "cavalry_1": 5,
+        "cavalry_4": 5,
+        "cavalry_3": 5,
+        "archer_6": 6,
+        "archer_1": 6,
+        "cavalry_5": 5,
+        "infantry_5": 6,
+        "archer_5": 6,
+        "archer_4": 6
+      }
+    },
+    "acct-41.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_2": 6,
+        "infantry_1": 6,
+        "infantry_3": 6,
+        "infantry_6": 5,
+        "infantry_4": 5,
+        "cavalry_5": 5,
+        "cavalry_2": 5,
+        "infantry_5": 5,
+        "archer_4": 5,
+        "archer_1": 5,
+        "archer_6": 5,
+        "cavalry_6": 5,
+        "cavalry_4": 5,
+        "cavalry_1": 5,
+        "cavalry_3": 5,
+        "archer_3": 5,
+        "archer_5": 5,
+        "archer_2": 5
+      }
+    },
+    "acct-42.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_5": 6,
+        "infantry_3": 7,
+        "infantry_2": 7,
+        "cavalry_1": 5,
+        "cavalry_3": 5,
+        "cavalry_6": 4,
+        "archer_2": 6,
+        "archer_6": 6,
+        "archer_1": 6,
+        "archer_3": 6,
+        "archer_5": 6,
+        "archer_4": 6,
+        "infantry_6": 6,
+        "cavalry_2": 5,
+        "infantry_1": 6,
+        "cavalry_5": 5,
+        "infantry_4": 7,
+        "cavalry_4": 4
+      }
+    },
+    "acct-44.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_6": 4,
+        "infantry_5": 4,
+        "cavalry_4": 3,
+        "cavalry_2": 3,
+        "cavalry_1": 3,
+        "cavalry_5": 3,
+        "cavalry_3": 2,
+        "archer_2": 4,
+        "cavalry_6": 2,
+        "archer_5": 3,
+        "archer_3": 3,
+        "archer_6": 4,
+        "archer_4": 4
+      }
+    },
+    "acct-45.webp": {
+      "device": "cropped account-listing image (gear area only)",
+      "charms": {
+        "infantry_3": 5,
+        "infantry_6": 5,
+        "cavalry_5": 5,
+        "cavalry_1": 5,
+        "cavalry_2": 5,
+        "cavalry_3": 5,
+        "cavalry_6": 5,
+        "archer_1": 5,
+        "archer_3": 5,
+        "infantry_1": 6,
+        "infantry_2": 5,
+        "infantry_5": 5,
+        "cavalry_4": 5,
+        "archer_2": 5,
+        "archer_5": 5,
+        "archer_6": 5,
+        "infantry_4": 5,
+        "archer_4": 5
       }
     }
   }
