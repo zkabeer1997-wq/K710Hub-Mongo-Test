@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { KVK_ALLIANCES, KVK_AVAILABILITY_OPTIONS } from '../../lib/playerCombatOptions.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
+import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 
 const AVAILABILITY_OPTIONS = KVK_AVAILABILITY_OPTIONS;
 const ALLIANCES = KVK_ALLIANCES;
@@ -27,11 +28,13 @@ export default function PlayerRecordForm({ initialMemberId = '' }) {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'Could not load your saved availability.');
         if (!cancelled && result.row) {
-          setOnFile(result.row);
-          setName(result.row.name || '');
+          // This cycle's answer if saved, otherwise last cycle's as a starting point (not saved until Save).
+          const start = result.record || result.previous || null;
+          setOnFile(result.record || null);
+          setName(result.row.name || start?.name || '');
           setMemberId(result.row.member_id);
-          setCurrentAlliance(result.row.current_alliance || '');
-          setAvailability(result.row.availability || '');
+          setCurrentAlliance(start?.current_alliance || '');
+          setAvailability(start?.availability || '');
         }
       } catch (error) {
         if (!cancelled) {
@@ -72,7 +75,8 @@ export default function PlayerRecordForm({ initialMemberId = '' }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not save your availability.');
       setOnFile(result.row);
-      setStatus('Saved your alliance and KvK availability.');
+      setStatus('Saved. Your KvK availability is done for this cycle.');
+      refreshMemberFormStatus();
     } catch (error) {
       setIsError(true);
       setStatus(error.message || 'Could not save. Please try again.');

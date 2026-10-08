@@ -4,6 +4,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { validateNobleAdvisor } from '../../../lib/nobleAdvisor.mjs';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
+import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store' };
@@ -12,19 +13,14 @@ export async function GET(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Member login required.' }, { status: 401, headers });
   try {
-    const nobleColl = await getCollection('noble_advisor_submissions');
     const profiles = await getCollection(COLLECTIONS.POWER_PROFILES);
-    const [record, profile] = await Promise.all([
-      nobleColl.findOne({ member_id: session.memberId }),
+    const [loaded, profile] = await Promise.all([
+      loadMemberCycleRecord('noble', session.memberId),
       profiles.findOne({ member_id: session.memberId }, { projection: { name: 1 } }),
     ]);
-    const { _id, ...safe } = record || {};
+    const { cycle, record, previous } = loaded;
     return NextResponse.json(
-      {
-        record: record
-          ? { ...safe, id: safe.id || String(_id) }
-          : { in_game_name: profile?.name || '', member_id: session.memberId },
-      },
+      { record, previous, cycle, member_id: session.memberId, profile_name: profile?.name || '' },
       { headers }
     );
   } catch {
@@ -52,20 +48,24 @@ export async function POST(request) {
   const { record, error } = validateNobleAdvisor(body);
   if (error) return NextResponse.json({ error }, { status: 400, headers });
   try {
-    const coll = await getCollection('noble_advisor_submissions');
+    const cycle = await getCurrentEventCycle('flamedragon');
+    if (!cycle) return NextResponse.json({ error: 'There is no active Flamedragon cycle yet.' }, { status: 409, headers });
+    const coll = await getCollection(COLLECTIONS.NOBLE_ADVISOR);
     await coll.updateOne(
-      { member_id: session.memberId },
+      { member_id: session.memberId, event_cycle_id: cycle.id },
       {
         $set: {
           ...record,
           member_id: session.memberId,
+          event_cycle_id: cycle.id,
+          event_cycle_label: cycle.label,
           updated_at: new Date(),
         },
         $setOnInsert: { created_at: new Date() },
       },
       { upsert: true }
     );
-    return NextResponse.json({ ok: true }, { headers });
+    return NextResponse.json({ ok: true, cycle: { id: cycle.id, label: cycle.label } }, { headers });
   } catch {
     return NextResponse.json({ error: 'Unable to save your booking.' }, { status: 500, headers });
   }

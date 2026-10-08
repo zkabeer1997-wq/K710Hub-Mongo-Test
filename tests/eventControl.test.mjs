@@ -134,7 +134,7 @@ test('GET shape for a fresh kvk and flamedragon cycle', async () => {
   assert.ok(kvk.forms.every((f) => f.state === 'open' && f.is_open));
   assert.deepEqual(kvk.appointments, { published: false, cycle_id: 'current' });
   assert.equal(kvk.next_actions[0], 'close_forms');
-  assert.deepEqual(kvk.counts, { applicants: 0, assigned: 0, unassigned: 0, forms_open: 4, forms_total: 4 });
+  assert.deepEqual(kvk.counts, { applicants: 0, assigned: 0, unassigned: 0, forms_open: 4, forms_total: 4, forms_submitted: { joiner: 0, prep: 0 } });
   const fd = await get('flamedragon');
   assert.equal(fd.title, 'Flamedragon Tyrant');
   assert.equal(fd.appointments, null);
@@ -217,7 +217,7 @@ test('archive_reset snapshots, ends the cycle, closes forms and keeps data', asy
   state.tables[T.FLAMEDRAGON_FORMS] = [{ member_id: 'f1', name: 'Fay', event_cycle_id: cycle.id }];
   state.tables[T.FLAMEDRAGON_ADMIN_RALLIES] = [{ id: 'r1', member_ids: ['f1'], position: 0 }];
   const s1 = await get('flamedragon');
-  assert.deepEqual(s1.counts, { applicants: 1, assigned: 1, unassigned: 0, forms_open: 2, forms_total: 2 });
+  assert.deepEqual(s1.counts, { applicants: 1, assigned: 1, unassigned: 0, forms_open: 2, forms_total: 2, forms_submitted: { dragon: 1, noble: 0 } });
   assert.equal((await post({ type: 'flamedragon', action: 'archive_reset', confirm: false })).status, 400);
   const res = await post({ type: 'flamedragon', action: 'archive_reset', confirm: true });
   assert.equal(res.status, 200);

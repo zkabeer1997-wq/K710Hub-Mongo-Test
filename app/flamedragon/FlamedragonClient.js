@@ -25,6 +25,7 @@ import {
   serializeGovernorGearSelections,
 } from '../../lib/flamedragonForm.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
+import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 
 function FlamedragonForm({ initialMemberId = '', intro }) {
   const { intro: fieldMetaIntro } = useFormFieldMeta('dragon');
@@ -99,14 +100,15 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
       return;
     }
     if (result.member_id) setForm((current) => ({ ...current, member_id: result.member_id }));
-    if (result.record) {
-      const r = result.record;
+    // This cycle's saved form, otherwise last cycle's answers as a starting point (not saved until Submit).
+    const r = result.record || result.previous;
+    if (r) {
       const charmSelections = parseCharmSelections(r.charms);
       const gearSelections = parseGovernorGearSelections(r.governor_gear);
       setCharms(charmSelections);
       setGovernorGear(gearSelections);
       setHeroes(Array.isArray(r.heroes) ? r.heroes : []);
-      setOnFile(r);
+      setOnFile(result.record || null);
       setForm((current) => ({
         ...current,
         name: current.name || r.name || '',
@@ -160,6 +162,7 @@ function FlamedragonForm({ initialMemberId = '', intro }) {
     }
     setIsError(false);
     setOnFile(result.record);
+    refreshMemberFormStatus();
     setStatus(result.status === 'created' ? 'Submitted! Your entry has been created.' : 'Updated! Your entry has been saved.');
   }
   return (

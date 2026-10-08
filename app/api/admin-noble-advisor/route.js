@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
+import { listEventCycles, loadCycleFormRows } from '../../../lib/eventCycles.server.js';
 import { NOBLE_FIELDS, validateNobleAdvisor } from '../../../lib/nobleAdvisor.mjs';
 
 export const dynamic = 'force-dynamic';
@@ -22,11 +23,16 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
   }
   try {
-    const coll = await getCollection('noble_advisor_submissions');
-    const data = await coll.find({}).sort({ created_at: 1 }).toArray();
+    // ?cycle=<Flamedragon cycle id> (default: the current cycle). Ended cycles read the rows tagged with that id.
+    const cycleId = new URL(request.url || '', 'http://localhost').searchParams.get('cycle') || null;
+    const loaded = await loadCycleFormRows('noble', cycleId);
+    if (!loaded) return NextResponse.json({ error: 'Cycle not found.' }, { status: 404, headers });
+    const cycles = (await listEventCycles('flamedragon')).map((c) => ({ id: c.id, label: c.label, is_current: c.is_current === true }));
     return NextResponse.json(
       {
-        rows: (data || []).map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id) })),
+        rows: loaded.rows.map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id) })),
+        cycle: { id: loaded.cycle.id, label: loaded.cycle.label, is_current: loaded.cycle.is_current === true },
+        cycles,
       },
       { headers }
     );

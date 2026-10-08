@@ -16,7 +16,7 @@ const strings = new Set(JSON.parse(readFileSync(out, 'utf8')));
 test('manifest covers member forms, dashboard and appointment strings', () => {
   for (const text of [
     'Needs your input', 'Get started', 'Your vote', 'Submit my vote', 'Current power', // Phase 8 events + dashboard
-    'Saving replaces your previous entry; it never creates a duplicate.',             // upsert notice
+    'You can change your answers and save again.',                                     // upsert notice
     'Apply', 'My Appointments', 'View Schedule', 'Update my application',            // appointments UI
     'Not applied', 'Pending', 'Assigned',                                            // lib/kvkAppointments.mjs status labels
     'Legion time', 'Flexible', 'Absent',                                             // lib/eventForms.mjs (.mjs source)

@@ -140,3 +140,16 @@ local Mongo is not.
 **Google Drive callback CSP.** `/api/*` CSP no longer allows `'unsafe-inline'`
 scripts; `/api/google-drive/callback` is excluded from that header and sets its
 own nonce-based CSP and escapes the message it renders.
+
+## Per-cycle member forms (2026-10)
+Every member form except Power Profile is saved per event cycle (KvK: Availability, Prep, Appointments;
+Flamedragon: Dragon, Noble Advisor). Prep and Noble are one row per (member_id, event_cycle_id); Availability
+and Dragon keep one roster row per member plus `event_cycle_snapshots` for earlier cycles.
+
+On cutover:
+1. Run `node scripts/ensure-indexes.mjs`. It drops the old one-row-per-member `member_id_unique` index on
+   `prep_backpack` and `noble_advisor_submissions` and creates `member_cycle_unique` (partial, tagged rows only).
+2. Legacy rows without `event_cycle_id` (imported prep/noble/availability/dragon rows) are tagged with the OLDEST
+   cycle of their type by `backfillCycleTags()` (lib/eventCycles.server.js). It runs once per server process the
+   first time a cycle is read, is idempotent, and needs no manual step. Start the new cycle afterwards: members then
+   see every cycle form as "not done" with last cycle's answers offered as a starting point.

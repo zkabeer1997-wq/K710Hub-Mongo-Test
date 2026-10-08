@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import NobleAdvisorFields, { SlotPicker } from '../../components/NobleAdvisorFields';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
+import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 const CONSTRUCTION_UPGRADES = ['TG5', 'TG6', 'TG7', 'TG8'];
 const T11_TROOPS = ['T11 Infantry', 'T11 Cavalry', 'T11 Archers'];
 
@@ -34,6 +35,40 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
   const [isError, setIsError] = useState(false);
+
+  // Start from this cycle's saved booking; if there is none yet, start from last cycle's answers
+  // (the notice above says so). Nothing is saved until the member presses Submit.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/prep-backpack', { cache: 'no-store', signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const r = data?.record || data?.previous;
+        if (!r) return;
+        setForm({
+          inGameName: r.in_game_name || '',
+          wantConstruction: r.want_construction || '',
+          constructionUpgrades: r.construction_upgrades || [],
+          ttgUsed: r.ttg_used || '',
+          tgUsed: r.tg_used || '',
+          wantResearch: r.want_research || '',
+          t11Troops: r.t11_troops || [],
+          tgDust: r.tg_dust || '',
+          researchSpeedupDays: r.research_speedup_days || '',
+          wantTroopTraining: r.want_troop_training || '',
+          isTransfer: r.is_transfer || '',
+          troopSpeedupDays: r.troop_speedup_days || '',
+          promotingT11: r.promoting_t11 || '',
+          notes: r.notes || '',
+        });
+        setAvailDay1(r.avail_day1 || []);
+        setAvailDay2(r.avail_day2 || []);
+        setAvailDay4(r.avail_day4 || []);
+        setAvailDay5(r.avail_day5 || []);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -100,12 +135,8 @@ export default function PrepBackpackForm({ initialMemberId = '' }) {
       return;
     }
     setIsError(false);
-    setStatus('Thanks! Your Prep Phase Backpack booking has been received.');
-    setForm(initialForm);
-    setAvailDay1([]);
-    setAvailDay2([]);
-    setAvailDay4([]);
-    setAvailDay5([]);
+    setStatus('Saved. Your Prep Phase Backpack booking is done for this cycle. You can change it and save again.');
+    refreshMemberFormStatus();
   }
 
   return (

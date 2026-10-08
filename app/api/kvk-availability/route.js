@@ -5,7 +5,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { readKingshotSession } from '../../../lib/memberAuthKingshot';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
-import { getCurrentEventCycle, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
+import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 
 const ALLIANCES = ['710', 'RED', 'SKY'];
 const AVAILABILITY = [
@@ -14,6 +14,12 @@ const AVAILABILITY = [
   'Full battle (12-17 UTC)',
   'Not Available',
 ];
+
+function pickJoiner(row) {
+  if (!row) return null;
+  const { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label } = row;
+  return { name, member_id, current_alliance, availability, updated_at, event_cycle_id, event_cycle_label };
+}
 
 async function resolveSession(request) {
   try {
@@ -47,8 +53,11 @@ export async function GET(request) {
         },
       }
     );
+    // `row` is the member's roster row (name, ID, last values) as before. `record` is the answer
+    // for THIS KvK cycle (null until saved) and `previous` the latest earlier-cycle answer.
+    const { cycle, record, previous } = await loadMemberCycleRecord('joiner', session.memberId);
     return NextResponse.json(
-      { row: data, auth: session.via },
+      { row: data, auth: session.via, record: pickJoiner(record), previous: pickJoiner(previous), cycle },
       { headers: { 'Cache-Control': 'no-store' } }
     );
   } catch {

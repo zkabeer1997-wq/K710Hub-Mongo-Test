@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { publicFlamedragonRecord, sanitizeFlamedragonInput } from '../../../lib/flamedragonForm.mjs';
-import { getCurrentEventCycle, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
+import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
@@ -35,9 +35,11 @@ export async function GET(request) {
   const session = await readMemberSession(request);
   if (!session) return UNAUTHORIZED();
   try {
-    const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
-    const data = await coll.findOne({ member_id: session.memberId }, { projection: PUBLIC_PROJECT });
-    return NextResponse.json({ member_id: session.memberId, record: publicFlamedragonRecord(data) });
+    // `record` is this Flamedragon cycle's answer (null until saved); `previous` is the latest
+    // earlier-cycle answer, offered as a pre-filled starting point.
+    const { cycle, record, previous } = await loadMemberCycleRecord('dragon', session.memberId);
+    const strip = (row) => (row ? publicFlamedragonRecord(Object.fromEntries(Object.entries(row).filter(([k]) => k in PUBLIC_PROJECT || k === 'event_cycle_label'))) : null);
+    return NextResponse.json({ member_id: session.memberId, record: strip(record), previous: strip(previous), cycle });
   } catch (error) {
     console.error('flamedragon GET failed', error);
     return NextResponse.json({ error: 'Could not load your form. Please try again.' }, { status: 500 });

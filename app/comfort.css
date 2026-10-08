@@ -162,3 +162,9 @@
 @media (pointer: coarse) {
   .ui-term-trigger { min-height: 32px; padding: 4px 0; }
 }
+
+/* per-cycle */
+.upsert-notice{display:flex;flex-direction:column;gap:4px;font-size:17px;line-height:1.5}
+.upsert-notice strong{font-size:18px}
+.upsert-notice span{color:var(--t-secondary)}
+.carry-over-notice{margin:0 0 16px;padding:12px 16px;border:1px solid var(--edge);border-left:3px solid var(--brass);border-radius:6px;background:rgba(255,255,255,.03);color:var(--parchment);font-size:17px;line-height:1.5}

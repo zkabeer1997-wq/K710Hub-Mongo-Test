@@ -10,7 +10,6 @@ import MemberDetailsDrawer from './MemberDetailsDrawer';
 import { buildKvkMembersWorkbook, formatUnitLevel, kvkMemberExportRows, KVK_MEMBER_HEADERS } from '../../lib/kvkMembersExport.mjs';
 import ExportToGoogleDrive from './ExportToGoogleDrive';
 import { useEscapeToClose } from '../../lib/useEscapeToClose';
-import { filterRowsUpdatedOnOrAfter } from '../../lib/adminTimeWindow.mjs';
 import {
   HEROES,
   KVK_ALLIANCES,
@@ -105,7 +104,6 @@ export default function RosterWorkspace({
   const [tierFilter,setTierFilter]=useState('');
   const [sortKey, setSortKey] = useState('updated_at');
   const [sortDir, setSortDir] = useState('desc');
-  const [assignmentCutoff, setAssignmentCutoff] = useState('');
   const [rallies, setRallies] = useState([]);
   const [ralliesHydrated, setRalliesHydrated] = useState(false);
   const [newMember, setNewMember] = useState({ ...EMPTY_MEMBER });
@@ -337,7 +335,7 @@ export default function RosterWorkspace({
   }
 
   function handleAutoAssign(rallyId) {
-    const eligibleRows = filterRowsUpdatedOnOrAfter(seasonFilteredRows, assignmentCutoff);
+    const eligibleRows = seasonFilteredRows;
     const result = autoAssignRallyMembers(rallies, rallyId, eligibleRows);
     if (!result.summary) return;
     setRallies(result.rallies);
@@ -583,26 +581,9 @@ export default function RosterWorkspace({
                 Add rally {rallies.length + 1}
               </button>
             </div>
-            <div className="admin-time-cutoff">
-              <label htmlFor="rally-assignment-cutoff">Only include answers updated after</label>
-              <input
-                id="rally-assignment-cutoff"
-                type="datetime-local"
-                value={assignmentCutoff}
-                onChange={(event) => setAssignmentCutoff(event.target.value)}
-              />
-              {assignmentCutoff ? (
-                <>
-                  <button type="button" onClick={() => setAssignmentCutoff('')}>Use all updates</button>
-                  <p>
-                    Auto assign will use {filterRowsUpdatedOnOrAfter(seasonFilteredRows, assignmentCutoff).length} of {seasonFilteredRows.length} applicants{cycleType && seasonFilter !== 'all' ? ' in this cycle' : ''}.
-                    Older answers stay in the table.
-                  </p>
-                </>
-              ) : (
-                <p>Auto assign will use every applicant.</p>
-              )}
-            </div>
+            <p className="ec-panel-note">
+              Auto assign uses all {seasonFilteredRows.length} applicants{cycleType && seasonFilter !== 'all' ? ' in this cycle' : ''}.
+            </p>
             <div className="rally-list">
               {rallies.length === 0 && (
                 <div className="rally-empty-state">Add rally 1 to start assigning applicants.</div>

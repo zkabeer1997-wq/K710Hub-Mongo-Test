@@ -2,16 +2,22 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { listEventCycles, loadCycleFormRows } from '../../../lib/eventCycles.server.js';
 
 export async function GET(request) {
   if (!(await isAdminRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
-    const coll = await getCollection(COLLECTIONS.PREP_BACKPACK);
-    const data = await coll.find({}).sort({ created_at: 1 }).toArray();
+    // ?cycle=<KvK cycle id> (default: the current cycle). Ended cycles read the rows tagged with that id.
+    const cycleId = new URL(request.url || '', 'http://localhost').searchParams.get('cycle') || null;
+    const loaded = await loadCycleFormRows('prep', cycleId);
+    if (!loaded) return NextResponse.json({ error: 'Cycle not found.' }, { status: 404 });
+    const cycles = (await listEventCycles('kvk')).map((c) => ({ id: c.id, label: c.label, is_current: c.is_current === true }));
     return NextResponse.json({
-      rows: (data || []).map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id) })),
+      rows: loaded.rows.map(({ _id, ...r }) => ({ ...r, id: r.id || String(_id) })),
+      cycle: { id: loaded.cycle.id, label: loaded.cycle.label, is_current: loaded.cycle.is_current === true },
+      cycles,
     });
   } catch (error) {
     console.error('admin-prep-backpack' + ' failed', error);

@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { filterRowsUpdatedOnOrAfter } from '../../../../lib/adminTimeWindow.mjs';
 import AdminShell from '../../../../components/admin/AdminShell';
 import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
@@ -126,7 +125,9 @@ export default function AdminPrepMinistersPage({ noble = false }) {
   const [sortKey,setSortKey] = useState('in_game_name');
   const [sortDir,setSortDir] = useState('asc');
   const [rows, setRows] = useState([]);
-  const [scheduleCutoff, setScheduleCutoff] = useState('');
+  const [cycleId, setCycleId] = useState('');
+  const [cycles, setCycles] = useState([]);
+  const [cycle, setCycle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
@@ -140,14 +141,18 @@ export default function AdminPrepMinistersPage({ noble = false }) {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const response = await fetch(api);
+      setError('');
+      const response = await fetch(cycleId ? `${api}?cycle=${encodeURIComponent(cycleId)}` : api);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) { setError(data.error || 'Failed to load submissions.'); setLoading(false); return; }
       setRows(data.rows || []);
+      setCycles(data.cycles || []);
+      setCycle(data.cycle || null);
+      setResult(null);
       setLoading(false);
     }
     load().catch(() => { setError('Unable to load submissions.'); setLoading(false); });
-  }, [api]);
+  }, [api, cycleId]);
 
   async function handleLogout() {
     await fetch('/api/admin-logout', { method: 'POST' });
@@ -168,10 +173,8 @@ export default function AdminPrepMinistersPage({ noble = false }) {
     }).sort((a,b)=>compareValues(a[sortKey],b[sortKey],['troop_speedup_days','research_speedup_days','tg_used','ttg_used','tg_dust'].includes(sortKey))*(sortDir==='asc'?1:-1));
   }, [rows, query, consFilter, resFilter, ttFilter, transferFilter, promotionFilter, slotFilter, minSpeedups, sortKey, sortDir, noble]);
 
-  const scheduleRows = useMemo(
-    () => filterRowsUpdatedOnOrAfter(rows, scheduleCutoff),
-    [rows, scheduleCutoff],
-  );
+  // Each cycle has its own rows, so the schedule always uses every answer in the chosen cycle.
+  const scheduleRows = rows;
 
   function makeSchedule() { const data = schedule(scheduleRows.map(row=>({...row,...Object.fromEntries(ARRAY_KEYS.map(key=>[key,Array.isArray(row[key])?row[key]:String(row[key] || '').split(',').map(v=>v.trim()).filter(Boolean)]))}))); return noble ? {...data,days:data.days.filter(day=>day.day===4)} : data; }
   function handleGenerate() { setResult(makeSchedule()); }
@@ -248,17 +251,13 @@ export default function AdminPrepMinistersPage({ noble = false }) {
             <label>Order<select value={sortDir} onChange={e=>setSortDir(e.target.value)}><option value="asc">Ascending</option><option value="desc">Descending</option></select></label>
           </TableFilters>
           <div className="admin-time-cutoff schedule-time-cutoff">
-            <label htmlFor={noble ? 'noble-schedule-cutoff' : 'prep-schedule-cutoff'}>Use submissions updated from</label>
-            <input
-              id={noble ? 'noble-schedule-cutoff' : 'prep-schedule-cutoff'}
-              type="datetime-local"
-              value={scheduleCutoff}
-              onChange={(event) => { setScheduleCutoff(event.target.value); setResult(null); }}
-            />
-            {scheduleCutoff && <button type="button" onClick={() => { setScheduleCutoff(''); setResult(null); }}>Use all submissions</button>}
+            <label htmlFor={noble ? 'noble-cycle' : 'prep-cycle'}>{noble ? 'Flamedragon cycle' : 'KvK cycle'}</label>
+            <select id={noble ? 'noble-cycle' : 'prep-cycle'} value={cycleId || cycle?.id || ''} onChange={(event) => setCycleId(event.target.value)}>
+              {cycles.map((c) => (<option key={c.id} value={c.id}>{c.label}{c.is_current ? ' (current)' : ''}</option>))}
+            </select>
             <p>
-              Schedule generation will use {scheduleRows.length} of {rows.length} submissions.
-              {scheduleCutoff ? ' Older submissions remain in the table.' : ''}
+              {cycle && !cycle.is_current ? 'Showing an earlier cycle. ' : ''}
+              The schedule uses all {rows.length} answers saved in {cycle ? cycle.label : 'this cycle'}. Members start every new cycle with a fresh form.
             </p>
           </div>
           <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:18,alignItems:'center'}}>
@@ -274,7 +273,7 @@ export default function AdminPrepMinistersPage({ noble = false }) {
                 }));
               }}
             />
-            <span>Uses the update time frame above, regardless of table filters.</span>
+            <span>Uses every answer in the chosen cycle, regardless of table filters.</span>
             {saveStatus && <span role="status">{saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : 'Save failed — correct the edited value before generating.'}</span>}
           </div>
           {loading && <TableSkeleton columns={COLUMNS.length} rows={7} />}
