@@ -59,7 +59,7 @@ test('needsReview thresholds', () => {
 });
 
 test('kind registry', () => {
-  assert.deepEqual(Object.keys(KINDS).sort(), ['hero_gear', 'governor_profile']);
+  assert.deepEqual(Object.keys(KINDS).sort(), ['governor_profile', 'hero_gear']);
   for (const k of Object.keys(KINDS)) {
     const e = getKind(k);
     assert.ok(e.gameData && typeof e.validate === 'function' && e.profileSchema);
