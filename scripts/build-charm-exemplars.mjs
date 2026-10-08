@@ -7,8 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 import { CHARM_GRID, harvestExemplar } from '../lib/scan/readers/charmReader.mjs';
-import { charmRegions } from '../lib/scan/kinds/governorProfile/layout.mjs';
-import { normToPx } from '../lib/scan/coords.mjs';
+import { charmWindows } from '../lib/scan/kinds/governorProfile/charms.mjs';
 import { crop } from '../lib/scan/normalize.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -24,13 +23,12 @@ for (const [file, lab] of Object.entries(labels.images)) {
   const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const px = { width: info.width, height: info.height, data: new Uint8ClampedArray(data) };
   const taken = new Map();
-  for (const region of charmRegions()) {
+  for (const region of charmWindows(px)) {
     const level = lab.charms[region.slot];
     if (!level) continue;
     const key = `${region.troop}:${level}`;
     if ((taken.get(key) || 0) >= PER_IMAGE_LEVEL) continue;
-    const rect = normToPx(region.rect, { x0: 0, y0: 0, scale: info.width, aspect: info.height / info.width }, info);
-    const ex = harvestExemplar(crop(px, rect), region.troop, level);
+    const ex = harvestExemplar(crop(px, region.rect), region.troop, level);
     if (!ex) continue;
     taken.set(key, (taken.get(key) || 0) + 1);
     items.push({ ...ex, source: file });
