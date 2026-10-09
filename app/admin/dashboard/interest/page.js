@@ -14,6 +14,7 @@ import { decisionConfirmText, acceptanceMessage, findDuplicateApplicants } from 
 
 const COMPACT_COLUMNS = [
   { key: 'in_game_name', label: 'Name' },
+  { key: 'verified', label: 'Verification' },
   { key: 'current_server', label: 'Server' },
   { key: 'current_alliance', label: 'Alliance' },
   { key: 'migrate_alliance', label: 'Target' },
@@ -24,7 +25,6 @@ const COMPACT_COLUMNS = [
   { key: 'passes_required', label: 'Passes' },
   { key: 'intake_period', label: 'Intake' },
   { key: 'created_at', label: 'Submitted' },
-  { key: 'verified', label: 'Verification' },
 ];
 
 const COLUMNS = [
@@ -863,7 +863,7 @@ export default function AdminInterestPage() {
                 <div className="admin-drawer-section">
                   <h3>Application</h3>
                   <div className="admin-drawer-grid">
-                    {COLUMNS.filter((c) => c.key !== 'status').map((col) => (
+                    {COLUMNS.filter((c) => c.key !== 'status' && c.key !== 'verified').map((col) => (
                       <div key={col.key} className="admin-drawer-field">
                         <span>{col.label}</span>
                         <strong>{cellValue(selectedRow, col.key) || '-'}</strong>
