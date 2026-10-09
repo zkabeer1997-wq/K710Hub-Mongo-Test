@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../../lib/adminAuth';
+import { ALLIANCE_IMAGE_MAX_BYTES } from '../../../../lib/allianceImages.mjs';
 import { getSiteImages, publicSiteImage, SiteImageError } from '../../../../lib/siteImages.server';
 
 export const dynamic = 'force-dynamic';
@@ -8,10 +9,11 @@ export const dynamic = 'force-dynamic';
 // Gallery and guide images have their own routes (extra metadata) but use the
 // same store. POST multipart { folder, file, alt?, subfolder? }
 //            or JSON      { folder, driveFileId, alt?, subfolder? } (Google Picker copy)
-const ALLOWED = ['hero', 'tool', 'help', 'guide'];
+const ALLOWED = ['hero', 'tool', 'help', 'guide', 'alliance'];
 // Guide card pictures are cropped to 512x512 in the browser, so a direct upload over 2 MB is not
 // from our editor. Picker copies keep the default cap because the browser crops them afterwards.
-const UPLOAD_MAX_BYTES = { guide: 2 * 1024 * 1024 };
+// Alliance photos are cropped to 1600x900 in the browser and get the same 2 MB cap.
+const UPLOAD_MAX_BYTES = { guide: 2 * 1024 * 1024, alliance: ALLIANCE_IMAGE_MAX_BYTES };
 
 function fail(error) {
   if (error instanceof SiteImageError || error?.name === 'FolderNameError') {

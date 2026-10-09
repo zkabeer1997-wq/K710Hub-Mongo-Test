@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AllianceEventEditor from './AllianceEventEditor';
 import { validateAllianceEvents } from '../../lib/allianceEvents.mjs';
 import AllianceLeadersEditor from './AllianceLeadersEditor';
 import { validateLeaders } from '../../lib/allianceLeaders.mjs';
 import ConfirmDialog from './ConfirmDialog';
+import DriveStatusBanner from './DriveStatusBanner';
+import ImageUploadField from './ImageUploadField';
+import { loadDriveStatus } from './AddImageButtons';
+import { ALLIANCE_IMAGE_WIDTH, ALLIANCE_IMAGE_HEIGHT, ALLIANCE_IMAGE_MIN_WIDTH, ALLIANCE_IMAGE_MIN_HEIGHT, ALLIANCE_IMAGE_MAX_BYTES } from '../../lib/allianceImages.mjs';
 import TableSkeleton from './TableSkeleton';
 import { Button, Field, Input, Select, Textarea, Table } from '../ui';
 
@@ -15,7 +19,13 @@ import { notifyBearScheduleChanged } from '../BearScheduleProvider';
 const STATUSES = ['open', 'selective', 'closed'];
 const EMPTY_FORM = {
   tag: '', name: '', blurb: '', leader_player_id: '', timezone_focus: '',
-  recruiting_status: 'open', language: '', roster_size: '', active: true, sort_order: 0, bear_times_utc: [], scheduled_events: [], leaders: [],
+  recruiting_status: 'open', language: '', roster_size: '', active: true, sort_order: 0, bear_times_utc: [], scheduled_events: [], leaders: [], image_id: '', image_alt: '',
+};
+
+// Crop settings for the alliance photo: centred 16:9, 1600 x 900, refuse sources under 800 px wide.
+const PHOTO_CROP = {
+  width: ALLIANCE_IMAGE_WIDTH, height: ALLIANCE_IMAGE_HEIGHT, minWidth: ALLIANCE_IMAGE_MIN_WIDTH, minHeight: ALLIANCE_IMAGE_MIN_HEIGHT, maxBytes: ALLIANCE_IMAGE_MAX_BYTES,
+  tooSmall: (w, h) => `This photo is too small (${w} x ${h}). Use one that is at least ${ALLIANCE_IMAGE_MIN_WIDTH} pixels wide and ${ALLIANCE_IMAGE_MIN_HEIGHT} pixels tall.`,
 };
 
 export default function AlliancesPanel() {
@@ -27,6 +37,19 @@ export default function AlliancesPanel() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmRow, setConfirmRow] = useState(null);
+  const [driveReady, setDriveReady] = useState(false);
+  // The photo that is actually saved on the alliance; any other id in the form is an unsaved upload.
+  const liveImageId = useRef('');
+  useEffect(() => { loadDriveStatus().then((s) => setDriveReady(Boolean(s?.connected))); }, []);
+
+  function dropUnsavedPhoto(id) {
+    if (id && id !== liveImageId.current) fetch(`/api/admin-drive/images?id=${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+  }
+  function changePhoto(image) {
+    // An upload that was never saved is just clutter in Drive: drop it when replaced or removed.
+    if (form.image_id && form.image_id !== image?.id) dropUnsavedPhoto(form.image_id);
+    setForm((f) => ({ ...f, image_id: image?.id || '' }));
+  }
 
   async function load() {
     setLoading(true);
@@ -46,7 +69,7 @@ export default function AlliancesPanel() {
   useEffect(() => { load(); }, []);
 
   function openCreate() {
-    setError(''); setStatus(''); setEditingTag('new'); setForm(EMPTY_FORM);
+    setError(''); setStatus(''); setEditingTag('new'); setForm(EMPTY_FORM); liveImageId.current = '';
   }
 
   function openEdit(row) {
@@ -60,11 +83,14 @@ export default function AlliancesPanel() {
       leader_player_id: row.leader_player_id || '', timezone_focus: row.timezone_focus || '',
       recruiting_status: row.recruiting_status, language: row.language || '',
       roster_size: row.roster_size ?? '', active: row.active, sort_order: row.sort_order,
+      image_id: row.image_id || '', image_alt: row.image_alt || '',
     });
+    liveImageId.current = row.image_id || '';
   }
 
   function closeEdit() {
     if (saving) return;
+    dropUnsavedPhoto(form.image_id);
     setEditingTag(null); setForm(EMPTY_FORM);
   }
 
@@ -86,7 +112,7 @@ export default function AlliancesPanel() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to save alliance.');
       notifyBearScheduleChanged();
-      setStatus(isNew ? 'Alliance created.' : 'Alliance saved. Bear Hunt times and event dates updated across the site.');
+      setStatus(result.warning || (isNew ? 'Alliance created.' : 'Alliance saved. Bear Hunt times and event dates updated across the site.'));
       setEditingTag(null); setForm(EMPTY_FORM);
       await load();
     } catch (err) {
@@ -152,6 +178,15 @@ export default function AlliancesPanel() {
             <Field label="Leadership contact (older field, shown only until Leaders below is saved)">
               <Input tone="console" value={form.leader_player_id} onChange={(e) => setForm((f) => ({ ...f, leader_player_id: e.target.value }))} />
             </Field>
+          </div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <DriveStatusBanner />
+            <ImageUploadField
+              folder="alliance" label="Alliance photo (optional)" altRequired={false} cropAspect={PHOTO_CROP} removeLabel="Remove photo"
+              disabled={!driveReady || saving} value={form.image_id ? { id: form.image_id, url: `/api/site-image/${form.image_id}`, alt: form.image_alt } : null}
+              onChange={changePhoto} onAltChange={(text) => setForm((f) => ({ ...f, image_alt: text }))}
+              hint={`Shown at the top of this alliance's box on the Alliances page and as the banner on its own page. Use a wide photo at least ${ALLIANCE_IMAGE_MIN_WIDTH} pixels wide. It is cropped to the centre in 16:9 (as in the preview) and resized to ${ALLIANCE_IMAGE_WIDTH} x ${ALLIANCE_IMAGE_HEIGHT}. Without one, the alliance colour and tag show instead. The description is read aloud by screen readers; leave it empty for a purely decorative photo.`}
+            />
           </div>
           <AllianceLeadersEditor leaders={form.leaders} disabled={saving} onChange={(leaders) => setForm((f) => ({ ...f, leaders }))} />
           <fieldset disabled={saving} style={{ border: '1px solid var(--edge)', padding: 16, display: 'grid', gap: 12, minWidth: 0 }}>

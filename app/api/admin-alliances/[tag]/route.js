@@ -6,6 +6,13 @@ import { validateLeaders } from '../../../../lib/allianceLeaders.mjs';
 import { isAdminRequest } from '../../../../lib/adminAuth';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
+import { checkAllianceImage, parseAllianceImageFields, releaseAllianceImage } from '../../../../lib/allianceImages.mjs';
+
+// Removes the Drive file + record of a no-longer-used alliance photo (best effort).
+async function removeAlliancePhoto(id) {
+  const { getSiteImages } = await import('../../../../lib/siteImages.server');
+  return (await getSiteImages({ requireConnected: false })).remove(id, { folders: ['alliance'] });
+}
 
 const STATUSES = ['open', 'selective', 'closed'];
 
@@ -78,12 +85,24 @@ export async function PUT(request, { params: paramsPromise }) {
     }
     update.recruiting_status = body.recruiting_status;
   }
+  const { fields: imageFields, error: imageError } = parseAllianceImageFields(body);
+  if (imageError) return NextResponse.json({ error: imageError }, { status: 400 });
   update.updated_at = new Date().toISOString();
 
   try {
     const coll = await getCollection(COLLECTIONS.ALLIANCES);
+    const upperTag = String(tag).toUpperCase();
+    // Omitting image_id leaves the photo alone; sending '' clears it. A photo that no longer exists is dropped and reported.
+    let warning = '';
+    if (imageFields.image_id) {
+      const state = await checkAllianceImage(await getCollection(COLLECTIONS.SITE_IMAGES), imageFields.image_id);
+      if (state === 'wrong-folder') return NextResponse.json({ error: 'Alliance photo is invalid.' }, { status: 400 });
+      if (state === 'missing') { imageFields.image_id = ''; imageFields.image_alt = ''; warning = 'The alliance photo was no longer available, so the alliance was saved without it.'; }
+    }
+    Object.assign(update, imageFields);
+    const before = imageFields.image_id !== undefined ? await coll.findOne({ tag: upperTag }, { projection: { image_id: 1 } }) : null;
     const result = await coll.findOneAndUpdate(
-      { tag: String(tag).toUpperCase() },
+      { tag: upperTag },
       { $set: update },
       { returnDocument: 'after', projection: { _id: 0 } }
     );
@@ -92,7 +111,8 @@ export async function PUT(request, { params: paramsPromise }) {
       return NextResponse.json({ error: 'Alliance not found.' }, { status: 404 });
     }
     revalidateAlliancePages(tag);
-    return NextResponse.json({ alliance: data });
+    if (before?.image_id && before.image_id !== data.image_id) await releaseAllianceImage({ alliances: coll, imageId: before.image_id, removeImage: removeAlliancePhoto });
+    return NextResponse.json({ alliance: data, ...(warning ? { warning } : {}) });
   } catch (error) {
     console.error('admin-alliances/[tag]' + ' failed', error);
     return NextResponse.json({ error: 'Update failed.' }, { status: 500 });
@@ -109,10 +129,12 @@ export async function DELETE(request, { params: paramsPromise }) {
 
   try {
     const coll = await getCollection(COLLECTIONS.ALLIANCES);
+    const existing = await coll.findOne({ tag: String(tag).toUpperCase() }, { projection: { image_id: 1 } });
     const result = await coll.deleteOne({ tag: String(tag).toUpperCase() });
     if (!result.deletedCount) {
       return NextResponse.json({ error: 'Alliance not found.' }, { status: 404 });
     }
+    if (existing?.image_id) await releaseAllianceImage({ alliances: coll, imageId: existing.image_id, removeImage: removeAlliancePhoto });
     revalidateAlliancePages(tag);
     return NextResponse.json({ ok: true });
   } catch (error) {

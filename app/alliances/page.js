@@ -1,6 +1,8 @@
 import { unstable_rethrow } from 'next/navigation';
 import { PageHero } from '../../components/ui';
 import AllianceGrid from '../../components/alliances/AllianceGrid';
+import AllianceBackdrop from '../../components/alliances/AllianceBackdrop';
+import { bandProps } from '../../lib/alliances.mjs';
 import { getPageText } from '../../lib/pageText.server';
 import { splitParagraphs } from '../../lib/pageText.mjs';
 import { loadLandingAlliances } from '../../lib/alliancesPublic.server';
@@ -31,15 +33,18 @@ export default async function AlliancesPage() {
   const list = alliances.map((a) => ({ ...a, blurb: stripLegacyBearCopy(a.blurb) }));
   const intro = splitParagraphs(t.alliances_intro);
   return (
-    <main className="theme-realm alliances-landing" style={{ padding: 0, background: 'var(--color-bg)', color: 'var(--color-ink)' }}>
+    <main className="theme-console alliances-landing" style={{ padding: 0, background: 'var(--obsidian)' }}>
       <PageHero eyebrow={t.alliances_kicker} title={t.alliances_heading} lede={intro.join(' ')} />
-      <section className="al-landing-inner" aria-label={t.alliances_heading} style={{ maxWidth: 'var(--page-max)', margin: '0 auto', padding: 'clamp(32px,5vw,56px) var(--page-gutter) 96px' }}>
+      <div className="al-stage k-wb" {...bandProps('710')}>
+      <AllianceBackdrop tag="710" />
+      <section className="al-landing-inner" aria-label={t.alliances_heading} style={{ maxWidth: 'var(--page-max)', margin: '0 auto', padding: 'clamp(24px,4vw,40px) var(--page-gutter) 96px' }}>
         {list.length === 0 ? (
           <p className="al-muted">{failed ? 'The alliance directory is unavailable right now. Please try again shortly.' : 'No alliances are listed yet.'}</p>
         ) : (
           <AllianceGrid alliances={list} />
         )}
       </section>
+      </div>
     </main>
   );
 }

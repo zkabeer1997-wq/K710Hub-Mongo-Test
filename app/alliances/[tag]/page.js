@@ -3,7 +3,9 @@ import Link from 'next/link';
 import { notFound, unstable_rethrow } from 'next/navigation';
 import { PageHero } from '../../../components/ui';
 import AllianceDetail from '../../../components/alliances/AllianceDetail';
-import { loadAllianceByTag } from '../../../lib/alliancesPublic.server';
+import { loadAllianceByTag, loadLandingAlliances } from '../../../lib/alliancesPublic.server';
+import { getKvkRecord } from '../../../lib/external/index.mjs';
+import { kvkRailData } from '../../../lib/allianceRails.mjs';
 
 // The root layout reads headers() (per-request CSP nonce), so every route is
 // dynamic. Declare that explicitly: a page with generateStaticParams would be
@@ -39,9 +41,15 @@ export default async function AlliancePage({ params }) {
   }
   if (!alliance) notFound();
 
+  // Side-rail data. Either failing only removes its card; the page itself never depends on them.
+  const [others, kvk] = await Promise.all([
+    loadLandingAlliances().catch((error) => { unstable_rethrow(error); return []; }),
+    getKvkRecord().then(kvkRailData).catch((error) => { unstable_rethrow(error); return null; }),
+  ]);
+
   return (
-    <main className="theme-realm alliance-detail-page" style={{ padding: 0, background: 'var(--color-bg)' }}>
-      <AllianceDetail alliance={alliance} blurb={stripLegacyBearCopy(alliance.blurb)} />
+    <main className="theme-console alliance-detail-page" style={{ padding: 0, background: 'var(--obsidian)' }}>
+      <AllianceDetail alliance={alliance} blurb={stripLegacyBearCopy(alliance.blurb)} others={others.map((a) => ({ tag: a.tag, name: a.name, sort_order: a.sort_order }))} kvk={kvk} />
     </main>
   );
 }

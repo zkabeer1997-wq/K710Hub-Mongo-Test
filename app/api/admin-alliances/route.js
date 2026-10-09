@@ -6,6 +6,7 @@ import { validateLeaders, resolveLeaders, usesLegacyLeaders } from '../../../lib
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { checkAllianceImage, parseAllianceImageFields } from '../../../lib/allianceImages.mjs';
 
 const STATUSES = ['open', 'selective', 'closed'];
 const TAG_RE = /^[A-Z0-9]{2,10}$/;
@@ -75,9 +76,20 @@ export async function POST(request) {
   const { leaders, error: leadersError } = validateLeaders(body.leaders ?? []);
   if (leadersError) return NextResponse.json({ error: leadersError }, { status: 400 });
 
+  const { fields: imageFields, error: imageError } = parseAllianceImageFields(body);
+  if (imageError) return NextResponse.json({ error: imageError }, { status: 400 });
+
   try {
+    // A photo that no longer exists is dropped (and reported) instead of blocking the alliance text.
+    let warning = '';
+    if (imageFields.image_id) {
+      const state = await checkAllianceImage(await getCollection(COLLECTIONS.SITE_IMAGES), imageFields.image_id);
+      if (state === 'wrong-folder') return NextResponse.json({ error: 'Alliance photo is invalid.' }, { status: 400 });
+      if (state === 'missing') { imageFields.image_id = ''; imageFields.image_alt = ''; warning = 'The alliance photo was no longer available, so the alliance was saved without it.'; }
+    }
     const coll = await getCollection(COLLECTIONS.ALLIANCES);
     const doc = {
+      ...(imageFields.image_id ? { image_id: imageFields.image_id, image_alt: imageFields.image_alt || '' } : {}),
       leaders,
       bear_times_utc: times,
       scheduled_events: events,
@@ -103,7 +115,7 @@ export async function POST(request) {
 
     revalidateAlliancePages(tag);
 
-    return NextResponse.json({ alliance });
+    return NextResponse.json({ alliance, ...(warning ? { warning } : {}) });
   } catch (error) {
     console.error('admin-alliances' + ' failed', error);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });

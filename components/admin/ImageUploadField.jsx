@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import AddImageButtons from './AddImageButtons';
-import { cropToSquareFile, CropError } from './cropSquare';
+import { cropToAspectFile, cropToSquareFile, CropError } from './cropSquare';
 import styles from './ImageUploadField.module.css';
 
 /**
@@ -25,6 +25,9 @@ import styles from './ImageUploadField.module.css';
  *  - onAltChange   (text) => void   called as the description is edited (optional)
  *  - cropSquare    number: crop to a centred square of this many pixels in the browser BEFORE saving (uploads), and
  *                  re-crop Drive picks after they are copied; the preview then shows the square crop
+ *  - cropAspect   { width, height, minWidth, minHeight, maxBytes, tooSmall }: crop to a centred rectangle of that aspect and
+ *                  resize to width x height in the browser (alliance photos, 16:9). Same flow as cropSquare, wide preview
+ *  - removeLabel  text of the remove button (default "Remove image")
  *  - showAlt      false hides the description box (decorative images)
  *  - hint          replaces the default help line under the buttons
  *  - disabled
@@ -48,12 +51,14 @@ function postForm(endpoint, form, onProgress) {
   });
 }
 
-export default function ImageUploadField({ onAltChange, folder, value = null, onChange, label = 'Image', altRequired = true, subfolder, deleteOnRemove = false, endpoint = '/api/admin-drive/images', maxMb = 8, disabled = false, cropSquare = 0, hint = '', showAlt = true }) {
+export default function ImageUploadField({ onAltChange, folder, value = null, onChange, label = 'Image', altRequired = true, subfolder, deleteOnRemove = false, endpoint = '/api/admin-drive/images', maxMb = 8, disabled = false, cropSquare = 0, cropAspect = null, removeLabel = 'Remove image', hint = '', showAlt = true }) {
   const id = useId();
   const [alt, setAlt] = useState(value?.alt || '');
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
+  const crops = Boolean(cropSquare || cropAspect);
+  const prepare = (blob, name) => (cropAspect ? cropToAspectFile(blob, { ...cropAspect, name }) : cropToSquareFile(blob, { size: cropSquare, name }));
 
   function needAlt() {
     if (altRequired && !alt.trim()) { setError('Describe the image first (for people using screen readers).'); return true; }
@@ -69,8 +74,8 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
     if (needAlt()) return;
     setBusy(true); setProgress(0);
     let sendFile = file;
-    if (cropSquare) {
-      try { sendFile = await cropToSquareFile(file, { size: cropSquare, name: file.name }); }
+    if (crops) {
+      try { sendFile = await prepare(file, file.name); }
       catch (e) { setError(e instanceof CropError ? e.message : 'The picture could not be prepared. Try a different image.'); setBusy(false); return; }
     }
     const form = new FormData();
@@ -90,7 +95,7 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
       const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder, driveFileId: picked.id, alt: alt.trim(), ...(subfolder ? { subfolder } : {}) }) });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'That file could not be copied from Google Drive.');
-      onChange?.(cropSquare ? await recropPicked(body.image) : body.image);
+      onChange?.(crops ? await recropPicked(body.image) : body.image);
     } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
 
@@ -100,7 +105,7 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
     try {
       const raw = await fetch(image.url, { cache: 'no-store' });
       if (!raw.ok) return image;
-      const file = await cropToSquareFile(await raw.blob(), { size: cropSquare, name: image.name });
+      const file = await prepare(await raw.blob(), image.name);
       const form = new FormData();
       form.append('file', file); form.append('folder', folder); form.append('alt', alt.trim());
       if (subfolder) form.append('subfolder', subfolder);
@@ -108,7 +113,7 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
       try { await fetch(`${endpoint}?id=${encodeURIComponent(image.id)}`, { method: 'DELETE' }); } catch { /* orphan raw copy is harmless */ }
       return cropped;
     } catch (e) {
-      if (e instanceof CropError) setError(`${e.message} The original was kept and is trimmed to a square on the page.`);
+      if (e instanceof CropError) setError(`${e.message} The original was kept and is trimmed to fit on the page.`);
       return image;
     }
   }
@@ -125,7 +130,7 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
     <div className={styles.field}>
       <span className={styles.label} id={`${id}-label`}>{label}</span>
       <div className={styles.row}>
-        <div className={`${styles.preview}${cropSquare ? ` ${styles.previewSquare}` : ''}`}>
+        <div className={`${styles.preview}${cropAspect ? ` ${styles.previewWide}` : cropSquare ? ` ${styles.previewSquare}` : ''}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {value?.url ? <img src={value.url} alt={value.alt || alt || ''} /> : <span>No image yet</span>}
         </div>
@@ -135,7 +140,7 @@ export default function ImageUploadField({ onAltChange, folder, value = null, on
             <input id={`${id}-alt`} value={alt} maxLength={240} disabled={disabled || busy} onChange={(e) => { setAlt(e.target.value); onAltChange?.(e.target.value); }} aria-describedby={error ? `${id}-err` : undefined} />
           </div> : null}
           <AddImageButtons onFiles={uploadFile} onPick={pickFromDrive} onError={setError} busy={busy} progress={progress} disabled={disabled} />
-          {value?.url ? <div className={styles.actions}><button type="button" className={`${styles.btn} ${styles.danger}`} disabled={busy || (disabled && deleteOnRemove)} onClick={remove}>Remove image</button></div> : null}
+          {value?.url ? <div className={styles.actions}><button type="button" className={`${styles.btn} ${styles.danger}`} disabled={busy || (disabled && deleteOnRemove)} onClick={remove}>{removeLabel}</button></div> : null}
           <p className={styles.hint}>{hint || `JPG, PNG, WebP or GIF, up to ${maxMb} MB. Saved to Google Drive, not the database.`}</p>
           {error ? <p className={styles.error} id={`${id}-err`} role="alert">{error}</p> : null}
         </div>
