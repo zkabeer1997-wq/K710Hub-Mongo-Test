@@ -2,16 +2,19 @@
 
 // Individual alliance page ("Option B: banner and three panels"): a banner card in the alliance's own
 // colour (or the admin's photo under a colour scrim), a status strip of four equal cells, then three
-// equal panels (Leadership, Bear Hunt, Join). Dark brass surface, self-contained (.al-scope).
+// equal panels (Leadership, Bear Hunt, Join). Dark brass surface, self-contained (.al-scope), on a band-colour
+// backdrop. From 1280px wide two rails sit in the margins (after the main content in the DOM).
 import Link from 'next/link';
 import { AllianceBearTimes } from '../BearScheduleProvider';
 import { useT } from '../i18n/LanguageProvider';
 import AllianceLeaders from './AllianceLeaders';
+import AllianceBackdrop from './AllianceBackdrop';
+import { LeftRail, RightRail } from './AllianceRails';
 import useAlliancePhoto, { AlliancePhotoImg } from './useAlliancePhoto';
 import { STATUS_TONE, bandProps } from '../../lib/alliances.mjs';
 import './alliances.css';
 
-export default function AllianceDetail({ alliance, blurb }) {
+export default function AllianceDetail({ alliance, blurb, others = [], kvk = null }) {
   const t = useT();
   const photo = useAlliancePhoto(alliance.image_url || '');
   const roster = Number(alliance.roster_size);
@@ -29,8 +32,11 @@ export default function AllianceDetail({ alliance, blurb }) {
 
   return (
     <div className="al-detail al-scope k-wb" {...bandProps(tag)}>
-      <div className="al-detail-inner">
+      <AllianceBackdrop tag={tag} />
+      <div className="al-layout">
+        <div className="al-main">
         <Link className="al-back" href="/alliances">{t('alliances.back')}</Link>
+        <div id="al-overview" className="al-overview">
         <header className="al-banner" data-photo={photo.show ? 'true' : undefined}>
           {photo.show && <AlliancePhotoImg className="al-banner-photo" src={alliance.image_url} alt={alliance.image_alt} eager onFail={photo.fail} />}
           <div className="al-banner-copy">
@@ -46,12 +52,13 @@ export default function AllianceDetail({ alliance, blurb }) {
             ))}
           </dl>
         )}
+        </div>
         <div className="al-panels">
-          <section className="al-panel" aria-labelledby="al-leadership-h">
+          <section id="al-leadership" className="al-panel" aria-labelledby="al-leadership-h">
             <h2 id="al-leadership-h" className="al-panel-h">{t('alliances.panel.leadership')}</h2>
             <AllianceLeaders leaders={alliance.leaders} legacyContact={legacyContact} />
           </section>
-          <section className="al-panel" aria-labelledby="al-bear-h">
+          <section id="al-bear" className="al-panel" aria-labelledby="al-bear-h">
             <h2 id="al-bear-h" className="al-panel-h">{t('alliances.panel.bearHunt')}</h2>
             <AllianceBearTimes tag={tag} initialTimes={alliance.bear_times_utc} variant="rows" rowLabel={(i) => t('alliances.bear.hunt', { n: i + 1 })} />
             <div className="al-panel-links">
@@ -59,12 +66,15 @@ export default function AllianceDetail({ alliance, blurb }) {
               <Link className="al-link" href="/alliances">{t('alliances.bear.all')}</Link>
             </div>
           </section>
-          <section className="al-panel" aria-labelledby="al-join-h">
+          <section id="al-join" className="al-panel" aria-labelledby="al-join-h">
             <h2 id="al-join-h" className="al-panel-h">{t('alliances.panel.join')}</h2>
             <p className="al-muted">{t('alliances.join.line', { name: alliance.name })}</p>
             <Link href="/interest" className="al-cta">{t('alliances.join.cta', { name: alliance.name })}</Link>
           </section>
         </div>
+        </div>
+        <LeftRail alliances={others} currentTag={tag} />
+        <RightRail tag={tag} bearTimes={alliance.bear_times_utc} kvk={kvk} />
       </div>
     </div>
   );
