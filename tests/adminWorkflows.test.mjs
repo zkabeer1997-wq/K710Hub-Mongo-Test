@@ -44,7 +44,7 @@ const images=await import('../app/api/guide-images/[file]/route.js');
 const {setDriveStorageFactory}=await import('../lib/driveStorage.server.js');
 const fakeDrive=await tmpFakeDrive();setDriveStorageFactory(()=>fakeDrive);
 const profiles=await import('../app/api/admin-member-pins/route.js');
-process.env.ADMIN_PASSWORD='workflow-test-only';process.env.MEMBER_SESSION_SECRET='workflow-members-only';
+process.env.GUIDE_IMAGE_ACCESS_TTL_MS='0';process.env.ADMIN_PASSWORD='workflow-test-only';process.env.MEMBER_SESSION_SECRET='workflow-members-only';
 const adminToken=await mintAdminToken(),memberToken=await createMemberToken('member-a');
 const req=(body={},role='anonymous')=>({json:async()=>body,cookies:{get:key=>key==='tff_admin_session'&&role==='admin'?{value:adminToken}:key==='k710_member_session'&&role==='member'?{value:memberToken}:undefined}});
 const params=slug=>({params:Promise.resolve({slug})});
@@ -78,6 +78,7 @@ test('guide images are served publicly by random file name from stored uploads',
  const file='11111111-1111-4111-8111-111111111111.png',p={params:Promise.resolve({file})};
  assert.equal((await images.GET(req(),p)).status,404);
  state.tables.guide_attachments=[{path:file,content_type:'image/png',data_url:'data:image/png;base64,iVBORw0KGgo='}];
+ state.tables.kingdom_guides=[...(state.tables.kingdom_guides||[]),{slug:'img-guide',is_published:true,access_level:'public',body:`![x](/api/guide-images/${file})`}];
  const response=await images.GET(req(),p);
  assert.equal(response.status,200);
  assert.equal(response.headers.get('content-type'),'image/png');

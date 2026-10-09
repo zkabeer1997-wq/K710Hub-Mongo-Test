@@ -11,7 +11,7 @@ registerHooks({
     if (/\/(lib\/)?mongo(\.js)?$/.test(s)) return { url: 'test:ad-mongo', shortCircuit: true };
     if (s === 'next/cache') return { url: 'test:ad-cache', shortCircuit: true };
     if (s === 'next/server') return next('next/server.js', c);
-    if (/\/(adminAuth|mongoCollections)$/.test(s)) return next(s + '.js', c);
+    if (/\/(adminAuth|mongoCollections|memberAuth)$/.test(s)) return next(s + '.js', c);
     return next(s, c);
   },
   load(u, c, next) {
@@ -26,6 +26,7 @@ registerHooks({
 });
 
 process.env.ADMIN_PASSWORD = 'admin-drive-test-only';
+process.env.GUIDE_IMAGE_ACCESS_TTL_MS = '0';
 const pickerRoute = await import('../app/api/admin-drive/picker-config/route.js');
 const statusRoute = await import('../app/api/admin-drive/status/route.js');
 const imagesRoute = await import('../app/api/admin-drive/images/route.js');
@@ -159,12 +160,14 @@ test('guide images: desktop upload and Drive pick both land in Guides images; pu
   assert.equal(up.status, 201);
   const { src } = await up.json();
   const file = src.split('/').pop();
-  const served = await guideServe.GET(as(false), { params: Promise.resolve({ file }) });
+  // Not used by any guide yet (a fresh builder upload): admin only, never cached publicly.
+  assert.equal((await guideServe.GET(as(false), { params: Promise.resolve({ file }) })).status, 404);
+  const served = await guideServe.GET(as(true), { params: Promise.resolve({ file }) });
   assert.equal(served.status, 200);
-  assert.match(served.headers.get('cache-control'), /max-age=31536000, immutable/);
+  assert.match(served.headers.get('cache-control'), /no-store/);
   assert.deepEqual(Buffer.from(await served.arrayBuffer()), PNG);
   const etag = served.headers.get('etag');
-  const notModified = await guideServe.GET({ ...as(false), headers: new Headers({ 'if-none-match': etag }) }, { params: Promise.resolve({ file }) });
+  const notModified = await guideServe.GET({ ...as(true), headers: new Headers({ 'if-none-match': etag }) }, { params: Promise.resolve({ file }) });
   assert.equal(notModified.status, 304);
 
   const picked = await drive.uploadFile({ name: 'p.png', mimeType: 'image/png', bytes: PNG, folderId: await drive.findOrCreateFolder('Picker source') });
@@ -174,7 +177,7 @@ test('guide images: desktop upload and Drive pick both land in Guides images; pu
 
   const legacyFile = '22222222-2222-4222-8222-222222222222.png';
   state.tables.guide_attachments.push({ path: legacyFile, content_type: 'image/png', data_url: `data:image/png;base64,${PNG.toString('base64')}`, guide: 'my-guide', created_at: new Date() });
-  const legacyServed = await guideServe.GET(as(false), { params: Promise.resolve({ file: legacyFile }) });
+  const legacyServed = await guideServe.GET(as(true), { params: Promise.resolve({ file: legacyFile }) });
   assert.equal(legacyServed.status, 200);
   assert.deepEqual(Buffer.from(await legacyServed.arrayBuffer()), PNG);
 
@@ -185,7 +188,7 @@ test('guide images: desktop upload and Drive pick both land in Guides images; pu
   const after = state.tables.guide_attachments.find((r) => r.path === legacyFile);
   assert.equal(after.data_url, undefined);
   assert.ok(after.drive_file_id);
-  const again = await guideServe.GET(as(false), { params: Promise.resolve({ file: legacyFile }) });
+  const again = await guideServe.GET(as(true), { params: Promise.resolve({ file: legacyFile }) });
   assert.deepEqual(Buffer.from(await again.arrayBuffer()), PNG);
   assert.equal((await (await guideMigrate.POST(as(true, {}))).json()).migrated.length, 0, 'idempotent');
   assert.equal((await guideServe.GET(as(false), { params: Promise.resolve({ file: '../etc/passwd' }) })).status, 404);
