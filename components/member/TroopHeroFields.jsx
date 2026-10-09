@@ -34,7 +34,7 @@ export function TroopLevelFields({ values, onChange, disabled = false, errors = 
           aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange(key, e.target.value)}
         >
-          <option value="">Select {noun}</option>
+          <option value="">Choose</option>
           {options.map((option) => <option key={option} value={option}>{option}</option>)}
         </select>
         {error ? <p id={`${id}-error`} className="field-error">{error}</p> : null}
