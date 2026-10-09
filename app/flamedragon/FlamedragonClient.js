@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import IdentityFields from '../../components/member/IdentityFields';
+import TourLauncher from '../../components/tour/TourLauncher';
 import { HeroRosterPicker, TroopLevelFields, troopFieldId } from '../../components/member/TroopHeroFields';
 import { TROOP_FIELD_KEYS, troopFieldErrors } from '../../lib/kvkAvailability.mjs';
 import {
@@ -175,16 +176,17 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
       <div className="member-form-col">
         {intro}
         <div className="public-shell single-form">
-        <section className="public-intro">
+        <section className="public-intro" data-tour="dragon-intro">
           <span className="public-kicker">{fieldMetaIntro.kicker}</span>
           <h1>{fieldMetaIntro.heading}</h1>
           {fieldMetaIntro.description ? <p>{fieldMetaIntro.description}</p> : null}
+          <TourLauncher id="dragon" />
         </section>
         <form className="public-form-card" onSubmit={handleSubmit} noValidate>
 
           <IdentityFields memberId={form.member_id} name={form.name} onNameChange={(v) => updateField('name', v)} label="In Game Name" known={Boolean(identity?.name)} />
 
-          <section className="troop-section public-section">
+          <section className="troop-section public-section" data-tour="dragon-alliance">
             <div className="section-title-row"><span>Alliance</span><h3>Current Alliance</h3><p>Select the alliance you are currently in.</p></div>
             <label>Current Alliance<select value={form.current_alliance} onChange={(e) => updateField('current_alliance', e.target.value)}><option value="">Select alliance</option>{withCurrentTag(ALLIANCES, form.current_alliance).map((a) => <option key={a} value={a}>{a}</option>)}</select></label>
           </section>
@@ -197,7 +199,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
             </div>
           )}
 
-          <section className="troop-section public-section">
+          <section className="troop-section public-section" data-tour="dragon-troops">
             <div className="section-title-row"><span>Army</span><h3>Troop levels</h3><p>Choose the best tier and TG for each troop type, as they stand for this battle.</p></div>
             <p className="troop-required-note">Tier and TG are required for Infantry, Cavalry and Archer. They are remembered on your profile and filled in for you next time.</p>
             <TroopLevelFields
@@ -215,13 +217,13 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
             />
           </section>
 
-          <section className="troop-section public-section">
+          <section className="troop-section public-section" data-tour="dragon-heroes">
             <div className="section-title-row"><span>Heroes</span><h3>Hero roster</h3><p>Select the heroes you have available for this battle.</p></div>
             <HeroRosterPicker catalog={heroCatalog} heroes={heroes} onToggle={toggleHero} />
           </section>
 
           <section className="troop-section public-section">
-            <div className="section-title-row"><span>Power data</span><h3>Charms, Gear and Power</h3><p>Set your charm levels, governor gear, and power stats.</p></div>
+            <div className="section-title-row" data-tour="dragon-power"><span>Power data</span><h3>Charms, Gear and Power</h3><p>Set your charm levels, governor gear, and power stats.</p></div>
             <div className="power-field-grid">
               <h4 className="power-subheader">Charm Levels</h4>
               <div className="charm-grid">
@@ -264,7 +266,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
               </label>
             </div>
           </section>
-          <section className="troop-section public-section">
+          <section className="troop-section public-section" data-tour="dragon-timing">
             <div className="section-title-row"><span>Timing</span><h3>Battle Availability</h3><p>Select the window rally planners should count on.</p></div>
             <div className="availability-grid">
               {AVAILABILITY_OPTIONS.map((option) => (
@@ -301,7 +303,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
           </section>
 
           {status && <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>{status}</div>}
-          <button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'Submit Flamedragon form'}</button>
+          <button type="submit" disabled={loading} data-tour="dragon-submit">{loading ? 'Submitting...' : 'Submit Flamedragon form'}</button>
         </form>
         </div>
       </div>

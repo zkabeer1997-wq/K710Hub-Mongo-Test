@@ -16,9 +16,9 @@ export function MemberIdLocked({ memberId, id = 'member-id-locked' }) {
   );
 }
 
-export default function IdentityFields({ memberId, name, onNameChange, label = 'Your name', known = true, inputProps = {}, invalid, describedBy }) {
+export default function IdentityFields({ memberId, name, onNameChange, label = 'Your name', known = true, inputProps = {}, invalid, describedBy, tourAnchor }) {
   return (
-    <div className="member-identity">
+    <div className="member-identity" data-tour={tourAnchor}>
       <div className="member-identity-field">
         <label>
           <span className="member-identity-label">{label}</span>

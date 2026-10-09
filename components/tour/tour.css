@@ -1,0 +1,222 @@
+/* Walkthrough overlay (components/tour). Console tone for member pages, Realm tone for the public applicant form.
+   The overlay never blocks the page: the dimming layer and the spotlight ignore the pointer, only the popover is
+   interactive. Logical properties throughout so Arabic (RTL) mirrors correctly. */
+
+.k-tour {
+  --tour-bg: var(--stone, #171a24);
+  --tour-ink: var(--text, #f3e9d2);
+  --tour-muted: var(--t-secondary, #a9afc0);
+  --tour-title: var(--gold-hot, #f3d99a);
+  --tour-accent: var(--gold-aged, #c9a44e);
+  --tour-on-accent: var(--ink, #14100a);
+  --tour-border: var(--edge-strong, rgba(201, 164, 78, 0.42));
+  --tour-dim: rgba(5, 6, 12, 0.68);
+  --tour-ring: var(--gold-hot, #f3d99a);
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-tour, 500);
+  pointer-events: none;
+  font-family: var(--font-body);
+}
+
+.k-tour--realm {
+  --tour-bg: #fffaf0;
+  --tour-ink: #2c1c0c;
+  --tour-muted: #5a4528;
+  --tour-title: #5b2d05;
+  --tour-accent: #d97a1f;
+  --tour-on-accent: #2c1c0c;
+  --tour-border: rgba(180, 120, 40, 0.55);
+  --tour-dim: rgba(44, 28, 12, 0.62);
+  --tour-ring: #f2941f;
+}
+
+.k-tour-spot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 0 0 2px var(--tour-ring), 0 0 0 9999px var(--tour-dim);
+  pointer-events: none;
+  transition: transform var(--t-ui, 260ms) var(--ease-cine, ease), width var(--t-ui, 260ms) var(--ease-cine, ease), height var(--t-ui, 260ms) var(--ease-cine, ease);
+}
+
+.k-tour-pop {
+  position: fixed;
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4, 16px) var(--space-5, 20px) var(--space-3, 12px);
+  background: var(--tour-bg);
+  color: var(--tour-ink);
+  border: 1px solid var(--tour-border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  text-align: start;
+  animation: k-tour-in var(--t-ui, 260ms) var(--ease-cine, ease) both;
+}
+.k-tour-pop:focus { outline: none; }
+.k-tour-pop:focus-visible { outline: 2px solid var(--tour-ring); outline-offset: 2px; }
+
+.k-tour-pop--sheet {
+  inset-inline: 0;
+  bottom: 0;
+  width: auto;
+  max-height: 62dvh;
+  border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
+  border-inline: 0;
+  border-bottom: 0;
+  padding-bottom: calc(var(--space-3, 12px) + env(safe-area-inset-bottom));
+  animation-name: k-tour-sheet-in;
+}
+
+@keyframes k-tour-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes k-tour-sheet-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.k-tour-count {
+  margin: 0 0 var(--space-1, 4px);
+  font-size: var(--text-xs, 12px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--tour-muted);
+  font-variant-numeric: tabular-nums;
+}
+.k-tour-title {
+  margin: 0 0 var(--space-2, 8px);
+  font-family: var(--font-display);
+  font-size: var(--text-lg, 18px);
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--tour-title);
+  text-wrap: balance;
+}
+.k-tour-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--tour-ink);
+}
+.k-tour-more {
+  margin: var(--space-2, 8px) 0 0;
+  font-size: var(--text-sm, 13px);
+  line-height: 1.45;
+  color: var(--tour-muted);
+}
+
+.k-tour-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px) var(--space-3, 12px);
+  margin-top: var(--space-4, 16px);
+}
+.k-tour-actions-main { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); margin-inline-start: auto; }
+
+.k-tour-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color var(--t-fast, 160ms) ease, transform var(--t-fast, 160ms) ease, border-color var(--t-fast, 160ms) ease;
+}
+.k-tour-btn:active { transform: translateY(1px); }
+.k-tour-btn:focus-visible { outline: 2px solid var(--tour-ring); outline-offset: 2px; }
+.k-tour-btn--primary { background: var(--tour-accent); color: var(--tour-on-accent); }
+.k-tour-btn--primary:hover { background: var(--gold-bright, #f0c669); }
+.k-tour--realm .k-tour-btn--primary:hover { background: #f2941f; }
+.k-tour-btn--quiet { background: transparent; color: var(--tour-ink); border-color: var(--tour-border); }
+.k-tour-btn--quiet:hover { background: rgba(127, 127, 127, 0.14); }
+.k-tour-btn--text { background: transparent; color: var(--tour-muted); padding: 0 var(--space-2, 8px); text-decoration: underline; text-underline-offset: 3px; }
+.k-tour-btn--text:hover { color: var(--tour-ink); }
+
+.k-tour-esc {
+  margin: var(--space-2, 8px) 0 0;
+  font-size: var(--text-xs, 12px);
+  color: var(--tour-muted);
+}
+@media (pointer: coarse), (max-width: 767px) {
+  .k-tour-esc { display: none; }
+}
+
+.k-tour-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.k-tour--paused .k-tour-pop,
+.k-tour--paused .k-tour-spot { visibility: hidden; }
+
+/* Phone: extra room at the end of the page while the sheet is open, so the last element can scroll above it. */
+html.k-tour-sheet-open body { padding-bottom: var(--k-tour-pad, 0); }
+
+/* The replay / take-the-tour button next to a page title. */
+.k-tour-launch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--edge-strong, rgba(201, 164, 78, 0.42));
+  background: transparent;
+  color: var(--gold-hot, #f3d99a);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--t-fast, 160ms) ease, border-color var(--t-fast, 160ms) ease;
+}
+.k-tour-launch:hover { background: rgba(201, 164, 78, 0.12); border-color: var(--gold-aged, #c9a44e); }
+.k-tour-launch:focus-visible { outline: 2px solid var(--gold-hot, #f3d99a); outline-offset: 2px; }
+
+/* Easy view: larger text and 52px buttons. */
+:root[data-easy="true"] .k-tour-pop { width: min(460px, calc(100vw - 24px)); }
+:root[data-easy="true"] .k-tour-pop--sheet { width: auto; max-height: 70dvh; }
+:root[data-easy="true"] .k-tour-body,
+:root[data-easy="true"] .k-tour-more { font-size: 1.125rem; line-height: 1.6; }
+:root[data-easy="true"] .k-tour-title { font-size: 1.375rem; }
+:root[data-easy="true"] .k-tour-count,
+:root[data-easy="true"] .k-tour-esc { font-size: 1rem; }
+:root[data-easy="true"] .k-tour-btn,
+:root[data-easy="true"] .k-tour-launch { min-height: 52px; font-size: 1.125rem; }
+
+@media (max-width: 480px) {
+  .k-tour-actions { flex-direction: column-reverse; align-items: stretch; }
+  .k-tour-actions-main { margin-inline-start: 0; }
+  .k-tour-actions-main .k-tour-btn { flex: 1 1 0; }
+  .k-tour-btn--text { align-self: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k-tour-pop,
+  .k-tour-pop--sheet { animation: none; }
+  .k-tour-spot,
+  .k-tour-btn,
+  .k-tour-launch { transition: none; }
+}

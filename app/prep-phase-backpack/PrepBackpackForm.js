@@ -10,6 +10,7 @@ import { NOBLE_TIME_SLOTS } from '../../lib/nobleAdvisor.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 import IdentityFields from '../../components/member/IdentityFields';
+import TourLauncher from '../../components/tour/TourLauncher';
 
 const CONSTRUCTION_UPGRADES = ['TG5', 'TG6', 'TG7', 'TG8'];
 const T11_TROOPS = ['T11 Infantry', 'T11 Cavalry', 'T11 Archers'];
@@ -206,11 +207,12 @@ export default function PrepBackpackForm({ identity }) {
 
   return (
     <form ref={formRef} className="public-form-card minister-hall-form prep2" onSubmit={handleSubmit} noValidate>
-      <div className="form-section-header prep-header-block">
+      <div className="form-section-header prep-header-block" data-tour="prep-intro">
         <span>{intro.kicker}</span>
         <h1>{intro.heading || 'KvK Prep & Appointments'}</h1>
         <p className="prep2-lede">{intro.description || 'This one form is how you ask for your buffs on prep days and tell us when you are online.'}</p>
         <p className="prep2-rule">{ONE_PER_DAY}</p>
+        <TourLauncher id="prep" />
       </div>
 
       {saved ? (
@@ -221,7 +223,7 @@ export default function PrepBackpackForm({ identity }) {
         </div>
       ) : null}
 
-      <section className="prep2-block">
+      <section className="prep2-block" data-tour="prep-name">
         <IdentityFields memberId={memberId} name={form.inGameName} onNameChange={(v) => updateField('inGameName', v)} label="Your in-game name" known={Boolean(identity?.name)} invalid={Boolean(errors.name)} describedBy={errors.name ? 'prep-name-err' : undefined} />
         {errors.name ? <p className="prep-err" id="prep-name-err">{errors.name}</p> : null}
       </section>
@@ -230,7 +232,7 @@ export default function PrepBackpackForm({ identity }) {
         const a = answer(step);
         const wantId = `prep-${step.id}`;
         return (
-          <section key={step.id} className="prep2-block prep2-day" aria-labelledby={`${wantId}-h`} data-answer={a || ''}>
+          <section key={step.id} className="prep2-block prep2-day" aria-labelledby={`${wantId}-h`} data-answer={a || ''} data-tour={index === 0 ? 'prep-day1' : undefined}>
             <p className="prep2-step">Step {index + 1} of {STEPS.length}</p>
             <h2 id={`${wantId}-h`}>
               <span className="minister-day-badge">Day {step.day}</span> {step.title}
@@ -302,6 +304,7 @@ export default function PrepBackpackForm({ identity }) {
                   label={`When can you be online on Day ${step.day}?`}
                   helper={TIME_HELPER}
                   showLocal
+                  tourAnchor="prep-times"
                   selected={avail[step.avail]}
                   onToggle={toggleSlot(step.avail)}
                   onSelectAll={setAllSlots(step.avail)}
@@ -322,7 +325,7 @@ export default function PrepBackpackForm({ identity }) {
         </label>
       </section>
 
-      <section className="prep2-block prep2-review" aria-labelledby="prep-review-h">
+      <section className="prep2-block prep2-review" aria-labelledby="prep-review-h" data-tour="prep-review">
         <h2 id="prep-review-h">Check your choices</h2>
         <ul>
           {reviewRows.map(({ step, a, n }) => (
@@ -334,7 +337,7 @@ export default function PrepBackpackForm({ identity }) {
         </ul>
       </section>
 
-      <div className="prep2-actions">
+      <div className="prep2-actions" data-tour="prep-save" data-tour-reserve>
         {errorList.length ? (
           <div className="prep-err-box" role="alert">
             <strong>Please fix this before saving:</strong>

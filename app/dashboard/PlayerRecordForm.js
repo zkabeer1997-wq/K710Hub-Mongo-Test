@@ -9,6 +9,7 @@ import { TROOP_FIELD_KEYS, troopFieldErrors } from '../../lib/kvkAvailability.mj
 import UpsertNotice from '../../components/member/UpsertNotice';
 import { HeroRosterPicker, TroopLevelFields, troopFieldId } from '../../components/member/TroopHeroFields';
 import IdentityFields from '../../components/member/IdentityFields';
+import TourLauncher from '../../components/tour/TourLauncher';
 
 const AVAILABILITY_OPTIONS = KVK_AVAILABILITY_OPTIONS;
 
@@ -123,10 +124,11 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
 
   return (
     <div className="public-shell single-form">
-      <section className="public-intro">
+      <section className="public-intro" data-tour="avail-intro">
         <span className="public-kicker">{intro.kicker}</span>
         <h1>{intro.heading}</h1>
         <p>{intro.description}</p>
+        <TourLauncher id="avail" />
       </section>
       <form className="public-form-card" onSubmit={handleSubmit} noValidate>
         <div className="form-section-header">
@@ -135,7 +137,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
           <p>Your availability, troop levels and heroes are for this KvK. They are filled in from your last answers, so just check them and press Save.</p>
         </div>
         <IdentityFields memberId={memberId} name={name} onNameChange={setName} known={Boolean(identity?.name)} />
-        <section className="troop-section public-section">
+        <section className="troop-section public-section" data-tour="avail-alliance">
           <div className="section-title-row">
             <span>Alliance</span>
             <h3>Current Alliance</h3>
@@ -160,7 +162,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
             {onFile.heroes?.length ? <> · Heroes: {onFile.heroes.length}</> : null}
           </div>
         )}
-        <section className="troop-section public-section">
+        <section className="troop-section public-section" data-tour="avail-timing">
           <div className="section-title-row">
             <span>Timing</span>
             <h3>Battle availability</h3>
@@ -191,7 +193,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
             fromLabel={troopSource.kind === 'profile' ? 'your saved profile' : null}
           />
         )}
-        <section className="troop-section public-section">
+        <section className="troop-section public-section" data-tour="avail-troops">
           <div className="section-title-row">
             <span>Army</span>
             <h3>Troop levels</h3>
@@ -212,7 +214,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
             }}
           />
         </section>
-        <section className="troop-section public-section">
+        <section className="troop-section public-section" data-tour="avail-heroes">
           <div className="section-title-row">
             <span>Heroes</span>
             <h3>Hero roster</h3>
@@ -225,7 +227,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
           />
         </section>
         {status && <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>{status}</div>}
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} data-tour="avail-save">
           {loading ? 'Submitting...' : 'Save KvK Availability'}
         </button>
       </form>
