@@ -11,7 +11,7 @@ registerHooks({
     if (/\/(lib\/)?mongo(\.js)?$/.test(s)) return { url: 'test:ad-mongo', shortCircuit: true };
     if (s === 'next/cache') return { url: 'test:ad-cache', shortCircuit: true };
     if (s === 'next/server') return next('next/server.js', c);
-    if (/\/(adminAuth|mongoCollections)$/.test(s)) return next(s + '.js', c);
+    if (/\/(adminAuth|mongoCollections|memberAuth)$/.test(s)) return next(s + '.js', c);
     return next(s, c);
   },
   load(u, c, next) {

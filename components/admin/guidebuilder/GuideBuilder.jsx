@@ -753,7 +753,7 @@ export default function GuideBuilder({ slug: initialSlug }) {
                 <ImageUploadField
                   folder="guide" label="Guide picture (shown on the Guides page)" altRequired={false} showAlt={false} cropSquare={512}
                   disabled={!driveReady} value={meta.image_id ? { id: meta.image_id, url: `/api/site-image/${meta.image_id}` } : null} onChange={changeCardImage}
-                  hint="Use a square picture, at least 256 x 256 pixels. It is cropped to the centre square (as in the preview) and resized to 512 x 512. Without one, the book icon shows. Anyone can see it, even for members-only guides."
+                  hint="Use a square picture, at least 256 x 256 pixels. It is cropped to the centre square (as in the preview) and resized to 512 x 512. Without one, the book icon shows. On a public guide anyone can see it; on a members-only guide only signed-in members and admins can, and everyone else sees the book icon."
                 />
               </div>
               <label className={styles.mini} style={{ flex: '1 1 280px' }}><span>F2P tab (optional markdown, shown under the page)</span>

@@ -16,7 +16,7 @@ function matches(doc, filter) {
   return Object.entries(filter).every(([key, cond]) => {
     if (key === '$or') return cond.some((sub) => matches(doc, sub));
     if (key === '$and') return cond.every((sub) => matches(doc, sub));
-    const value = doc[key];
+    const value = key.includes('.') ? key.split('.').reduce((o, k) => (o == null ? undefined : o[k]), doc) : doc[key];
     // RegExp / { $regex } match a string, or any string element of an array (as MongoDB does).
     const regexOf = cond instanceof RegExp ? cond : cond && typeof cond === 'object' && '$regex' in cond ? new RegExp(cond.$regex, cond.$options || '') : null;
     if (regexOf) return (Array.isArray(value) ? value : [value]).some((v) => typeof v === 'string' && regexOf.test(v));

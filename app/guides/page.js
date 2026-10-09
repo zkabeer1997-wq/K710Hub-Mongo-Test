@@ -10,7 +10,7 @@ import { getPageText } from '../../lib/pageText.server';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import GuidesDirectory from './GuidesDirectory';
 import { guideCategories, guideSummary } from '../../lib/guideValidation.mjs';
-import { guideCardImageUrl } from '../../lib/guideImages.mjs';
+import { guideCardImageUrl, visibleCardImageId } from '../../lib/guideImages.mjs';
 import { formatGuideDate, guideUpdatedAt } from '../../lib/guideContent.mjs';
 
 export const metadata = {
@@ -54,7 +54,7 @@ async function loadGuides() {
     .toArray();
 
   // The picture id stays on the server; the card only gets a same-origin url (or '' = book icon).
-  return (data || []).map(({ image_id, ...guide }) => ({ ...guideSummary(guide), image_url: guideCardImageUrl(image_id) }));
+  return (data || []).map((row) => { const { image_id: _id, ...guide } = row; return { ...guideSummary(guide), image_url: guideCardImageUrl(visibleCardImageId(row, { canSeeMembers: allowed })) }; });
 }
 
 export default async function GuidesPage({ searchParams }) {
