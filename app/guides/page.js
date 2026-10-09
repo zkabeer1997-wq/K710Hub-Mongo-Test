@@ -10,6 +10,7 @@ import { getPageText } from '../../lib/pageText.server';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import GuidesDirectory from './GuidesDirectory';
 import { guideCategories, guideSummary } from '../../lib/guideValidation.mjs';
+import { guideCardImageUrl } from '../../lib/guideImages.mjs';
 import { formatGuideDate, guideUpdatedAt } from '../../lib/guideContent.mjs';
 
 export const metadata = {
@@ -44,6 +45,7 @@ async function loadGuides() {
       spender_content: 1,
       created_at: 1,
       access_level: 1,
+      image_id: 1,
       position: 1,
       updated_at: 1,
       _id: 0,
@@ -51,7 +53,8 @@ async function loadGuides() {
     .sort({ position: 1, title: 1 })
     .toArray();
 
-  return (data || []).map(guideSummary);
+  // The picture id stays on the server; the card only gets a same-origin url (or '' = book icon).
+  return (data || []).map(({ image_id, ...guide }) => ({ ...guideSummary(guide), image_url: guideCardImageUrl(image_id) }));
 }
 
 export default async function GuidesPage({ searchParams }) {
@@ -158,8 +161,9 @@ export default async function GuidesPage({ searchParams }) {
         .guide-entry:hover,.guide-entry:focus-visible{padding-inline:18px;background:rgba(108,66,30,.055);outline:none}
         .guide-device{height:126px;position:relative;display:grid;place-items:center;isolation:isolate}
         .guide-book{position:relative;z-index:2;width:112px;height:112px;filter:drop-shadow(0 10px 9px rgba(75,42,18,.18));transition:transform .2s ease}
+        .guide-photo{position:relative;z-index:2;width:112px;height:112px;object-fit:cover;border-radius:10px;border:1px solid rgba(183,140,66,.55);background:#e0cba3;box-shadow:0 10px 9px -4px rgba(75,42,18,.2);transition:transform .2s ease}
         .guide-device-glow{position:absolute;z-index:1;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,rgba(159,90,37,.16),transparent 70%);filter:blur(8px)}
-        .guide-entry:hover .guide-book{transform:translateY(-4px) rotate(-2deg)}
+        .guide-entry:hover .guide-book,.guide-entry:hover .guide-photo,.guide-entry:focus-visible .guide-book,.guide-entry:focus-visible .guide-photo{transform:translateY(-4px) rotate(-2deg)}
         .guide-entry-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
         .guide-entry-tags{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
         .guide-category{color:#9b5a27;font-size:10px;margin:0}
@@ -177,9 +181,9 @@ export default async function GuidesPage({ searchParams }) {
         .guides-ledger p{margin:8px 0 0;color:#765a40;font-size:14px;line-height:1.55}
         .guides-back{display:inline-block;margin-top:34px;color:#754723;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:.05em;text-transform:uppercase}
         .guides-error{padding:26px 0;border-block:1px solid rgba(77,48,24,.2);color:#5a4528}
-        @media(max-width:820px){.guides-index{grid-template-columns:repeat(3,1fr)}.guides-index>div{grid-template-columns:1fr;padding:16px}.guides-intro-band{grid-template-columns:1fr}.guides-intro-band>div{border-right:0;border-bottom:1px solid rgba(65,40,19,.2)}.guides-archive-head{grid-template-columns:1fr;gap:18px}.guide-entry{grid-template-columns:96px minmax(0,1fr);gap:18px}.guide-entry-meta{grid-column:2;align-items:flex-start;flex-direction:row}.guide-device{height:100px}.guide-book{width:90px;height:90px}}
+        @media(max-width:820px){.guides-index{grid-template-columns:repeat(3,1fr)}.guides-index>div{grid-template-columns:1fr;padding:16px}.guides-intro-band{grid-template-columns:1fr}.guides-intro-band>div{border-right:0;border-bottom:1px solid rgba(65,40,19,.2)}.guides-archive-head{grid-template-columns:1fr;gap:18px}.guide-entry{grid-template-columns:96px minmax(0,1fr);gap:18px}.guide-entry-meta{grid-column:2;align-items:flex-start;flex-direction:row}.guide-device{height:100px}.guide-book,.guide-photo{width:90px;height:90px}}
         @media(max-width:560px){.guides-index{grid-template-columns:1fr}.guides-index>div{grid-template-columns:1fr auto}.guides-archive{width:min(100% - 32px,1160px)}.guide-entry{grid-template-columns:1fr;padding:22px 0}.guide-device{display:none}.guide-entry-meta{grid-column:1}.guides-toolbar{align-items:stretch}.guides-search{max-width:none}}
-        @media(prefers-reduced-motion:reduce){.guide-entry,.guide-book{transition:none}}
+        @media(prefers-reduced-motion:reduce){.guide-entry,.guide-book,.guide-photo{transition:none}}
       `}</style>
     </main>
   );

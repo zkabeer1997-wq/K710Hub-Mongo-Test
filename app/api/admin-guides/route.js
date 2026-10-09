@@ -5,6 +5,7 @@ import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { GUIDE_FIELDS, validateGuide } from '../../../lib/guideValidation.mjs';
+import { guideImageExists } from '../../../lib/guideImages.mjs';
 
 async function requireAdmin(request) {
   if (!(await isAdminRequest(request))) {
@@ -40,6 +41,7 @@ export async function GET(request) {
         is_published: 1,
         access_level: 1,
         reviewed_by: 1,
+        image_id: 1,
         created_at: 1,
         updated_at: 1,
         _id: 0,
@@ -77,6 +79,8 @@ export async function POST(request) {
     if (existing) {
       return NextResponse.json({ error: 'A guide with that slug already exists.' }, { status: 409 });
     }
+    // A missing/foreign picture never blocks the guide text: the guide is saved without it.
+    if (guide.image_id && !(await guideImageExists(await getCollection(COLLECTIONS.SITE_IMAGES), guide.image_id))) guide.image_id = '';
     const doc = { ...guide, updated_at: new Date(), created_at: new Date() };
     await coll.insertOne(doc);
     const { _id, ...saved } = doc;

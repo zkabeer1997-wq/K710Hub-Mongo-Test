@@ -2,7 +2,7 @@ import { isAdminRequest } from '../../../../lib/adminAuth';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
 import { getDriveStorage } from '../../../../lib/driveStorage.server';
-import { deliverSiteImage } from '../../../../lib/siteImages.mjs';
+import { deliverSiteImage, withoutPlaceholder } from '../../../../lib/siteImages.mjs';
 import { placeholderResponse } from '../../../../lib/galleryImageDelivery.mjs';
 
 export const dynamic = 'force-dynamic';
@@ -13,10 +13,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(request, { params }) {
   const { id } = await params;
   let coll;
-  try { coll = await getCollection(COLLECTIONS.SITE_IMAGES); } catch { return placeholderResponse(502); }
-  return deliverSiteImage({
+  const strict = new URL(request.url || 'http://localhost').searchParams.get('fallback') === 'none';
+  try { coll = await getCollection(COLLECTIONS.SITE_IMAGES); } catch { return withoutPlaceholder(placeholderResponse(502), strict); }
+  return withoutPlaceholder(await deliverSiteImage({
     id, coll, getDrive: getDriveStorage,
     isAdmin: () => isAdminRequest(request),
     ifNoneMatch: request.headers.get('if-none-match'),
-  });
+  }), strict);
 }

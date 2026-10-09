@@ -76,7 +76,7 @@ export default function GuidesDirectory({ copy, guides, categories: savedCategor
             const isStartHere = Boolean(guide.slug) && guide.slug === startHere;
             return (
               <a key={guide.slug} href={`/guides/${guide.slug}${query}`} className="guide-entry" role="listitem">
-                <GuideIcon index={index} />
+                <GuideIcon index={index} imageUrl={guide.image_url} />
                 <span className="guide-entry-copy">
                   <span className="guide-entry-tags">
                     <span className="k-mark guide-category">{guide.category}</span>

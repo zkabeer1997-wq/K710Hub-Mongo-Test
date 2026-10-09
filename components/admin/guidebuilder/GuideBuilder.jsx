@@ -20,10 +20,12 @@ import Inspector from './Inspector';
 import Palette from './Palette';
 import TemplatePicker from './TemplatePicker';
 import { checkImageFile, uploadGuideImage, pickGuideImageFromDrive } from './uploadImage';
-import AddImageButtons from '../AddImageButtons';
+import AddImageButtons, { loadDriveStatus } from '../AddImageButtons';
+import ImageUploadField from '../ImageUploadField';
+import DriveStatusBanner from '../DriveStatusBanner';
 import styles from './builder.module.css';
 
-const META_KEYS = ['title', 'slug', 'category', 'description', 'access_level', 'reviewed_by', 'position', 'f2p_content', 'spender_content'];
+const META_KEYS = ['title', 'slug', 'category', 'description', 'access_level', 'reviewed_by', 'position', 'f2p_content', 'spender_content', 'image_id'];
 const signature = (layout, meta) => JSON.stringify([layout, ...META_KEYS.map(k => meta[k])]);
 const AUTO_SLUG = /^untitled-guide(-\d+)?$/;
 
@@ -198,6 +200,8 @@ export default function GuideBuilder({ slug: initialSlug }) {
   const [saveState, setSaveState] = useState('saved'); // saved | dirty | saving | error
   const [retry, setRetry] = useState(0);
   const [committing, setCommitting] = useState(false);
+  const [driveReady, setDriveReady] = useState(false);
+  const liveImageId = useRef(''); // the picture the live page uses; anything else is an unsaved upload
   const [showDetails, setShowDetails] = useState(false);
   const [restored, setRestored] = useState(false);
   const [converted, setConverted] = useState(false);
@@ -239,9 +243,10 @@ export default function GuideBuilder({ slug: initialSlug }) {
         const nextMeta = {
           title: src.title || '', slug: src.slug || g.slug, category: src.category || '', description: src.description || '',
           access_level: src.access_level || 'public', reviewed_by: src.reviewed_by || '', position: String(src.position ?? 0),
-          f2p_content: src.f2p_content || '', spender_content: src.spender_content || '', is_published: Boolean(g.is_published),
+          f2p_content: src.f2p_content || '', spender_content: src.spender_content || '', image_id: src.image_id || '', is_published: Boolean(g.is_published),
         };
         const liveLayout = g.layout ? validateLayout(g.layout).layout : null;
+        liveImageId.current = g.image_id || '';
         setMeta(nextMeta);
         setSlugKey(g.slug);
         setSlugAuto(AUTO_SLUG.test(nextMeta.slug));
@@ -374,15 +379,16 @@ export default function GuideBuilder({ slug: initialSlug }) {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || 'Unable to save this guide.');
       const saved = body.guide;
-      setMeta(m => ({ ...m, is_published: Boolean(saved.is_published), slug: saved.slug }));
+      liveImageId.current = saved.image_id || '';
+      setMeta(m => ({ ...m, is_published: Boolean(saved.is_published), slug: saved.slug, image_id: saved.image_id || '' }));
       setSlugKey(saved.slug);
       if (saved.slug !== slugKey) window.history.replaceState(null, '', `/admin/dashboard/guides/${saved.slug}`);
-      const newSig = signature(layout, { ...meta, slug: saved.slug });
+      const newSig = signature(layout, { ...meta, slug: saved.slug, image_id: saved.image_id || '' });
       setSavedSig(newSig);
       setLiveSig(newSig);
       setSaveState('saved');
       setRestored(false);
-      setNotice({ kind: 'ok', text: willPublish ? (meta.is_published ? 'Live page updated.' : 'Published. The page is now live.') : (publish === false ? 'Unpublished. The page is now a draft.' : 'Saved.') });
+      setNotice(body.warning ? { kind: 'error', text: `Saved, but ${body.warning.charAt(0).toLowerCase()}${body.warning.slice(1)}` } : { kind: 'ok', text: willPublish ? (meta.is_published ? 'Live page updated.' : 'Published. The page is now live.') : (publish === false ? 'Unpublished. The page is now a draft.' : 'Saved.') });
       if (exit) router.push('/admin/dashboard/guides');
     } catch (err) {
       setNotice({ kind: 'error', text: err.message });
@@ -398,6 +404,15 @@ export default function GuideBuilder({ slug: initialSlug }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [commitLive]);
+
+  // ---------------------------------------------------------------- card picture
+  useEffect(() => { loadDriveStatus().then(s => setDriveReady(Boolean(s?.connected))); }, []);
+  const changeCardImage = image => {
+    const old = meta?.image_id;
+    // An upload that was never saved to the live page is just clutter in Drive: drop it when replaced.
+    if (old && old !== image?.id && old !== liveImageId.current) fetch(`/api/admin-drive/images?id=${encodeURIComponent(old)}`, { method: 'DELETE' }).catch(() => {});
+    setMetaField('image_id', image?.id || '');
+  };
 
   // ---------------------------------------------------------------- meta
   const setMetaField = (field, value) => setMeta(m => {
@@ -733,6 +748,14 @@ export default function GuideBuilder({ slug: initialSlug }) {
               </label>
               <label className={styles.mini}><span>Last reviewed by</span><input value={meta.reviewed_by} maxLength={80} onChange={e => setMetaField('reviewed_by', e.target.value)} /></label>
               <label className={styles.mini}><span>Library position</span><input type="number" min="0" max="100000" value={meta.position} onChange={e => setMetaField('position', e.target.value)} /></label>
+              <div style={{ flex: '1 1 100%', display: 'grid', gap: 8, fontFamily: 'var(--font-body)' }}>
+                <DriveStatusBanner />
+                <ImageUploadField
+                  folder="guide" label="Guide picture (shown on the Guides page)" altRequired={false} showAlt={false} cropSquare={512}
+                  disabled={!driveReady} value={meta.image_id ? { id: meta.image_id, url: `/api/site-image/${meta.image_id}` } : null} onChange={changeCardImage}
+                  hint="Use a square picture, at least 256 x 256 pixels. It is cropped to the centre square (as in the preview) and resized to 512 x 512. Without one, the book icon shows. Anyone can see it, even for members-only guides."
+                />
+              </div>
               <label className={styles.mini} style={{ flex: '1 1 280px' }}><span>F2P tab (optional markdown, shown under the page)</span>
                 <textarea rows={3} value={meta.f2p_content} onChange={e => setMetaField('f2p_content', e.target.value)} />
               </label>
