@@ -28,7 +28,7 @@ const config = [
     },
   },
   {
-    ignores: ['.next/**', 'out/**', 'build/**', 'public/ui-strings.json'],
+    ignores: ['.next/**', 'out/**', 'build/**'],
   },
 ];
 

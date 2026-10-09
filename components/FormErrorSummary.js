@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useT } from './i18n/LanguageProvider';
 
 /** Focuses the field (or the first control inside a group) with the given id. */
 export function focusFieldById(id) {
@@ -22,6 +23,7 @@ export function focusFieldById(id) {
  */
 export default function FormErrorSummary({ errors, focusSignal = 0, id = 'form-error-summary' }) {
   const ref = useRef(null);
+  const t = useT();
   useEffect(() => {
     if (errors.length && focusSignal) ref.current?.focus({ preventScroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -30,7 +32,7 @@ export default function FormErrorSummary({ errors, focusSignal = 0, id = 'form-e
   return (
     <div id={id} ref={ref} className="status error form-error-summary" role="alert" tabIndex={-1}>
       <strong className="form-error-summary-title">
-        {errors.length === 1 ? 'There is 1 problem to fix' : `There are ${errors.length} problems to fix`}
+        {t('form.errors', { count: errors.length })}
       </strong>
       <ul>
         {errors.map((error) => (

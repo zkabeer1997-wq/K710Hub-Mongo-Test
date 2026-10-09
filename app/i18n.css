@@ -1,194 +1,66 @@
-/* K710 global language selector and translation status */
+/* Language control + picker (components/i18n/*). Tokens only. */
 
+/* ---- Picker: full-screen sheet on phones, centred dialog from 700px ---- */
 .k710-language-overlay {
   position: fixed;
   inset: 0;
   z-index: 12000;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background:
-    radial-gradient(circle at 50% 38%, rgba(226, 105, 42, 0.22), transparent 34%),
-    linear-gradient(180deg, rgba(5, 7, 16, 0.96), rgba(8, 10, 20, 0.99));
-  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: rgba(4, 5, 10, 0.78);
 }
-
-.k710-language-overlay::before,
-.k710-language-overlay::after {
-  content: '';
-  position: fixed;
-  pointer-events: none;
-  border-radius: 999px;
-  filter: blur(70px);
-  opacity: 0.34;
-}
-
-.k710-language-overlay::before {
-  width: min(48vw, 520px);
-  height: min(48vw, 520px);
-  left: -12vw;
-  bottom: -18vw;
-  background: rgba(226, 105, 42, 0.24);
-}
-
-.k710-language-overlay::after {
-  width: min(42vw, 460px);
-  height: min(42vw, 460px);
-  right: -10vw;
-  top: -16vw;
-  background: rgba(211, 178, 94, 0.15);
-}
-
 .k710-language-panel {
-  position: relative;
-  width: min(100%, 560px);
-  max-width: calc(100vw - 48px);
-  box-sizing: border-box;
-  padding: clamp(28px, 5vw, 46px);
-  border: 1px solid rgba(214, 179, 96, 0.32);
-  border-radius: 28px;
-  color: #f7f2e8;
-  background:
-    linear-gradient(180deg, rgba(22, 24, 38, 0.96), rgba(11, 13, 24, 0.98)),
-    #0c0f1b;
-  box-shadow:
-    0 28px 80px rgba(0, 0, 0, 0.5),
-    inset 0 1px rgba(255, 255, 255, 0.05);
-  text-align: center;
-}
-
-.k710-language-crest {
-  width: 72px;
-  height: 80px;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 18px;
-  clip-path: polygon(50% 0, 94% 17%, 94% 61%, 78% 84%, 50% 100%, 22% 84%, 6% 61%, 6% 17%);
-  color: #14100a;
-  background: linear-gradient(145deg, #fff1bd, #d8a84d 45%, #8f5d21 100%);
-  font-family: var(--font-display-loaded), Georgia, serif;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  box-shadow: 0 0 42px rgba(226, 105, 42, 0.3);
-}
-
-.k710-language-eyebrow {
-  margin: 0 0 10px;
-  color: #d6b86f;
-  font-family: var(--font-mono-loaded), monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-}
-
-.k710-language-panel h1 {
-  margin: 0;
-  font-family: var(--font-display-loaded), Georgia, serif;
-  font-size: clamp(1.85rem, 5vw, 3rem);
-  line-height: 1.03;
-  letter-spacing: -0.025em;
-}
-
-.k710-language-multilingual {
-  margin: 14px auto 0;
-  color: #e7cf98;
-  font-size: 0.88rem;
-  line-height: 1.6;
-}
-
-.k710-language-copy {
-  max-width: 440px;
-  margin: 14px auto 26px;
-  color: rgba(241, 238, 229, 0.72);
-  font-family: var(--font-body-loaded), system-ui, sans-serif;
-  font-size: 0.94rem;
-  line-height: 1.55;
-}
-
-.k710-language-label {
-  display: block;
-  margin: 0 0 8px;
-  color: rgba(247, 242, 232, 0.78);
-  font-family: var(--font-body-loaded), system-ui, sans-serif;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.k710-language-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
   width: 100%;
-  min-height: 52px;
-  border: 1px solid rgba(214, 184, 111, 0.28);
-  border-radius: 14px;
-  padding: 0 16px;
-  color: #fff9ed;
-  background: rgba(255, 255, 255, 0.055);
-  font: 600 0.98rem/1 var(--font-body-loaded), system-ui, sans-serif;
-  outline: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  max-height: 100dvh;
+  padding: var(--space-5) var(--page-gutter) max(var(--space-6), env(safe-area-inset-bottom));
+  overflow-y: auto;
+  color: var(--t-primary);
+  background: var(--stone);
 }
-
-.k710-language-input:focus {
-  border-color: rgba(235, 188, 89, 0.78);
-  background: rgba(255, 255, 255, 0.075);
-  box-shadow: 0 0 0 4px rgba(226, 105, 42, 0.13);
+.k710-language-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.k710-language-head h2 { margin: 0; font: 700 var(--text-xl)/1.25 var(--font-body); letter-spacing: -0.01em; }
+.k710-language-head p { margin: var(--space-1) 0 0; color: var(--t-secondary); font-size: var(--text-md); line-height: 1.5; }
+.k710-language-close {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border: 1px solid var(--edge); border-radius: var(--radius-md);
+  color: var(--t-primary); background: transparent; cursor: pointer;
 }
-
-.k710-language-enter {
-  width: 100%;
-  min-height: 52px;
-  margin-top: 12px;
-  border: 1px solid rgba(255, 226, 160, 0.3);
-  border-radius: 14px;
-  color: #171108;
-  background: linear-gradient(135deg, #f7d98d, #d79a3d 72%, #bb6a29);
-  box-shadow: 0 10px 28px rgba(180, 92, 35, 0.22);
-  cursor: pointer;
-  font-family: var(--font-body-loaded), system-ui, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  transition: transform 150ms ease, filter 150ms ease;
+.k710-language-close:hover { background: rgba(217, 169, 78, 0.1); }
+.k710-language-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3);
+  margin: 0; padding: 0; list-style: none;
 }
-
-.k710-language-enter:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
+.k710-language-option {
+  position: relative; display: grid; align-content: center; gap: 2px; width: 100%; min-height: 76px;
+  padding: var(--space-3) var(--space-4); padding-inline-end: 44px; text-align: start;
+  border: 1px solid var(--edge); border-radius: var(--radius-md);
+  color: var(--t-primary); background: var(--stone-lit); cursor: pointer; font: inherit;
+  transition: border-color var(--t-fast), background var(--t-fast);
 }
-
-.k710-language-enter:active {
-  transform: translateY(0);
+.k710-language-option:hover { border-color: var(--edge-strong); background: var(--steel); }
+.k710-language-option[aria-current='true'] { border-color: var(--gold); background: rgba(217, 169, 78, 0.12); }
+.k710-language-native { font: 700 var(--text-xl)/1.25 var(--font-body); }
+.k710-language-english { color: var(--t-secondary); font-size: var(--text-sm); }
+.k710-language-check {
+  position: absolute; inset-block-start: 50%; inset-inline-end: var(--space-3); transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border-radius: var(--radius-pill); color: var(--ink); background: var(--gold);
 }
-
-@keyframes k710-language-spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 640px) {
-  .k710-language-overlay {
-    align-items: end;
-    padding: 14px;
-  }
-
+.k710-language-option:focus-visible, .k710-language-close:focus-visible { outline: 3px solid var(--gold-hot); outline-offset: 2px; }
+@media (min-width: 700px) {
+  .k710-language-overlay { align-items: center; padding: var(--space-6); }
   .k710-language-panel {
-    max-width: calc(100vw - 28px);
-    padding: 28px 20px 24px;
-    border-radius: 24px;
+    width: min(100%, 560px); max-height: min(100%, 640px); padding: var(--space-6);
+    border: 1px solid var(--edge-strong); border-radius: var(--radius-lg); box-shadow: var(--depth-2);
   }
 }
+@media (prefers-reduced-motion: reduce) { .k710-language-option { transition: none; } }
 
-@media (prefers-reduced-motion: reduce) {
-  .k710-language-input,
-  .k710-language-enter {
-    transition: none;
-  }
-}
-
-/* Header language switcher (components/i18n/LanguageSwitcher.jsx) */
+/* ---- Header / footer language button ---- */
 .lang-switch {
   display: inline-flex;
   align-items: center;
@@ -198,19 +70,15 @@
   min-height: 44px;
   padding: 0 10px;
   border: 1px solid var(--line, rgba(214, 184, 111, 0.28));
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--parchment, #f3ead8);
   background: transparent;
   cursor: pointer;
   font: 700 12px/1 var(--font-mono-loaded, ui-monospace, monospace);
   letter-spacing: 0.06em;
 }
-.lang-switch:hover { border-color: rgba(230, 188, 92, 0.58); background: rgba(217, 169, 78, 0.08); }
+.lang-switch:hover { border-color: var(--edge-strong); background: rgba(217, 169, 78, 0.08); }
 .lang-switch:focus-visible { outline: 2px solid var(--gold-hot, #f0c660); outline-offset: 2px; }
-.lang-switch-busy {
-  width: 10px; height: 10px; border: 2px solid rgba(255, 255, 255, 0.28); border-top-color: #e6bb61;
-  border-radius: 999px; animation: k710-language-spin 700ms linear infinite;
-}
 /* Desktop header shows the compact code; the mobile menu carries a full-width row instead. */
 .lang-switch--mobile { display: none; }
 @media (max-width: 759px) {
@@ -219,26 +87,37 @@
     display: flex; justify-content: flex-start; width: 100%; margin: 0 0 6px; padding: 0 12px;
     font-size: 13px; letter-spacing: 0.03em;
   }
-  .lang-switch-name { font-family: var(--font-body-loaded, system-ui, sans-serif); font-weight: 600; }
 }
+.lang-switch-name { font-family: var(--font-body-loaded, system-ui, sans-serif); font-weight: 600; font-size: 15px; letter-spacing: 0; }
 
-/* Floating fallback (pages without the site header, e.g. /gate); hidden when the header switcher exists. */
-.k710-language-globe {
-  position: fixed; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 11900;
-  min-width: 44px; min-height: 44px; padding: 0 12px; border: 1px solid rgba(214, 184, 111, 0.28); border-radius: 999px;
-  color: #f3ead8; background: rgba(12, 15, 27, 0.88); cursor: pointer; font: 700 12px/1 var(--font-mono-loaded, monospace);
+/* Chrome-less public pages (/gate): one small corner control so language stays reachable. */
+.lang-switch--floating {
+  position: fixed; inset-block-end: max(12px, env(safe-area-inset-bottom)); inset-inline-end: 12px; z-index: 900;
+  background: rgba(12, 15, 27, 0.88);
 }
-body:has(.lang-switch) .k710-language-globe { display: none; }
+.k710-language-head h2 { text-transform: none; letter-spacing: -0.01em; }
+.k710-language-native { justify-self: start; text-align: start; unicode-bidi: plaintext; }
 
-/* Quick-pick chips in the chooser dialog */
-.k710-language-quick { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 14px 0 0; }
-.k710-language-chip {
-  min-height: 44px; padding: 0 14px; border: 1px solid rgba(214, 184, 111, 0.3); border-radius: 999px;
-  color: #f3ead8; background: transparent; cursor: pointer; font: 600 0.85rem var(--font-body-loaded, system-ui, sans-serif);
+/* ---- Runtime translation status (components/i18n/TranslationOverlay.jsx) ---- */
+.rt-status-wrap { position: fixed; inset-inline: 0; inset-block-end: max(12px, env(safe-area-inset-bottom)); z-index: 880; display: flex; justify-content: center; pointer-events: none; padding-inline: 16px; }
+.rt-status {
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 10px; margin: 0; max-width: min(92vw, 460px);
+  padding: 8px 14px; border-radius: var(--radius-md); border: 1px solid var(--line, rgba(214, 184, 111, 0.28));
+  background: rgba(12, 15, 27, 0.94); color: var(--parchment, #f3ead8);
+  font: 500 13px/1.35 var(--font-body-loaded, system-ui, sans-serif);
 }
-.k710-language-chip:hover, .k710-language-chip[aria-pressed="true"] { border-color: rgba(230, 188, 92, 0.7); background: rgba(217, 169, 78, 0.14); }
-.k710-language-chip:focus-visible, .k710-language-cancel:focus-visible, .k710-language-enter:focus-visible { outline: 2px solid #f0c660; outline-offset: 2px; }
-.k710-language-cancel {
-  width: 100%; min-height: 44px; margin-top: 8px; border: 0; background: transparent; color: rgba(241, 238, 229, 0.72);
-  cursor: pointer; font: 600 0.85rem var(--font-body-loaded, system-ui, sans-serif);
+.rt-status-warn { border-color: rgba(230, 150, 90, 0.55); }
+.rt-status-close {
+  min-width: 32px; min-height: 32px; border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; cursor: pointer; font-size: 20px; line-height: 1;
 }
+.rt-status-close:hover { background: rgba(255, 255, 255, 0.08); }
+.rt-status-close:focus-visible { outline: 2px solid var(--gold-hot, #f0c660); outline-offset: 2px; }
+
+/* ---- Scripts that need their own typography (no web font is shipped: the phone's system font is used) ---- */
+html:lang(ar) body, html:lang(hi) body, html:lang(ja) body, html:lang(ko) body, html:lang(zh-Hans) body {
+  font-family: var(--font-body-loaded), system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans Arabic", "Noto Sans Devanagari", "Noto Sans JP", "Noto Sans KR", "Noto Sans SC", "Hiragino Sans", "Apple SD Gothic Neo", "PingFang SC", "Microsoft YaHei", "Malgun Gothic", "Yu Gothic", sans-serif;
+}
+/* Letter-spacing and forced capitals break joined (Arabic) and conjunct (Devanagari) letters. */
+html:lang(ar) *, html:lang(hi) * { letter-spacing: normal !important; text-transform: none !important; }
+html:lang(ko) body { word-break: keep-all; }
+html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; }

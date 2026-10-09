@@ -6,6 +6,8 @@ import SiteFooter from './SiteFooter';
 import SiteAtmosphere from './SiteAtmosphere';
 import DeadlineTicker from './member/DeadlineTicker';
 import MemberSidebar from './member/MemberSidebar';
+import LanguageSwitcher from './i18n/LanguageSwitcher';
+import { useT } from './i18n/LanguageProvider';
 
 function wantsChrome(pathname) {
   if (pathname === '/gate') return false;
@@ -27,14 +29,17 @@ function routeTone(pathname) {
 
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
+  const t = useT();
   const tone = routeTone(pathname);
-  const skipLink = <a href="#main" className="k-skip">Skip to content</a>;
+  const skipLink = <a href="#main" className="k-skip">{t('chrome.skip')}</a>;
 
   if (!wantsChrome(pathname)) {
     return (
       <>
         {skipLink}
         <div id="main" className={`site-route site-route-${tone}`}>{children}</div>
+        {/* Public entry pages without the site header (/gate) still need a way to change language. */}
+        {!(pathname === '/admin' || pathname.startsWith('/admin/')) && <LanguageSwitcher className="lang-switch--floating" />}
       </>
     );
   }
