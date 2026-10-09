@@ -7,6 +7,7 @@ import ConfirmDialog from './ConfirmDialog';
 import TableSkeleton from './TableSkeleton';
 import { Button, Table } from '../ui';
 import MemberDetailsDrawer from './MemberDetailsDrawer';
+import RallyBoard from './RallyBoard';
 import { buildKvkMembersWorkbook, formatUnitLevel, kvkMemberExportRows, KVK_MEMBER_HEADERS } from '../../lib/kvkMembersExport.mjs';
 import ExportToGoogleDrive from './ExportToGoogleDrive';
 import { useEscapeToClose } from '../../lib/useEscapeToClose';
@@ -19,25 +20,12 @@ import {
 } from '../../lib/playerCombatOptions.mjs';
 import {
   hydrateRallies,
-  serializeRalliesForSave,
   assignMemberToRally,
-  autoAssignRallyMembers,
-  createNextRally,
-  decrementRallyLeadHero,
-  getLeadHeroTotal,
-  getMatchingLeadHeroes,
-  getRallyLeadMemberIds,
   getTroopLevelSummary,
-  incrementRallyLeadHero,
   normalizeRalliesForRows,
   parseStoredRallies,
   removeRowsAndAssignments,
-  removeRallyById,
-  renameRally,
   removeMemberFromRallies,
-  setRallyLead,
-  setRallyTroopWeight,
-  MAX_LEAD_HEROES,
 } from '../../app/admin/dashboard/rallyState.mjs';
 
 const EMPTY_MEMBER = {
@@ -121,8 +109,6 @@ export default function RosterWorkspace({
   const [confirmState, setConfirmState] = useState(null);
   const [draggingMemberId, setDraggingMemberId] = useState(null);
   const [dragOverRallyId, setDragOverRallyId] = useState(null);
-  const [collapsedRallyIds, setCollapsedRallyIds] = useState([]);
-  const [autoAssignSummaries, setAutoAssignSummaries] = useState({});
   const [cycles, setCycles] = useState([]);
   // 'current', 'all', or a past cycle id. Chosen by the event page (History tab).
   const seasonFilter = cycleFilter;
@@ -186,21 +172,43 @@ export default function RosterWorkspace({
     return () => { cancelled = true; };
   }, [ralliesEndpoint, rallyStorageKey]);
 
+  const [ralliesSave, setRalliesSave] = useState({ status: 'idle', at: null });
+  const ralliesRef = useRef(rallies);
+  useEffect(() => { ralliesRef.current = rallies; }, [rallies]);
+  const saveSeqRef = useRef(0);
+
+  const saveRallies = useCallback(async () => {
+    const seq = (saveSeqRef.current += 1);
+    setRalliesSave((current) => ({ ...current, status: 'saving' }));
+    try {
+      const response = await fetch(ralliesEndpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        // The route serialises once; sending already-serialised rows made it drop every joiner.
+        body: JSON.stringify({ rallies: ralliesRef.current }),
+      });
+      if (!response.ok) throw new Error(`save failed (${response.status})`);
+      const result = await response.json().catch(() => ({}));
+      // Only the newest save decides the indicator; an older one finishing late must not say "Saved".
+      if (seq === saveSeqRef.current) {
+        ralliesDirtyRef.current = false;
+        setRalliesSave({ status: 'saved', at: result.saved_at || new Date().toISOString() });
+      }
+    } catch {
+      if (seq === saveSeqRef.current) setRalliesSave((current) => ({ ...current, status: 'error' }));
+    }
+  }, [ralliesEndpoint]);
+  const retryRalliesSave = useCallback(() => { saveRallies(); }, [saveRallies]);
+
   useEffect(() => {
-    if (!ralliesHydrated || !ralliesDirtyRef.current) return;
+    if (!ralliesHydrated || !ralliesDirtyRef.current) return undefined;
     try {
       window.localStorage.setItem(rallyStorageKey, JSON.stringify(rallies));
     } catch {}
-    const timer = setTimeout(() => {
-      ralliesDirtyRef.current = false;
-      fetch(ralliesEndpoint, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rallies: serializeRalliesForSave(rallies) }),
-      }).catch(() => {});
-    }, 800);
+    setRalliesSave((current) => (current.status === 'saving' ? current : { ...current, status: 'saving' }));
+    const timer = setTimeout(saveRallies, 800);
     return () => clearTimeout(timer);
-  }, [rallies, ralliesHydrated, ralliesEndpoint, rallyStorageKey]);
+  }, [rallies, ralliesHydrated, rallyStorageKey, saveRallies]);
 
   useEffect(() => {
     if (!rows.length) return;
@@ -281,10 +289,6 @@ export default function RosterWorkspace({
     setActionStatus(`Cleared ${deletedMemberIds.length} test entries.`);
   }
 
-  function handleCreateRally() {
-    updateRallies((current) => createNextRally(current, `rally-${current.length + 1}-${Date.now()}`));
-  }
-
   function handleDragStart(event, memberId) {
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', String(memberId));
@@ -296,70 +300,12 @@ export default function RosterWorkspace({
     setDragOverRallyId(null);
   }
 
-  function handleDropOnRally(event, rallyId) {
-    event.preventDefault();
-    const memberId = event.dataTransfer.getData('text/plain');
-    setDraggingMemberId(null);
-    setDragOverRallyId(null);
-    if (!memberId) return;
-    updateRallies((current) => assignMemberToRally(current, rallyId, memberId));
-  }
-
-  function handleRemoveFromRally(memberId) {
-    updateRallies((current) => removeMemberFromRallies(current, memberId));
-  }
-
-  function toggleRallyCollapsed(rallyId) {
-    setCollapsedRallyIds((current) => (
-      current.includes(rallyId) ? current.filter((id) => id !== rallyId) : [...current, rallyId]
-    ));
-  }
-
-  function handleDeleteRally(rally) {
-    setConfirmState({
-      message: `Delete ${rally.name}? Members will stay in the table.`,
-      confirmLabel: 'Delete rally',
-      onConfirm: () => {
-        setConfirmState(null);
-        updateRallies((current) => removeRallyById(current, rally.id));
-      },
-    });
-  }
-
-  function handleRallyLeadChange(rallyId, memberId) {
-    updateRallies((current) => setRallyLead(current, rallyId, memberId));
-  }
-
-  function handleTroopWeightChange(rallyId, troopType, value) {
-    updateRallies((current) => setRallyTroopWeight(current, rallyId, troopType, value));
-  }
-
-  function handleIncrementLeadHero(rallyId, hero) {
-    updateRallies((current) => incrementRallyLeadHero(current, rallyId, hero));
-  }
-
-  function handleDecrementLeadHero(rallyId, hero) {
-    updateRallies((current) => decrementRallyLeadHero(current, rallyId, hero));
-  }
-
-  function handleAutoAssign(rallyId) {
-    const eligibleRows = seasonFilteredRows;
-    const result = autoAssignRallyMembers(rallies, rallyId, eligibleRows);
-    if (!result.summary) return;
-    updateRallies(result.rallies);
-    setAutoAssignSummaries((current) => ({ ...current, [rallyId]: result.summary }));
-  }
-
   function handleAssignFromDropdown(memberId, rallyId) {
     if (!rallyId) {
       updateRallies((current) => removeMemberFromRallies(current, memberId));
       return;
     }
     updateRallies((current) => assignMemberToRally(current, rallyId, memberId));
-  }
-
-  function handleRenameRally(rallyId, name) {
-    updateRallies((current) => renameRally(current, rallyId, name));
   }
 
   function handleExportXlsx() {
@@ -444,24 +390,6 @@ export default function RosterWorkspace({
     return new Map(seasonFilteredRows.map((row) => [String(row.member_id), row]));
   }, [seasonFilteredRows]);
 
-  const assignedInView = useMemo(() => {
-    const ids = new Set();
-    rallies.forEach((rally) => {
-      [...(rally.memberIds || []), rally.leadMemberId].filter(Boolean).forEach((id) => {
-        if (membersById.has(String(id))) ids.add(String(id));
-      });
-    });
-    return ids.size;
-  }, [rallies, membersById]);
-
-  const rallyByMemberId = useMemo(() => {
-    const assignments = new Map();
-    rallies.forEach((rally) => {
-      rally.memberIds.forEach((memberId) => assignments.set(String(memberId), rally.name));
-    });
-    return assignments;
-  }, [rallies]);
-
   const rallyIdByMemberId = useMemo(() => {
     const assignments = new Map();
     rallies.forEach((rally) => {
@@ -470,16 +398,6 @@ export default function RosterWorkspace({
     });
     return assignments;
   }, [rallies]);
-
-  const rallyLeadNameByMemberId = useMemo(() => {
-    const names = new Map();
-    rallies.forEach((rally) => {
-      if (rally.leadMemberId) names.set(String(rally.leadMemberId), rally.name);
-    });
-    return names;
-  }, [rallies]);
-
-  const leadMemberIds = useMemo(() => getRallyLeadMemberIds(rallies), [rallies]);
 
   const toolbar = (
     <div className="roster-toolbar">
@@ -596,66 +514,18 @@ export default function RosterWorkspace({
       )}
       {!loading && !error && view === 'rallies' && (
         <div className="admin-workspace">
-          <section className="rally-board rally-board-embedded" aria-label="Rallies">
-            <div className="rally-board-header">
-              <h2>Rallies</h2>
-              <button type="button" className="dash-btn" onClick={handleCreateRally}>
-                Add rally {rallies.length + 1}
-              </button>
-            </div>
-            <p className="ec-panel-note">
-              {assignedInView} of {seasonFilteredRows.length} applicants{cycleType && seasonFilter !== 'all' ? ' in this cycle' : ''} are in a rally. Auto assign picks from all of them.
-            </p>
-            <div className="rally-list">
-              {rallies.length === 0 && (
-                <div className="rally-empty-state">Add rally 1 to start assigning applicants.</div>
-              )}
-              {rallies.map((rally) => (
-                <div
-                  key={rally.id}
-                  className={`rally-card${dragOverRallyId === rally.id ? ' is-drag-over' : ''}`}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverRallyId(rally.id); }}
-                  onDragLeave={() => setDragOverRallyId(null)}
-                  onDrop={(e) => handleDropOnRally(e, rally.id)}
-                >
-                  <div className="rally-card-head">
-                    <input
-                      value={rally.name || ''}
-                      onChange={(e) => handleRenameRally(rally.id, e.target.value)}
-                      aria-label="Rally name"
-                    />
-                    <button type="button" onClick={() => toggleRallyCollapsed(rally.id)}>
-                      {collapsedRallyIds.includes(rally.id) ? 'Expand' : 'Collapse'}
-                    </button>
-                    <button type="button" onClick={() => handleAutoAssign(rally.id)}>Auto assign</button>
-                    <button type="button" onClick={() => handleDeleteRally(rally)}>Delete</button>
-                  </div>
-                  {!collapsedRallyIds.includes(rally.id) && (
-                    <div className="rally-card-body">
-                      <p>
-                        {rally.leadMemberId ? <>Lead: <strong>{membersById.get(String(rally.leadMemberId))?.name || rally.leadMemberId}</strong>{' · '}</> : null}
-                        {(rally.memberIds || []).filter((id) => membersById.has(String(id))).length} joiners{cycleType && seasonFilter !== 'all' ? ' this cycle' : ''}
-                      </p>
-                      {autoAssignSummaries[rally.id] && (
-                        <p className="admin-row-message">{autoAssignSummaries[rally.id]}</p>
-                      )}
-                      <ul>
-                        {(rally.memberIds || []).filter((id) => membersById.has(String(id))).map((id) => {
-                          const m = membersById.get(String(id));
-                          return (
-                            <li key={id}>
-                              {m?.name || id}
-                              <button type="button" onClick={() => handleRemoveFromRally(id)}>Remove</button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
+          <RallyBoard
+            rallies={rallies}
+            updateRallies={updateRallies}
+            rows={seasonFilteredRows}
+            membersById={membersById}
+            heroOptions={heroFilterOptions}
+            eventType={cycleType || 'kvk'}
+            eventName={title}
+            saveState={ralliesSave}
+            onRetrySave={retryRalliesSave}
+            onOpenMember={setSelectedMemberId}
+          />
         </div>
       )}
       <MemberDetailsDrawer

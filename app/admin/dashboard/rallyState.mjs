@@ -21,7 +21,22 @@ const TROOP_LEVEL_ORDER = [
 
 const AVAILABILITY_TARGET_PER_RALLY = 8;
 
-export function createNextRally(rallies, id = `rally-${Date.now()}`) {
+export const RALLY_TYPES = ['attack', 'garrison', 'optional'];
+export const RALLY_TYPE_LABELS = { attack: 'Attack', garrison: 'Garrison', optional: 'Optional' };
+export const RALLY_FORMATIONS = ['balanced', 'archer', 'cavalry'];
+export const RALLY_FORMATION_LABELS = { balanced: 'Balanced', archer: 'Archer-heavy', cavalry: 'Cavalry-heavy' };
+export const RALLY_SLOT_MINIMUM = 10;
+export const RALLY_JOINER_FLAG_ABOVE = 10;
+
+export function normalizeRallyType(value) {
+  return RALLY_TYPES.includes(value) ? value : 'attack';
+}
+
+export function normalizeRallyFormation(value) {
+  return RALLY_FORMATIONS.includes(value) ? value : 'balanced';
+}
+
+export function createNextRally(rallies, id = `rally-${Date.now()}`, rallyType = 'attack') {
 return [
 ...rallies,
 {
@@ -29,11 +44,51 @@ id,
 name: `Rally ${rallies.length + 1}`,
 memberIds: [],
 leadMemberId: '',
+managerName: '',
+rallyType: normalizeRallyType(rallyType),
+formationKind: 'balanced',
+notes: '',
 troopWeights: { ...DEFAULT_TROOP_WEIGHTS },
 leadHeroes: {},
 leadHeroAssignments: {},
 },
 ];
+}
+
+/** Sets one plain field (managerName, rallyType, formationKind, notes) on a rally. */
+export function setRallyField(rallies, rallyId, field, value) {
+  const clean = {
+    managerName: (v) => String(v ?? '').slice(0, 80),
+    rallyType: normalizeRallyType,
+    formationKind: normalizeRallyFormation,
+    notes: (v) => String(v ?? '').slice(0, 1000),
+  }[field];
+  if (!clean) return rallies;
+  return rallies.map((rally) => (rally.id === rallyId ? { ...rally, [field]: clean(value) } : rally));
+}
+
+/** Moves one joiner to a new position in the same rally's ordered list. */
+export function moveRallyJoiner(rallies, rallyId, memberId, toIndex) {
+  const id = String(memberId);
+  return rallies.map((rally) => {
+    if (rally.id !== rallyId) return rally;
+    const from = rally.memberIds.map(String).indexOf(id);
+    if (from === -1) return rally;
+    const ids = rally.memberIds.map(String);
+    ids.splice(from, 1);
+    ids.splice(Math.max(0, Math.min(ids.length, toIndex)), 0, id);
+    return { ...rally, memberIds: ids };
+  });
+}
+
+/** Cards are shown Attack, Garrison, Optional; creation order is kept inside each type. */
+export function sortRalliesByType(rallies) {
+  const order = (r) => RALLY_TYPES.indexOf(normalizeRallyType(r.rallyType));
+  return rallies.map((r, i) => [r, i]).sort((a, b) => order(a[0]) - order(b[0]) || a[1] - b[1]).map(([r]) => r);
+}
+
+export function rallySlotCount(rally) {
+  return Math.max(RALLY_SLOT_MINIMUM, (rally?.memberIds || []).length);
 }
 
                export function renameRally(rallies, rallyId, name) {
@@ -80,6 +135,10 @@ name: rally.name,
 // stale overlap (e.g. from data saved before this rule existed) on load.
 memberIds: leadMemberId ? memberIds.filter((id) => id !== leadMemberId) : memberIds,
 leadMemberId,
+managerName: typeof rally.managerName === 'string' ? rally.managerName.slice(0, 80) : '',
+rallyType: normalizeRallyType(rally.rallyType),
+formationKind: normalizeRallyFormation(rally.formationKind),
+notes: typeof rally.notes === 'string' ? rally.notes.slice(0, 1000) : '',
 troopWeights: {
 ...DEFAULT_TROOP_WEIGHTS,
 ...(rally.troopWeights || {}),
@@ -221,22 +280,31 @@ function troopLevelScore(tier, tg) {
 }
 
 /**
- * Formation-aware troop score: cavalry-heavy formations (cavalry % >= archer %)
- * weigh infantry + cavalry only; archer-heavy formations weigh all three,
- * per kingdom doctrine on the 60/40/0, 50/1/49-style formations.
+ * Which pair of troop types a rally's fill should weigh. An explicit
+ * formationKind wins. Otherwise it is derived from the old percentage weights:
+ * the lower of cavalry / archer decides it (cavalry lowest = archer-heavy).
  */
-function scoreMemberForRally(row, rally) {
-const weights = { ...DEFAULT_TROOP_WEIGHTS, ...(rally.troopWeights || {}) };
-const infantryScore = troopLevelScore(row.infantry_tier, row.infantry_tg);
-const cavalryScore = troopLevelScore(row.cavalry_tier, row.cavalry_tg);
-const archerScore = troopLevelScore(row.archer_tier, row.archer_tg);
-const archerHeavy = weights.archer >= weights.cavalry;
-return archerHeavy
-? infantryScore + archerScore + cavalryScore
-: infantryScore + cavalryScore;
+export function effectiveFormation(rally) {
+  const kind = normalizeRallyFormation(rally?.formationKind);
+  if (kind !== 'balanced') return kind;
+  const weights = { ...DEFAULT_TROOP_WEIGHTS, ...(rally?.troopWeights || {}) };
+  if (weights.cavalry < weights.archer) return 'archer';
+  if (weights.archer < weights.cavalry) return 'cavalry';
+  return 'balanced';
 }
 
-function classifyAvailability(row) {
+/** Archer-heavy weighs infantry + archer, cavalry-heavy infantry + cavalry, otherwise all three. */
+function scoreMemberForRally(row, rally) {
+  const infantryScore = troopLevelScore(row.infantry_tier, row.infantry_tg);
+  const cavalryScore = troopLevelScore(row.cavalry_tier, row.cavalry_tg);
+  const archerScore = troopLevelScore(row.archer_tier, row.archer_tg);
+  const formation = effectiveFormation(rally);
+  if (formation === 'archer') return infantryScore + archerScore;
+  if (formation === 'cavalry') return infantryScore + cavalryScore;
+  return infantryScore + cavalryScore + archerScore;
+}
+
+export function classifyAvailability(row) {
   const text = String(row.availability || '').toLowerCase();
   if (text.includes('not available')) return 'none';
   if (text.includes('full')) return 'full';
@@ -280,75 +348,184 @@ export function assignLeadHeroesForRally(rally, members) {
   return { assignments, lines };
 }
 
-/**
- * Fills a rally to 8 members: as many Full Battle members as possible
- * (best troop level for the rally's formation first), then backfills any
- * remaining slots with a First Half + Second Half pair per slot (so a rally
- * short 2 full-timers gains 2 first-half + 2 second-half members, not 2
- * total). Also runs lead-hero assignment across the final roster and
- * returns a summary for the admin.
- */
-export function autoAssignRallyMembers(rallies, rallyId, rows) {
-const targetRally = rallies.find((rally) => rally.id === rallyId);
-if (!targetRally) return { rallies, summary: null };
+/** A hero-holding joiner may replace a stronger non-holder only if their troop score is within this many points. */
+export const HERO_SWAP_MAX_SCORE_DROP = 2;
 
-const assignedElsewhere = new Set();
-rallies.forEach((rally) => {
-if (rally.id === rallyId) return;
-rally.memberIds.forEach((memberId) => assignedElsewhere.add(String(memberId)));
-});
-const currentMemberIds = new Set(targetRally.memberIds.map(String));
-const leadMemberIds = getRallyLeadMemberIds(rallies);
-
-const eligible = rows.filter((row) => (
-!assignedElsewhere.has(String(row.member_id))
-&& !currentMemberIds.has(String(row.member_id))
-&& !leadMemberIds.has(String(row.member_id))
-));
-
-const byAvailability = { full: [], first: [], second: [] };
-eligible.forEach((row) => {
-const bucket = classifyAvailability(row);
-if (byAvailability[bucket]) byAvailability[bucket].push(row);
-});
-
-const fullSorted = sortByScoreDesc(byAvailability.full, targetRally);
-const firstSorted = sortByScoreDesc(byAvailability.first, targetRally);
-const secondSorted = sortByScoreDesc(byAvailability.second, targetRally);
-
-const fullPicked = fullSorted.slice(0, AVAILABILITY_TARGET_PER_RALLY);
-const remainingSlots = Math.max(0, AVAILABILITY_TARGET_PER_RALLY - fullPicked.length);
-
-const partialPicked = [];
-for (let i = 0; i < remainingSlots; i += 1) {
-if (firstSorted[i]) partialPicked.push(firstSorted[i]);
-if (secondSorted[i]) partialPicked.push(secondSorted[i]);
+function heroHolders(row, needs) {
+  const held = new Set((row.heroes || []).map(String));
+  return Object.keys(needs).filter((hero) => needs[hero] > 0 && held.has(hero));
 }
 
-const newMembers = [...fullPicked, ...partialPicked];
-const nextMemberIds = [...targetRally.memberIds.map(String), ...newMembers.map((m) => String(m.member_id))];
+/**
+ * Picks joiners for one rally. At every moment of the battle the rally needs
+ * AVAILABILITY_TARGET_PER_RALLY joiners: Full Battle joiners count in both
+ * halves, so the fill takes Full Battle first (best troop level for the
+ * formation, then members who hold a required hero) and only then pairs
+ * First Half and Second Half joiners until both halves reach the target.
+ * A required hero nobody left can supply is skipped rather than leaving a gap.
+ */
+function pickJoinersForRally(rally, pool, rowsById) {
+  const currentRows = rally.memberIds.map((id) => rowsById.get(String(id))).filter(Boolean);
+  const count = { full: 0, first: 0, second: 0 };
+  currentRows.forEach((row) => {
+    const bucket = classifyAvailability(row);
+    if (count[bucket] !== undefined) count[bucket] += 1;
+  });
 
-const rowsById = new Map(rows.map((row) => [String(row.member_id), row]));
-const finalMembers = nextMemberIds.map((id) => rowsById.get(String(id))).filter(Boolean);
-const { assignments, lines } = assignLeadHeroesForRally(targetRally, finalMembers);
+  const needs = { ...(rally.leadHeroes || {}) };
+  currentRows.forEach((row) => {
+    const [hero] = heroHolders(row, needs);
+    if (hero) needs[hero] -= 1;
+  });
 
-const nextRallies = rallies.map((rally) => (
-rally.id === rallyId
-? { ...rally, memberIds: nextMemberIds, leadHeroAssignments: assignments }
-: rally
-));
+  const buckets = { full: [], first: [], second: [] };
+  pool.forEach((row) => {
+    const bucket = classifyAvailability(row);
+    if (buckets[bucket]) buckets[bucket].push({ row, score: scoreMemberForRally(row, rally) });
+  });
+  const picked = [];
 
-return {
-rallies: nextRallies,
-summary: {
-addedCount: newMembers.length,
-fullCount: fullPicked.length,
-firstHalfCount: partialPicked.filter((m) => classifyAvailability(m) === 'first').length,
-secondHalfCount: partialPicked.filter((m) => classifyAvailability(m) === 'second').length,
-totalMembers: nextMemberIds.length,
-leadHeroLines: lines,
-},
-};
+  function take(bucket) {
+    const list = buckets[bucket];
+    if (!list.length) return false;
+    list.sort((a, b) => (
+      b.score - a.score
+      || heroHolders(b.row, needs).length - heroHolders(a.row, needs).length
+    ));
+    const entry = list.shift();
+    const [hero] = heroHolders(entry.row, needs);
+    if (hero) needs[hero] -= 1;
+    picked.push({ ...entry, bucket });
+    count[bucket] += 1;
+    return true;
+  }
+
+  const shortOf = () => ({
+    first: count.full + count.first < AVAILABILITY_TARGET_PER_RALLY,
+    second: count.full + count.second < AVAILABILITY_TARGET_PER_RALLY,
+  });
+  for (;;) {
+    const short = shortOf();
+    if (!short.first && !short.second) break;
+    if (take('full')) continue;
+    let progress = false;
+    if (short.first && take('first')) progress = true;
+    if (short.second && take('second')) progress = true;
+    if (!progress) break;
+  }
+
+  // Hero pass: swap a newly picked non-holder for a better-than-nothing holder from the same availability bucket.
+  Object.keys(needs).forEach((hero) => {
+    while (needs[hero] > 0) {
+      let done = false;
+      for (const bucket of ['full', 'first', 'second']) {
+        const holder = buckets[bucket]
+          .filter((entry) => (entry.row.heroes || []).map(String).includes(hero))
+          .sort((a, b) => b.score - a.score)[0];
+        if (!holder) continue;
+        const victim = picked
+          .filter((entry) => entry.bucket === bucket && !heroHolders(entry.row, { ...(rally.leadHeroes || {}) }).length)
+          .sort((a, b) => a.score - b.score)[0];
+        if (!victim || holder.score < victim.score - HERO_SWAP_MAX_SCORE_DROP) continue;
+        picked.splice(picked.indexOf(victim), 1, { ...holder, bucket });
+        buckets[bucket] = buckets[bucket].filter((entry) => entry !== holder);
+        needs[hero] -= 1;
+        done = true;
+        break;
+      }
+      if (!done) break;
+    }
+  });
+
+  const short = shortOf();
+  return { picked: picked.map((entry) => entry.row), complete: !short.first && !short.second, count };
+}
+
+/** Fills one rally and reports what was added. Joiners already on the rally are kept. */
+export function autoAssignRallyMembers(rallies, rallyId, rows) {
+  const targetRally = rallies.find((rally) => rally.id === rallyId);
+  if (!targetRally) return { rallies, summary: null };
+
+  const taken = new Set();
+  rallies.forEach((rally) => {
+    rally.memberIds.forEach((memberId) => taken.add(String(memberId)));
+    if (rally.leadMemberId) taken.add(String(rally.leadMemberId));
+  });
+  const rowsById = new Map(rows.map((row) => [String(row.member_id), row]));
+  const pool = rows.filter((row) => !taken.has(String(row.member_id)));
+
+  const { picked, complete } = pickJoinersForRally(targetRally, pool, rowsById);
+  const nextMemberIds = [...targetRally.memberIds.map(String), ...picked.map((m) => String(m.member_id))];
+  const finalMembers = nextMemberIds.map((id) => rowsById.get(String(id))).filter(Boolean);
+  const { assignments, lines } = assignLeadHeroesForRally(targetRally, finalMembers);
+
+  const nextRallies = rallies.map((rally) => (
+    rally.id === rallyId ? { ...rally, memberIds: nextMemberIds, leadHeroAssignments: assignments } : rally
+  ));
+  const fullCount = picked.filter((m) => classifyAvailability(m) === 'full').length;
+
+  return {
+    rallies: nextRallies,
+    summary: {
+      addedCount: picked.length,
+      fullCount,
+      firstHalfCount: picked.filter((m) => classifyAvailability(m) === 'first').length,
+      secondHalfCount: picked.filter((m) => classifyAvailability(m) === 'second').length,
+      totalMembers: nextMemberIds.length,
+      complete,
+      leadHeroLines: lines,
+    },
+  };
+}
+
+/**
+ * Plans "Auto-fill all rallies" without saving anything. Attack and Garrison
+ * rallies are completed first; Optional rallies are only touched once every
+ * other rally is complete. `replace` clears current joiners first (leads stay).
+ */
+export function planAutoFillAll(rallies, rows, { replace = false } = {}) {
+  const placedBefore = rallies.reduce((sum, rally) => sum + rally.memberIds.length, 0);
+  let working = replace ? rallies.map((rally) => ({ ...rally, memberIds: [], leadHeroAssignments: {} })) : rallies;
+  const order = [
+    ...working.filter((rally) => normalizeRallyType(rally.rallyType) !== 'optional'),
+    ...working.filter((rally) => normalizeRallyType(rally.rallyType) === 'optional'),
+  ];
+  const perRally = [];
+  let primaryComplete = true;
+  order.forEach((rally) => {
+    const isOptional = normalizeRallyType(rally.rallyType) === 'optional';
+    if (isOptional && !primaryComplete) {
+      perRally.push({ id: rally.id, name: rally.name, added: 0, total: rally.memberIds.length, complete: false, skipped: true, leadHeroLines: [] });
+      return;
+    }
+    const result = autoAssignRallyMembers(working, rally.id, rows);
+    working = result.rallies;
+    if (!isOptional && !result.summary.complete) primaryComplete = false;
+    perRally.push({
+      id: rally.id,
+      name: rally.name,
+      added: result.summary.addedCount,
+      total: result.summary.totalMembers,
+      complete: result.summary.complete,
+      skipped: false,
+      leadHeroLines: result.summary.leadHeroLines,
+    });
+  });
+  const placedAfter = working.reduce((sum, rally) => sum + rally.memberIds.length, 0);
+  const leadIds = getRallyLeadMemberIds(working);
+  const assignedIds = new Set(working.flatMap((rally) => rally.memberIds.map(String)));
+  const unassigned = rows.filter((row) => !assignedIds.has(String(row.member_id)) && !leadIds.has(String(row.member_id))).length;
+  return {
+    rallies: working,
+    preview: {
+      placed: placedAfter - (replace ? 0 : placedBefore),
+      totalPlaced: placedAfter,
+      replacedCount: replace ? placedBefore : 0,
+      keptCount: replace ? 0 : placedBefore,
+      unassigned,
+      perRally,
+    },
+  };
 }
 
 export function normalizeRalliesForRows(rallies, rows) {
@@ -418,6 +595,10 @@ export function serializeRalliesForSave(rallies) {
       // them; formatRallyRows/normalizeRally strips the lead back out in memory.
       member_ids: storedMemberIds(rally),
       lead_member_id: rally.leadMemberId ? String(rally.leadMemberId) : null,
+      manager_name: typeof rally.managerName === 'string' ? rally.managerName.slice(0, 80) : '',
+      rally_type: normalizeRallyType(rally.rallyType),
+      formation_kind: normalizeRallyFormation(rally.formationKind),
+      notes: typeof rally.notes === 'string' ? rally.notes.slice(0, 1000) : '',
       formation: {
         ...troopWeights,
         leadHeroes: normalizeLeadHeroes(rally.leadHeroes),
@@ -437,6 +618,10 @@ export function formatRallyRows(rows) {
       name: row.name,
       memberIds: row.member_ids,
       leadMemberId: row.lead_member_id,
+      managerName: row.manager_name,
+      rallyType: row.rally_type,
+      formationKind: row.formation_kind,
+      notes: row.notes,
       troopWeights,
       leadHeroes,
       leadHeroAssignments,

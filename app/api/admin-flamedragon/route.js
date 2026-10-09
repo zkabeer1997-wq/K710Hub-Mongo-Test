@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { loadCycleRoster } from '../../../lib/eventCycles.server';
+import { getCurrentEventCycle, loadCycleRoster } from '../../../lib/eventCycles.server';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
 const PROJECT = {
@@ -143,6 +143,8 @@ export async function POST(request) {
     updated_at: new Date(),
   };
   try {
+    const cycle = await getCurrentEventCycle('flamedragon').catch(() => null);
+    if (cycle) { record.event_cycle_id = cycle.id; record.event_cycle_label = cycle.label; }
     const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
     await coll.insertOne(record);
     const { pin_hash, ...safe } = record;
