@@ -81,6 +81,7 @@ export default function ToolDataEditor({ kind, intro, otherHref, otherLabel, ext
     return out;
   }, [tool, values]);
   const errorCount = Object.keys(errors).length;
+  const changedCount = (tool?.fields || []).filter((f) => values[f.key] !== '' && values[f.key] !== undefined && Number(values[f.key]) !== f.value).length;
 
   function choose(key) {
     setSelected(key);
@@ -151,12 +152,6 @@ export default function ToolDataEditor({ kind, intro, otherHref, otherLabel, ext
 
       {!extra && tool && (
         <>
-          <div className={styles.actions}>
-            <Button onClick={save} disabled={saving || !dirty}>{saving ? 'Saving...' : `Save ${tool.label}`}</Button>
-            <Button variant="quiet" disabled={!dirty || saving} onClick={() => choose(selected)}>Discard changes</Button>
-            <Button variant="quiet" disabled={saving} onClick={() => setConfirmReset(true)}>Reset to defaults</Button>
-            <span className={styles.stamp}>{stampText(tool.updated_at)}</span>
-          </div>
           <fieldset disabled={saving} className={styles.fieldset}>
             <legend className="sr-only">{tool.label} values</legend>
             {sections.map((section) => {
@@ -214,6 +209,12 @@ export default function ToolDataEditor({ kind, intro, otherHref, otherLabel, ext
               );
             })}
           </fieldset>
+          <div className={styles.actions} role="region" aria-label="Save changes">
+            <span className={styles.stamp}>{dirty ? `${changedCount} unsaved change${changedCount === 1 ? '' : 's'}` : stampText(tool.updated_at)}</span>
+            <Button variant="quiet" disabled={saving} onClick={() => setConfirmReset(true)}>Reset to defaults</Button>
+            <Button variant="quiet" disabled={!dirty || saving} onClick={() => choose(selected)}>Discard changes</Button>
+            <Button onClick={save} disabled={saving || !dirty}>{saving ? 'Saving...' : 'Save changes'}</Button>
+          </div>
         </>
       )}
       <ConfirmDialog

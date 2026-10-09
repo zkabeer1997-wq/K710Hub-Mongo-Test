@@ -43,3 +43,4 @@
   .addControls > button { flex: 1 1 100%; }
   .restore li > button, .notice > button { flex: 1 1 100%; }
 }
+.toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }

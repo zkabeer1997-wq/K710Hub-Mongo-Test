@@ -23,11 +23,11 @@ export default function AdminAllianceEventsPage() {
 
   return (
     <AdminShell
-      title="Alliance Events"
-      subtitle="Manage kingdom events and alliance details in one place."
+      title="Calendar"
+      subtitle="Kingdom-wide events on a calendar, plus alliance details."
       onLogout={handleLogout}
     >
-      <div className="admin-subtabs" role="tablist" aria-label="Alliance Events sections">
+      <div className="admin-subtabs" role="tablist" aria-label="Calendar sections">
         {TABS.map((t) => (
           <button
             key={t.id}

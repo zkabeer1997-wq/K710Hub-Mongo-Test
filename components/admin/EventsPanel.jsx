@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import EventCalendar from '../events/EventCalendar';
 import EventFormDialog from './EventFormDialog';
@@ -11,6 +12,7 @@ import { eventAllianceLabel } from '../../lib/eventFields.mjs';
 import { planSplit, newSeriesSlug } from '../../lib/eventSeries.mjs';
 import { emptyForm, formFromEvent, eventFromForm, shiftSeries, singleOccurrenceCopy, withExdate } from '../../lib/eventForm.mjs';
 
+const CYCLE_PAGES = { 'kvk-cycle': '/admin/dashboard/events/kvk', 'flamedragon-tyrant': '/admin/dashboard/events/flamedragon' };
 const FALLBACK_ALLIANCES = [{ tag: '710' }, { tag: 'RED' }, { tag: 'SKY' }];
 
 async function api(url, options) {
@@ -23,6 +25,7 @@ async function api(url, options) {
 // Google-Calendar-style admin: click a day or drag a time range to add, click an event to edit or delete.
 // Everything saved here is what members see on /events (the API revalidates that page).
 export default function EventsPanel() {
+  const router = useRouter();
   const [rows, setRows] = useState([]);
   const [alliances, setAlliances] = useState(FALLBACK_ALLIANCES);
   const [guides, setGuides] = useState([]);
@@ -75,6 +78,13 @@ export default function EventsPanel() {
       form.start_time = start.slice(11, 16);
     }
     setDialog({ mode: 'edit', initial: form, event, occStart: occ.starts_at, seriesStart, recurring: Boolean(recurring), isDefault: Boolean(event.is_default) });
+  }
+
+  // KvK and Flamedragon cycle entries are run from their own admin event page.
+  function openOccurrence(occ) {
+    const page = CYCLE_PAGES[occ.event.slug];
+    if (page) { router.push(page); return; }
+    openEdit(occ);
   }
 
   const close = () => { if (!saving) setDialog(null); };
@@ -175,14 +185,15 @@ export default function EventsPanel() {
           defaultUtc
           views={['month', 'week', 'day']}
           label="Admin event calendar"
+          spanMulti
           onCreate={openCreate}
-          onOpen={openEdit}
+          onOpen={openOccurrence}
           toolbarExtra={<Button onClick={() => openCreate()}>+ New event</Button>}
         />
       )}
 
       <details className="evp-list">
-        <summary>All events as a list ({events.length})</summary>
+        <summary>All events as a list{loading ? '' : ` (${events.length})`}</summary>
         <Table className="stack-table">
           <thead><tr><th>Name</th><th>First start (UTC)</th><th>Repeats</th><th>Alliance</th><th>Status</th><th /></tr></thead>
           <tbody>

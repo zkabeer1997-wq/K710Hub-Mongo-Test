@@ -46,6 +46,7 @@ export default function AdminHeroesPage() {
   const [drive, setDrive] = useState(null);
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [rowError, setRowError] = useState({});
   const [renaming, setRenaming] = useState(null); // { key, value }
   const [imageFor, setImageFor] = useState(null);
@@ -180,7 +181,11 @@ export default function AdminHeroesPage() {
       </p>
       {error ? <p className={styles.error} role="alert">{error} <button type="button" className={styles.link} onClick={load}>Try again</button></p> : null}
 
-      <form className={styles.addRow} onSubmit={addHero} noValidate>
+      <div className={styles.toolbar}>
+        <button type="button" className={styles.primary} aria-expanded={addOpen} aria-controls="hero-add-panel" onClick={() => setAddOpen((v) => !v)}>{addOpen ? 'Close' : '+ Add hero'}</button>
+      </div>
+      {addOpen ? (
+      <form id="hero-add-panel" className={styles.addRow} onSubmit={addHero} noValidate>
         <label htmlFor="new-hero">Add hero</label>
         <div className={styles.addControls}>
           <input id="new-hero" value={newName} maxLength={30} autoComplete="off" placeholder="Hero name" onChange={(e) => { setNewName(e.target.value); setRowError((c) => ({ ...c, _new: '' })); }} aria-invalid={rowError._new ? 'true' : undefined} aria-describedby={rowError._new ? 'new-hero-err' : undefined} />
@@ -196,6 +201,7 @@ export default function AdminHeroesPage() {
           </div>
         ) : null}
       </form>
+      ) : null}
 
       {!heroes && !error ? <p>Loading heroes...</p> : null}
       {duplicates > 0 ? (
@@ -223,7 +229,7 @@ export default function AdminHeroesPage() {
                 )}
                 <p className={styles.meta}>
                   {hero.image_url ? 'Picture from Google Drive' : hero.default_url ? 'Built-in portrait' : 'No picture yet'}
-                  {hero.saved_count > 0 ? ` · saved by ${hero.saved_count} member${hero.saved_count === 1 ? '' : 's'}` : ''}
+                  {hero.saved_count > 0 ? ` · ${hero.saved_count} save${hero.saved_count === 1 ? '' : 's'} across all cycles` : ''}
                 </p>
               </div>
               <div className={styles.toggle}>

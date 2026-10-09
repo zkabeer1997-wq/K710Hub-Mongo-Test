@@ -91,3 +91,10 @@
   .evcal-month-head > div { padding: 6px 0; }
 }
 @media (prefers-reduced-motion: no-preference) { .evcal-chip, .evcal-cell-btn { transition: background-color 160ms; } }
+
+/* Multi-day events as one bar across the week (admin month view). */
+.evcal-month-row { position: relative; }
+.evcal-span-layer { position: absolute; z-index: 2; top: 30px; left: 0; right: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; padding: 0 4px; pointer-events: none; }
+.evcal-span-layer > .evcal-span { pointer-events: auto; height: 22px; display: block; margin: 0; border-left-width: 3px; font-weight: 600; font-size: 12px; }
+.evcal-span:not(.is-start) { border-left-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.evcal-span:not(.is-end) { border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: -6px; }

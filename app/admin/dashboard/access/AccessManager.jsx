@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
+import ConfirmDialog from '../../../../components/admin/ConfirmDialog';
+import { needsPromotionConfirm } from '../../../../lib/adminOverview.mjs';
 import styles from './access.module.css';
 
 const ROLE_COPY = {
@@ -32,6 +34,7 @@ export default function AccessManager({ actorPlayerId }) {
   const [copiedCode, setCopiedCode] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [promoting, setPromoting] = useState(null); // { user, role }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,6 +65,14 @@ export default function AccessManager({ actorPlayerId }) {
       )
     );
   }, [query, users]);
+
+  // Giving someone admin or superadmin access asks for a confirmation first.
+  function requestRole(user) {
+    const role = drafts[user.player_id];
+    if (role === user.access_role) return;
+    if (needsPromotionConfirm(user.access_role, role)) setPromoting({ user, role });
+    else saveRole(user);
+  }
 
   async function saveRole(user) {
     const role = drafts[user.player_id];
@@ -167,7 +178,10 @@ export default function AccessManager({ actorPlayerId }) {
           <div>
             <span>Permission ledger</span>
             <h2>Verified Kingshot accounts</h2>
-            <p>Only accounts that have completed Kingdom 710 verification appear here.</p>
+            <p>
+              The permission ledger lists who can do what: member, admin or superadmin.
+              Members become verified by signing in with their Kingshot Player ID; only verified accounts appear here.
+            </p>
           </div>
           <label className={styles.search}>
             <span>Search users</span>
@@ -243,7 +257,7 @@ export default function AccessManager({ actorPlayerId }) {
                     <button
                       type="button"
                       disabled={isSelf || !changed || saving === user.player_id}
-                      onClick={() => saveRole(user)}
+                      onClick={() => requestRole(user)}
                       title={isSelf ? 'You cannot remove your own superadmin role' : undefined}
                     >
                       {isSelf
@@ -285,7 +299,18 @@ export default function AccessManager({ actorPlayerId }) {
             )}
           </div>
         )}
+        <p className={styles.note}>
+          A personal code is a private code for one account. Creating or resetting one shows the new code once, so copy it straight away.
+        </p>
       </section>
+      <ConfirmDialog
+        open={Boolean(promoting)}
+        title={promoting ? `Make ${promoting.user.nickname} ${ROLE_COPY[promoting.role].toLowerCase()}?` : ''}
+        message={promoting ? `${promoting.role === 'superadmin' ? 'Superadmins can change every setting and other people\u2019s roles.' : 'Admins can edit events, forms, content and member data.'} You can change this later.` : ''}
+        confirmLabel="Change role" danger={false}
+        onCancel={() => setPromoting(null)}
+        onConfirm={() => { const u = promoting.user; setPromoting(null); saveRole(u); }}
+      />
     </AdminShell>
   );
 }

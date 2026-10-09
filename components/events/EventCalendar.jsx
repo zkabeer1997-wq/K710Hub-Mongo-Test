@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUR, clock, dayKey, dayName, describeOccurrence, isAllDay, makeMs, monthName, occurrencesInRange,
-  occurrencesOnDay, rangeLabel, shiftAnchor, tzParts, viewDays,
+  occurrencesOnDay, rangeLabel, shiftAnchor, spanBarsForWeek, tzParts, viewDays,
 } from '../../lib/eventCalendar.mjs';
 import { eventAllianceLabel, eventHref } from '../../lib/eventFields.mjs';
 import { recurrenceLabel } from '../../lib/eventRecurrence.mjs';
@@ -83,17 +83,35 @@ function DayList({ day, items, mode, onOpen, onCreate, utc, today }) {
   );
 }
 
-function MonthGrid({ days, items, mode, onOpen, onCreate, utc, todayKey, anchorMonth, selected, setSelected, narrow, goDay }) {
+const occ_title = (occ) => `${occ.event.title}${occ.event.published === false ? ' (draft)' : ''}`;
+
+function MonthGrid({ days, items, mode, onOpen, onCreate, utc, todayKey, anchorMonth, selected, setSelected, narrow, goDay, spanMulti = false }) {
   const heads = [0, 1, 2, 3, 4, 5, 6];
   return (
     <div className="evcal-month" role="grid" aria-label={`${monthName(anchorMonth)} calendar`}>
       <div className="evcal-month-head" role="row">
         {heads.map(d => <div key={d} role="columnheader" aria-label={dayName(d)}>{narrow ? dayName(d)[0] : dayName(d).slice(0, 3)}</div>)}
       </div>
-      {Array.from({ length: 6 }, (_, w) => (
+      {Array.from({ length: 6 }, (_, w) => {
+        const weekDays = days.slice(w * 7, w * 7 + 7);
+        // Multi-day events (KvK cycle, battles...) become one bar across the week instead of a chip per day.
+        const spans = spanMulti && !narrow ? spanBarsForWeek(items, weekDays) : { bars: [], lanes: 0, spanKeys: new Set() };
+        return (
         <div className="evcal-month-row" role="row" key={w}>
-          {days.slice(w * 7, w * 7 + 7).map(day => {
+          {spans.bars.length > 0 && (
+            <div className="evcal-span-layer" role="presentation" style={{ gridTemplateRows: `repeat(${spans.lanes}, 22px)` }}>
+              {spans.bars.map(bar => (
+                <OccLink key={`${bar.occ.key}-${w}`} occ={bar.occ} mode={mode} onOpen={onOpen} utc={utc}
+                  className={chipClass(bar.occ, `evcal-span${bar.startsHere ? ' is-start' : ''}${bar.endsHere ? ' is-end' : ''}`)}
+                  style={{ gridColumn: `${bar.col + 1} / ${bar.col + bar.len + 1}`, gridRow: bar.lane + 1 }}>
+                  {bar.startsHere || bar.col === 0 ? occ_title(bar.occ) : '\u00a0'}
+                </OccLink>
+              ))}
+            </div>
+          )}
+          {weekDays.map(day => {
             const list = occurrencesOnDay(items, day);
+            const chips = spans.spanKeys.size ? list.filter(o => !spans.spanKeys.has(o.key)) : list;
             const out = day.m !== anchorMonth;
             const isToday = day.key === todayKey;
             const full = `${dayName(day.dow)} ${monthName(day.m)} ${day.d}`;
@@ -119,17 +137,19 @@ function MonthGrid({ days, items, mode, onOpen, onCreate, utc, todayKey, anchorM
               <div role="gridcell" key={day.key} className={`evcal-cell${out ? ' is-out' : ''}${isToday ? ' is-today' : ''}`} onClick={mode === 'admin' ? create : undefined}>
                 <button type="button" className="evcal-daynum" aria-label={`${full}, ${count}${isToday ? ', today' : ''}${mode === 'admin' ? '. Add event' : '. Show day'}`}
                   onClick={(e) => { e.stopPropagation(); if (mode === 'admin') create(); else goDay(day); }}>{day.d}</button>
-                {list.slice(0, 3).map(occ => (
+                {spans.lanes > 0 && <div className="evcal-span-spacer" style={{ height: spans.lanes * 24 }} aria-hidden="true" />}
+                {chips.slice(0, 3).map(occ => (
                   <OccLink key={`${occ.key}-${day.key}`} occ={occ} mode={mode} onOpen={onOpen} utc={utc} className={chipClass(occ)}>
                     <span className="evcal-chip-time">{isAllDay(occ) ? '' : clock(occ.startMs, utc)}</span> {occ.event.title}
                   </OccLink>
                 ))}
-                {list.length > 3 && <button type="button" className="evcal-more" onClick={(e) => { e.stopPropagation(); goDay(day); }}>+{list.length - 3} more</button>}
+                {chips.length > 3 && <button type="button" className="evcal-more" onClick={(e) => { e.stopPropagation(); goDay(day); }}>+{chips.length - 3} more</button>}
               </div>
             );
           })}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -246,7 +266,7 @@ function TimeGrid({ days, items, mode, onOpen, onCreate, utc, todayKey, now, goD
  * Shared Google-Calendar-style view. mode "member": events link to their guide/detail page.
  * mode "admin": clicking a day / dragging a range calls onCreate(startMs, endMs); clicking an event calls onOpen(occ).
  */
-export default function EventCalendar({ events, mode = 'member', defaultUtc = false, views = ['month', 'week'], onCreate, onOpen, toolbarExtra = null, label = 'Event calendar' }) {
+export default function EventCalendar({ events, mode = 'member', defaultUtc = false, views = ['month', 'week'], onCreate, onOpen, toolbarExtra = null, label = 'Event calendar', spanMulti = false }) {
   const narrow = useNarrow();
   const [now, setNow] = useState(null);
   const [view, setView] = useState(views[0]);
@@ -298,7 +318,7 @@ export default function EventCalendar({ events, mode = 'member', defaultUtc = fa
       {view === 'month' && (
         <>
           <MonthGrid days={range.days} items={items} mode={mode} onOpen={onOpen} onCreate={create} utc={utc} todayKey={todayKey} anchorMonth={mid.m}
-            selected={selected} setSelected={setSelected} narrow={narrow} goDay={goDay} />
+            selected={selected} setSelected={setSelected} narrow={narrow} goDay={goDay} spanMulti={spanMulti} />
           {narrow && selectedDay && <DayList day={selectedDay} items={items} mode={mode} onOpen={onOpen} onCreate={create} utc={utc} today={selectedDay.key === todayKey} />}
         </>
       )}

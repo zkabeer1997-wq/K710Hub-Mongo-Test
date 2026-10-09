@@ -18,3 +18,10 @@
   .pa-table td { border-top: 0; padding: 6px 10px; }
   .pa-table td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; opacity: 0.65; margin-bottom: 2px; }
 }
+.pa-reset { background: none; border: 0; padding: 4px 0; min-height: 44px; color: var(--gold-bright, #e6bb61); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
+.pa-reset:disabled { opacity: 0.5; cursor: default; }
+.pa-reset:focus-visible { outline: 2px solid var(--gold-bright, #e6bb61); outline-offset: 2px; }
+.pa-confirm-list { margin: 0 0 8px; padding-left: 18px; line-height: 1.6; }
+.pa-bar { position: sticky; bottom: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px; padding: 10px 16px; border-top: 1px solid #2a2f38; border-radius: 8px 8px 0 0; background: #10141b; }
+.pa-bar-status { margin: 0 auto 0 0; font-size: 14px; }
+@media (max-width: 640px) { .pa-bar-status { flex: 1 1 100%; } .pa-bar > button { flex: 1 1 0; min-height: 44px; } }

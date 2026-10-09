@@ -19,8 +19,6 @@ export default function PageAddressesPage() {
 
   const apply = useCallback((data) => {
     setPages(data.pages || []);
-    setDrafts({});
-    setErrors({});
   }, []);
 
   useEffect(() => {
@@ -41,13 +39,35 @@ export default function PageAddressesPage() {
     return pages.map((p) => ({ from: p.path, to: p.isDefault ? null : p.current })).filter((r) => r.to);
   }
 
-  function onSave(page) {
-    const draft = (drafts[page.path] ?? '').trim();
-    const check = validateAlias(page.path, draft, rows());
-    if (!check.ok) return setErrors((e) => ({ ...e, [page.path]: check.error }));
-    setErrors((e) => ({ ...e, [page.path]: '' }));
+  // Rows with a typed new address that differs from what is live now.
+  function changedPages() {
+    return pages.filter((p) => {
+      const d = (drafts[p.path] ?? '').trim();
+      return d && d !== p.current;
+    });
+  }
+
+  function onSaveAll() {
+    const changed = changedPages();
+    const nextErrors = {};
+    const targets = [];
+    for (const page of changed) {
+      const draft = (drafts[page.path] ?? '').trim();
+      // Check each row against the saved addresses plus the other rows being changed together.
+      const others = rows().filter((r) => r.from !== page.path);
+      for (const other of changed) {
+        if (other.path === page.path) continue;
+        const od = (drafts[other.path] ?? '').trim();
+        if (od) others.push({ from: other.path, to: od.startsWith('/') ? od : `/${od}` });
+      }
+      const check = validateAlias(page.path, draft, others);
+      if (!check.ok) nextErrors[page.path] = check.error;
+      else targets.push({ page, to: check.to });
+    }
+    setErrors((e) => ({ ...e, ...nextErrors }));
+    if (Object.keys(nextErrors).length || !targets.length) return;
     setConfirmError('');
-    setConfirm({ page, to: check.to });
+    setConfirm({ targets });
   }
 
   async function send(method, body) {
@@ -71,15 +91,28 @@ export default function PageAddressesPage() {
   }
 
   async function doSave() {
-    if (await send('PUT', { from: confirm.page.path, to: confirm.to })) {
-      setNotice(`Saved. ${confirm.page.path} now opens at ${confirm.to}. Changes can take up to 15 seconds to show everywhere.`);
-      setConfirm(null);
+    const done = [];
+    for (const { page, to } of confirm.targets) {
+      if (!(await send('PUT', { from: page.path, to }))) {
+        setNotice(done.length ? `Saved ${done.length} of ${confirm.targets.length}. Fix the problem below and save again.` : '');
+        return;
+      }
+      done.push(page.path);
+      setDrafts((d) => ({ ...d, [page.path]: '' }));
     }
+    setNotice(`Saved ${done.length} address${done.length === 1 ? '' : 'es'}. Changes can take up to 15 seconds to show everywhere.`);
+    setConfirm(null);
+  }
+
+  function discardAll() {
+    setDrafts({});
+    setErrors({});
   }
 
   async function doReset(page) {
     setConfirmError('');
     if (await send('DELETE', { from: page.path })) {
+      setDrafts((d) => ({ ...d, [page.path]: '' }));
       setNotice(`${page.label} is back at ${page.path}.`);
     } else {
       setErrors((e) => ({ ...e, [page.path]: 'Could not reset. Please try again.' }));
@@ -101,7 +134,7 @@ export default function PageAddressesPage() {
           {notice ? <p role="status" className="pa-notice">{notice}</p> : null}
           <table className="pa-table">
             <thead>
-              <tr><th>Page</th><th>Address now</th><th>New address</th><th>Actions</th></tr>
+              <tr><th>Page</th><th>Address now</th><th>New address</th><th>Reset</th></tr>
             </thead>
             <tbody>
               {pages.map((page) => {
@@ -136,8 +169,11 @@ export default function PageAddressesPage() {
                     </td>
                     <td data-label="Actions">
                       <div className="pa-actions">
-                        <Button onClick={() => onSave(page)} disabled={!value.trim() || busy}>Save</Button>
-                        <Button variant="quiet" onClick={() => doReset(page)} disabled={page.isDefault || busy}>Reset to default</Button>
+                        {!page.isDefault ? (
+                          <button type="button" className="pa-reset" onClick={() => doReset(page)} disabled={busy}>Reset to {page.path}</button>
+                        ) : value.trim() ? (
+                          <button type="button" className="pa-reset" onClick={() => setDrafts((d) => ({ ...d, [page.path]: '' }))}>Clear</button>
+                        ) : <span className="pa-badge">No change</span>}
                       </div>
                     </td>
                   </tr>
@@ -145,24 +181,33 @@ export default function PageAddressesPage() {
               })}
             </tbody>
           </table>
+          <div className="pa-bar" role="region" aria-label="Save changes">
+            <p className="pa-bar-status" role="status" aria-live="polite">
+              {changedPages().length ? `${changedPages().length} unsaved change${changedPages().length === 1 ? '' : 's'}` : 'No changes'}
+            </p>
+            <Button variant="quiet" onClick={discardAll} disabled={!changedPages().length || busy}>Discard changes</Button>
+            <Button onClick={onSaveAll} disabled={!changedPages().length || busy}>Save changes</Button>
+          </div>
         </>
       )}
       <AdminDialog
         open={Boolean(confirm)}
-        title={confirm ? `Change ${confirm.page.label} to ${confirm.to}?` : ''}
+        title={confirm ? `Change ${confirm.targets.length} page address${confirm.targets.length === 1 ? '' : 'es'}?` : ''}
         onClose={() => setConfirm(null)}
         role="alertdialog"
         busy={busy}
         footer={(
           <>
             <Button variant="quiet" onClick={() => setConfirm(null)} disabled={busy}>Cancel</Button>
-            <Button onClick={doSave} disabled={busy}>{busy ? 'Saving...' : 'Change address'}</Button>
+            <Button onClick={doSave} disabled={busy}>{busy ? 'Saving...' : 'Change addresses'}</Button>
           </>
         )}
       >
         {confirm ? (
           <>
-            <p>Old links to {confirm.page.path} will redirect to {confirm.to}.</p>
+            <ul className="pa-confirm-list">
+              {confirm.targets.map(({ page, to }) => <li key={page.path}>{page.label}: {page.current} becomes {to}. Old links redirect.</li>)}
+            </ul>
             {confirmError ? <p className="pa-error" role="alert">{confirmError}</p> : null}
           </>
         ) : null}

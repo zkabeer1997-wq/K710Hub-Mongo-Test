@@ -103,7 +103,7 @@ export default function AdminGiftCodesPage() {
 
   return (
     <AdminShell
-      title="Gift Codes"
+      title="Gift codes"
       subtitle="Automatic code discovery + member alerts for Kingdom 710 — members redeem themselves"
       onLogout={handleLogout}
       counters={[
@@ -144,17 +144,23 @@ export default function AdminGiftCodesPage() {
           <Button disabled={!!busy} onClick={() => runAction('check_sources')}>
             {busy === 'check_sources' ? 'Checking…' : 'Check now'}
           </Button>
-          <Button
-            variant="quiet"
-            disabled={!!busy}
-            onClick={() => {
-              if (window.confirm('Force check? This ignores the 30 minute wait and contacts the gift code sites again right now. Use it sparingly; a site that refuses access is never forced.')) {
-                runAction('check_sources', { force: true });
-              }
-            }}
-          >
-            Force check
-          </Button>
+          <details className="roster-more">
+            <summary aria-label="More ways to check">More</summary>
+            <div className="roster-more-menu">
+              <button
+                type="button"
+                disabled={!!busy}
+                title="Ignores the 30 minute wait and contacts the gift code sites right now. Use sparingly; a site that refuses access is never forced."
+                onClick={() => {
+                  if (window.confirm('Force check? This ignores the 30 minute wait and contacts the gift code sites again right now. Use it sparingly; a site that refuses access is never forced.')) {
+                    runAction('check_sources', { force: true });
+                  }
+                }}
+              >
+                Force check
+              </button>
+            </div>
+          </details>
           <Button variant="quiet" href="https://kingshot.net/gift-codes" target="_blank" rel="noreferrer">Open kingshot.net/gift-codes</Button>
           <Button variant="quiet" href="https://kingshotmastery.com/gift-codes" target="_blank" rel="noreferrer">Open kingshotmastery.com/gift-codes</Button>
         </div>
