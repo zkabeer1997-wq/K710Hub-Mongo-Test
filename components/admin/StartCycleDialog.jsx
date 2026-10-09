@@ -24,7 +24,7 @@ export function suggestNextLabel(history, cycle, fallback) {
   return `${fallback} 1`;
 }
 
-export default function StartCycleDialog({ open, onClose, onSubmit, suggestion, hasPrevious, eventName }) {
+export default function StartCycleDialog({ open, onClose, onSubmit, suggestion, hasPrevious, eventName, summary = '' }) {
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -94,6 +94,7 @@ export default function StartCycleDialog({ open, onClose, onSubmit, suggestion, 
       )}
     >
       <form id="start-cycle-form" className="ec-form" onSubmit={submit} noValidate>
+        {summary ? <p className="ec-confirm-summary">{summary}</p> : null}
         {serverError ? <p className="ec-inline-error" role="alert">{serverError}</p> : null}
         <Field label="Cycle name" error={errors.label} htmlFor="sc-label">
           <Input tone="console" id="sc-label" data-autofocus value={form.label} maxLength={80} onChange={(e) => set('label', e.target.value)} aria-invalid={Boolean(errors.label)} />

@@ -12,6 +12,7 @@ import { AdminEmbedContext } from './adminEmbed';
 import { ACTION_LABELS, fetchEventState, runEventAction } from './eventControlClient';
 import { formatLocal } from './adminDates';
 import { formatUtc } from '../../lib/deadlines.mjs';
+import { actionSummary, buildEventSearch, lastTabStorageKey, readEventUrl, resolveEventTab } from '../../lib/eventPage.mjs';
 import { Button } from '../ui';
 import AppointmentsFlow from '../../app/admin/dashboard/kvk-appointments/AppointmentsFlow';
 import NobleAppointmentsFlow from '../../app/admin/dashboard/prep-ministers/NobleAppointmentsFlow';
@@ -76,10 +77,19 @@ function confirmCopy(action, state, eventName) {
         title: `Close all forms for ${label}?`,
         confirm: 'Close forms',
         danger: true,
+        summary: actionSummary('close_forms', state, eventName),
         body: [
           `${c.forms_open ?? 0} of ${c.forms_total ?? 0} forms will close. Members will see the closed message instead of the form.`,
           `${c.applicants ?? 0} applicants keep their answers. You can open the forms again at any time.`,
         ],
+      };
+    case 'open_forms':
+      return {
+        title: `Open all forms for ${label}?`,
+        confirm: 'Open forms',
+        danger: false,
+        summary: actionSummary('open_forms', state, eventName),
+        body: ['Members see the forms again straight away. Times you set on a form still apply.'],
       };
     case 'publish':
       return {
@@ -103,6 +113,7 @@ function confirmCopy(action, state, eventName) {
         title: `End ${label} without starting a new cycle?`,
         confirm: 'End this cycle',
         danger: true,
+        summary: actionSummary('archive_reset', state, eventName),
         body: [
           `All forms close and ${label} moves to History with its ${c.applicants ?? 0} applicants. Nothing is deleted.`,
           'Members will see closed forms until you use Start next cycle. If you want a new cycle straight away, use Start next cycle instead; it ends this one for you.',
@@ -137,6 +148,8 @@ export default function EventControl({ type }) {
   const [confirm, setConfirm] = useState(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [tab, setTab] = useState('participants');
+  // 'assigned' | 'unassigned' | '' - the Participants tab's rally filter, kept in the URL (?filter=).
+  const [assignFilter, setAssignFilter] = useState('');
   const [cycleFilter, setCycleFilter] = useState('current');
   const tabRefs = useRef({});
 
@@ -154,19 +167,65 @@ export default function EventControl({ type }) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Tab and filter live in the URL (?tab=participants&filter=unassigned) so links and
+  // the browser's back button work. With no ?tab= the last tab used for this event is
+  // restored (remembered per event in localStorage, falling back to Participants).
   useEffect(() => {
-    let wanted = new URLSearchParams(window.location.search).get('tab');
-    if (wanted === 'prep') wanted = 'appointments'; // old "Prep ministers" tab links
-    if (wanted && config.tabs.some((t) => t.id === wanted)) setTab(wanted);
-  }, [config]);
+    function syncFromUrl(initial) {
+      const fromUrl = readEventUrl(window.location.search, config.tabs);
+      let stored = '';
+      if (initial && !fromUrl.tab) {
+        try { stored = window.localStorage.getItem(lastTabStorageKey(type)) || ''; } catch { /* storage blocked */ }
+      }
+      const next = resolveEventTab(config.tabs, fromUrl.tab, stored);
+      setTab(next);
+      setAssignFilter(next === 'participants' ? fromUrl.filter : '');
+      if (initial && !fromUrl.tab && next !== 'participants') {
+        try {
+          const search = buildEventSearch(window.location.search, { tab: next, filter: '' });
+          window.history.replaceState(null, '', `${window.location.pathname}${search}${window.location.hash}`);
+        } catch { /* ignore */ }
+      }
+    }
+    syncFromUrl(true);
+    const onPop = () => syncFromUrl(false);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [config, type]);
+
+  function navigate(nextTab, nextFilter = '') {
+    const filter = nextTab === 'participants' ? nextFilter : '';
+    setTab(nextTab);
+    setAssignFilter(filter);
+    try {
+      const search = buildEventSearch(window.location.search, { tab: nextTab, filter });
+      const href = `${window.location.pathname}${search}${window.location.hash}`;
+      if (href !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+        window.history.pushState(null, '', href);
+      }
+    } catch { /* ignore */ }
+    try { window.localStorage.setItem(lastTabStorageKey(type), nextTab); } catch { /* storage blocked */ }
+  }
 
   function selectTab(id) {
-    setTab(id);
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', id);
-      window.history.replaceState(null, '', url);
-    } catch { /* ignore */ }
+    navigate(id, '');
+  }
+
+  function changeAssignFilter(value) {
+    navigate('participants', value);
+  }
+
+  // A stat tile is a real link (middle-click opens a new tab) that also updates in place.
+  function tileLink(filter) {
+    const search = buildEventSearch(typeof window === 'undefined' ? '' : window.location.search, { tab: 'participants', filter });
+    return {
+      href: search || '?tab=participants',
+      onClick: (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        navigate('participants', filter);
+      },
+    };
   }
 
   function onTabKey(event, index) {
@@ -217,14 +276,14 @@ export default function EventControl({ type }) {
       setConfirm({ action });
       return;
     }
-    const text = { open_forms: 'Forms are open.' }[action];
-    runWithErrors(action, {}, text);
+    runWithErrors(action, {});
   }
 
   async function confirmAction() {
     const { action, form } = confirm;
     const payload = action === 'archive_reset' ? { confirm: true } : form ? { form_key: form.form_key } : {};
     const text = {
+      open_forms: 'Forms are open.',
       close_forms: form ? `${form.label} is closed.` : 'Forms are closed.',
       publish: 'Schedule published.',
       unpublish: 'Schedule unpublished.',
@@ -273,6 +332,7 @@ export default function EventControl({ type }) {
         title: `Close ${confirm.form.label}?`,
         confirm: 'Close form',
         danger: true,
+        summary: `Closes ${confirm.form.label}; answers already sent are kept`,
         body: ['Members will see the closed message instead of this form. Answers already sent are kept. You can open it again at any time.'],
       }
     : copy;
@@ -297,7 +357,8 @@ export default function EventControl({ type }) {
     <div className="ec-actions">
       {primary ? (
         <Button
-          className={isDanger(primary) ? 'ec-btn-danger' : ''}
+          variant="quiet"
+          className={`ec-header-action${isDanger(primary) ? ' ec-btn-danger-quiet' : ''}`}
           onClick={() => requestAction(primary)}
           disabled={Boolean(busyAction)}
         >
@@ -360,15 +421,20 @@ export default function EventControl({ type }) {
 
         {state ? (
           <>
-            <dl className="ec-stats" aria-label={`${config.name} summary`}>
-              <div><dt>Applicants</dt><dd>{counts?.applicants ?? 0}</dd></div>
-              <div><dt>Assigned</dt><dd>{counts?.assigned ?? 0}</dd></div>
-              <div className={counts?.unassigned > 0 ? 'is-attn' : ''}><dt>Unassigned</dt><dd>{counts?.unassigned ?? 0}</dd></div>
-              <div><dt>Forms open</dt><dd>{counts?.forms_open ?? 0}<span> of {counts?.forms_total ?? 0}</span></dd></div>
-            </dl>
+            <div className="ec-stats" role="group" aria-label={`${config.name} summary`}>
+              <a className={`ec-stat${tab === 'participants' && !assignFilter ? ' is-active' : ''}`} {...tileLink('')} aria-label={`Applicants: ${counts?.applicants ?? 0}. Show all participants.`}>
+                <span className="ec-stat-label">Applicants</span><span className="ec-stat-value">{counts?.applicants ?? 0}</span>
+              </a>
+              <a className={`ec-stat${tab === 'participants' && assignFilter === 'assigned' ? ' is-active' : ''}`} {...tileLink('assigned')} aria-label={`Assigned: ${counts?.assigned ?? 0}. Show participants in a rally.`}>
+                <span className="ec-stat-label">Assigned</span><span className="ec-stat-value">{counts?.assigned ?? 0}</span>
+              </a>
+              <a className={`ec-stat${counts?.unassigned > 0 ? ' is-attn' : ''}${tab === 'participants' && assignFilter === 'unassigned' ? ' is-active' : ''}`} {...tileLink('unassigned')} aria-label={`Unassigned: ${counts?.unassigned ?? 0}. Show participants not in a rally.`}>
+                <span className="ec-stat-label">Unassigned</span><span className="ec-stat-value">{counts?.unassigned ?? 0}</span>
+              </a>
+              <div className="ec-stat ec-stat-static"><span className="ec-stat-label">Forms open</span><span className="ec-stat-value">{counts?.forms_open ?? 0}<span> of {counts?.forms_total ?? 0}</span></span></div>
+            </div>
 
-            <section className="ec-section" aria-labelledby="ec-forms-h">
-              <h2 id="ec-forms-h" className="ec-h2">Forms</h2>
+            <section className="ec-section" aria-label="Forms">
               <EventForms forms={state.forms || []} onSaveWindow={saveWindow} onToggle={toggleForm} />
             </section>
           </>
@@ -414,6 +480,8 @@ export default function EventControl({ type }) {
               {...config.roster}
               view={tab === 'rallies' ? 'rallies' : 'participants'}
               cycleFilter={cycleFilter}
+              assignFilter={assignFilter}
+              onAssignFilterChange={changeAssignFilter}
             />
           </AdminEmbedContext.Provider>
         </div>
@@ -499,8 +567,9 @@ export default function EventControl({ type }) {
           </>
         )}
       >
+        {confirmCopyFinal?.summary ? <p className="ec-confirm-summary">{confirmCopyFinal.summary}</p> : null}
         {confirmCopyFinal?.body.map((line) => <p key={line} className="ec-confirm-line">{line}</p>)}
-        {publishWarn && <p className="ec-confirm-line" role="alert"><strong>{publishWarn}</strong> Use the Forms list below to open it.</p>}
+        {publishWarn && <p className="ec-confirm-line" role="alert"><strong>{publishWarn}</strong> Open it from the Forms strip above.</p>}
         {closeWarn && <p className="ec-confirm-line" role="alert"><strong>{closeWarn}</strong></p>}
       </AdminDialog>
 
@@ -511,6 +580,7 @@ export default function EventControl({ type }) {
         suggestion={suggestNextLabel(history, cycle, config.fallbackLabel)}
         hasPrevious={Boolean(cycle)}
         eventName={config.name}
+        summary={actionSummary('start_cycle', state, config.name)}
       />
     </AdminShell>
   );
