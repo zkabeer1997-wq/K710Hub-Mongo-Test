@@ -83,14 +83,14 @@ function DateLine({ form, language, t }) {
 }
 
 // One form row: number badge, title, one helper line, status chip, one date line, one action.
-function FormRow({ form, language, t }) {
+function FormRow({ form, language, t, tour }) {
   const text = FORM_TEXT[form.key];
   const title = text ? t(text.title) : form.label;
   const help = text ? t(text.help) : FORM_PLAIN[form.key] || '';
   const textKey = BUTTON[form.card];
   const quiet = form.card === 'done';
   return (
-    <li className={styles.formRow} data-state={form.card}>
+    <li className={styles.formRow} data-state={form.card} data-tour={tour}>
       <div className={styles.formMain}>
         <h3>{form.number ? <span className={styles.formNum} aria-hidden="true">{form.number}</span> : null}{title}</h3>
         {help && <p>{help}</p>}
@@ -120,7 +120,7 @@ export default function MyFormsList({ status, loaded }) {
   const power = home.power;
   return (
     <div className={styles.formsCol}>
-      <section className={styles.panel} aria-labelledby="my-forms-title">
+      <section className={styles.panel} aria-labelledby="my-forms-title" data-tour="dash-forms">
         <div className={styles.panelHead}>
           <h2 id="my-forms-title">{t('dash.myForms')}{home.left > 0 ? <span> · {t('dash.todoCount', { count: home.left })}</span> : null}</h2>
           <Link href="/forms" className={styles.textLink}>{t('dash.more.allForms')}</Link>
@@ -136,7 +136,7 @@ export default function MyFormsList({ status, loaded }) {
             {home.left === 0 && <p className={styles.caughtUp} role="status"><Icon name="check" size={16} /> {t('dash.allDone')} {t('dash.allDoneHint')}</p>}
             {home.cards.length > 0 && (
               <ol className={styles.formList} aria-label={t('dash.formsHeading')}>
-                {home.cards.map((form) => <FormRow key={form.key} form={form} language={language} t={t} />)}
+                {home.cards.map((form, i) => <FormRow key={form.key} form={form} language={language} t={t} tour={i === 0 ? 'dash-first-form' : undefined} />)}
               </ol>
             )}
             {(home.extras.length > 0 || home.results.length > 0) && (
@@ -152,7 +152,7 @@ export default function MyFormsList({ status, loaded }) {
         )}
       </section>
       {loaded && !signedOut && (
-        <Link href="/power-profile" prefetch={false} className={styles.powerRow}>
+        <Link href="/power-profile" prefetch={false} className={styles.powerRow} data-tour="dash-power">
           <Icon name="shield" size={20} />
           <span className={styles.powerText}><strong>{t('dash.power.title')}</strong><span>{t('dash.power.help')}</span></span>
           {power?.submitted && <Chip state="done" t={t} />}

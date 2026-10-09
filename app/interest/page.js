@@ -4,6 +4,7 @@ import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
 import InterestForm from './InterestForm';
 import { getActiveIntakePeriod } from '../../lib/transferIntakePeriods.server';
 import PageHero from '../../components/ui/PageHero';
+import TourLauncher from '../../components/tour/TourLauncher';
 
 export const metadata = {
   title: 'Apply to join Kingdom 710',
@@ -33,7 +34,7 @@ export default async function InterestPage() {
           eyebrow="Kingdom 710 · Transfer application"
           title="Apply to join Kingdom 710"
           lede="Answer a few questions about your account and your power. It takes about 5 minutes. You can stop and come back: your answers are saved on this device. Our officers read every application."
-          actions={<><Link href="/alliances" className="registry-head-link">Check alliance schedules first →</Link><a href="/help" className="registry-head-link">Need help?</a><a href="/interest/status" className="registry-head-link">Already applied? Check status</a></>}
+          actions={<><TourLauncher id="interest" /><Link href="/alliances" className="registry-head-link">Check alliance schedules first →</Link><a href="/help" className="registry-head-link">Need help?</a><a href="/interest/status" className="registry-head-link">Already applied? Check status</a></>}
         />
 
         {(hasIntro || isAdmin) && (

@@ -14,7 +14,7 @@ function localSlotTime(slot) {
 // showLocal: also print the viewer's local time under each UTC slot (Noble Advisor).
 // onSelectAll / onClear (optional): show "Select all" and "Clear" buttons. helper (optional): replaces the
 // default one-line hint under the label (used by the KvK Prep & Appointments form).
-export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_SLOTS, showLocal = false, onSelectAll, onClear, helper }) {
+export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_SLOTS, showLocal = false, onSelectAll, onClear, helper, tourAnchor }) {
   const [zone, setZone] = useState('');
   useEffect(() => {
     if (!showLocal) return;
@@ -22,7 +22,7 @@ export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_S
   }, [showLocal]);
   return (
     <div className="prep-slot-group">
-      <div className="prep-slot-head">
+      <div className="prep-slot-head" data-tour={tourAnchor}>
         <strong>{label}</strong>
         <span className="prep-slot-count" aria-live="polite">{selected.length} selected</span>
         {helper ? <span className="prep-slot-sub">{helper}{showLocal && zone ? ` Your time zone: ${zone}.` : ''}</span> : (
@@ -66,6 +66,7 @@ export default function NobleAdvisorFields({ form, updateField, availDay4, onTog
       <section className="form-block">
         <span className="minister-day-badge">Day 4</span>
         <h3>Noble Advisor &mdash; Troop Training</h3>
+        <div data-tour="noble-questions" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <label>Do you want a Troop Training appointment?
           <select value={form.wantTroopTraining} onChange={(e) => updateField('wantTroopTraining', e.target.value)}>
             <option value="">Select</option>
@@ -88,7 +89,8 @@ export default function NobleAdvisorFields({ form, updateField, availDay4, onTog
             <option value="No">No</option>
           </select>
         </label>
-        <SlotPicker label="Available Times &mdash; Day 4 (Troop Training)" sublabel="Every 30 minutes, starting 00:00 UTC" selected={availDay4} onToggle={onToggle} slots={slots} showLocal={showLocal} />
+        </div>
+        <SlotPicker label="Available Times &mdash; Day 4 (Troop Training)" sublabel="Every 30 minutes, starting 00:00 UTC" selected={availDay4} onToggle={onToggle} slots={slots} showLocal={showLocal} tourAnchor="noble-times" />
       </section>
 
  );
