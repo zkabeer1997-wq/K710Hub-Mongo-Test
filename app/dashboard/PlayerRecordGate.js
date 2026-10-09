@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import styles from './member-login.module.css';
 import { PageHero } from '../../components/ui';
 import MemberDashboard from '../../components/member/MemberDashboard';
+import SiteHeader from '../../components/SiteHeader';
+import SiteFooter from '../../components/SiteFooter';
+import DeadlineTicker from '../../components/member/DeadlineTicker';
 
 function isSafeNext(next) {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//');
@@ -187,20 +190,24 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   const step = view === 'player' ? '01' : '02';
 
   if (view === 'profile' && profile) {
+    // MemberDashboard draws its own header and <main>; this wrapper is only the backdrop.
     return (
-      <main className={styles.page}>
+      <div className={`${styles.page} ${styles.pageBare}`}>
         <div className={styles.grid} aria-hidden="true" />
         <div className={styles.glow} aria-hidden="true" />
         {banner && <div className={styles.banner}>{banner}</div>}
         <MemberDashboard profile={profile} adminAccessRequested={adminAccessRequested} busy={busy} onLogout={logout} />
-        <p className={styles.disclaimer}>
+        <footer className={styles.disclaimer}>
           Not affiliated with Century Games. Authentication is completed through the official Kingshot store.
-        </p>
-      </main>
+        </footer>
+      </div>
     );
   }
 
   return (
+    <>
+    <SiteHeader />
+    <DeadlineTicker />
     <main className={styles.page}>
       <div className={styles.grid} aria-hidden="true" />
       <div className={styles.glow} aria-hidden="true" />
@@ -391,5 +398,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
         Not affiliated with Century Games. Authentication is completed through the official Kingshot store.
       </p>
     </main>
+    <SiteFooter />
+    </>
   );
 }

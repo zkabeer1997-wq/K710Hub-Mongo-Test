@@ -189,7 +189,7 @@ async function languageSwitcher(browser) {
   const row = m.page.locator('#site-nav-mobile .lang-switch--mobile');
   await row.waitFor();
   const rb = await row.boundingBox();
-  ok('lang: mobile menu row visible, >= 44px, shows language', rb.height >= 44 && /EN/.test(await row.innerText()), `h=${rb.height}`);
+  ok('lang: mobile menu row visible, >= 44px, shows language', rb.height >= 44 && /English/.test(await row.innerText()), `h=${rb.height}`);
   await row.click();
   await m.page.waitForSelector('[role=dialog].k710-language-overlay');
   ok('lang: mobile row opens chooser and closes the menu', (await m.page.locator('#site-nav-mobile').count()) === 0);

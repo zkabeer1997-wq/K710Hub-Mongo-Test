@@ -1,506 +1,85 @@
 'use client';
 
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { usePathname } from 'next/navigation';
+import { createTranslator } from '../../lib/i18n/translate.mjs';
+import { ENGLISH, loadMessages } from '../../lib/i18n/catalog';
 import {
-  SUGGESTED_LANGUAGES, QUICK_LANGUAGES, RTL_LANGUAGE_RE, normalize, isEnglish, resolveBrowserLanguageCode, languageShortCode,
-} from '../../lib/i18nLanguages.mjs';
-import { translateWithProtectedTerms } from '../../lib/i18nTerms.mjs';
+  DEFAULT_LANGUAGE, LANGUAGE_COOKIE, LANGUAGE_STORAGE_KEY, getLanguage, normalizeLanguage,
+} from '../../lib/i18n/languages.mjs';
+import LanguagePicker from './LanguagePicker';
 
-const STORAGE_KEY = 'k710-language-v1';
-// v4: cached strings now keep protected game terms (lib/i18nTerms.mjs).
-const CACHE_PREFIX = 'k710-ui-translations-v4:';
-const BATCH_SIZE = 40;
+// "Translate once, ship as files": the page text comes from i18n/en.json plus one lazily loaded
+// locale file (i18n/locales/<code>.json). No in-browser translation, no network call per visitor.
+// The layout reads the language cookie, so the first server render is already in the right language.
+const english = createTranslator({ locale: 'en', messages: {}, fallback: ENGLISH });
 
 const LanguageContext = createContext({
-  language: 'English',
+  language: DEFAULT_LANGUAGE,
+  languageName: 'English',
   languageCode: 'EN',
-  hasChosenLanguage: false,
+  hasChosenLanguage: true,
   translationStatus: 'idle',
+  t: english,
+  setLanguage: () => {},
   openLanguageChooser: () => {},
 });
 
-
-const BLOCKED_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE']);
-
-function preserveWhitespace(raw, translated) {
-  const prefix = raw.match(/^\s*/)?.[0] || '';
-  const suffix = raw.match(/\s*$/)?.[0] || '';
-  return `${prefix}${translated}${suffix}`;
-}
-
-function shouldSkipElement(element) {
-  if (!element) return true;
-  if (BLOCKED_TAGS.has(element.tagName)) return true;
-  return Boolean(element.closest?.('[data-k710-no-translate], .notranslate, [translate="no"]'));
-}
-
-function readCache(language) {
-  if (typeof window === 'undefined') return new Map();
-  try {
-    const raw = localStorage.getItem(`${CACHE_PREFIX}${language}`);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return new Map(Object.entries(parsed));
-  } catch {
-    return new Map();
-  }
-}
-
-function writeCache(language, cache) {
-  try {
-    const entries = [...cache.entries()].slice(-2200);
-    localStorage.setItem(`${CACHE_PREFIX}${language}`, JSON.stringify(Object.fromEntries(entries)));
-  } catch {
-    // Storage limits/private browsing are non-fatal.
-  }
-}
-
+/** Translator + language for any client component. Safe outside the provider (English). */
 export function useLanguage() {
   return useContext(LanguageContext);
 }
+export function useT() {
+  return useContext(LanguageContext).t;
+}
 
-export default function LanguageProvider({ children }) {
-  const pathname = usePathname();
-  const [language, setLanguage] = useState('English');
-  const [hasChosenLanguage, setHasChosenLanguage] = useState(false);
+function applyToDocument(code) {
+  const lang = getLanguage(code);
+  document.documentElement.lang = lang.code === 'zh' ? 'zh-Hans' : lang.code;
+  document.documentElement.dir = lang.dir;
+}
+
+function writePreference(code) {
+  try { window.localStorage.setItem(LANGUAGE_STORAGE_KEY, code); } catch { /* private mode */ }
+  try { document.cookie = `${LANGUAGE_COOKIE}=${code}; Path=/; Max-Age=31536000; SameSite=Lax`; } catch { /* cookies blocked */ }
+}
+
+export default function LanguageProvider({ children, initialLanguage = DEFAULT_LANGUAGE, initialMessages = {} }) {
+  const startCode = normalizeLanguage(initialLanguage) || DEFAULT_LANGUAGE;
+  const [code, setCode] = useState(startCode);
+  const [messages, setMessages] = useState(initialMessages);
   const [chooserOpen, setChooserOpen] = useState(false);
-  const [inputLanguage, setInputLanguage] = useState('English');
-  const [manifest, setManifest] = useState(null);
-  const [translationStatus, setTranslationStatus] = useState('idle');
-  const [languageError, setLanguageError] = useState('');
-  const [downloadProgress, setDownloadProgress] = useState(null);
-
   const openerRef = useRef(null);
-  const languageRef = useRef('English');
-  const cacheRef = useRef(new Map());
-  const originalTextRef = useRef(new WeakMap());
-  const originalAttrRef = useRef(new WeakMap());
-  const trackedTextNodesRef = useRef(new Set());
-  const trackedElementsRef = useRef(new Set());
-  const observerRef = useRef(null);
-  const scheduleRef = useRef(null);
-  const processingRef = useRef(false);
-  const queuedRef = useRef(false);
-  const failureUntilRef = useRef(0);
-  const browserTranslatorRef = useRef(null);
-  const browserTranslatorPromiseRef = useRef(null);
+  const cache = useRef({ [startCode]: initialMessages });
+  const latest = useRef(startCode);
 
-  const destroyBrowserTranslator = useCallback(() => {
-    try {
-      browserTranslatorRef.current?.translator?.destroy?.();
-    } catch {
-      // Best-effort cleanup.
+  const switchTo = useCallback(async (next, { persist = true } = {}) => {
+    const target = normalizeLanguage(next) || DEFAULT_LANGUAGE;
+    latest.current = target;
+    if (persist) writePreference(target);
+    let loaded = cache.current[target];
+    if (!loaded) {
+      loaded = await loadMessages(target);
+      cache.current[target] = loaded;
     }
-    browserTranslatorRef.current = null;
-    browserTranslatorPromiseRef.current = null;
+    if (latest.current !== target) return; // a newer choice won
+    applyToDocument(target);
+    setMessages(loaded);
+    setCode(target);
   }, []);
 
-  const startBrowserTranslator = useCallback((targetLanguage) => {
-    if (typeof window === 'undefined' || !('Translator' in window)) return null;
-    const targetCode = resolveBrowserLanguageCode(targetLanguage);
-    if (!targetCode || targetCode === 'en') return null;
-
-    const current = browserTranslatorRef.current;
-    if (current?.language === targetLanguage && current?.translator) {
-      return Promise.resolve(current.translator);
-    }
-
-    const pending = browserTranslatorPromiseRef.current;
-    if (pending?.language === targetLanguage && pending?.promise) return pending.promise;
-
-    destroyBrowserTranslator();
-    setDownloadProgress(null);
-    setTranslationStatus('translating');
-
-    // create() is intentionally called directly from the user's language-selection
-    // click whenever possible because Chrome requires user activation when a language
-    // pack needs to be created/downloaded.
-    const promise = window.Translator.create({
-      sourceLanguage: 'en',
-      targetLanguage: targetCode,
-      monitor(monitor) {
-        monitor.addEventListener('downloadprogress', (event) => {
-          const value = Math.max(0, Math.min(100, Math.round((event.loaded || 0) * 100)));
-          setDownloadProgress(value);
-        });
-      },
-    })
-      .then((translator) => {
-        browserTranslatorRef.current = { language: targetLanguage, translator };
-        setDownloadProgress(100);
-        return translator;
-      })
-      .catch((error) => {
-        console.warn('K710 browser Translator API unavailable', error);
-        browserTranslatorPromiseRef.current = null;
-        return null;
-      });
-
-    browserTranslatorPromiseRef.current = { language: targetLanguage, promise };
-    return promise;
-  }, [destroyBrowserTranslator]);
-
+  // A saved choice on this device wins when the server did not know it yet (first visit after the cookie was cleared).
   useEffect(() => {
     let saved = null;
-    try {
-      saved = localStorage.getItem(STORAGE_KEY);
-    } catch {
-      saved = null;
-    }
-
-    if (saved) {
-      setLanguage(saved);
-      setInputLanguage(saved);
-      languageRef.current = saved;
-      cacheRef.current = readCache(saved);
-      setHasChosenLanguage(true);
-
-      // A previously downloaded Chrome language pack may be reusable without a
-      // visible download. Try it; if Chrome requires fresh user activation, the
-      // server fallback remains available and the globe control can re-arm it.
-      if (!isEnglish(saved)) {
-        try {
-          startBrowserTranslator(saved);
-        } catch {
-          // Non-fatal; requestTranslations will use the server fallback.
-        }
-      }
-    } else {
-      // Admin tools should not block on the public language gate.
-      const onAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-      if (onAdmin) {
-        setLanguage('English');
-        setInputLanguage('English');
-        languageRef.current = 'English';
-        setHasChosenLanguage(true);
-        setChooserOpen(false);
-      } else {
-        setChooserOpen(true);
-        setHasChosenLanguage(false);
-      }
-    }
-  }, [startBrowserTranslator]);
-
-  useEffect(() => {
-    let active = true;
-    fetch('/ui-strings.json', { cache: 'force-cache' })
-      .then((response) => (response.ok ? response.json() : []))
-      .then((values) => {
-        if (!active) return;
-        setManifest(new Set(Array.isArray(values) ? values.map(normalize) : []));
-      })
-      .catch(() => {
-        if (active) setManifest(new Set());
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => () => destroyBrowserTranslator(), [destroyBrowserTranslator]);
-
-  const restoreTracked = useCallback(() => {
-    for (const node of [...trackedTextNodesRef.current]) {
-      if (!node.isConnected) {
-        trackedTextNodesRef.current.delete(node);
-        continue;
-      }
-      const original = originalTextRef.current.get(node);
-      if (original && node.nodeValue !== original.raw) node.nodeValue = original.raw;
-    }
-
-    for (const element of [...trackedElementsRef.current]) {
-      if (!element.isConnected) {
-        trackedElementsRef.current.delete(element);
-        continue;
-      }
-      const attrs = originalAttrRef.current.get(element);
-      if (!attrs) continue;
-      for (const [name, original] of attrs.entries()) {
-        if (element.hasAttribute(name) && element.getAttribute(name) !== original) {
-          element.setAttribute(name, original);
-        }
-      }
-    }
-  }, []);
-
-  const requestServerTranslations = useCallback(async (items, targetLanguage) => {
-    const results = new Map();
-    for (let i = 0; i < items.length; i += BATCH_SIZE) {
-      const batch = items.slice(i, i + BATCH_SIZE);
-      const response = await fetch('/api/translate-ui', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language: targetLanguage, strings: batch }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const error = new Error(data?.error || `Translation failed (${response.status})`);
-        error.code = data?.code || 'TRANSLATION_FAILED';
-        error.retryAfter = Number(data?.retryAfter || response.headers.get('Retry-After') || 60);
-        throw error;
-      }
-
-      if (!Array.isArray(data?.translated) || data.translated.length !== batch.length) {
-        const error = new Error('Translation response shape mismatch');
-        error.code = 'BAD_TRANSLATION_RESPONSE';
-        error.retryAfter = 60;
-        throw error;
-      }
-      batch.forEach((source, index) => results.set(source, data.translated[index]));
-    }
-    return results;
-  }, []);
-
-  const requestTranslations = useCallback(async (items, targetLanguage) => {
-    const browserCode = resolveBrowserLanguageCode(targetLanguage);
-    if (browserCode && typeof window !== 'undefined' && 'Translator' in window) {
-      let translator = browserTranslatorRef.current?.language === targetLanguage
-        ? browserTranslatorRef.current.translator
-        : null;
-
-      if (!translator) {
-        const pending = browserTranslatorPromiseRef.current;
-        if (pending?.language === targetLanguage) translator = await pending.promise;
-      }
-
-      if (!translator) translator = await startBrowserTranslator(targetLanguage);
-
-      if (translator) {
-        // Game terms are masked before the on-device translator sees them.
-        const values = await translateWithProtectedTerms(
-          items,
-          (masked) => Promise.all(masked.map((source) => translator.translate(source))),
-          browserCode,
-        );
-        const results = new Map();
-        items.forEach((source, index) => results.set(source, values[index]));
-        return results;
-      }
-    }
-
-    return requestServerTranslations(items, targetLanguage);
-  }, [requestServerTranslations, startBrowserTranslator]);
-
-  const processDocument = useCallback(async () => {
-    if (Date.now() < failureUntilRef.current) return;
-    if (!manifest || processingRef.current || typeof document === 'undefined') {
-      queuedRef.current = true;
-      return;
-    }
-
-    processingRef.current = true;
-    queuedRef.current = false;
-    const targetLanguage = languageRef.current;
-
-    try {
-      if (isEnglish(targetLanguage)) {
-        restoreTracked();
-        document.documentElement.lang = 'en';
-        document.documentElement.dir = 'ltr';
-        setTranslationStatus('idle');
-        setLanguageError('');
-        return;
-      }
-
-      const browserCode = resolveBrowserLanguageCode(targetLanguage);
-      document.documentElement.lang = browserCode || 'und';
-      document.documentElement.dir = RTL_LANGUAGE_RE.test(targetLanguage) ? 'rtl' : 'ltr';
-
-      const needed = new Set();
-      const textTargets = [];
-      const attrTargets = [];
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      let node = walker.nextNode();
-
-      while (node) {
-        const parent = node.parentElement;
-        if (!shouldSkipElement(parent)) {
-          let original = originalTextRef.current.get(node);
-          if (!original) {
-            const normalized = normalize(node.nodeValue);
-            if (normalized && manifest.has(normalized)) {
-              original = { raw: node.nodeValue, normalized };
-              originalTextRef.current.set(node, original);
-              trackedTextNodesRef.current.add(node);
-            }
-          }
-
-          if (original) {
-            textTargets.push([node, original]);
-            if (!cacheRef.current.has(original.normalized)) needed.add(original.normalized);
-          }
-        }
-        node = walker.nextNode();
-      }
-
-      const elements = document.body.querySelectorAll('[placeholder], [title], [aria-label]');
-      for (const element of elements) {
-        if (shouldSkipElement(element)) continue;
-        let originals = originalAttrRef.current.get(element);
-        if (!originals) {
-          originals = new Map();
-          originalAttrRef.current.set(element, originals);
-        }
-
-        for (const name of ['placeholder', 'title', 'aria-label']) {
-          if (!element.hasAttribute(name)) continue;
-          if (!originals.has(name)) {
-            const raw = element.getAttribute(name);
-            const normalized = normalize(raw);
-            if (normalized && manifest.has(normalized)) originals.set(name, raw);
-          }
-          const raw = originals.get(name);
-          if (!raw) continue;
-          const normalized = normalize(raw);
-          attrTargets.push([element, name, raw, normalized]);
-          trackedElementsRef.current.add(element);
-          if (!cacheRef.current.has(normalized)) needed.add(normalized);
-        }
-      }
-
-      if (needed.size) {
-        setTranslationStatus('translating');
-        setLanguageError('');
-        const translated = await requestTranslations([...needed], targetLanguage);
-        if (languageRef.current !== targetLanguage) return;
-        for (const [source, value] of translated.entries()) cacheRef.current.set(source, value);
-        writeCache(targetLanguage, cacheRef.current);
-      }
-
-      if (languageRef.current !== targetLanguage) return;
-
-      for (const [textNode, original] of textTargets) {
-        if (!textNode.isConnected) continue;
-        const translated = cacheRef.current.get(original.normalized);
-        if (!translated) continue;
-        const nextValue = preserveWhitespace(original.raw, translated);
-        if (textNode.nodeValue !== nextValue) textNode.nodeValue = nextValue;
-      }
-
-      for (const [element, name, raw, normalized] of attrTargets) {
-        if (!element.isConnected) continue;
-        const translated = cacheRef.current.get(normalized);
-        if (!translated) continue;
-        const nextValue = translated || raw;
-        if (element.getAttribute(name) !== nextValue) element.setAttribute(name, nextValue);
-      }
-
-      failureUntilRef.current = 0;
-      setTranslationStatus('ready');
-      setDownloadProgress(null);
-      setLanguageError('');
-    } catch (error) {
-      console.error('K710 UI translation failed', error);
-      restoreTracked();
-      setTranslationStatus('error');
-
-      if (error?.code === 'UNSUPPORTED_LANGUAGE') {
-        failureUntilRef.current = Number.MAX_SAFE_INTEGER;
-        setLanguageError(error.message || 'That language is not supported by this browser or the fallback engine.');
-        setChooserOpen(true);
-      } else {
-        const retryAfter = Math.max(30, Math.min(Number(error?.retryAfter || 60), 300));
-        failureUntilRef.current = Date.now() + retryAfter * 1000;
-        setLanguageError('Translation could not start in this browser. Choose another language or click the globe to retry.');
-      }
-    } finally {
-      processingRef.current = false;
-      if (queuedRef.current && Date.now() >= failureUntilRef.current) {
-        queuedRef.current = false;
-        processDocument();
-      }
-    }
-  }, [manifest, requestTranslations, restoreTracked]);
-
-  const scheduleTranslation = useCallback(() => {
-    if (typeof window === 'undefined' || Date.now() < failureUntilRef.current) return;
-    if (scheduleRef.current) window.clearTimeout(scheduleRef.current);
-    scheduleRef.current = window.setTimeout(() => processDocument(), 140);
-  }, [processDocument]);
-
-  useEffect(() => {
-    if (!manifest || !hasChosenLanguage) return undefined;
-
-    scheduleTranslation();
-    observerRef.current?.disconnect();
-    observerRef.current = new MutationObserver((mutations) => {
-      if (Date.now() < failureUntilRef.current) return;
-      const relevant = mutations.some((mutation) => {
-        const target = mutation.target?.nodeType === Node.TEXT_NODE
-          ? mutation.target.parentElement
-          : mutation.target;
-        return !shouldSkipElement(target);
-      });
-      if (relevant) scheduleTranslation();
-    });
-    observerRef.current.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ['placeholder', 'title', 'aria-label'],
-    });
-
-    return () => {
-      observerRef.current?.disconnect();
-      if (scheduleRef.current) window.clearTimeout(scheduleRef.current);
-    };
-  }, [manifest, hasChosenLanguage, pathname, scheduleTranslation]);
-
-  useEffect(() => {
-    if (!manifest || !hasChosenLanguage) return;
-    window.setTimeout(() => scheduleTranslation(), 80);
-  }, [pathname, manifest, hasChosenLanguage, scheduleTranslation]);
-
-  const applyLanguage = useCallback(
-    (nextLanguage) => {
-      const clean = normalize(nextLanguage) || 'English';
-      restoreTracked();
-      failureUntilRef.current = 0;
-      setTranslationStatus('idle');
-      setLanguageError('');
-      setDownloadProgress(null);
-
-      if (!isEnglish(clean)) {
-        try {
-          startBrowserTranslator(clean);
-        } catch (error) {
-          console.warn('K710 could not pre-arm browser translator', error);
-        }
-      } else {
-        destroyBrowserTranslator();
-      }
-
-      setLanguage(clean);
-      setInputLanguage(clean);
-      languageRef.current = clean;
-      cacheRef.current = readCache(clean);
-      setHasChosenLanguage(true);
-      setChooserOpen(false);
-      const opener = openerRef.current;
-      openerRef.current = null;
-      if (opener && typeof opener.focus === 'function') window.setTimeout(() => opener.focus(), 0);
-      try {
-        localStorage.setItem(STORAGE_KEY, clean);
-      } catch {
-        // Non-fatal.
-      }
-    },
-    [destroyBrowserTranslator, restoreTracked, startBrowserTranslator],
-  );
+    try { saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY); } catch { saved = null; }
+    const normalized = normalizeLanguage(saved);
+    if (normalized && normalized !== startCode) switchTo(normalized);
+    else if (normalized) writePreference(normalized);
+    else applyToDocument(startCode);
+  }, [startCode, switchTo]);
 
   const openLanguageChooser = useCallback(() => {
-    failureUntilRef.current = 0;
     openerRef.current = typeof document !== 'undefined' ? document.activeElement : null;
     setChooserOpen(true);
   }, []);
@@ -509,112 +88,31 @@ export default function LanguageProvider({ children }) {
     setChooserOpen(false);
     const opener = openerRef.current;
     openerRef.current = null;
-    // Return focus to whatever opened the chooser (the header switcher).
-    if (opener && typeof opener.focus === 'function') window.setTimeout(() => opener.focus(), 0);
+    if (opener && typeof opener.focus === 'function' && opener.isConnected) window.setTimeout(() => opener.focus(), 0);
   }, []);
 
-  // Escape closes the chooser, but only once a language has been chosen: the
-  // very first visit still has to pick one (the forge intro waits for it).
-  useEffect(() => {
-    if (!chooserOpen || !hasChosenLanguage) return undefined;
-    function onKeyDown(event) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeLanguageChooser();
-      }
-    }
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [chooserOpen, hasChosenLanguage, closeLanguageChooser]);
+  const choose = useCallback((next) => {
+    switchTo(next);
+    closeLanguageChooser();
+  }, [switchTo, closeLanguageChooser]);
 
-  const contextValue = useMemo(
-    () => ({ language, languageCode: languageShortCode(language), hasChosenLanguage, translationStatus, openLanguageChooser }),
-    [language, hasChosenLanguage, translationStatus, openLanguageChooser],
-  );
+  const t = useMemo(() => createTranslator({ locale: code, messages, fallback: ENGLISH }), [code, messages]);
+  const lang = getLanguage(code);
+  const value = useMemo(() => ({
+    language: code,
+    languageName: lang.native,
+    languageCode: code.toUpperCase(),
+    hasChosenLanguage: true, // never blocks the page; the forge intro used to wait for this
+    translationStatus: 'idle',
+    t,
+    setLanguage: switchTo,
+    openLanguageChooser,
+  }), [code, lang.native, t, switchTo, openLanguageChooser]);
 
   return (
-    <LanguageContext.Provider value={contextValue}>
+    <LanguageContext.Provider value={value}>
       {children}
-
-      {chooserOpen && !(pathname || '').startsWith('/admin') && (
-        <div className="k710-language-overlay" data-k710-no-translate role="dialog" aria-modal="true" aria-labelledby="k710-language-title">
-          <div className="k710-language-panel">
-            <div className="k710-language-crest" aria-hidden="true">710</div>
-            <p className="k710-language-eyebrow">KINGDOM 710</p>
-            <h1 id="k710-language-title">Choose your language</h1>
-            <p className="k710-language-multilingual">
-              اختر لغتك · Choisissez votre langue · Dilinizi seçin · 언어 선택 · Elige tu idioma
-            </p>
-            <p className="k710-language-copy">
-              Pick the language you want to read. You can change it later from the top of any page.
-            </p>
-
-            <label className="k710-language-label" htmlFor="k710-language-input">Language</label>
-            <input
-              id="k710-language-input"
-              className="k710-language-input"
-              list="k710-language-options"
-              value={inputLanguage}
-              onChange={(event) => setInputLanguage(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') applyLanguage(inputLanguage);
-              }}
-              placeholder="Search or type a language"
-              autoComplete="off"
-              autoFocus
-            />
-            <datalist id="k710-language-options">
-              {SUGGESTED_LANGUAGES.map(([name, native]) => (
-                <option key={name} value={name}>{native}</option>
-              ))}
-            </datalist>
-
-            {languageError && (
-              <p className="k710-language-error" role="alert">{languageError}</p>
-            )}
-
-            <div className="k710-language-quick" role="group" aria-label="Common languages">
-              {QUICK_LANGUAGES.map((name) => {
-                const native = SUGGESTED_LANGUAGES.find(([n]) => n === name)?.[1] || name;
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    className="k710-language-chip"
-                    aria-pressed={normalize(language) === name && hasChosenLanguage}
-                    onClick={() => applyLanguage(name)}
-                  >
-                    {native}
-                  </button>
-                );
-              })}
-            </div>
-
-            <button type="button" className="k710-language-enter" onClick={() => applyLanguage(inputLanguage)}>
-              {hasChosenLanguage ? 'Apply language' : 'Continue'}
-            </button>
-            {hasChosenLanguage && (
-              <button type="button" className="k710-language-cancel" onClick={closeLanguageChooser}>
-                Cancel
-              </button>
-            )}
-            
-          </div>
-        </div>
-      )}
-
-      {hasChosenLanguage && !chooserOpen && (
-        <button
-          type="button"
-          className="k710-language-globe"
-          data-k710-no-translate
-          onClick={openLanguageChooser}
-          aria-label={`Language: ${language}. Change language`}
-          title="Change language"
-        >
-          {languageShortCode(language)}
-        </button>
-      )}
+      {chooserOpen && <LanguagePicker current={code} t={t} onChoose={choose} onClose={closeLanguageChooser} />}
     </LanguageContext.Provider>
   );
 }
