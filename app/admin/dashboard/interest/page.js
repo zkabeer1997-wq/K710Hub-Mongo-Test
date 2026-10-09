@@ -14,12 +14,13 @@ import { decisionConfirmText, acceptanceMessage, findDuplicateApplicants } from 
 
 const COMPACT_COLUMNS = [
   { key: 'in_game_name', label: 'Name' },
+  { key: 'verified', label: 'Verification' },
   { key: 'current_server', label: 'Server' },
   { key: 'current_alliance', label: 'Alliance' },
   { key: 'migrate_alliance', label: 'Target' },
   { key: 'highest_troop_level', label: 'Troop Level' },
   { key: 't11_units', label: 'T11' },
-  { key: 'mystic_trial_stages', label: 'Mystic Trial' },
+  { key: 'mystic_trial_score', label: 'Mystic Trial score' },
   { key: 'total_power', label: 'Power' },
   { key: 'passes_required', label: 'Passes' },
   { key: 'intake_period', label: 'Intake' },
@@ -28,6 +29,7 @@ const COMPACT_COLUMNS = [
 
 const COLUMNS = [
   { key: 'status', label: 'Status' },
+  { key: 'verified', label: 'Verification' },
   { key: 'in_game_name', label: 'In-game name' },
   { key: 'player_id', label: 'Player ID' },
   { key: 'discord_username', label: 'Discord' },
@@ -38,7 +40,7 @@ const COLUMNS = [
   { key: 'highest_troop_level', label: 'Troop level' },
   { key: 'current_tg', label: 'TG' },
   { key: 't11_units', label: 'T11' },
-  { key: 'mystic_trial_stages', label: 'Mystic Trial' },
+  { key: 'mystic_trial_score', label: 'Total Mystic Trial Score' },
   { key: 'total_power', label: 'Total Power' },
   { key: 'willing_reduce_power', label: 'Reduce power' },
   { key: 'passes_required', label: 'Passes required' },
@@ -48,12 +50,21 @@ const COLUMNS = [
   { key: 'participates_battles', label: 'Battles' },
   { key: 'spending_archetype', label: 'Spending' },
   { key: 'main_language', label: 'Language' },
-  { key: 'created_at', label: 'Submitted' },
+  { key: 'created_at', label: 'Submitted (latest)' },
+  { key: 'first_submitted_at', label: 'First submitted' },
+  { key: 'updated_at', label: 'Updated' },
+  { key: 'resubmitted_count', label: 'Resubmitted (times)' },
+  { key: 'verified_at', label: 'Verified at' },
+  { key: 'stats_fetched_at', label: 'Game data read at' },
+  { key: 'power_self_reported', label: 'Power self-reported' },
+  { key: 'mystic_self_reported', label: 'Mystic Trial self-reported' },
 ];
 
 const EXPORT_COLUMNS = COLUMNS.filter((c) => c.key !== 'status');
 
-const NUMERIC_KEYS = new Set(['total_power', 'mystic_trial_stages', 'current_tg', 'passes_required', 'current_passes']);
+const NUMERIC_KEYS = new Set(['total_power', 'mystic_trial_score', 'current_tg', 'passes_required', 'current_passes', 'resubmitted_count']);
+const DATE_KEYS = new Set(['created_at', 'first_submitted_at', 'updated_at', 'verified_at', 'stats_fetched_at']);
+const VERIFICATION_TABS = [{ id: '', label: 'All' }, { id: 'verified', label: 'Verified' }, { id: 'unverified', label: 'Unverified' }];
 const SEARCH_KEYS = ['in_game_name', 'current_server', 'player_id', 'current_alliance'];
 
 const STATUS_ACTIONS = [
@@ -86,11 +97,58 @@ function matchesStatusTab(row, tab) {
   return status === tab;
 }
 
+// Rows saved before applicant verification existed have no `verified` field.
+function verificationState(row) {
+  if (row.verified === true) return 'verified';
+  if (row.verified === false) return 'unverified';
+  return 'legacy';
+}
+
+const VERIFICATION_LABELS = { verified: 'Verified', unverified: 'Unverified', legacy: 'Unverified (older application)' };
+
+// The Mystic Trial figure used to be "stages cleared" (0-4000) under mystic_trial_stages.
+function mysticValue(row) {
+  if (row.mystic_trial_score != null && row.mystic_trial_score !== '') return String(row.mystic_trial_score);
+  if (row.mystic_trial_stages != null && row.mystic_trial_stages !== '') return `${row.mystic_trial_stages} (old form: stages)`;
+  return '';
+}
+
+// A number typed by someone who WAS verified is flagged. (Unverified rows are self-reported as a whole.)
+function selfReported(row, key) {
+  if (row.verified !== true) return false;
+  if (key === 'total_power') return row.power_self_reported === true;
+  if (key === 'mystic_trial_score') return row.mystic_self_reported === true;
+  return false;
+}
+
 function cellValue(row, key) {
   if (key === 'status') return STATUS_LABELS[row.status] || 'Pending';
+  if (key === 'verified') return VERIFICATION_LABELS[verificationState(row)];
   if (key === 't11_units') return (row.t11_units || []).join(', ');
-  if (key === 'created_at') return row.created_at ? new Date(row.created_at).toLocaleString() : '';
+  if (DATE_KEYS.has(key)) return row[key] ? new Date(row[key]).toLocaleString() : '';
+  if (key === 'mystic_trial_score') return mysticValue(row) + (selfReported(row, key) ? ' (self-reported)' : '');
+  if (key === 'total_power') return (row.total_power == null ? '' : String(row.total_power)) + (selfReported(row, key) ? ' (self-reported)' : '');
+  if (key === 'power_self_reported' || key === 'mystic_self_reported') {
+    if (row.verified !== true) return row.verified === false ? 'Yes (unverified)' : '';
+    return row[key] === true ? 'Yes' : 'No';
+  }
+  if (key === 'resubmitted_count') return String(Number(row.resubmitted_count) || 0);
   return row[key] == null ? '' : String(row[key]);
+}
+
+// Text + icon, never colour alone.
+function VerifiedBadge({ row }) {
+  const state = verificationState(row);
+  return (
+    <span className={`verify-badge is-${state}`}>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+        {state === 'verified'
+          ? <path fill="currentColor" d="M8 1 2 3.5v4.2c0 3.2 2.5 6 6 7.3 3.5-1.3 6-4.1 6-7.3V3.5L8 1Zm-1 9.3L4.7 8l1-1L7 8.3 10.3 5l1 1L7 10.3Z" />
+          : <path fill="currentColor" d="M8 1 2 3.5v4.2c0 3.2 2.5 6 6 7.3 3.5-1.3 6-4.1 6-7.3V3.5L8 1Zm-.8 3.5h1.6v4H7.2v-4Zm0 5h1.6v1.6H7.2V9.5Z" />}
+      </svg>
+      {VERIFICATION_LABELS[state]}
+    </span>
+  );
 }
 
 function buildMatcher(query) {
@@ -112,6 +170,7 @@ export default function AdminInterestPage() {
   const [intakeFilter, setIntakeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [migrateFilter, setMigrateFilter] = useState('');
+  const [verificationFilter, setVerificationFilter] = useState('');
   const [serverFilter, setServerFilter] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState('desc');
@@ -313,6 +372,8 @@ export default function AdminInterestPage() {
     let out = rows.filter((row) => {
       if (intakeFilter && row.intake_period !== intakeFilter) return false;
       if (!matchesStatusTab(row, statusFilter)) return false;
+      if (verificationFilter === 'verified' && row.verified !== true) return false;
+      if (verificationFilter === 'unverified' && row.verified === true) return false;
       if (migrateFilter && row.migrate_alliance !== migrateFilter) return false;
       if (serverFilter && row.current_server !== serverFilter) return false;
       if (matcher) {
@@ -322,14 +383,14 @@ export default function AdminInterestPage() {
       return true;
     });
     out = out.slice().sort((a, b) => {
-      let av = a[sortKey];
-      let bv = b[sortKey];
+      let av = sortKey === 'mystic_trial_score' ? (a.mystic_trial_score ?? a.mystic_trial_stages) : sortKey === 'verified' ? verificationState(a) : a[sortKey];
+      let bv = sortKey === 'mystic_trial_score' ? (b.mystic_trial_score ?? b.mystic_trial_stages) : sortKey === 'verified' ? verificationState(b) : b[sortKey];
       if (NUMERIC_KEYS.has(sortKey)) {
         av = parseFloat(av) || 0;
         bv = parseFloat(bv) || 0;
-      } else if (sortKey === 'created_at') {
-        av = a.created_at ? new Date(a.created_at).getTime() : 0;
-        bv = b.created_at ? new Date(b.created_at).getTime() : 0;
+      } else if (DATE_KEYS.has(sortKey)) {
+        av = a[sortKey] ? new Date(a[sortKey]).getTime() : 0;
+        bv = b[sortKey] ? new Date(b[sortKey]).getTime() : 0;
       } else {
         av = String(av == null ? '' : av).toLowerCase();
         bv = String(bv == null ? '' : bv).toLowerCase();
@@ -339,7 +400,7 @@ export default function AdminInterestPage() {
       return 0;
     });
     return out;
-  }, [rows, query, intakeFilter, statusFilter, migrateFilter, serverFilter, sortKey, sortDir]);
+  }, [rows, query, intakeFilter, statusFilter, verificationFilter, migrateFilter, serverFilter, sortKey, sortDir]);
 
   function toggleSort(key) {
     if (sortKey === key) {
@@ -601,6 +662,11 @@ export default function AdminInterestPage() {
             <Field label="Search (name, server, player ID, alliance)">
               <Input tone="console" className="narrow" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search the inbox" placeholder="e.g. Legend" />
             </Field>
+            <Field label="Verification">
+              <Select tone="console" value={verificationFilter} onChange={(e) => setVerificationFilter(e.target.value)}>
+                {VERIFICATION_TABS.map((tab) => (<option key={tab.id || 'all'} value={tab.id}>{tab.label}</option>))}
+              </Select>
+            </Field>
             <Field label="Migrating to">
               <Select tone="console" value={migrateFilter} onChange={(e) => setMigrateFilter(e.target.value)}>
                 <option value="">All</option>
@@ -653,7 +719,16 @@ export default function AdminInterestPage() {
                       <td><StatusBadge status={row.status || 'pending'} label={STATUS_LABELS[row.status] || 'Pending'} /></td>
                       {COMPACT_COLUMNS.map((col) => (
                         <td key={col.key} className={col.key === 'created_at' ? 'updated-cell' : undefined}>
-                          {cellValue(row, col.key)}
+                          {col.key === 'verified' ? <VerifiedBadge row={row} /> : cellValue(row, col.key).replace(' (self-reported)', '')}
+                          {(col.key === 'total_power' || col.key === 'mystic_trial_score') && selfReported(row, col.key) && (
+                            <> <span className="unit-pill" title="Typed by the applicant, not read from the game">Self-reported</span></>
+                          )}
+                          {col.key === 'created_at' && Number(row.resubmitted_count) > 0 && (
+                            <> <span className="unit-pill" title={`First submitted ${row.first_submitted_at ? new Date(row.first_submitted_at).toLocaleString() : ''}`}>Resubmitted {row.resubmitted_count}x</span></>
+                          )}
+                          {col.key === 'in_game_name' && row.unverified_duplicate_of && (
+                            <> <span className="unit-pill" title="Sent with the Player ID of a verified application, not verified itself">Unverified copy</span></>
+                          )}
                           {col.key === 'in_game_name' && duplicates.has(row.id) && (
                             <>
                               {' '}
@@ -681,6 +756,9 @@ export default function AdminInterestPage() {
             .inbox-confirm textarea,.inbox-message{width:100%;font:inherit;font-size:13px;padding:8px;border-radius:6px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:inherit;resize:vertical}
             .inbox-message{font-family:var(--font-mono-loaded),ui-monospace,monospace;font-size:12px}
             .status-action-btn.active-confirm{border-color:var(--gold);color:var(--parchment)}
+            .verify-badge{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;border:1px solid var(--line)}
+            .verify-badge.is-verified{color:var(--gold);border-color:var(--gold)}
+            .verify-badge.is-unverified,.verify-badge.is-legacy{color:var(--text-muted);border-style:dashed}
           `}</style>
           {selectedRow && (
             <div className="admin-drawer-overlay" role="presentation" onClick={closeDrawer}>
@@ -757,9 +835,35 @@ export default function AdminInterestPage() {
                 </div>
 
                 <div className="admin-drawer-section">
+                  <h3>Verification</h3>
+                  <p className="admin-row-message"><VerifiedBadge row={selectedRow} /></p>
+                  {verificationState(selectedRow) === 'verified' && (
+                    <p className="admin-row-message">
+                      Name, Player ID, server and alliance{selectedRow.power_self_reported ? '' : ', power'}{selectedRow.mystic_self_reported ? '' : ' and Mystic Trial score'} were read from the game{selectedRow.stats_fetched_at ? ` on ${new Date(selectedRow.stats_fetched_at).toLocaleString()}` : ''}.
+                      {selectedRow.power_self_reported ? ' Power was typed by the applicant (self-reported).' : ''}{selectedRow.mystic_self_reported ? ' Mystic Trial score was typed by the applicant (self-reported).' : ''}
+                    </p>
+                  )}
+                  {verificationState(selectedRow) !== 'verified' && (
+                    <p className="admin-row-message">Everything on this application was typed by the applicant. Check it against the screenshots before you accept.</p>
+                  )}
+                  {selectedRow.unverified_duplicate_of && (
+                    <p className="admin-row-message">
+                      This was sent with the Player ID of a verified application and is not verified itself.{' '}
+                      <button type="button" className="admin-sort-btn" onClick={() => openRow(selectedRow.unverified_duplicate_of)}>Open the verified application</button>
+                    </p>
+                  )}
+                  {Number(selectedRow.resubmitted_count) > 0 && (
+                    <p className="admin-row-message">
+                      Resubmitted {selectedRow.resubmitted_count} time{Number(selectedRow.resubmitted_count) === 1 ? '' : 's'}. This is the latest version; first submitted {selectedRow.first_submitted_at ? new Date(selectedRow.first_submitted_at).toLocaleString() : 'earlier'}.
+                      {selectedRow.previous_status ? ` It was ${STATUS_LABELS[selectedRow.previous_status] || selectedRow.previous_status} before and is pending again.` : ''}
+                    </p>
+                  )}
+                </div>
+
+                <div className="admin-drawer-section">
                   <h3>Application</h3>
                   <div className="admin-drawer-grid">
-                    {COLUMNS.filter((c) => c.key !== 'status').map((col) => (
+                    {COLUMNS.filter((c) => c.key !== 'status' && c.key !== 'verified').map((col) => (
                       <div key={col.key} className="admin-drawer-field">
                         <span>{col.label}</span>
                         <strong>{cellValue(selectedRow, col.key) || '-'}</strong>

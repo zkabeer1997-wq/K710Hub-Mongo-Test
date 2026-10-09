@@ -41,7 +41,7 @@ function req(overrides = {}, count = 2, extra = []) {
   const fd = new FormData();
   const base = {
     in_game_name: 'Shot Test', player_id: '98765432', discord_username: 'shottest', current_server: '512', current_alliance: 'None',
-    migrate_alliance: '710 (Bear 0200UTC and 1300UTC)', highest_troop_level: 'TG8', current_tg: '5,000', mystic_trial_stages: '120',
+    migrate_alliance: '710 (Bear 0200UTC and 1300UTC)', highest_troop_level: 'TG8', current_tg: '5,000', mystic_trial_score: '120',
     total_power: '245,000,000', active_commit: 'Yes', willing_save_resources: 'Yes', participates_battles: 'Yes',
     spending_archetype: 'F2P (pure skills, always on)', main_language: 'English', willing_reduce_power: 'No', passes_required: '0', current_passes: '0', rendered_at: String(Date.now() - 60000),
     ...overrides,
@@ -148,9 +148,15 @@ test('Drive throwing is handled the same way as not connected', async () => {
 test('non-numeric Player ID and path tricks never become folder names', async () => {
   const drive = await tmpFakeDrive();
   useConnectedDrive(drive);
-  await interest.POST(req({ player_id: '../../etc' }, 1, [['client_request_id', 'trick-1']]));
+  // The route keeps digits only, so a path trick is "no Player ID" (400) and no folder is made.
+  const res = await interest.POST(req({ player_id: '../../etc' }, 1, [['client_request_id', 'trick-1']]));
+  assert.equal(res.status, 400);
   const apps = await listDir(path.join(drive.root, 'tree', 'K710 Website', 'Applications'));
-  assert.deepEqual(apps, ['unknown-player-id']);
+  assert.ok(!apps.includes('unknown-player-id') && !apps.some((n) => n.includes('..')));
+  // Digits hidden in a trick string become a plain numeric folder.
+  await interest.POST(req({ player_id: '../../777666' }, 1, [['client_request_id', 'trick-2']]));
+  const after = await listDir(path.join(drive.root, 'tree', 'K710 Website', 'Applications'));
+  assert.ok(after.includes('777666') || after.some((n) => /777666/.test(n)));
 });
 
 test('migration moves waiting screenshots to Drive, verifies, drops base64 and is idempotent', async () => {

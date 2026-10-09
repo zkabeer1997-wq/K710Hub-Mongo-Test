@@ -80,22 +80,25 @@ test('total power boundaries', () => {
   assert.equal(ok('12.3M').digits, '12300000');
 });
 
-test('Mystic Trial stages boundaries are plain integers only', () => {
-  const m = (v) => validateNumericAnswer('mystic_trial_stages', v);
+test('Total Mystic Trial Score: 0 to 5,000, suffixes allowed, no decimals', () => {
+  const m = (v) => validateNumericAnswer('mystic_trial_score', v);
   assert.equal(m('0').ok, true);
-  assert.equal(m('4000').ok, true);
-  assert.equal(m('4,000').ok, true);
-  assert.equal(m('4001').error, 'Mystic Trial stages cannot be more than 4,000.');
-  assert.equal(m('4k').ok, false);
-  assert.equal(m('1m').ok, false);
+  assert.equal(m('4,250').digits, '4250');
+  assert.equal(m('1.2k').digits, '1200');
+  assert.equal(m('5000').ok, true);
+  assert.equal(m('5001').error, 'Enter a score from 0 to 5,000.');
+  assert.equal(m('1.2M').ok, false);
   assert.equal(m('12.5').ok, false);
+  assert.equal(m('-5').ok, false);
+  assert.equal(m('').empty, true);
+  assert.equal(validateNumericAnswer('mystic_trial_stages', '5').ok, false, 'the old stages rule is gone');
 });
 
 test('numberPreview turns into the error past a limit', () => {
   assert.equal(numberPreview('12345', 'total_power'), 'You typed: 12,345');
   assert.match(numberPreview('3100000000', 'total_power'), /cannot be more than 3,000,000,000/);
   assert.equal(numberPreview('', 'total_power'), '');
-  assert.equal(normalizeNumericAnswer('4k', 'mystic_trial_stages'), '4k');
+  assert.equal(normalizeNumericAnswer('4k', 'mystic_trial_score'), '4000');
   assert.equal(normalizeNumericAnswer('3b', 'total_power'), '3000000000');
 });
 
