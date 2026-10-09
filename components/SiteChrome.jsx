@@ -45,7 +45,7 @@ export default function SiteChrome({ children }) {
       <SiteAtmosphere />
       <SiteHeader />
       <DeadlineTicker />
-      {isMemberPage(pathname) ? (
+      {isMemberPage(pathname) && pathname !== '/dashboard' ? (
         <div className="member-layout">
           <MemberSidebar />
           <div id="main" className={`site-route site-route-${tone}`}>{children}</div>

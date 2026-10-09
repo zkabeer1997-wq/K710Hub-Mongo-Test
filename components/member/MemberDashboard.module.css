@@ -1,5 +1,5 @@
 /* Signed-in dashboard (Console): dense, dark, 3/4 forms + 1/4 deadlines on desktop. */
-.dash { display: grid; gap: 20px; max-width: 1180px; margin: 0 auto; position: relative; z-index: 1; min-width: 0; }
+.dash { display: grid; gap: 20px; max-width: 1040px; margin: 0 auto; position: relative; z-index: 1; min-width: 0; }
 .head { display: grid; gap: 16px; align-items: end; }
 .hero :global(.ph-inner) { padding-inline: 0; margin-bottom: 0; }
 .assurance { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--edge, #3a3630); border-radius: 8px; background: rgba(12, 14, 21, 0.8); }
@@ -118,3 +118,29 @@
 :global(:root[data-easy='true']) .assurance strong,
 :global(:root[data-easy='true']) .gifts h2,
 :global(:root[data-easy='true']) .dueChip { font-size: 16px; }
+
+/* ---- Forms card: numbered rows, status chip, one date line, Power Profile row ---- */
+.formsCol { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.formNum { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 10px; border: 1px solid var(--edge-strong, #6a5a30); border-radius: 50%; font: 800 15px/1 var(--font-mono, monospace); color: var(--gold-bright, #f0c669); vertical-align: 2px; }
+.formStatus { padding: 2px 10px 2px 8px; border: 1px solid transparent; border-radius: 999px; }
+.formStatus[data-state='todo'] { color: #ffb8b0; background: rgba(255, 107, 94, 0.12); border-color: rgba(255, 107, 94, 0.5); }
+.formStatus[data-state='done'] { background: rgba(134, 168, 115, 0.14); border-color: rgba(134, 168, 115, 0.5); }
+.formStatus[data-state='carry'] { border-color: var(--edge-strong, #6a5a30); }
+.formDeadline { font-weight: 600; color: var(--t-primary, #ece6d8); }
+.formBtn { gap: 8px; }
+.alsoOpen { margin-top: 14px; border-top: 1px solid var(--edge, #3a3630); padding-top: 12px; }
+.alsoHead { margin: 0 0 4px; font: 700 14px/1.3 var(--font-body, sans-serif); text-transform: uppercase; letter-spacing: 0.1em; color: var(--t-secondary, #a9afc0); }
+.powerRow { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; border: 1px dashed var(--edge-strong, #6a5a30); border-radius: 10px; color: var(--t-primary, #ece6d8); text-decoration: none; }
+.powerRow:hover { background: rgba(217, 169, 78, 0.07); }
+.powerRow:focus-visible { outline: 2px solid var(--gold-hot, #f3d99a); outline-offset: 2px; }
+.powerRow > svg:first-child { flex: none; color: var(--gold, #d9a94e); }
+.powerRow > svg:last-child { flex: none; color: var(--t-secondary, #a9afc0); }
+.powerText { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.powerText strong { font-size: 16px; font-weight: 700; }
+.powerText span { font-size: 14px; color: var(--t-secondary, #a9afc0); }
+[dir='rtl'] .formNum { margin-right: 0; margin-left: 10px; }
+[dir='rtl'] .formBtn svg, [dir='rtl'] .powerRow > svg:last-child { transform: scaleX(-1); }
+:global(:root[data-easy='true']) .powerText span { font-size: 16px; }
+.caughtUp { display: flex; align-items: center; gap: 8px; }
+.caughtUp svg { flex: none; color: var(--moss, #86a873); }
+.panelHead .textLink { display: inline-flex; align-items: center; min-height: 44px; }

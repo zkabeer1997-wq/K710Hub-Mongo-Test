@@ -6,7 +6,6 @@ import GiftCodeRewards from '../GiftCodeRewards';
 import { useMemberFormStatus } from '../../lib/useMemberFormStatus';
 import { dashboardLinks } from '../../lib/memberForms.mjs';
 import MyFormsList from './MyFormsList';
-import DeadlinesPanel from './DeadlinesPanel';
 import styles from './MemberDashboard.module.css';
 
 function formatNumber(value) {
@@ -27,7 +26,7 @@ function Avatar({ profile }) {
   );
 }
 
-// Signed-in dashboard: account card, My forms (3/4) beside Deadlines (1/4), then a few links.
+// Signed-in dashboard: account card, the My forms card, then a few links.
 // The Admin link depends on the live role the session returns, never on client state.
 export default function MemberDashboard({ profile, adminAccessRequested, busy, onLogout }) {
   const { status, loaded } = useMemberFormStatus();
@@ -74,10 +73,7 @@ export default function MemberDashboard({ profile, adminAccessRequested, busy, o
         )}
       </section>
 
-      <div className={styles.split}>
-        <MyFormsList status={status} loaded={loaded} />
-        <div className={styles.side}><DeadlinesPanel status={status} loaded={loaded} /></div>
-      </div>
+      <MyFormsList status={status} loaded={loaded} />
 
       <nav className={styles.links} aria-label="Member destinations">
         {links.map((link) => (
