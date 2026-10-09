@@ -101,7 +101,7 @@
 .al-bd-ridge{position:absolute;inset-inline-end:-6%;bottom:0;width:min(70vw,980px);clip-path:polygon(0 100%,10% 46%,18% 62%,30% 30%,42% 58%,54% 24%,66% 59%,78% 40%,89% 56%,100% 31%,100% 100%,0 100%)}
 .al-bd-ridge-back{height:min(48vh,420px);background:linear-gradient(180deg,color-mix(in srgb,var(--wb-deep) 62%,transparent),color-mix(in srgb,var(--wb-deep) 24%,#000));opacity:.5}
 .al-bd-ridge-front{inset-inline-end:-22%;width:min(78vw,1100px);height:min(32vh,280px);background:linear-gradient(180deg,rgba(17,19,20,.55),#050608);opacity:.85}
-.al-watermark{position:absolute;inset-inline-start:-.05em;bottom:-.04em;font:700 min(24vw,340px,calc(100vw / var(--len,3)))/.8 var(--font-display);letter-spacing:-.04em;white-space:nowrap;color:transparent;-webkit-text-stroke:2px color-mix(in srgb,var(--wb) 32%,transparent);user-select:none}
+.al-watermark{position:absolute;inset-inline-start:-.05em;top:clamp(20px,4vh,48px);font:700 min(22vw,300px,calc(92vw / var(--len,3)))/.8 var(--font-display);letter-spacing:-.04em;white-space:nowrap;color:transparent;-webkit-text-stroke:2px color-mix(in srgb,var(--wb) 32%,transparent);user-select:none}
 .al-stage .al-backdrop,.al-detail .al-backdrop{--font-display:var(--font-fraunces-loaded),Georgia,'Times New Roman',serif}
 .al-landing-inner{position:relative}
 @media(max-width:1023px){.al-watermark{opacity:.55}}
@@ -131,12 +131,12 @@
 @media(min-width:1280px){
   .al-layout{max-width:1380px;display:grid;grid-template-columns:minmax(172px,200px) minmax(0,860px) minmax(172px,200px);justify-content:center;gap:24px;align-items:start}
   .al-main{grid-column:2;grid-row:1}
-  .al-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:var(--al-rail-top);grid-row:1;max-height:calc(100dvh - var(--al-rail-top) - 12px)}
+  .al-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:var(--al-rail-top);grid-row:1}
   .al-rail-left{grid-column:1}
   .al-rail-right{grid-column:3}
 }
 /* panels: the main column can be narrower than the viewport suggests once the rails take their share */
-@container al-main (min-width:701px) and (max-width:800px){
+@container al-main (min-width:701px) and (max-width:740px){
   .al-panels{grid-template-columns:repeat(2,minmax(0,1fr))}
   .al-panels>:last-child{grid-column:1/-1}
 }
@@ -206,3 +206,37 @@
   .al-box{animation:al-rise .4s ease-out both}
 }
 @keyframes al-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- fit one screen (>= 1280px, not Easy view): everything of the page body visible without scrolling ---------- */
+@media(min-width:1280px){
+:root:not([data-easy='true']) .al-layout{padding-top:10px;padding-bottom:56px}
+:root:not([data-easy='true']) .al-main,:root:not([data-easy='true']) .al-overview{gap:12px}
+:root:not([data-easy='true']) .al-back{min-height:30px;font-size:14px}
+:root:not([data-easy='true']) .al-banner{padding:clamp(18px,3vh,32px) clamp(22px,2.6vw,36px);min-height:clamp(150px,19vh,210px)}
+:root:not([data-easy='true']) .al-banner[data-photo]{min-height:clamp(220px,28vh,300px)}
+:root:not([data-easy='true']) .al-eyebrow{margin-bottom:6px}
+:root:not([data-easy='true']) .al-title{margin-bottom:6px;font-size:clamp(32px,5.6vh,52px)}
+:root:not([data-easy='true']) .al-lede{font-size:17px}
+:root:not([data-easy='true']) .al-strip{gap:8px}
+:root:not([data-easy='true']) .al-strip-cell{padding:10px 14px}
+:root:not([data-easy='true']) .al-strip dd{font-size:16px}
+:root:not([data-easy='true']) .al-panels{gap:12px}
+:root:not([data-easy='true']) .al-panel{gap:10px;padding:16px 18px}
+:root:not([data-easy='true']) .al-panel-h{font-size:20px;margin-bottom:0}
+:root:not([data-easy='true']) .al-people li{padding:8px 0}
+:root:not([data-easy='true']) .bear-row{padding:6px 0}
+:root:not([data-easy='true']) .al-link{min-height:32px}
+:root:not([data-easy='true']) .al-panel-links{padding-top:0}
+:root:not([data-easy='true']) .al-cta{min-height:44px}
+:root:not([data-easy='true']) .al-rail{margin-top:clamp(24px,10vh,100px)}
+:root:not([data-easy='true']) .al-rail-card{padding:14px 16px;gap:8px}
+:root:not([data-easy='true']) .al-rail-h{font-size:17px}
+:root:not([data-easy='true']) .al-navchip{min-height:34px}
+:root:not([data-easy='true']) .al-anchors a{min-height:34px}
+:root:not([data-easy='true']) .al-count{font-size:28px}
+:root:not([data-easy='true']) .al-record{font-size:32px}
+}
+/* short screens: drop the least useful rail card instead of letting anything fall off */
+@media(min-width:1280px) and (max-height:700px){
+  :root:not([data-easy='true']) .al-rail-left .al-rail-card:nth-child(2){display:none}
+}
