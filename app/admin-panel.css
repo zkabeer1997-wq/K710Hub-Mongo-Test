@@ -588,3 +588,47 @@ table.roster-table td.roster-updated, table.roster-table td .roster-lead-note { 
   .roster-namecell { text-align: right; }
   table.roster-table td.roster-troops { font-size: 13px; }
 }
+
+/* Language control lives in the sidebar footer (the floating button is hidden on admin pages). */
+.admin-sidebar-bottom .admin-sidebar-lang { width: 100%; justify-content: flex-start; min-height: 40px; font-size: 12px; color: var(--text-muted); }
+.admin-sidebar-bottom .admin-sidebar-lang .lang-switch-name { font-family: var(--font-body-loaded, system-ui, sans-serif); font-weight: 600; letter-spacing: 0; }
+.admin-sidebar.is-collapsed .admin-sidebar-lang .lang-switch-name { display: none; }
+.admin-sidebar.is-collapsed .admin-sidebar-lang { padding: 0 6px; }
+
+/* Read-only forms strip rows (Forms & copy owns the controls). */
+.ec-form-item-ro { grid-template-columns: minmax(150px, 1.2fr) auto minmax(180px, 1.4fr) auto; }
+.ec-form-times { font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 1100px) {
+  .ec-form-item-ro { grid-template-columns: minmax(130px, 1fr) auto auto; }
+  .ec-form-item-ro .ec-form-state { grid-column: auto; grid-row: auto; }
+  .ec-form-item-ro .ec-form-id { grid-column: auto; grid-row: auto; }
+  .ec-form-item-ro .ec-form-sched { grid-column: 1 / -1; grid-row: 2; }
+  .ec-form-item-ro .ec-form-save { grid-column: auto; grid-row: auto; }
+}
+
+/* Overview health row */
+.ov-health { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 8px 14px; border: 1px solid var(--border-soft); border-radius: 8px; font-size: 13px; color: var(--text-muted); }
+.ov-health-item { display: inline-flex; align-items: center; gap: 8px; }
+.ov-health .ov-cta { margin-left: auto; }
+
+/* Sideways-scrolling tables (laptop width): pin the first column and the actions column so the name
+   and the buttons never scroll out of sight; secondary columns scroll or wrap between them.
+   Phone width uses stacked cards instead (see stack-table above). */
+@media (min-width: 641px) {
+  .admin-table-wrap > table th:first-child, .admin-table-wrap > table td:first-child,
+  .ui-table-scroll > table th:first-child, .ui-table-scroll > table td:first-child { position: sticky; left: 0; z-index: 2; background: #0f131b; box-shadow: 1px 0 0 var(--border-soft, rgba(255,255,255,0.1)); }
+  .admin-table-wrap > table thead th:first-child, .ui-table-scroll > table thead th:first-child { background: #12151d; z-index: 3; }
+  .admin-table-wrap > table tbody tr:hover td:first-child, .ui-table-scroll > table tbody tr:hover td:first-child { background: #161a22; }
+  .admin-table-wrap > table td:last-child:has(> button, > .ui-btn, > a.ui-btn, > .admin-table-actions, > .admin-row-actions, > .ff-actions),
+  .ui-table-scroll > table td:last-child:has(> button, > .ui-btn, > a.ui-btn, > .admin-table-actions, > .admin-row-actions) { position: sticky; right: 0; z-index: 2; background: #0f131b; box-shadow: -1px 0 0 var(--border-soft, rgba(255,255,255,0.1)); }
+  .admin-table-wrap > table tbody tr:hover td:last-child:has(> button, > .ui-btn, > a.ui-btn, > .admin-table-actions, > .admin-row-actions), .ui-table-scroll > table tbody tr:hover td:last-child:has(> button, > .ui-btn, > a.ui-btn, > .admin-table-actions, > .admin-row-actions) { background: #161a22; }
+}
+@media (min-width: 641px) and (max-width: 1200px) {
+  .ff-actions { white-space: normal; }
+  .ff-actions .ui-btn { margin: 0 6px 4px 0; }
+  .ff-table .ff-message, .ff-table th:nth-child(4) { display: none; }
+  .ff-table th, .ff-table td { white-space: normal; }
+}
+@media (min-width: 641px) and (max-width: 1200px) {
+  .admin-table-wrap > table th { white-space: normal; }
+}

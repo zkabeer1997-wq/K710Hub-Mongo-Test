@@ -6,8 +6,8 @@
 .status[data-tone='ok'] { color: var(--success); }
 .status[data-tone='error'] { color: var(--danger); }
 .status[data-tone='info'] { color: var(--gold-bright); }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 14px; }
-.stamp { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+.actions { position: sticky; bottom: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin: 8px 0 0; padding: 10px 16px; border-top: 1px solid var(--line, #2a2f38); border-radius: 8px 8px 0 0; background: #10141b; }
+.stamp { font-size: 12.5px; color: var(--text-dim); margin-right: auto; }
 .section { margin: 0 0 18px; min-width: 0; }
 .section h2 { margin: 0 0 8px; font-size: 14px; text-transform: none; color: var(--parchment); letter-spacing: 0; }
 .fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
@@ -27,7 +27,7 @@
 @media (max-width: 640px) {
   .toolbar > * { max-width: none; flex-basis: 100%; }
   .input { min-height: 44px; }
-  .stamp { margin-left: 0; flex-basis: 100%; }
-  .actions > button { flex: 1 1 100%; min-height: 44px; }
+  .stamp { margin-right: 0; flex-basis: 100%; }
+  .actions > button { flex: 1 1 auto; min-height: 44px; }
   .table th:not(:first-child), .table td:not(:first-child) { width: auto; min-width: 0; }
 }

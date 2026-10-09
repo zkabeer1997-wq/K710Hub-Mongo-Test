@@ -22,7 +22,7 @@ export const ADMIN_NAV = [
         label: 'Flamedragon Tyrant',
         match: ['/admin/dashboard/events/flamedragon', '/admin/dashboard/noble-advisor'],
       },
-      { href: '/admin/dashboard/alliance-events', label: 'Alliance events', match: ['/admin/dashboard/alliance-events'] },
+      { href: '/admin/dashboard/alliance-events', label: 'Calendar', match: ['/admin/dashboard/alliance-events'] },
     ],
   },
   {
@@ -49,11 +49,9 @@ export const ADMIN_NAV = [
       { href: '/admin/dashboard/heroes', label: 'Heroes', match: ['/admin/dashboard/heroes'] },
       { href: '/admin/dashboard/help-images', label: 'Help images', match: ['/admin/dashboard/help-images'] },
       { href: '/admin/dashboard/page-text', label: 'Page text', match: ['/admin/dashboard/page-text'] },
-      {
-        href: '/admin/dashboard/tool-editing',
-        label: 'Tools',
-        match: ['/admin/dashboard/tool-editing', '/admin/dashboard/tool-database', '/admin/dashboard/tool-images'],
-      },
+      { href: '/admin/dashboard/tool-editing', label: 'Pack editing', match: ['/admin/dashboard/tool-editing'] },
+      { href: '/admin/dashboard/tool-database', label: 'Tool database', match: ['/admin/dashboard/tool-database'] },
+      { href: '/admin/dashboard/tool-images', label: 'Tool images', match: ['/admin/dashboard/tool-images'] },
     ],
   },
   {
@@ -61,6 +59,7 @@ export const ADMIN_NAV = [
     label: 'Settings',
     items: [
       { href: '/admin/dashboard/form-gates', label: 'Forms & copy', match: ['/admin/dashboard/form-gates'] },
+      { href: '/admin/dashboard/integrations', label: 'Integrations', match: ['/admin/dashboard/integrations'] },
       { href: '/admin/dashboard/page-addresses', label: 'Page addresses', match: ['/admin/dashboard/page-addresses'], superadminOnly: true },
     ],
   },

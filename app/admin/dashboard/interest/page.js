@@ -6,6 +6,7 @@ import SectionTabs, { INBOX_TABS } from '../../../../components/admin/SectionTab
 import StatusBadge from '../../../../components/admin/StatusBadge';
 import ExportToGoogleDrive from '../../../../components/admin/ExportToGoogleDrive';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
+import { sortPeriodsNewestFirst } from '../../../../lib/adminOverview.mjs';
 import DriveStatusBanner from '../../../../components/admin/DriveStatusBanner';
 import { Button, Field, Input, Select, Table } from '../../../../components/ui';
 import { useEscapeToClose } from '../../../../lib/useEscapeToClose';
@@ -535,7 +536,7 @@ export default function AdminInterestPage() {
             >
               All
             </button>
-            {periods.map((period) => (
+            {sortPeriodsNewestFirst(periods).map((period) => (
               <button
                 key={period.id}
                 type="button"
@@ -544,7 +545,7 @@ export default function AdminInterestPage() {
                 className={`admin-subtab${intakeFilter === period.label ? ' is-active' : ''}`}
                 onClick={() => setIntakeFilter(period.label)}
               >
-                {period.label}{period.is_active ? ' •' : ''}
+                {period.label}{period.is_active ? <span className="admin-subtab-current"> (current)</span> : null}
               </button>
             ))}
             {!periodsLoading && (
@@ -597,8 +598,8 @@ export default function AdminInterestPage() {
             </div>
           </div>
           <div className="admin-filter-bar">
-            <Field label="Search (Name, server, player ID, alliance) — use % as wildcard">
-              <Input tone="console" className="narrow" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="e.g. Legend%" placeholder="e.g. Legend%" />
+            <Field label="Search (name, server, player ID, alliance)">
+              <Input tone="console" className="narrow" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search the inbox" placeholder="e.g. Legend" />
             </Field>
             <Field label="Migrating to">
               <Select tone="console" value={migrateFilter} onChange={(e) => setMigrateFilter(e.target.value)}>

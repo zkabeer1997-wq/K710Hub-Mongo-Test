@@ -304,18 +304,6 @@ export default function EventControl({ type }) {
     setCycleFilter('current');
   }
 
-  function toggleForm(form, nextOpen) {
-    if (nextOpen) {
-      runWithErrors('open_forms', { form_key: form.form_key }, `${form.label} is open.`);
-    } else {
-      setConfirm({ action: 'close_forms', form });
-    }
-  }
-
-  async function saveWindow(form, window_) {
-    await perform('set_window', { form_key: form.form_key, ...window_ }, `${form.label} times saved.`);
-  }
-
   const cycle = state?.cycle || null;
   const nextActions = state?.next_actions || [];
   const primary = nextActions[0] || null;
@@ -435,7 +423,7 @@ export default function EventControl({ type }) {
             </div>
 
             <section className="ec-section" aria-label="Forms">
-              <EventForms forms={state.forms || []} onSaveWindow={saveWindow} onToggle={toggleForm} />
+              <EventForms forms={state.forms || []} />
             </section>
           </>
         ) : loading ? (
@@ -518,7 +506,7 @@ export default function EventControl({ type }) {
                       <tr key={h.id}>
                         <th scope="row" data-label="Cycle">{h.label}{h.start_date ? <span className="ec-hist-date"> {formatUtc(h.start_date)}</span> : null}</th>
                         <td data-label="Status">
-                          {h.is_current ? <StatusChip kind="open">Current</StatusChip> : h.archived ? <StatusChip kind="ended">Archived</StatusChip> : <StatusChip kind="closed">Past</StatusChip>}
+                          {h.is_current ? <StatusChip kind="open">{cycle && cycle.status === 'ended' ? 'Current' : 'In progress'}</StatusChip> : h.archived ? <StatusChip kind="ended">Archived</StatusChip> : <StatusChip kind="closed">Past</StatusChip>}
                         </td>
                         <td data-label="Applicants" className="ec-num">{h.applicants}</td>
                         <td data-label="Answers per form">

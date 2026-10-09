@@ -9,18 +9,13 @@ import Switch from '../../../../components/admin/Switch';
 import TableSkeleton from '../../../../components/admin/TableSkeleton';
 import { describeFormState, fromLocalInput, localZoneName, toLocalInput } from '../../../../components/admin/adminDates';
 import { Button, Field, Input, Textarea } from '../../../../components/ui';
-import { FORM_GATE_LABELS as LABELS, EVENT_GATE_KEYS } from '../../../../lib/formGates.mjs';
+import { FORM_GATE_LABELS as LABELS, EVENT_GATE_KEYS, FORM_GROUPS } from '../../../../lib/formGates.mjs';
 import { useEscapeToClose } from '../../../../lib/useEscapeToClose';
 import { windowState } from '../../../../lib/deadlines.mjs';
 import { FORM_META_KEYS, FORM_META_TITLES, FORM_FIELDS_REORDERABLE, DEFAULT_FORM_FIELDS } from '../../../../lib/formFieldMeta.mjs';
 
-// Forms grouped by the event they belong to.
-const GROUPS = [
-  { id: 'kvk', title: 'KvK', keys: ['joiner', 'prep'] },
-  { id: 'flamedragon', title: 'Flamedragon Tyrant', keys: ['dragon', 'noble'] },
-  { id: 'standing', title: 'Standing', keys: ['lead', 'requests'] },
-  { id: 'other', title: 'Other', keys: ['swordland', 'tri-alliance'] },
-];
+// Forms grouped by the event they belong to (shared with the event pages' forms strip).
+const GROUPS = FORM_GROUPS;
 const GATE_KEYS = GROUPS.flatMap((g) => g.keys);
 const TEXT_ONLY_KEYS = FORM_META_KEYS.filter((key) => !GATE_KEYS.includes(key));
 
@@ -64,6 +59,14 @@ export default function AdminFormGatesPage() {
   }
 
   useEffect(() => { load(); }, []);
+
+  // Deep link from the Overview: /form-gates?settings=swordland opens that form's Edit drawer.
+  useEffect(() => {
+    if (loading) return;
+    const key = new URLSearchParams(window.location.search).get('settings');
+    if (key && LABELS[key] && !settingsKey) openSettings(key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   async function handleLogout() {
     await fetch('/api/admin-logout', { method: 'POST' });
@@ -247,8 +250,8 @@ export default function AdminFormGatesPage() {
           {gate.message ? <span className="ff-message-text" title={gate.message}>{gate.message}</span> : <span className="ff-message-none">None</span>}
         </td>
         <td data-label="Actions" className="ff-actions">
-          <Button variant="quiet" className="ec-btn-sm" onClick={() => openSettings(formKey)} aria-label={`Message and times for ${LABELS[formKey]}`}>
-            {gate.message ? 'Message & times' : EVENT_GATE_KEYS.includes(formKey) ? 'Times & message' : 'Add message'}
+          <Button variant="quiet" className="ec-btn-sm" onClick={() => openSettings(formKey)} aria-label={`Edit message${EVENT_GATE_KEYS.includes(formKey) ? ' and times' : ''} for ${LABELS[formKey]}`}>
+            Edit
           </Button>
           <Button variant="quiet" className="ec-btn-sm" onClick={() => openEditor(formKey)} aria-label={`Edit text of ${LABELS[formKey]}`}>Edit form text</Button>
           {EVENT_GATE_KEYS.includes(formKey) ? (
