@@ -80,13 +80,14 @@ test('total power boundaries', () => {
   assert.equal(ok('12.3M').digits, '12300000');
 });
 
-test('Total Mystic Trial Score: 0 to 100,000,000, suffixes allowed, no decimals', () => {
+test('Total Mystic Trial Score: 0 to 5,000, suffixes allowed, no decimals', () => {
   const m = (v) => validateNumericAnswer('mystic_trial_score', v);
   assert.equal(m('0').ok, true);
-  assert.equal(m('48,250').digits, '48250');
-  assert.equal(m('1.2M').digits, '1200000');
-  assert.equal(m('100000000').ok, true);
-  assert.equal(m('100000001').error, 'Total Mystic Trial Score cannot be more than 100,000,000. Check the number and try again.');
+  assert.equal(m('4,250').digits, '4250');
+  assert.equal(m('1.2k').digits, '1200');
+  assert.equal(m('5000').ok, true);
+  assert.equal(m('5001').error, 'Enter a score from 0 to 5,000.');
+  assert.equal(m('1.2M').ok, false);
   assert.equal(m('12.5').ok, false);
   assert.equal(m('-5').ok, false);
   assert.equal(m('').empty, true);

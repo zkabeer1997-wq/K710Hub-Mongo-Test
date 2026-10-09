@@ -129,12 +129,12 @@ test('total power limits: 3,000,000,000 and 3b ok; 3,000,000,001, 3.1b, 0 and a 
   }
 });
 
-test('Total Mystic Trial Score limits: 100,000,000 ok, one more rejected, decimals rejected', async () => {
-  assert.equal((await interest.POST(req({ mystic_trial_score: '100000000' }))).status, 200);
-  assert.equal(rows().at(-1).mystic_trial_score, '100000000');
-  const over = await interest.POST(req({ mystic_trial_score: '100000001' }));
+test('Total Mystic Trial Score limits: 5,000 ok, 5,001 rejected, decimals rejected', async () => {
+  assert.equal((await interest.POST(req({ mystic_trial_score: '5000' }))).status, 200);
+  assert.equal(rows().at(-1).mystic_trial_score, '5000');
+  const over = await interest.POST(req({ mystic_trial_score: '5001' }));
   assert.equal(over.status, 400);
-  assert.equal((await over.json()).error, 'Total Mystic Trial Score cannot be more than 100,000,000. Check the number and try again.');
+  assert.equal((await over.json()).error, 'Enter a score from 0 to 5,000.');
   assert.equal((await interest.POST(req({ mystic_trial_score: '12.5' }))).status, 400);
   assert.equal((await interest.POST(req({ mystic_trial_score: '99999999999999999999' }))).status, 400);
   // New rows store the new key only; the legacy "stages" key is never written.

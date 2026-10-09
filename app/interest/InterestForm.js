@@ -893,7 +893,7 @@ export default function InterestForm({ initialPeriod }) {
                 <Where>In Kingshot tap your picture in the top-left corner. Your power is the big number on your profile.</Where>
               </TextField>
               <TextField ctx={ctx} k="currentTg" label={L('currentTg')} hint="TrueGold is a late-game upgrade material. We want to know how far you can push your troops. Type 0 if none." mode="decimal" maxLength={NUMBER_INPUT_MAX_LENGTH} live={numberPreview(form.currentTg, 'current_tg')} liveBad={liveBad('currentTg')} />
-              <TextField ctx={ctx} k="mysticTrialScore" label={L('mysticTrialScore')} hint="Your total Mystic Trial score from the game. A whole number from 0 to 100,000,000. Type 0 if you have none." mode="numeric" maxLength={NUMBER_INPUT_MAX_LENGTH} placeholder="48,250" live={numberPreview(form.mysticTrialScore, 'mystic_trial_score')} liveBad={liveBad('mysticTrialScore')} {...lockProps('mysticTrialScore')}>
+              <TextField ctx={ctx} k="mysticTrialScore" label={L('mysticTrialScore')} hint="Your total Mystic Trial score from the game. A whole number from 0 to 5,000. Type 0 if you have none." mode="numeric" maxLength={NUMBER_INPUT_MAX_LENGTH} placeholder="48,250" live={numberPreview(form.mysticTrialScore, 'mystic_trial_score')} liveBad={liveBad('mysticTrialScore')} {...lockProps('mysticTrialScore')}>
                 <Where>Open Mystic Trial in Kingshot and copy your total score.</Where>
               </TextField>
             </div>

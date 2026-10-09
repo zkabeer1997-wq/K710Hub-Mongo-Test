@@ -47,7 +47,7 @@ const val = (id) => page.inputValue(`#${id}`);
 const ro = (id) => page.$eval(`#${id}`, (e) => e.readOnly);
 
 async function fillStep() {
-  const ids = { 'f-discordUsername': 'qa_applicant', 'f-inGameName': 'Typed Name', 'f-playerId': '8800110', 'f-currentServer': '523', 'f-currentAlliance': 'TypedAlliance', 'f-totalPower': '55,000,000', 'f-currentTg': '4,000', 'f-mysticTrialScore': '12,345', 'f-passesRequired': '1', 'f-currentPasses': '2' };
+  const ids = { 'f-discordUsername': 'qa_applicant', 'f-inGameName': 'Typed Name', 'f-playerId': '8800110', 'f-currentServer': '523', 'f-currentAlliance': 'TypedAlliance', 'f-totalPower': '55,000,000', 'f-currentTg': '4,000', 'f-mysticTrialScore': '1,234', 'f-passesRequired': '1', 'f-currentPasses': '2' };
   for (const [id, v] of Object.entries(ids)) {
     const el = page.locator(`#${id}`);
     if (!(await el.count()) || !(await el.isVisible())) continue;
@@ -125,7 +125,7 @@ if (scenario === 'verified' || scenario === 'nulls') {
     check(`${tag}: power + mystic NOT locked when the game has none`, !powerLocked && !mysticLocked);
     check(`${tag}: self-reported hint visible`, (await page.getByText(/could not read this from the game, so please type it/).count()) >= 2);
     await page.fill('#f-totalPower', '77,000,000');
-    await page.fill('#f-mysticTrialScore', '9,999');
+    await page.fill('#f-mysticTrialScore', '4,999');
   }
   await page.getByRole('button', { name: /^Continue$/ }).click();
   await walkAndSubmit();
