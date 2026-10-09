@@ -33,18 +33,6 @@ export default function SiteChrome({ children }) {
   const tone = routeTone(pathname);
   const skipLink = <a href="#main" className="k-skip">{t('chrome.skip')}</a>;
 
-  // The member dashboard draws its own header (shield, wordmark, language button), so the shared
-  // header/ticker/footer are not rendered here. Its signed-out views add them back (PlayerRecordGate).
-  if (pathname === '/dashboard') {
-    return (
-      <div className={`site-shell site-shell-${tone}`}>
-        {skipLink}
-        <SiteAtmosphere />
-        <div id="main" className={`site-route site-route-${tone}`}>{children}</div>
-      </div>
-    );
-  }
-
   if (!wantsChrome(pathname)) {
     return (
       <>

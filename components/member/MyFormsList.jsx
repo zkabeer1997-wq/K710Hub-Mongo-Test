@@ -2,24 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import DualTime from '../ui/DualTime';
-import { FORM_PLAIN, formDisplayState } from '../../lib/memberForms.mjs';
-import { withResults, todoCount, NOTHING_OPEN_MESSAGE, resultSeenKey, isResultNew } from '../../lib/memberResults.mjs';
+import Icon from '../ui/icons';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { FORM_PLAIN } from '../../lib/memberForms.mjs';
+import { resultSeenKey, isResultNew } from '../../lib/memberResults.mjs';
+import {
+  FORM_TEXT, buildHome, cardDate, formatDay, formatWhen,
+} from './memberHome.mjs';
 import styles from './MemberDashboard.module.css';
 
-// "My forms" list for the dashboard. `forms` arrive already ordered by the ongoing cycle
-// (/api/member-form-status). Every status is icon + text, never colour only.
-const GLYPH = { todo: '●', carry: '↻', done: '✓', soon: '◷', closed: '⊘' };
-const DEADLINE_PREFIX = { closes: 'Closes', cycle: 'Cycle ends', opens: 'Opens' };
-
-const RESULT_BUTTON = { placed: 'See my appointment', not_placed: 'See my appointment', waiting: 'Open', needs_form: 'Open', not_asked: 'Open' };
+// "My forms" card for the dashboard. `forms` arrive already ordered/filtered by /api/member-form-status
+// (only open forms). Every status is icon + text, never colour only.
+const CHIP = {
+  todo: { icon: 'alert', key: 'formStatus.todo' },
+  carry: { icon: 'alert', key: 'formStatus.carry' },
+  done: { icon: 'check', key: 'formStatus.done' },
+  closed: { icon: 'clock', key: 'formStatus.closed' },
+  soon: { icon: 'clock', key: 'formStatus.soon' },
+};
+const BUTTON = { todo: 'formButton.fill', carry: 'formButton.check', done: 'formButton.change' };
 
 function readSeen(result) {
   try { return window.localStorage.getItem(resultSeenKey(result)) === '1'; } catch { return false; }
 }
 
 // A RESULT row (what leadership decided), not a form: calendar glyph and "Result" label, no "To do" dot.
-function ResultRow({ result }) {
+function ResultRow({ result, t }) {
   const [seen, setSeen] = useState(true);
   useEffect(() => { setSeen(readSeen(result)); }, [result]);
   const fresh = isResultNew(result, seen);
@@ -27,7 +35,7 @@ function ResultRow({ result }) {
     <li className={`${styles.formRow} ${styles.resultRow}`} data-state="result" data-new={fresh ? 'true' : undefined}>
       <div className={styles.formMain}>
         <h3>{result.label}</h3>
-        {fresh && <p className={styles.resultNew}>New: your appointment is ready</p>}
+        {fresh && <p className={styles.resultNew}>{t('dash.result.new')}</p>}
         {result.lines.length > 0 ? (
           <ul className={styles.resultLines}>{result.lines.map((line) => <li key={line}>{line}<AppointmentLocal line={line} /></li>)}</ul>
         ) : (
@@ -35,10 +43,10 @@ function ResultRow({ result }) {
         )}
       </div>
       <div className={styles.formMeta}>
-        <span className={styles.formStatus} data-state="result"><span aria-hidden="true">📅</span>Result</span>
+        <span className={styles.formStatus} data-state="result"><Icon name="calendar" size={16} />{t('dash.result.label')}</span>
       </div>
       <Link href={result.href} prefetch={false} className={`${styles.formBtn} ${result.ready ? '' : styles.formBtnQuiet}`}>
-        {RESULT_BUTTON[result.state] || 'Open'}<span className="sr-only">: {result.label}</span>
+        {t(result.ready ? 'dash.result.see' : 'dash.result.open')}<span className="sr-only">: {result.label}</span>
       </Link>
     </li>
   );
@@ -56,63 +64,101 @@ function AppointmentLocal({ line }) {
     const at = new Date(Date.UTC(now.getUTCFullYear(), monthIndex, mon ? Number(day) : now.getUTCDate(), Number(hhmm.slice(0, 2)), Number(hhmm.slice(3))));
     try { setLocal(new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(at)); } catch { setLocal(''); }
   }, [line]);
-  return local ? <span> ({local} your time)</span> : null;
+  return local ? <span> ({local})</span> : null;
 }
 
-function Row({ form }) {
-  const st = formDisplayState(form);
-  const btn = st.button;
-  const deadline = form.deadline;
+function Chip({ state, t }) {
+  const chip = CHIP[state] || CHIP.todo;
   return (
-    <li className={styles.formRow} data-state={st.id}>
+    <span className={styles.formStatus} data-state={state}><Icon name={chip.icon} size={16} />{t(chip.key)}</span>
+  );
+}
+
+function DateLine({ form, language, t }) {
+  if (form.card === 'done' && form.updatedAt) return <span className={styles.formDeadline}>{t('form.saved', { date: formatDay(form.updatedAt, language) })}</span>;
+  const date = cardDate(form);
+  if (date.kind === 'before') return <span className={styles.formDeadline}>{t('form.date.before', { date: formatWhen(date.at, language) })}</span>;
+  if (date.kind === 'opens') return <span className={styles.formDeadline}>{t('form.date.opens', { date: formatWhen(date.at, language) })}</span>;
+  return <span className={styles.formDeadline}>{t('form.date.none')}</span>;
+}
+
+// One form row: number badge, title, one helper line, status chip, one date line, one action.
+function FormRow({ form, language, t }) {
+  const text = FORM_TEXT[form.key];
+  const title = text ? t(text.title) : form.label;
+  const help = text ? t(text.help) : FORM_PLAIN[form.key] || '';
+  const textKey = BUTTON[form.card];
+  const quiet = form.card === 'done';
+  return (
+    <li className={styles.formRow} data-state={form.card}>
       <div className={styles.formMain}>
-        <h3>{form.label}</h3>
-        <p>{FORM_PLAIN[form.key] || ''}</p>
+        <h3>{form.number ? <span className={styles.formNum} aria-hidden="true">{form.number}</span> : null}{title}</h3>
+        {help && <p>{help}</p>}
       </div>
       <div className={styles.formMeta}>
-        <span className={styles.formStatus} data-state={st.id}><span aria-hidden="true">{GLYPH[st.id]}</span>{st.label}</span>
-        {deadline && (
-          <span className={styles.formDeadline}>
-            {DEADLINE_PREFIX[deadline.kind]} <DualTime value={new Date(deadline.at).toISOString()} />
-          </span>
-        )}
+        <Chip state={form.card} t={t} />
+        <DateLine form={form} language={language} t={t} />
       </div>
-      {btn.disabled ? (
-        <span className={`${styles.formBtn} ${styles.formBtnOff}`} aria-disabled="true">{btn.text}</span>
-      ) : (
-        <Link href={form.href} prefetch={false} className={`${styles.formBtn} ${btn.quiet ? styles.formBtnQuiet : ''}`}>
-          {btn.text}<span className="sr-only">: {form.label}</span>
+      {textKey ? (
+        <Link href={form.href} prefetch={false} className={`${styles.formBtn} ${quiet ? styles.formBtnQuiet : ''}`}>
+          {t(textKey)}{!quiet && <Icon name="arrow" size={18} />}<span className="sr-only">: {title}</span>
         </Link>
+      ) : (
+        <span className={`${styles.formBtn} ${styles.formBtnOff}`} aria-disabled="true">{t('formButton.closed')}</span>
       )}
     </li>
   );
 }
 
+// "My forms": exactly the four member forms (numbered, fixed order) while their gates are open, then an
+// "Also open now" strip (event votes + appointment results), then Power Profile as its own optional row.
 export default function MyFormsList({ status, loaded }) {
-  const forms = status?.forms || [];
-  const results = status?.results || [];
-  const todo = todoCount(forms);
-  const rows = withResults(forms, results);
+  const { t, language } = useLanguage();
+  const home = buildHome(status);
+  const signedOut = !status?.signedIn || status?.degraded;
+  const nothing = home.cards.length === 0 && home.extras.length === 0 && home.results.length === 0;
+  const power = home.power;
   return (
-    <section className={styles.panel} aria-labelledby="my-forms-title">
-      <div className={styles.panelHead}>
-        <h2 id="my-forms-title">My forms{todo > 0 ? <span> · {todo} to do</span> : null}</h2>
-        <Link href="/forms" className={styles.textLink}>All forms</Link>
-      </div>
-      {!loaded ? (
-        <p className={styles.note} role="status">Loading your forms…</p>
-      ) : !status?.signedIn || status?.degraded ? (
-        <p className={styles.note} role="status">We could not load your forms just now. <Link href="/forms">Open the forms page</Link> or try again in a moment.</p>
-      ) : forms.length === 0 ? (
-        <p className={styles.note} role="status">{NOTHING_OPEN_MESSAGE}</p>
-      ) : (
-        <>
-          {todo === 0 && <p className={styles.caughtUp} role="status"><span aria-hidden="true">✓</span> You are all caught up. You can still open a form to change your answers.</p>}
-          <ul className={styles.formList}>
-            {rows.map((item) => (item.kind === 'result' ? <ResultRow key={item.key} result={item} /> : <Row key={item.key} form={item} />))}
-          </ul>
-        </>
+    <div className={styles.formsCol}>
+      <section className={styles.panel} aria-labelledby="my-forms-title">
+        <div className={styles.panelHead}>
+          <h2 id="my-forms-title">My forms{home.left > 0 ? <span> · {home.left} to do</span> : null}</h2>
+          <Link href="/forms" className={styles.textLink}>{t('dash.more.allForms')}</Link>
+        </div>
+        {!loaded ? (
+          <p className={styles.note} role="status">{t('dash.loading')}</p>
+        ) : signedOut ? (
+          <p className={styles.note} role="status">{t('dash.loadError')} <Link href="/forms">{t('dash.loadErrorLink')}</Link></p>
+        ) : nothing ? (
+          <p className={styles.note} role="status">{t('dash.nothingOpen')}</p>
+        ) : (
+          <>
+            {home.left === 0 && <p className={styles.caughtUp} role="status"><Icon name="check" size={16} /> {t('dash.allDone')} {t('dash.allDoneHint')}</p>}
+            {home.cards.length > 0 && (
+              <ol className={styles.formList} aria-label={t('dash.formsHeading')}>
+                {home.cards.map((form) => <FormRow key={form.key} form={form} language={language} t={t} />)}
+              </ol>
+            )}
+            {(home.extras.length > 0 || home.results.length > 0) && (
+              <div className={styles.alsoOpen}>
+                <h3 className={styles.alsoHead}>{t('dash.alsoOpen')}</h3>
+                <ul className={styles.formList}>
+                  {home.extras.map((form) => <FormRow key={form.key} form={form} language={language} t={t} />)}
+                  {home.results.map((result) => <ResultRow key={result.key} result={result} t={t} />)}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+      {loaded && !signedOut && (
+        <Link href="/power-profile" prefetch={false} className={styles.powerRow}>
+          <Icon name="shield" size={20} />
+          <span className={styles.powerText}><strong>{t('dash.power.title')}</strong><span>{t('dash.power.help')}</span></span>
+          {power?.submitted && <Chip state="done" t={t} />}
+          <Icon name="arrow" size={18} />
+        </Link>
       )}
-    </section>
+    </div>
   );
 }

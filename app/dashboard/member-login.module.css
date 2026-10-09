@@ -436,6 +436,3 @@
   opacity: 0.7;
 }
 
-
-/* Signed-in dashboard draws its own header and spacing. */
-.pageBare { padding: 0; min-height: 100dvh; }
