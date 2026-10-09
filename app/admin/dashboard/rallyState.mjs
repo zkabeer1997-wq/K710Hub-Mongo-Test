@@ -1,9 +1,9 @@
 export const RALLY_STORAGE_KEY = 'kvk-admin-rallies-v1';
 export const DEFAULT_TROOP_WEIGHTS = { infantry: 0, cavalry: 0, archer: 0 };
-// A march carries at most four lead hero slots, but the same hero can fill
-// more than one of them (e.g. 3x Saul + 1x Thrud). leadHeroes is therefore
+// An admin can pick up to six required heroes per rally, and the same hero can
+// fill more than one of them (e.g. 3x Saul + 3x Thrud). leadHeroes is therefore
 // stored as { heroName: count }, with the counts summing to at most this cap.
-export const MAX_LEAD_HEROES = 4;
+export const MAX_LEAD_HEROES = 6;
 
 // Explicit troop-level strength order (best first), per kingdom doctrine.
 // TG dominates, except T11 at a lower TG can still beat T10 at a higher TG

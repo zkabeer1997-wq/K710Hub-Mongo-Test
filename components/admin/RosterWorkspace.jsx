@@ -101,6 +101,16 @@ export default function RosterWorkspace({
     setRallies(next);
   }, []);
   const [ralliesHydrated, setRalliesHydrated] = useState(false);
+  // The heroes members can pick on the KvK Availability and Flamedragon forms (Admin > Heroes controls it).
+  const [offeredHeroes, setOfferedHeroes] = useState(HEROES);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/heroes').then((r) => (r.ok ? r.json() : null)).then((body) => {
+      const names = Array.isArray(body?.heroes) ? body.heroes.map((h) => h.name).filter(Boolean) : [];
+      if (!cancelled && names.length) setOfferedHeroes(names);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const [newMember, setNewMember] = useState({ ...EMPTY_MEMBER });
   const [addingMember, setAddingMember] = useState(false);
   const [addMemberError, setAddMemberError] = useState('');
@@ -519,7 +529,7 @@ export default function RosterWorkspace({
             updateRallies={updateRallies}
             rows={seasonFilteredRows}
             membersById={membersById}
-            heroOptions={heroFilterOptions}
+            heroOptions={offeredHeroes}
             eventType={cycleType || 'kvk'}
             eventName={title}
             saveState={ralliesSave}

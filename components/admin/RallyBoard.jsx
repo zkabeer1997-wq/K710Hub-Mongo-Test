@@ -347,7 +347,7 @@ export default function RallyBoard({
                         disabled={heroTotal >= MAX_LEAD_HEROES}
                         onChange={(e) => e.target.value && updateRallies((c) => incrementRallyLeadHero(c, rally.id, e.target.value))}
                       >
-                        <option value="">{heroTotal >= MAX_LEAD_HEROES ? 'All four hero slots used' : 'Add a required hero…'}</option>
+                        <option value="">{heroTotal >= MAX_LEAD_HEROES ? 'All six hero slots used' : 'Add a required hero…'}</option>
                         {heroOptions.map((h) => <option key={h} value={h}>{h}</option>)}
                       </select>
                       <p className={styles.heroLine}>Auto-fill prefers joiners who have these heroes. If nobody left has one, it skips it so the rally still fills.</p>

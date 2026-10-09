@@ -169,19 +169,21 @@ withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
 withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
 withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
 withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Thrud');
-assert.deepEqual(withHeroes[0].leadHeroes, { Saul: 3, Thrud: 1 });
+withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Thrud');
+withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Thrud');
+assert.deepEqual(withHeroes[0].leadHeroes, { Saul: 3, Thrud: 3 });
 assert.equal(getLeadHeroTotal(withHeroes[0]), MAX_LEAD_HEROES);
 
 // The cap applies to the combined total, not per hero.
 const overCap = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
-assert.deepEqual(overCap[0].leadHeroes, { Saul: 3, Thrud: 1 }, 'a hero beyond the combined cap is refused');
+assert.deepEqual(overCap[0].leadHeroes, { Saul: 3, Thrud: 3 }, 'a hero beyond the combined cap is refused');
 
 const decremented = decrementRallyLeadHero(withHeroes, 'a', 'Saul');
-assert.deepEqual(decremented[0].leadHeroes, { Saul: 2, Thrud: 1 });
-assert.equal(getLeadHeroTotal(decremented[0]), 3, 'a freed slot lowers the total');
+assert.deepEqual(decremented[0].leadHeroes, { Saul: 2, Thrud: 3 });
+assert.equal(getLeadHeroTotal(decremented[0]), 5, 'a freed slot lowers the total');
 
 const droppedToZero = decrementRallyLeadHero(
-  decrementRallyLeadHero(decrementRallyLeadHero(withHeroes, 'a', 'Thrud'), 'nope', 'Thrud'),
+  decrementRallyLeadHero(decrementRallyLeadHero(decrementRallyLeadHero(decrementRallyLeadHero(withHeroes, 'a', 'Thrud'), 'a', 'Thrud'), 'a', 'Thrud'), 'nope', 'Thrud'),
   'a',
   'Missing',
 );
@@ -363,7 +365,7 @@ assert.deepEqual(parseStoredRallies('[{"id":"a"}]'), [], 'entries missing a name
 // Legacy stored state (leadHeroes as a plain array, from before hero counts)
 // still loads, with each hero converted to a count of 1.
 const stored = parseStoredRallies(JSON.stringify([
-  { id: 'a', name: 'Rally 1', memberIds: [101], leadHeroes: ['H1', 'H2', 'H3', 'H4', 'H5'] },
+  { id: 'a', name: 'Rally 1', memberIds: [101], leadHeroes: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7'] },
 ]));
 assert.deepEqual(stored[0].memberIds, ['101'], 'ids normalised to strings');
 assert.equal(
@@ -375,7 +377,7 @@ assert.deepEqual(stored[0].troopWeights, DEFAULT_TROOP_WEIGHTS, 'missing weights
 
 // A stored count above the cap is trimmed, not rejected outright.
 const overCapStored = parseStoredRallies(JSON.stringify([
-  { id: 'a', name: 'Rally 1', memberIds: [], leadHeroes: { Saul: 6 } },
+  { id: 'a', name: 'Rally 1', memberIds: [], leadHeroes: { Saul: 9 } },
 ]));
 assert.equal(overCapStored[0].leadHeroes.Saul, MAX_LEAD_HEROES);
 
