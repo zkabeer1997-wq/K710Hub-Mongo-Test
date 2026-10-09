@@ -40,7 +40,7 @@ export default async function AlliancePage({ params }) {
   if (!alliance) notFound();
 
   return (
-    <main className="theme-realm alliance-detail-page" style={{ padding: 0, background: 'var(--color-bg)' }}>
+    <main className="theme-console alliance-detail-page" style={{ padding: 0, background: 'var(--obsidian)' }}>
       <AllianceDetail alliance={alliance} blurb={stripLegacyBearCopy(alliance.blurb)} />
     </main>
   );

@@ -58,11 +58,11 @@ export function useBearSchedule(initialAlliances = null) {
   return { alliances: alliances || [], hunts: huntsFromAlliances(alliances || []), loading: alliances === null && !state.error, error: state.error };
 }
 
-export function AllianceBearTimes({ tag, initialTimes }) {
+export function AllianceBearTimes({ tag, initialTimes, ...timeProps }) {
   const initial = initialTimes ? [{ tag, bear_times_utc: initialTimes }] : null;
   const { alliances, loading, error } = useBearSchedule(initial);
   const times = alliances.find(alliance => alliance.tag === tag)?.bear_times_utc || [];
   if (loading) return <span>Loading Bear Hunt times…</span>;
   if (error) return <span>{error}</span>;
-  return <BearTimes times={times} />;
+  return <BearTimes times={times} {...timeProps} />;
 }

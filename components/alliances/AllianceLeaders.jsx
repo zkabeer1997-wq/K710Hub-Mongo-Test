@@ -2,7 +2,7 @@
 
 // Self-contained leadership display. The link to Discord exists only when an
 // admin stored a valid Discord user id for that person; otherwise it is just
-// the name. Drop this component anywhere an alliance's leaders are needed.
+// the name (no placeholder). Drop this component anywhere an alliance's leaders are needed.
 import { useT } from '../i18n/LanguageProvider';
 import { leaderView } from '../../lib/allianceLeaders.mjs';
 import './alliances.css';
@@ -18,7 +18,7 @@ function DiscordLink({ person }) {
       rel="noopener noreferrer"
       aria-label={t('alliances.discord.aria', { name: person.name })}
     >
-      {t('alliances.discord.link')}
+      {t('alliances.discord.short')}
     </a>
   );
 }
@@ -36,7 +36,10 @@ export default function AllianceLeaders({ leaders = [], variant = 'list', legacy
       <ul className="al-r5">
         {people.map((p) => (
           <li key={p.id}>
-            <span className="al-r5-text"><span className="al-role">{p.role}</span> <span className="al-name">{p.name}</span></span>
+            <span className="al-person">
+              <span className="al-role">{p.role}</span>
+              <span className="al-name">{p.name}</span>
+            </span>
             <DiscordLink person={p} />
           </li>
         ))}

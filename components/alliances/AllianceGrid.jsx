@@ -9,7 +9,7 @@ import './alliances.css';
 export default function AllianceGrid({ alliances = [], compact = false }) {
   const list = orderAlliancesForLanding(alliances);
   return (
-    <ul className="al-grid">
+    <ul className="al-grid al-scope">
       {list.map((a) => <li key={a.tag}><AllianceCard alliance={a} compact={compact} /></li>)}
     </ul>
   );

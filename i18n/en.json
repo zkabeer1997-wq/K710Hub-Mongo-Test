@@ -167,6 +167,9 @@
   "alliances.bear.all": { "text": "See all alliance Bear Hunt times →", "note": "Link to the page listing every alliance. Keep the arrow." },
   "alliances.join.line": { "text": "Ready to move? Send a transfer application and our officers will help you join {name}.", "note": "Short invitation in the Join panel. {name} is the alliance name and must stay exactly as written." },
   "alliances.join.cta": { "text": "Join {name}", "note": "Button that opens the transfer application. {name} is the alliance name and must stay exactly as written." },
+  "alliances.discord.short": { "text": "Discord", "note": "Short label of the small outlined button next to a leader's name on the alliance pages. Discord is a product name and stays as is. The full sentence for screen readers is alliances.discord.aria." },
+  "alliances.panel.bearHunt": { "text": "Bear Hunt", "note": "Heading of the panel with the alliance's daily Bear Hunt times on the alliance page. Bear Hunt is a game event and keeps its English name." },
+  "alliances.bear.hunt": { "text": "Hunt {n}", "note": "Row label in the Bear Hunt list: Hunt 1, Hunt 2 and so on, one per daily Bear Hunt of an alliance. {n} is the number of the hunt and must stay exactly as written. Hunt here means one Bear Hunt event." },
 
   "tour.ui.next": { "text": "Next", "note": "Button in the form walkthrough that goes to the next tip. One short word." },
   "tour.ui.back": { "text": "Back", "note": "Button in the form walkthrough that goes to the previous tip. One short word." },

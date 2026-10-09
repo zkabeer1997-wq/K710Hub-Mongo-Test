@@ -1,23 +1,25 @@
 'use client';
 
-// Individual alliance page: banner in the alliance's own colour, a status
-// strip of equal cells, then three equal panels (Leadership, Bear Hunts, Join).
+// Individual alliance page ("Option B: banner and three panels"): a banner card in the alliance's own
+// colour (or the admin's photo under a colour scrim), a status strip of four equal cells, then three
+// equal panels (Leadership, Bear Hunt, Join). Dark brass surface, self-contained (.al-scope).
 import Link from 'next/link';
-import { Button, PageHero, Tag } from '../ui';
 import { AllianceBearTimes } from '../BearScheduleProvider';
 import { useT } from '../i18n/LanguageProvider';
 import AllianceLeaders from './AllianceLeaders';
+import useAlliancePhoto, { AlliancePhotoImg } from './useAlliancePhoto';
 import { STATUS_TONE, bandProps } from '../../lib/alliances.mjs';
 import './alliances.css';
 
 export default function AllianceDetail({ alliance, blurb }) {
   const t = useT();
+  const photo = useAlliancePhoto(alliance.image_url || '');
   const roster = Number(alliance.roster_size);
   const text = (v) => (typeof v === 'string' ? v.trim() : '');
   const known = ['open', 'selective', 'closed'].includes(alliance.recruiting_status);
   const status = known ? t(`alliances.status.${alliance.recruiting_status}`) : text(alliance.recruiting_status);
   const cells = [
-    status && { key: 'status', label: t('alliances.strip.status'), value: <Tag tone={STATUS_TONE[alliance.recruiting_status] || 'neutral'}>{status}</Tag> },
+    status && { key: 'status', label: t('alliances.strip.status'), value: <span className="al-status" data-tone={STATUS_TONE[alliance.recruiting_status] || 'neutral'}><span className="al-dot" aria-hidden="true" />{status}</span> },
     Number.isFinite(roster) && roster > 0 && { key: 'members', label: t('alliances.strip.members'), value: roster },
     text(alliance.language) && { key: 'language', label: t('alliances.strip.language'), value: text(alliance.language) },
     text(alliance.timezone_focus) && { key: 'timezone', label: t('alliances.strip.timezone'), value: text(alliance.timezone_focus) },
@@ -26,16 +28,17 @@ export default function AllianceDetail({ alliance, blurb }) {
   const tag = String(alliance.tag);
 
   return (
-    <div className="al-detail k-wb" {...bandProps(tag)}>
-      <div className="al-banner">
-        <PageHero
-          eyebrow={t('alliances.eyebrow', { tag })}
-          title={alliance.name}
-          lede={blurb || undefined}
-          actions={<Link href="/alliances">{t('alliances.back')}</Link>}
-        />
-      </div>
+    <div className="al-detail al-scope k-wb" {...bandProps(tag)}>
       <div className="al-detail-inner">
+        <Link className="al-back" href="/alliances">{t('alliances.back')}</Link>
+        <header className="al-banner" data-photo={photo.show ? 'true' : undefined}>
+          {photo.show && <AlliancePhotoImg className="al-banner-photo" src={alliance.image_url} alt={alliance.image_alt} eager onFail={photo.fail} />}
+          <div className="al-banner-copy">
+            <p className="al-eyebrow">{t('alliances.eyebrow', { tag })}</p>
+            <h1 className="al-title">{alliance.name}</h1>
+            {blurb && <p className="al-lede">{blurb}</p>}
+          </div>
+        </header>
         {cells.length > 0 && (
           <dl className="al-strip" style={{ '--cells': cells.length }}>
             {cells.map((c) => (
@@ -49,15 +52,17 @@ export default function AllianceDetail({ alliance, blurb }) {
             <AllianceLeaders leaders={alliance.leaders} legacyContact={legacyContact} />
           </section>
           <section className="al-panel" aria-labelledby="al-bear-h">
-            <h2 id="al-bear-h" className="al-panel-h">{t('alliances.panel.bear')}</h2>
-            <div className="al-bear-list"><AllianceBearTimes tag={tag} initialTimes={alliance.bear_times_utc} /></div>
-            <a className="al-link" href={`/api/events/bear-hunt.ics?alliance=${tag}`} download>{t('alliances.bear.calendar', { tag })}</a>
-            <Link className="al-link" href="/alliances">{t('alliances.bear.all')}</Link>
+            <h2 id="al-bear-h" className="al-panel-h">{t('alliances.panel.bearHunt')}</h2>
+            <AllianceBearTimes tag={tag} initialTimes={alliance.bear_times_utc} variant="rows" rowLabel={(i) => t('alliances.bear.hunt', { n: i + 1 })} />
+            <div className="al-panel-links">
+              <a className="al-link" href={`/api/events/bear-hunt.ics?alliance=${tag}`} download>{t('alliances.bear.calendar', { tag })}</a>
+              <Link className="al-link" href="/alliances">{t('alliances.bear.all')}</Link>
+            </div>
           </section>
           <section className="al-panel" aria-labelledby="al-join-h">
             <h2 id="al-join-h" className="al-panel-h">{t('alliances.panel.join')}</h2>
             <p className="al-muted">{t('alliances.join.line', { name: alliance.name })}</p>
-            <Button href="/interest" variant="struck" className="al-join-cta">{t('alliances.join.cta', { name: alliance.name })}</Button>
+            <Link href="/interest" className="al-cta">{t('alliances.join.cta', { name: alliance.name })}</Link>
           </section>
         </div>
       </div>
