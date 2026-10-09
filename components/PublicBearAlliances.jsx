@@ -31,10 +31,9 @@ export default function PublicBearAlliances({ layout = 'home', initialAlliances 
     </div>
   );
   return (
-    <div className="home-v2-alliance-line">
-      {alliances.map((alliance, index) => (
-        <div className="home-v2-alliance-fragment" key={alliance.tag}>
-          {index > 0 && <i />}
+    <div className="home-v2-alliance-line" data-count={Math.min(alliances.length, 6)}>
+      {alliances.map((alliance) => (
+        <div className="home-v2-alliance-fragment k-wb" {...bandProps(alliance.tag)} key={alliance.tag}>
           <Link href={`/alliances/${alliance.tag.toLowerCase()}`}>
             <b>{alliance.tag}</b><small>{alliance.name}</small>
             <em><BearTimes times={alliance.bear_times_utc} />{notes[alliance.tag] ? <span className="bear-note">{notes[alliance.tag]}</span> : null}</em>

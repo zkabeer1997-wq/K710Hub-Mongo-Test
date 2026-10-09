@@ -8,6 +8,8 @@ import {
 } from '../lib/allianceLeaders.mjs';
 import { FALLBACK_HUES, bandHue, bandProps, orderAlliancesForLanding } from '../lib/alliances.mjs';
 import { acceptedAllianceTags, migrateOptionsFor, offeredAllianceTags, withCurrentTag } from '../lib/allianceTags.mjs';
+import { buildBearNotes, generatedBearNote } from '../lib/allianceNotes.mjs';
+import { stripLegacyBearCopy } from '../lib/bearCopy.mjs';
 import { isLocalMongoUri } from '../lib/localMongo.mjs';
 
 const state = { tables: { alliances: [] }, paths: [] };
@@ -213,4 +215,25 @@ test('admin API: leaders are validated and stored on create and update; bad inpu
   // an update that does not mention leaders leaves them alone
   await PUT(request({ language: 'English' }), putParams('PHL'));
   assert.equal(state.tables.alliances.find((a) => a.tag === 'PHL').leaders.length, 2);
+});
+
+test('Home notes: Home page text wins for the original three, any other alliance gets a note from its record', () => {
+  const textNotes = { '710': stripLegacyBearCopy('Two Bear Hunts each day.\n\nR5: Yumin'), RED: stripLegacyBearCopy('Custom RED note'), SKY: stripLegacyBearCopy('') };
+  assert.equal(textNotes['710'], 'R5: Yumin');
+  const alliances = [{ tag: '710' }, { tag: 'RED' }, { tag: 'SKY' }, { tag: 'PHL' }, { tag: 'ZED' }];
+  const details = {
+    '710': { blurb: 'Ignored because text exists', leaders: [] },
+    SKY: { blurb: 'Two Bear Hunts each day. Sky blurb.', leaders: [{ role: 'R5', name: 'Asri' }] },
+    PHL: { blurb: 'A friendly Filipino-speaking alliance.', leaders: [{ role: 'R4', name: 'Jo' }, { role: 'R5', name: 'Mira' }] },
+    ZED: { blurb: '', leaders: [] },
+  };
+  const notes = buildBearNotes({ alliances, textNotes, details, stripBlurb: stripLegacyBearCopy });
+  assert.equal(notes['710'], 'R5: Yumin'); // admin text unchanged
+  assert.equal(notes.RED, 'Custom RED note');
+  assert.equal(notes.SKY, 'Sky blurb.\nR5: Asri'); // empty text -> generated, stock sentence stripped
+  assert.equal(notes.PHL, 'A friendly Filipino-speaking alliance.\nR5: Mira');
+  assert.equal(notes.ZED, ''); // nothing to say: no note, no error
+  const long = generatedBearNote({ blurb: 'word '.repeat(60), leaders: [] });
+  assert.ok(long.length <= 112 && long.endsWith('…'));
+  assert.equal(generatedBearNote(undefined), '');
 });

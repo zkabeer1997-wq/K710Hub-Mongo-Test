@@ -30,3 +30,23 @@
 .home-v2-command-copy .sh-lede { max-width: 500px; line-height: 1.65; }
 .home-v2-command-copy .sh, .home-v2-alliances .sh { display: block; margin-bottom: 0; }
 .home-v2-alliances .sh-title { margin: 18px 0 24px; }
+
+/* Alliance notes (Home): a centred, balanced set that stays tidy for any number of alliances.
+   3 across, 4 as a 2x2, 5-6 as 3 + the rest centred; 2 across on tablets; 1 on phones. Colour comes from .k-wb tokens. */
+.home-v2 .home-v2-alliance-line { --gap: clamp(20px, 3vw, 36px); display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: var(--gap); margin-top: 38px; }
+.home-v2 .home-v2-alliance-fragment { display: block !important; box-sizing: border-box; flex: 0 0 calc((100% - 2 * var(--gap)) / 3); max-width: calc((100% - 2 * var(--gap)) / 3); padding: 22px 18px 26px; border-top: 3px solid var(--wb); background: linear-gradient(180deg, color-mix(in srgb, var(--wb) 9%, transparent), transparent 70%); text-align: center; }
+.home-v2 .home-v2-alliance-line[data-count='4'] .home-v2-alliance-fragment { flex-basis: calc((100% - var(--gap)) / 2); max-width: calc((100% - var(--gap)) / 2); }
+.home-v2 .home-v2-alliance-line[data-count='1'] .home-v2-alliance-fragment { flex-basis: min(100%, 420px); max-width: min(100%, 420px); }
+.home-v2 .home-v2-alliance-line[data-count='2'] .home-v2-alliance-fragment { flex-basis: calc((100% - var(--gap)) / 2); max-width: 460px; }
+.home-v2 .home-v2-alliance-fragment a { display: block; }
+.home-v2 .home-v2-alliance-fragment a:focus-visible { outline: 2px solid var(--hero-eyebrow, #f3d99a); outline-offset: 6px; }
+.home-v2 .home-v2-alliance-fragment em { color: #b3bbc4; }
+.home-v2 .home-v2-alliance-fragment .bear-note { white-space: pre-line; margin-inline: auto; max-width: 34ch; color: #c9cfd6; }
+@media (max-width: 980px) {
+  .home-v2 .home-v2-alliance-fragment,
+  .home-v2 .home-v2-alliance-line[data-count] .home-v2-alliance-fragment { flex-basis: calc((100% - var(--gap)) / 2); max-width: calc((100% - var(--gap)) / 2); }
+}
+@media (max-width: 640px) {
+  .home-v2 .home-v2-alliance-fragment,
+  .home-v2 .home-v2-alliance-line[data-count] .home-v2-alliance-fragment { flex-basis: 100%; max-width: 100%; }
+}
