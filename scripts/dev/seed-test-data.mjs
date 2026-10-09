@@ -139,7 +139,7 @@ for (let i = 0; i < 30; i++) {
     const fd = new FormData();
     const f = {
       in_game_name: nameOf(i), player_id: pid, discord_username: `testuser${i + 1}`, current_server: String(400 + i), current_alliance: 'XYZ',
-      migrate_alliance: ALLIANCE_OF(i), highest_troop_level: i % 4 === 0 ? 'T10' : 'T11', current_tg: String(4 + (i % 4)), mystic_trial_stages: String(60 + i),
+      migrate_alliance: ALLIANCE_OF(i), highest_troop_level: i % 4 === 0 ? 'T10' : 'T11', current_tg: String(4 + (i % 4)), mystic_trial_score: String(24000 + i * 700),
       total_power: String(80000000 + i * 3500000), willing_reduce_power: 'Yes', passes_required: '2', current_passes: String(i % 3),
       active_commit: 'Yes - daily', willing_save_resources: 'Yes', participates_battles: 'Always', spending_archetype: i % 2 ? 'Light spender' : 'Free to play', main_language: 'English',
     };

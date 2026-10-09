@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import './apply.css';
 import SealedPetition from '../../components/kingdom/world/SealedPetition';
@@ -10,6 +10,9 @@ import { useAlliances } from '../../lib/useAllianceTags';
 import { migrateOptionsFor } from '../../lib/allianceTags.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import FormErrorSummary from '../../components/FormErrorSummary';
+import ApplicantVerify, { LockIcon } from '../../components/interest/ApplicantVerify';
+import { useApplicantVerify } from '../../components/interest/useApplicantVerify';
+import { useT } from '../../components/i18n/LanguageProvider';
 import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
 import { draftKey, firstInvalidStep, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
 import { INTEREST_UPLOAD_LIMITS, isHeicFile, validateProcessedInterestFiles } from '../../lib/interestUploadLimits.mjs';
@@ -51,7 +54,7 @@ const LANGUAGE_OPTIONS = [{ value: 'English', label: 'English' }, { value: 'Othe
 const ACTS = [
   { id: 'identity', label: 'Your account', short: 'Account', fields: ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance'] },
   { id: 'intake', label: 'Your move', short: 'Move', fields: ['migrateAlliance', 'migrateAllianceOther'] },
-  { id: 'troops', label: 'Your power', short: 'Power', fields: ['highestTroopLevel', 'currentTg', 't11', 'mysticTrialStages', 'totalPower', 'willingReducePower', 'passesRequired', 'currentPasses'] },
+  { id: 'troops', label: 'Your power', short: 'Power', fields: ['highestTroopLevel', 'currentTg', 't11', 'mysticTrialScore', 'totalPower', 'willingReducePower', 'passesRequired', 'currentPasses'] },
   { id: 'commitment', label: 'Your play style', short: 'Play style', fields: ['activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage', 'mainLanguageOther'] },
   { id: 'battle-report', label: 'Screenshots', short: 'Pictures', fields: ['screenshots'] },
   { id: 'review', label: 'Check and send', short: 'Send', fields: [] },
@@ -68,7 +71,7 @@ const initialForm = {
   highestTroopLevel: '',
   currentTg: '',
   t11: [],
-  mysticTrialStages: '',
+  mysticTrialScore: '',
   totalPower: '',
   willingReducePower: '',
   passesRequired: '',
@@ -90,7 +93,7 @@ const DEFAULT_LABELS = {
   currentServer: 'Your current server number',
   currentAlliance: 'Your current alliance',
   currentTg: 'How much TrueGold (TG) do you have now?',
-  mysticTrialStages: 'Mystic Trial: total stages cleared',
+  mysticTrialScore: 'Total Mystic Trial Score',
   totalPower: 'Total power',
   passesRequired: 'Transfer passes you need',
   currentPasses: 'Transfer passes you have now',
@@ -105,7 +108,7 @@ const REQUIRED_MESSAGES = {
   migrateAlliance: 'Please choose the alliance you want to join.',
   highestTroopLevel: 'Please choose your highest troop level.',
   currentTg: 'Please type how much TrueGold you have. If none, type 0.',
-  mysticTrialStages: 'Please type your Mystic Trial stages. If none, type 0.',
+  mysticTrialScore: 'Please type your Total Mystic Trial Score. If none, type 0.',
   totalPower: 'Please type your total power, for example 12,345,678.',
   activeCommit: 'Please answer Yes or No.',
   willingSaveResources: 'Please answer Yes or No.',
@@ -117,12 +120,13 @@ const REQUIRED_MESSAGES = {
   currentPasses: 'Please type how many transfer passes you have. If none, type 0.',
 };
 // UI key -> stored field name that carries the numeric limits (lib/interestForm.mjs).
-const NUMERIC_FIELD = { currentServer: 'current_server', currentTg: 'current_tg', mysticTrialStages: 'mystic_trial_stages', totalPower: 'total_power', passesRequired: 'passes_required', currentPasses: 'current_passes' };
-const NUMERIC_KEYS = ['currentServer', 'currentTg', 'mysticTrialStages', 'totalPower', 'passesRequired', 'currentPasses'];
-const REQUIRED_TEXT = ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance', 'migrateAlliance', 'highestTroopLevel', 'currentTg', 'mysticTrialStages', 'totalPower', 'willingReducePower', 'passesRequired', 'currentPasses', 'activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'];
+const NUMERIC_FIELD = { currentServer: 'current_server', currentTg: 'current_tg', mysticTrialScore: 'mystic_trial_score', totalPower: 'total_power', passesRequired: 'passes_required', currentPasses: 'current_passes' };
+const NUMERIC_KEYS = ['currentServer', 'currentTg', 'mysticTrialScore', 'totalPower', 'passesRequired', 'currentPasses'];
+const REQUIRED_TEXT = ['inGameName', 'playerId', 'discordUsername', 'currentServer', 'currentAlliance', 'migrateAlliance', 'highestTroopLevel', 'currentTg', 'mysticTrialScore', 'totalPower', 'willingReducePower', 'passesRequired', 'currentPasses', 'activeCommit', 'willingSaveResources', 'participatesBattles', 'spendingArchetype', 'mainLanguage'];
 
 // Pure per-field validation: returns a message or ''.
-function fieldError(key, form, screenshots) {
+function fieldError(key, form, screenshots, locked = {}) {
+  if (locked[key]) return '';
   const value = String(form[key] ?? '').trim();
   if (key === 't11') return form.t11.length === 0 ? 'Please pick at least one, or “I do not have T11”.' : '';
   if (key === 'screenshots') return screenshots.length === 0 ? 'Please add at least one screenshot.' : '';
@@ -137,10 +141,10 @@ function fieldError(key, form, screenshots) {
   return '';
 }
 
-function computeErrors(index, form, screenshots) {
+function computeErrors(index, form, screenshots, locked = {}) {
   const found = [];
   for (const key of ACTS[index].fields) {
-    const message = fieldError(key, form, screenshots);
+    const message = fieldError(key, form, screenshots, locked);
     if (message) found.push({ id: `f-${key}`, key, message });
   }
   return found;
@@ -210,14 +214,19 @@ function Choices({ legend, hint, name, options, value, onChange, multiple = fals
 
 // Text/number field with persistent label, hint and live feedback. Module
 // level so React keeps the same input mounted while typing.
-function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, autoComplete = 'off', live, liveBad = false, maxLength, children, tour }) {
+function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, autoComplete = 'off', live, liveBad = false, maxLength, children, tour, locked = false, lockedText = '', selfReportedText = '' }) {
   const { form, updateField, gp, errMsg, fe } = ctx;
   return (
-    <div className="wizard-field apply-field" data-tour={tour}>
+    <div className={`wizard-field apply-field${locked ? ' is-locked' : ''}`} data-tour={tour}>
       <label htmlFor={`f-${k}`}>{label}</label>
+      {locked && <p className="verify-locked-note"><LockIcon /> <span>{lockedText}</span></p>}
       <p id={`f-${k}-hint`} className="apply-hint">{hint}</p>
+      {selfReportedText && <p className="verify-self-note">{selfReportedText}</p>}
       <input
         {...gp(k)}
+        onBlur={locked ? undefined : gp(k).onBlur}
+        readOnly={locked}
+        aria-readonly={locked || undefined}
         type={type}
         inputMode={mode}
         enterKeyHint="next"
@@ -228,9 +237,9 @@ function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, auto
         placeholder={placeholder}
         maxLength={maxLength}
         value={form[k]}
-        onChange={(e) => updateField(k, e.target.value)}
+        onChange={(e) => { if (!locked) updateField(k, e.target.value); }}
       />
-      {live && !errMsg(k) && <p className={`apply-live${liveBad ? ' is-bad' : ''}`} aria-live="polite">{live}</p>}
+      {live && !locked && !errMsg(k) && <p className={`apply-live${liveBad ? ' is-bad' : ''}`} aria-live="polite">{live}</p>}
       {fe(k)}
       {children}
     </div>
@@ -268,20 +277,43 @@ function StepProgress({ step, onJump }) {
   );
 }
 
-function buildSummary(form, screenshots) {
+function buildSummary(form, screenshots, verified = false) {
   const other = (v, o) => (v === 'Other' ? `Other: ${o}` : v);
   const rows = [
     ['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord', form.discordUsername],
     ['Current server', form.currentServer], ['Current alliance', form.currentAlliance],
     ['Alliance I want to join', other(form.migrateAlliance, form.migrateAllianceOther)],
     ['Highest troop level', form.highestTroopLevel], ['TrueGold (TG)', form.currentTg], ['T11', form.t11.join(', ')],
-    ['Mystic Trial stages', form.mysticTrialStages], ['Total power', form.totalPower],
+    ['Total Mystic Trial Score', form.mysticTrialScore], ['Total power', form.totalPower],
     ['Willing to lower power', form.willingReducePower], ['Passes needed', form.passesRequired], ['Passes I have', form.currentPasses],
     ['Active in events', form.activeCommit], ['Saves resources for KvK prep', form.willingSaveResources],
     ['Joins Sanctuary, Castle and KvK battles', form.participatesBattles], ['Spending', form.spendingArchetype],
     ['Main language', other(form.mainLanguage, form.mainLanguageOther)], ['Screenshots', String(screenshots.length)],
+    ['Account', verified ? 'Verified by the game' : 'Not verified'],
   ];
   return `Kingdom 710 transfer application\n${rows.map(([k, v]) => `${k}: ${String(v || '').trim() || '-'}`).join('\n')}`;
+}
+
+/** Form values for a verified profile (locked fields only; typed answers are left alone). */
+function withVerifiedValues(current, vp) {
+  const next = {
+    ...current,
+    inGameName: vp.nickname,
+    playerId: vp.playerId,
+    currentServer: String(vp.kingdomId),
+    currentAlliance: vp.alliance,
+  };
+  if (vp.power != null) next.totalPower = String(vp.power);
+  if (vp.mysticTrial != null) next.mysticTrialScore = String(vp.mysticTrial);
+  return next;
+}
+
+/** "Use a different account": remove what the previous account supplied, keep the rest. */
+function clearVerifiedValues(current, previous) {
+  const next = { ...current, inGameName: '', playerId: '', currentServer: '', currentAlliance: '' };
+  if (previous?.power != null) next.totalPower = '';
+  if (previous?.mysticTrial != null) next.mysticTrialScore = '';
+  return next;
 }
 
 export default function InterestForm({ initialPeriod }) {
@@ -303,7 +335,7 @@ export default function InterestForm({ initialPeriod }) {
   const submittingRef = useRef(false);
   const requestId = useRef(null);
   const { step, setStep, initFromUrl } = useWizardUrlStep(ACTS.length, () => {
-    const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, formRef.current, screenshotsRef.current));
+    const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, formRef.current, screenshotsRef.current, lockedRef.current));
     return bad < 0 ? ACTS.length - 1 : bad;
   });
   const draftReady = useRef(false);
@@ -315,10 +347,64 @@ export default function InterestForm({ initialPeriod }) {
   const { fields: editableFields } = useFormFieldMeta('interest');
   const editableLabel = (key, fallback) => String(editableFields.find((f) => f.key === key)?.label || fallback).replace(/\s*\(optional\)\s*$/i, '');
   const L = (key) => editableLabel(key, DEFAULT_LABELS[key] || key);
+  const t = useT();
+
+  // Optional verification with the player's Kingshot account (see components/interest).
+  // `vp` is the server-confirmed profile; every locked value comes from it.
+  const verify = useApplicantVerify();
+  const vp = verify.profile;
+  const lockedMap = vp
+    ? { inGameName: true, playerId: true, currentServer: true, currentAlliance: true, totalPower: vp.power != null, mysticTrialScore: vp.mysticTrial != null }
+    : {};
+  const lockedRef = useRef(lockedMap);
+  const profileRef = useRef(vp);
+  const lockProps = (key) => ({
+    locked: Boolean(lockedMap[key]),
+    lockedText: t('interest.verify.lock'),
+    selfReportedText: vp && (key === 'totalPower' || key === 'mysticTrialScore') && !lockedMap[key] ? t('interest.verify.selfReported.hint') : '',
+  });
   useEffect(() => {
     formRef.current = form;
     screenshotsRef.current = screenshots;
+    lockedRef.current = lockedMap;
+    profileRef.current = vp;
   });
+
+  // Fill (and lock) the form from the verified game data. Draft values never win over it.
+  useEffect(() => {
+    if (!vp) return;
+    setForm((current) => withVerifiedValues(current, vp));
+    setErrors((current) => current.filter((e) => !['inGameName', 'playerId', 'currentServer', 'currentAlliance', 'totalPower', 'mysticTrialScore'].includes(e.key) || (e.key === 'totalPower' && vp.power == null) || (e.key === 'mysticTrialScore' && vp.mysticTrial == null)));
+  }, [vp]);
+
+  const useDifferentAccount = useCallback(async () => {
+    const previous = profileRef.current;
+    await verify.reset();
+    setForm((current) => clearVerifiedValues(current, previous));
+    setErrors([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verify.reset]);
+
+  const expireVerification = useCallback(() => {
+    verify.expire(t('interest.verify.expired'));
+    setStep(0, { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verify.expire, t]);
+  const expireRef = useRef(expireVerification);
+  useEffect(() => { expireRef.current = expireVerification; });
+
+  // A session that runs out (3 hours) or disappears while the form is open: drop the verified state, never keep a stale one.
+  useEffect(() => {
+    if (!vp) return undefined;
+    const check = async () => {
+      if (Date.now() >= vp.expiresAt) { expireRef.current(); return; }
+      if (document.visibilityState === 'visible' && !(await verify.confirm())) expireRef.current();
+    };
+    const timer = setInterval(() => { if (Date.now() >= vp.expiresAt) expireRef.current(); }, 30000);
+    document.addEventListener('visibilitychange', check);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', check); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vp, verify.confirm]);
   const renderedAt = useRef(Date.now());
 
   useEffect(() => {
@@ -354,11 +440,12 @@ export default function InterestForm({ initialPeriod }) {
     if (!pendingDraft) return;
     const restored = mergeDraft(initialForm, pendingDraft.data);
     restored.website = '';
+    if (profileRef.current) Object.assign(restored, withVerifiedValues(restored, profileRef.current));
     formRef.current = restored;
     setForm(restored);
     setPendingDraft(null);
     draftReady.current = true;
-    const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, restored, []));
+    const bad = firstInvalidStep(ACTS.length, (i) => computeErrors(i, restored, [], lockedRef.current));
     // Pictures are never saved, so a finished draft resumes at the pictures step.
     setStep(bad < 0 ? ACTS.length - 2 : bad, { replace: true });
   }
@@ -377,6 +464,7 @@ export default function InterestForm({ initialPeriod }) {
       try {
         const { website, ...rest } = form; // honeypot is never stored
         void website;
+        for (const key of Object.keys(lockedRef.current)) rest[key] = ''; // game-supplied values are never saved in the draft
         if (draftFilledCount(rest) === 0) return;
         window.localStorage.setItem(DRAFT_KEY, serializeDraft(rest));
       } catch { /* ignore */ }
@@ -422,7 +510,7 @@ export default function InterestForm({ initialPeriod }) {
     else if (typeof value === 'string') value = value.trim();
     const next = { ...form, [key]: value };
     if (value !== form[key]) setForm(next);
-    const message = fieldError(key, next, screenshots);
+    const message = fieldError(key, next, screenshots, lockedMap);
     setErrors((current) => {
       const rest = current.filter((e) => e.key !== key);
       return message ? [...rest, { id: `f-${key}`, key, message }] : rest;
@@ -453,7 +541,7 @@ export default function InterestForm({ initialPeriod }) {
   }
 
   function validateStep(index) {
-    const found = computeErrors(index, form, screenshots);
+    const found = computeErrors(index, form, screenshots, lockedRef.current);
     setErrors(found);
     setIsError(false);
     setStatus('');
@@ -476,11 +564,11 @@ export default function InterestForm({ initialPeriod }) {
 
   function jumpTo(i) {
     if (i <= step) { setErrors([]); setStep(i); return; }
-    const bad = firstInvalidStep(ACTS.length, (n) => computeErrors(n, form, screenshots));
+    const bad = firstInvalidStep(ACTS.length, (n) => computeErrors(n, form, screenshots, lockedRef.current));
     if (bad === -1 || bad >= i) { setErrors([]); setStep(i); return; }
     if (bad === step) { validateStep(step); return; }
     setStep(bad);
-    setErrors(computeErrors(bad, form, screenshots));
+    setErrors(computeErrors(bad, form, screenshots, lockedRef.current));
     setErrorSignal((n) => n + 1);
   }
 
@@ -551,8 +639,8 @@ export default function InterestForm({ initialPeriod }) {
     e.preventDefault();
     if (step !== ACTS.length - 1) { goNext(); return; }
     if (loading || submittingRef.current) return;
-    const bad = firstInvalidStep(ACTS.length + 1, (i) => computeErrors(Math.min(i, ACTS.length - 1), form, screenshots));
-    if (bad !== -1 && bad < step) { setStep(bad); setErrors(computeErrors(bad, form, screenshots)); setErrorSignal((n) => n + 1); return; }
+    const bad = firstInvalidStep(ACTS.length + 1, (i) => computeErrors(Math.min(i, ACTS.length - 1), form, screenshots, lockedRef.current));
+    if (bad !== -1 && bad < step) { setStep(bad); setErrors(computeErrors(bad, form, screenshots, lockedRef.current)); setErrorSignal((n) => n + 1); return; }
     if (!validateStep(step)) return;
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       setIsError(true);
@@ -563,6 +651,15 @@ export default function InterestForm({ initialPeriod }) {
     submittingRef.current = true;
     setLoading(true);
     setIsError(false);
+    // Verified applicants: confirm with the server that the 3 hour verification is still valid.
+    // If it ran out, nothing is sent; the panel comes back with a gentle message.
+    if (profileRef.current && !(await verify.confirm())) {
+      submittingRef.current = false;
+      setLoading(false);
+      setStatus('');
+      expireVerification();
+      return;
+    }
     setStatus('Sending… please keep this page open.');
     if (!requestId.current) requestId.current = newRequestId();
     const body = new FormData();
@@ -576,7 +673,7 @@ export default function InterestForm({ initialPeriod }) {
     body.append('highest_troop_level', form.highestTroopLevel);
     body.append('current_tg', normalizeNumericAnswer(form.currentTg, 'current_tg'));
     form.t11.forEach((option) => body.append('t11_units', option));
-    body.append('mystic_trial_stages', normalizeNumericAnswer(form.mysticTrialStages, 'mystic_trial_stages'));
+    body.append('mystic_trial_score', normalizeNumericAnswer(form.mysticTrialScore, 'mystic_trial_score'));
     body.append('total_power', normalizeNumericAnswer(form.totalPower, 'total_power'));
     body.append('willing_reduce_power', form.willingReducePower);
     body.append('passes_required', normalizeNumericAnswer(form.passesRequired, 'passes_required'));
@@ -617,7 +714,7 @@ export default function InterestForm({ initialPeriod }) {
     setIsError(false);
     setStatus('');
     try { if (result.reference) window.localStorage.setItem(REF_KEY, result.reference); } catch { /* ignore */ }
-    setConfirmedInfo({ intakePeriod: activePeriod, discordUsername: normalizeDiscordUsername(form.discordUsername), reference: result.reference || null });
+    setConfirmedInfo({ intakePeriod: activePeriod, discordUsername: normalizeDiscordUsername(form.discordUsername), reference: result.reference || null, verified: Boolean(result.verified) });
     setForm(initialForm);
     setScreenshots([]);
     setErrors([]);
@@ -665,10 +762,16 @@ export default function InterestForm({ initialPeriod }) {
       {lede && <p className="apply-lede">{lede}</p>}
     </header>
   );
+  // Review step markers: text + icon, never colour alone.
+  const tagFor = (key) => {
+    if (!vp) return null;
+    if (lockedMap[key]) return 'locked';
+    return key === 'totalPower' || key === 'mysticTrialScore' ? 'self' : null;
+  };
   const reviewGroups = [
-    { stepIndex: 0, title: 'Your account', rows: [['In-game name', form.inGameName], ['Player ID', form.playerId], ['Discord username', form.discordUsername], ['Current server', form.currentServer], ['Current alliance', form.currentAlliance]] },
+    { stepIndex: 0, title: 'Your account', rows: [['In-game name', form.inGameName, tagFor('inGameName')], ['Player ID', form.playerId, tagFor('playerId')], ['Discord username', form.discordUsername], ['Current server', form.currentServer, tagFor('currentServer')], ['Current alliance', form.currentAlliance, tagFor('currentAlliance')]] },
     { stepIndex: 1, title: 'Your move', rows: [['Alliance you want to join', form.migrateAlliance === 'Other' ? `Other: ${form.migrateAllianceOther}` : form.migrateAlliance]] },
-    { stepIndex: 2, title: 'Your power', rows: [['Highest troop level', form.highestTroopLevel], ['TrueGold (TG)', form.currentTg ? formatNum(form.currentTg) : ''], ['T11 troops', form.t11.join(', ')], ['Mystic Trial stages', formatNum(form.mysticTrialStages)], ['Total power', formatNum(form.totalPower)], ['Would lower power if needed', form.willingReducePower], ['Passes needed', formatNum(form.passesRequired)], ['Passes you have', formatNum(form.currentPasses)]] },
+    { stepIndex: 2, title: 'Your power', rows: [['Highest troop level', form.highestTroopLevel], ['TrueGold (TG)', form.currentTg ? formatNum(form.currentTg) : ''], ['T11 troops', form.t11.join(', ')], ['Total Mystic Trial Score', formatNum(form.mysticTrialScore), tagFor('mysticTrialScore')], ['Total power', formatNum(form.totalPower), tagFor('totalPower')], ['Would lower power if needed', form.willingReducePower], ['Passes needed', formatNum(form.passesRequired)], ['Passes you have', formatNum(form.currentPasses)]] },
     { stepIndex: 3, title: 'Your play style', rows: [['Active in alliance events', form.activeCommit], ['Saves resources for KvK prep', form.willingSaveResources], ['Joins Sanctuary, Castle and KvK battles', form.participatesBattles], ['Spending', form.spendingArchetype], ['Main language', form.mainLanguage === 'Other' ? `Other: ${form.mainLanguageOther}` : form.mainLanguage]] },
     { stepIndex: 4, title: 'Screenshots', rows: [['Screenshots added', String(screenshots.length)]] },
   ];
@@ -703,7 +806,8 @@ export default function InterestForm({ initialPeriod }) {
         {step === 0 && (
           <>
             {actHead('Your account', 'So we can find you in the game and message you.')}
-            <aside className="apply-ready" aria-label="Before you start" data-tour="interest-ready">
+            <ApplicantVerify verify={verify} onUseDifferent={useDifferentAccount} />
+            <aside className="apply-ready" aria-label="Before you start">
               <h3>Before you start</h3>
               <p><strong>About 5 minutes.</strong> You can stop and come back: your answers are saved on this device.</p>
               <ul>
@@ -714,15 +818,15 @@ export default function InterestForm({ initialPeriod }) {
             </aside>
             <FormErrorSummary errors={errors} focusSignal={errorSignal} />
             <div className="apply-fields">
-              <TextField ctx={ctx} k="inGameName" tour="interest-identity" label={L('inGameName')} hint="The name other players see in Kingshot." autoComplete="off" />
-              <TextField ctx={ctx} k="playerId" label={L('playerId')} hint="Numbers only." mode="numeric" live={playerIdHint(form.playerId)}>
+              <TextField ctx={ctx} k="inGameName" tour="interest-identity" label={L('inGameName')} hint="The name other players see in Kingshot." autoComplete="off" {...lockProps('inGameName')} />
+              <TextField ctx={ctx} k="playerId" label={L('playerId')} hint="Numbers only." mode="numeric" live={playerIdHint(form.playerId)} {...lockProps('playerId')}>
                 <Where>Open Kingshot and tap your picture in the top-left corner. Your Player ID is the number shown there.</Where>
               </TextField>
               <TextField ctx={ctx} k="discordUsername" label={L('discordUsername')} hint="We message you here. You can leave out the @." placeholder="yourname">
                 <Where>Open Discord and tap your picture. Your username is the short name without spaces, for example name or name#1234.</Where>
               </TextField>
-              <TextField ctx={ctx} k="currentServer" label={L('currentServer')} hint="The kingdom you play in today, before moving. Numbers only, from 250 to 1,100." mode="numeric" maxLength={4} placeholder="for example 512" />
-              <TextField ctx={ctx} k="currentAlliance" label={L('currentAlliance')} hint="The alliance you are in today. Type “None” if you have none." />
+              <TextField ctx={ctx} k="currentServer" label={L('currentServer')} hint="The kingdom you play in today, before moving. Numbers only, from 250 to 1,100." mode="numeric" maxLength={4} placeholder="for example 512" {...lockProps('currentServer')} />
+              <TextField ctx={ctx} k="currentAlliance" label={L('currentAlliance')} hint="The alliance you are in today. Type “None” if you have none." {...lockProps('currentAlliance')} />
             </div>
           </>
         )}
@@ -785,11 +889,13 @@ export default function InterestForm({ initialPeriod }) {
               errorId="f-t11-error"
             />
             <div className="apply-fields">
-              <TextField ctx={ctx} k="totalPower" label={L('totalPower')} hint="The big number on your profile. Type it like 12,345,678. The most we accept is 3,000,000,000." mode="decimal" placeholder="12,345,678" maxLength={NUMBER_INPUT_MAX_LENGTH} live={numberPreview(form.totalPower, 'total_power')} liveBad={liveBad('totalPower')}>
+              <TextField ctx={ctx} k="totalPower" label={L('totalPower')} hint="The big number on your profile. Type it like 12,345,678. The most we accept is 3,000,000,000." mode="decimal" placeholder="12,345,678" maxLength={NUMBER_INPUT_MAX_LENGTH} live={numberPreview(form.totalPower, 'total_power')} liveBad={liveBad('totalPower')} {...lockProps('totalPower')}>
                 <Where>In Kingshot tap your picture in the top-left corner. Your power is the big number on your profile.</Where>
               </TextField>
               <TextField ctx={ctx} k="currentTg" label={L('currentTg')} hint="TrueGold is a late-game upgrade material. We want to know how far you can push your troops. Type 0 if none." mode="decimal" maxLength={NUMBER_INPUT_MAX_LENGTH} live={numberPreview(form.currentTg, 'current_tg')} liveBad={liveBad('currentTg')} />
-              <TextField ctx={ctx} k="mysticTrialStages" label={L('mysticTrialStages')} hint="Add up all the stages you have cleared in Mystic Trial. Whole number from 0 to 4,000. Type 0 if none." mode="numeric" maxLength={5} live={numberPreview(form.mysticTrialStages, 'mystic_trial_stages')} liveBad={liveBad('mysticTrialStages')} />
+              <TextField ctx={ctx} k="mysticTrialScore" label={L('mysticTrialScore')} hint="Your total Mystic Trial score from the game. A whole number from 0 to 100,000,000. Type 0 if you have none." mode="numeric" maxLength={NUMBER_INPUT_MAX_LENGTH} placeholder="48,250" live={numberPreview(form.mysticTrialScore, 'mystic_trial_score')} liveBad={liveBad('mysticTrialScore')} {...lockProps('mysticTrialScore')}>
+                <Where>Open Mystic Trial in Kingshot and copy your total score.</Where>
+              </TextField>
             </div>
             <Choices
               legend="Would you lower your power if needed to join?"
@@ -900,15 +1006,27 @@ export default function InterestForm({ initialPeriod }) {
                     <button type="button" className="k-btn k-btn-quiet" onClick={() => { setErrors([]); setStep(group.stepIndex); }} aria-label={`Change ${group.title}`}>Change</button>
                   </div>
                   <dl>
-                    {group.rows.map(([k, v]) => (
-                      <div key={k}><dt>{k}</dt><dd>{String(v || '').trim() || 'Not answered'}</dd></div>
+                    {group.rows.map(([k, v, tag]) => (
+                      <div key={k}>
+                        <dt>{k}</dt>
+                        <dd>
+                          {String(v || '').trim() || 'Not answered'}
+                          {tag === 'locked' && <span className="review-tag"><LockIcon /> {t('interest.verify.lock')}</span>}
+                          {tag === 'self' && <span className="review-tag is-self">{t('interest.verify.selfReported.tag')}</span>}
+                        </dd>
+                      </div>
                     ))}
                   </dl>
+                  {group.stepIndex === 0 && (
+                    <p className={`review-verify-note${vp ? ' is-verified' : ''}`}>
+                      {vp ? <><LockIcon /> {t('interest.verify.review.verified')}</> : t('interest.verify.review.unverified')}
+                    </p>
+                  )}
                 </section>
               ))}
             </div>
             <div className="apply-copy">
-              <button type="button" className="k-btn k-btn-quiet" onClick={() => copyText(buildSummary(form, screenshots))}>{copied ? 'Copied' : 'Copy a summary of my answers'}</button>
+              <button type="button" className="k-btn k-btn-quiet" onClick={() => copyText(buildSummary(form, screenshots, Boolean(vp)))}>{copied ? 'Copied' : 'Copy a summary of my answers'}</button>
             </div>
           </>
         )}

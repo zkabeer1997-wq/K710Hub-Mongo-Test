@@ -30,8 +30,9 @@ let ip = 10;
 function req(overrides = {}, { extra = [] } = {}) {
   const fd = new FormData();
   const base = {
-    in_game_name: 'API Test', player_id: '123456', discord_username: 'apitest', current_server: '512', current_alliance: 'None',
-    migrate_alliance: '710 (Bear 0200UTC and 1300UTC)', highest_troop_level: 'TG8', current_tg: '5,000', mystic_trial_stages: '120',
+    in_game_name: 'API Test', player_id: String(500000 + ip), // unique per call: the same player in the same window would replace the earlier row
+    discord_username: 'apitest', current_server: '512', current_alliance: 'None',
+    migrate_alliance: '710 (Bear 0200UTC and 1300UTC)', highest_troop_level: 'TG8', current_tg: '5,000', mystic_trial_score: '120',
     total_power: '245,000,000', active_commit: 'Yes', willing_save_resources: 'Yes', participates_battles: 'Yes',
     spending_archetype: 'F2P (pure skills, always on)', main_language: 'English', willing_reduce_power: 'No', passes_required: '0', current_passes: '0', rendered_at: String(Date.now() - 60000),
     ...overrides,
@@ -72,14 +73,14 @@ test('letters in a numeric field are still rejected', async () => {
 
 test('retry with the same client_request_id returns the same reference and stores one row', async () => {
   const before = rows().length;
-  const a = await (await interest.POST(req({}, { extra: [['client_request_id', 'req-abc-1']] }))).json();
-  const b = await (await interest.POST(req({}, { extra: [['client_request_id', 'req-abc-1']] }))).json();
+  const a = await (await interest.POST(req({ player_id: '424242' }, { extra: [['client_request_id', 'req-abc-1']] }))).json();
+  const b = await (await interest.POST(req({ player_id: '424242' }, { extra: [['client_request_id', 'req-abc-1']] }))).json();
   assert.equal(a.reference, b.reference);
   assert.equal(rows().length, before + 1);
 });
 
 const REQUIRED = ['in_game_name', 'player_id', 'discord_username', 'current_server', 'current_alliance', 'migrate_alliance',
-  'highest_troop_level', 'current_tg', 'mystic_trial_stages', 'total_power', 'willing_reduce_power', 'passes_required',
+  'highest_troop_level', 'current_tg', 'mystic_trial_score', 'total_power', 'willing_reduce_power', 'passes_required',
   'current_passes', 'active_commit', 'willing_save_resources', 'participates_battles', 'spending_archetype', 'main_language'];
 
 for (const field of REQUIRED) {
@@ -106,10 +107,10 @@ test('missing T11 selection returns 400', async () => {
   void fd;
 });
 
-test('zero is accepted for TG, passes and Mystic Trial stages', async () => {
-  const res = await interest.POST(req({ current_tg: '0', passes_required: '0', current_passes: '0', mystic_trial_stages: '0' }));
+test('zero is accepted for TG, passes and Total Mystic Trial Score', async () => {
+  const res = await interest.POST(req({ current_tg: '0', passes_required: '0', current_passes: '0', mystic_trial_score: '0' }));
   assert.equal(res.status, 200);
-  assert.equal(rows().at(-1).mystic_trial_stages, '0');
+  assert.equal(rows().at(-1).mystic_trial_score, '0');
 });
 
 test('total power limits: 3,000,000,000 and 3b ok; 3,000,000,001, 3.1b, 0 and a 30-digit paste rejected', async () => {
@@ -128,14 +129,22 @@ test('total power limits: 3,000,000,000 and 3b ok; 3,000,000,001, 3.1b, 0 and a 
   }
 });
 
-test('Mystic Trial limits: 4000 ok, 4001 rejected, k suffix not thousands', async () => {
-  assert.equal((await interest.POST(req({ mystic_trial_stages: '4000' }))).status, 200);
-  assert.equal(rows().at(-1).mystic_trial_stages, '4000');
-  const over = await interest.POST(req({ mystic_trial_stages: '4001' }));
+test('Total Mystic Trial Score limits: 100,000,000 ok, one more rejected, decimals rejected', async () => {
+  assert.equal((await interest.POST(req({ mystic_trial_score: '100000000' }))).status, 200);
+  assert.equal(rows().at(-1).mystic_trial_score, '100000000');
+  const over = await interest.POST(req({ mystic_trial_score: '100000001' }));
   assert.equal(over.status, 400);
-  assert.equal((await over.json()).error, 'Mystic Trial stages cannot be more than 4,000.');
-  assert.equal((await interest.POST(req({ mystic_trial_stages: '4k' }))).status, 400);
-  assert.equal((await interest.POST(req({ mystic_trial_stages: '99999999999999999999' }))).status, 400);
+  assert.equal((await over.json()).error, 'Total Mystic Trial Score cannot be more than 100,000,000. Check the number and try again.');
+  assert.equal((await interest.POST(req({ mystic_trial_score: '12.5' }))).status, 400);
+  assert.equal((await interest.POST(req({ mystic_trial_score: '99999999999999999999' }))).status, 400);
+  // New rows store the new key only; the legacy "stages" key is never written.
+  assert.equal(rows().at(-1).mystic_trial_stages, undefined);
+});
+
+test('an older cached page that still sends mystic_trial_stages is read as the score', async () => {
+  const res = await interest.POST(req({ mystic_trial_score: null, mystic_trial_stages: '77' }));
+  assert.equal(res.status, 200);
+  assert.equal(rows().at(-1).mystic_trial_score, '77');
 });
 
 test('absurd TG and pass counts are rejected', async () => {

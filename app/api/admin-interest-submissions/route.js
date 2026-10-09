@@ -44,7 +44,7 @@ export async function GET(request) {
       // Applications whose screenshots wait in MongoDB (Drive was unavailable, or
       // legacy rows): drives the "Move to Drive" warning in the Inbox.
       waitingForDrive: (data || []).filter((r) => r.screenshots_in_db > 0).length,
-      rows: (data || []).map(({ _id, screenshot_files: driveFiles = [], drive_folder_id: _folder, ...r }) => {
+      rows: (data || []).map(({ _id, screenshot_files: driveFiles = [], drive_folder_id: _folder, previous_screenshot_files: _previous, ...r }) => {
         const id = r.id || String(_id);
         // Slot order matches lib/interestScreenshots.mjs screenshotSlots(): Drive files, then stored URLs.
         const files = [...driveFiles].sort((a, b) => a.idx - b.idx);

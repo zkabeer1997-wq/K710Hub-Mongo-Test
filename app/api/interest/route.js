@@ -11,10 +11,18 @@ import {
   validateProcessedInterestFiles,
 } from '../../../lib/interestUploadLimits.mjs';
 import { migrateInterestBatch, storageLabel, uploadApplicantScreenshots } from '../../../lib/interestScreenshots.mjs';
+import { readApplicantFromRequest } from '../../../lib/applicantAuth.js';
+import {
+  applyVerifiedSnapshot,
+  buildOverwriteUpdate,
+  findResubmitTarget,
+  verificationMarkers,
+} from '../../../lib/interestApplication.mjs';
 import {
   NUMERIC_RULES,
   REQUIRED_FIELD_LABELS,
   normalizeDiscordUsername,
+  normalizePlayerId,
   validateNumericAnswer,
 } from '../../../lib/interestForm.mjs';
 
@@ -139,11 +147,16 @@ export async function POST(request) {
       );
     }
 
-    const fields = {
+    // Who is applying: ONLY the signed applicant cookie counts (never the member
+    // session, never a client-sent flag). No/invalid/expired cookie = unverified.
+    const snapshot = readApplicantFromRequest(request);
+
+    let fields = {
       intake_period: activePeriod.label,
       intake_period_id: activePeriod.id,
       in_game_name: cap(formData.get('in_game_name')),
-      player_id: cap(formData.get('player_id')),
+      // Digits only, so the "same player" match below cannot be dodged with spaces or prefixes.
+      player_id: normalizePlayerId(cap(formData.get('player_id'))),
       discord_username: cap(normalizeDiscordUsername(formData.get('discord_username'))),
       current_server: cap(formData.get('current_server')),
       current_alliance: cap(formData.get('current_alliance')),
@@ -151,7 +164,8 @@ export async function POST(request) {
       highest_troop_level: cap(formData.get('highest_troop_level')),
       current_tg: cap(formData.get('current_tg')),
       t11_units: formData.getAll('t11_units').slice(0, 20).map((v) => cap(v, 100)),
-      mystic_trial_stages: cap(formData.get('mystic_trial_stages')),
+      // Older cached pages still send the legacy name; the value is read as the score.
+      mystic_trial_score: cap(formData.get('mystic_trial_score') ?? formData.get('mystic_trial_stages')),
       total_power: cap(formData.get('total_power')),
       willing_reduce_power: cap(formData.get('willing_reduce_power')),
       passes_required: cap(formData.get('passes_required')),
@@ -162,6 +176,16 @@ export async function POST(request) {
       spending_archetype: cap(formData.get('spending_archetype')),
       main_language: cap(formData.get('main_language')),
     };
+
+    // Verified applicant: the game's values replace whatever the browser sent.
+    let locked = new Set();
+    let markers = verificationMarkers(null);
+    if (snapshot) {
+      const applied = applyVerifiedSnapshot(fields, snapshot);
+      fields = applied.fields;
+      locked = applied.locked;
+      markers = verificationMarkers(snapshot, applied);
+    }
 
     // Every question is required. The server is the authority: it names the
     // first missing answer in plain words.
@@ -175,7 +199,7 @@ export async function POST(request) {
       'highest_troop_level',
       'current_tg',
       't11_units',
-      'mystic_trial_stages',
+      'mystic_trial_score',
       'total_power',
       'willing_reduce_power',
       'passes_required',
@@ -213,6 +237,7 @@ export async function POST(request) {
 
     // Numbers: parsed, range-checked and stored as plain digits.
     for (const key of Object.keys(NUMERIC_RULES)) {
+      if (locked.has(key)) continue; // read from the game, not typed
       const checked = validateNumericAnswer(key, fields[key]);
       if (!checked.ok) {
         return NextResponse.json({ error: checked.error || 'Please check the numbers.', field: key }, { status: 400 });
@@ -251,18 +276,43 @@ export async function POST(request) {
       doc = existing || null;
     }
 
-    const id = doc?.id || randomUUID();
+    // Same player, same intake window: the latest application replaces the
+    // earlier one (see lib/interestApplication.mjs). An unverified submission
+    // never overwrites a verified one.
+    let id = doc?.id || '';
+    let resubmitted = false;
     if (!doc) {
-      await coll.insertOne({
-        id,
-        ...fields,
-        ...(clientRequestId ? { client_request_id: clientRequestId } : {}),
-        screenshot_urls: [],
-        screenshot_files: [],
-        screenshot_state: 'pending',
-        status: 'pending',
-        created_at: new Date(),
+      const { target, duplicateOf } = await findResubmitTarget(coll, {
+        playerId: fields.player_id,
+        periodId: fields.intake_period_id,
+        verified: markers.verified,
       });
+      const now = new Date();
+      if (target) {
+        id = target.id;
+        resubmitted = true;
+        await coll.updateOne(
+          { _id: target._id },
+          buildOverwriteUpdate(target, { fields, markers, clientRequestId, duplicateOf, now })
+        );
+      } else {
+        id = randomUUID();
+        await coll.insertOne({
+          id,
+          ...fields,
+          ...markers,
+          ...(clientRequestId ? { client_request_id: clientRequestId } : {}),
+          ...(duplicateOf ? { unverified_duplicate_of: duplicateOf } : {}),
+          screenshot_urls: [],
+          screenshot_files: [],
+          screenshot_state: 'pending',
+          status: 'pending',
+          created_at: now,
+          first_submitted_at: now,
+          updated_at: now,
+          resubmitted_count: 0,
+        });
+      }
     }
 
     // Screenshots go to Google Drive (K710 Website/Applications/<Player ID>/).
@@ -274,7 +324,7 @@ export async function POST(request) {
     if (stored.driveWorked) scheduleWaitingRetry(coll);
 
     const reference = 'K710-' + String(id).replace(/-/g, '').slice(0, 8).toUpperCase();
-    return NextResponse.json({ ok: true, reference });
+    return NextResponse.json({ ok: true, reference, verified: markers.verified, resubmitted });
   } catch (error) {
     console.error('interest submission failed', error);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
