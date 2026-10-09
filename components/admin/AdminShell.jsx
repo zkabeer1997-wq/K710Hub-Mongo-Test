@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ADMIN_NAV, isNavActive, navBadge, visibleNav } from './adminNav';
 import { useAdminEmbedded } from './adminEmbed';
 import StackTableLabels from '../ui/StackTableLabels';
-import LanguageSwitcher from '../i18n/LanguageSwitcher';
 
 const SIDEBAR_KEY = 'k710-admin-sidebar-collapsed';
 const SECTIONS_KEY = 'k710-admin-nav-groups';
@@ -234,7 +233,6 @@ function FullShell({ title, subtitle, actions, meta, counters = [], onLogout, ch
       {/* Rendering the header switcher here also hides the floating language
           button (app/i18n.css: body:has(.lang-switch)), so it no longer covers
           the page's Save bar. */}
-      <LanguageSwitcher className="admin-sidebar-lang" showLabel />
       <Link href="/" className="admin-sidebar-view-site">View site</Link>
       <button type="button" className="admin-sidebar-logout" onClick={handleLogout}>Log out</button>
     </div>

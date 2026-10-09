@@ -9,32 +9,33 @@ import { withResults } from '../lib/memberResults.mjs';
 import UtcClock from './member/UtcClock';
 import FormStatusMark from './member/FormStatusMark';
 import LanguageSwitcher from './i18n/LanguageSwitcher';
+import { useT } from './i18n/LanguageProvider';
 import EasyViewToggle from './EasyViewToggle';
 
 const NAV_ITEMS = [
-  { type: 'link', href: '/', label: 'Home' },
+  { type: 'link', href: '/', labelKey: 'chrome.nav.home' },
   {
     type: 'group',
     id: 'about',
-    label: 'About',
+    labelKey: 'chrome.nav.about',
     children: [
-      { href: '/about', label: 'About Kingdom 710' },
-      { href: '/timeline', label: 'Release Timeline' },
-      { href: '/gallery', label: 'Gallery' },
-      { href: '/glossary', label: 'Glossary' },
+      { href: '/about', labelKey: 'chrome.nav.aboutKingdom' },
+      { href: '/timeline', labelKey: 'chrome.nav.timeline' },
+      { href: '/gallery', labelKey: 'chrome.nav.gallery' },
+      { href: '/glossary', labelKey: 'chrome.nav.glossary' },
     ],
   },
-  { type: 'link', href: '/guides', label: 'Guides' },
-  { type: 'link', href: '/help', label: 'Help' },
+  { type: 'link', href: '/guides', labelKey: 'chrome.nav.guides' },
+  { type: 'link', href: '/help', labelKey: 'chrome.nav.help' },
   {
     type: 'group',
     id: 'members',
-    label: 'Members',
+    labelKey: 'chrome.nav.members',
     children: [
-      { href: '/dashboard', label: 'Dashboard' },
-      { href: '/forms', label: 'Forms' },
-      { href: '/tools', label: 'Tools' },
-      { href: '/events', label: 'Events' },
+      { href: '/dashboard', labelKey: 'chrome.nav.dashboard' },
+      { href: '/forms', labelKey: 'chrome.nav.forms' },
+      { href: '/tools', labelKey: 'chrome.nav.tools' },
+      { href: '/events', labelKey: 'chrome.nav.events' },
     ],
   },
 ];
@@ -44,11 +45,11 @@ const NAV_ITEMS = [
 function membersChildren(base, status) {
   if (status?.signedIn && !status.forms?.length) return base;
   if (!status?.signedIn) {
-    return base.flatMap((c) => (c.href === '/forms' ? [{ href: '/power-profile', label: 'Power Profile' }, c] : [c]));
+    return base.flatMap((c) => (c.href === '/forms' ? [{ href: '/power-profile', labelKey: 'chrome.nav.powerProfile' }, c] : [c]));
   }
   return [
     ...base,
-    { separator: true, label: 'My forms' },
+    { separator: true, labelKey: 'chrome.nav.myForms' },
     ...withResults(status.forms, status.results).map((f) => (f.kind === 'result'
       ? { href: f.href, label: f.shortLabel, status: { badge: 'Result', state: 'result' } }
       : { href: f.href, label: f.shortLabel, status: f })),
@@ -79,6 +80,7 @@ function isHoverCapable() {
 const HOVER_CLOSE_DELAY_MS = 150;
 
 function NavDropdown({ item, pathname, openGroup, setOpenGroup, memberStatus }) {
+  const t = useT();
   const isOpen = openGroup === item.id;
   const children = item.id === 'members' ? membersChildren(item.children, memberStatus) : item.children;
   const links = children.filter((child) => !child.separator);
@@ -180,15 +182,15 @@ function NavDropdown({ item, pathname, openGroup, setOpenGroup, memberStatus }) 
         }}
         onKeyDown={handleTriggerKeyDown}
       >
-        {item.label}
+        {t(item.labelKey)}
         {groupPending && (<><span className="form-status-dot" aria-hidden="true" /><span className="sr-only">: forms not submitted</span></>)}
         {' '}<span className="site-nav-group-caret" aria-hidden="true">▾</span>
       </button>
       {isOpen && (
-        <div className="site-nav-group-menu" role="menu" ref={menuRef} aria-label={item.label}>
+        <div className="site-nav-group-menu" role="menu" ref={menuRef} aria-label={t(item.labelKey)}>
           {children.map((child) => {
             if (child.separator) {
-              return <span key={`sep-${child.label}`} className="site-nav-group-label" role="presentation">{child.label}</span>;
+              return <span key={`sep-${child.labelKey}`} className="site-nav-group-label" role="presentation">{t(child.labelKey)}</span>;
             }
             const index = links.indexOf(child);
             return (
@@ -203,7 +205,7 @@ function NavDropdown({ item, pathname, openGroup, setOpenGroup, memberStatus }) 
                 aria-current={isActivePath(pathname, child.href) ? 'page' : undefined}
                 onClick={() => setOpenGroup(null)}
               >
-                <span>{child.label}</span>
+                <span>{child.labelKey ? t(child.labelKey) : child.label}</span>
                 <FormStatusMark status={child.status} />
               </Link>
             );
@@ -224,6 +226,7 @@ export default function SiteHeader() {
   const mobileRef = useRef(null);
   const headerRef = useRef(null);
   const { status: memberStatus } = useMemberFormStatus(pathname);
+  const t = useT();
 
   // Close the mobile menu on route change.
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -304,11 +307,11 @@ export default function SiteHeader() {
                 className={isActivePath(pathname, item.href) ? 'active' : ''}
                 aria-current={isActivePath(pathname, item.href) ? 'page' : undefined}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
-          <Link href="/interest" className="site-nav-cta">Apply</Link>
+          <Link href="/interest" className="site-nav-cta">{t('chrome.nav.apply')}</Link>
           <Link
             href={SUPPORT_URL}
             target="_blank"
@@ -317,7 +320,7 @@ export default function SiteHeader() {
             title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
             aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
           >
-            ☕ Donate
+            ☕ {t('chrome.nav.donate')}
           </Link>
         </nav>
 
@@ -331,7 +334,7 @@ export default function SiteHeader() {
           className="site-nav-toggle"
           aria-expanded={open}
           aria-controls="site-nav-mobile"
-          aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-label={open ? t('chrome.menu.close') : t('chrome.menu.open')}
           onClick={() => setOpen((v) => !v)}
         >
           <span className="site-nav-toggle-bars" aria-hidden="true">
@@ -339,7 +342,7 @@ export default function SiteHeader() {
             <span />
             <span />
           </span>
-          <span className="site-nav-toggle-label">Menu</span>
+          <span className="site-nav-toggle-label">{t('chrome.menu')}</span>
         </button>
       </div>
 
@@ -355,9 +358,9 @@ export default function SiteHeader() {
               const groupActive = kids.some((child) => !child.separator && isActivePath(pathname, child.href));
               return (
                 <div key={item.id} className="site-nav-mobile-group">
-                  <span className={`site-nav-mobile-heading${groupActive ? ' active' : ''}`}>{item.label}</span>
+                  <span className={`site-nav-mobile-heading${groupActive ? ' active' : ''}`}>{t(item.labelKey)}</span>
                   {kids.map((child) => child.separator ? (
-                    <span key={`sep-${child.label}`} className="site-nav-group-label">{child.label}</span>
+                    <span key={`sep-${child.labelKey}`} className="site-nav-group-label">{t(child.labelKey)}</span>
                   ) : (
                     <Link
                       key={child.href}
@@ -365,7 +368,7 @@ export default function SiteHeader() {
                       onClick={() => setOpen(false)}
                       className={isActivePath(pathname, child.href) ? 'active' : ''}
                     >
-                      <span>{child.label}</span>
+                      <span>{child.labelKey ? t(child.labelKey) : child.label}</span>
                       <FormStatusMark status={child.status} />
                     </Link>
                   ))}
@@ -379,11 +382,11 @@ export default function SiteHeader() {
                 onClick={() => setOpen(false)}
                 className={isActivePath(pathname, item.href) ? 'active' : ''}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
-          <Link href="/interest" onClick={() => setOpen(false)} className="site-nav-cta">Apply</Link>
+          <Link href="/interest" onClick={() => setOpen(false)} className="site-nav-cta">{t('chrome.nav.apply')}</Link>
           <Link
             href={SUPPORT_URL}
             target="_blank"
@@ -393,7 +396,7 @@ export default function SiteHeader() {
             title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
             aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
           >
-            ☕ Donate
+            ☕ {t('chrome.nav.donate')}
           </Link>
         </nav>
         </>

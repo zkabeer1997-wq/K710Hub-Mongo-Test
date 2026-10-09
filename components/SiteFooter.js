@@ -1,41 +1,45 @@
+'use client';
+
 import Link from 'next/link';
 import { SUPPORT_URL } from '../lib/supportLink';
+import { useT } from './i18n/LanguageProvider';
 
 // Mirrors the top-nav structure in SiteHeader.js: the standalone links
 // (Home, Guides, Apply) plus the About and Members dropdown groups, each
 // presented under a small heading. The Admin link is intentionally absent.
 const FOOTER_GROUPS = [
   {
-    heading: 'Explore',
+    heading: 'footer.group.explore',
     links: [
-      { href: '/', label: 'Home' },
-      { href: '/guides', label: 'Guides' },
-      { href: '/interest', label: 'Apply' },
-      { href: '/help', label: 'Help' },
+      { href: '/', label: 'footer.link.home' },
+      { href: '/guides', label: 'footer.link.guides' },
+      { href: '/interest', label: 'footer.link.apply' },
+      { href: '/help', label: 'footer.link.help' },
     ],
   },
   {
-    heading: 'About',
+    heading: 'footer.group.about',
     links: [
-      { href: '/about', label: 'About' },
-      { href: '/timeline', label: 'Release Timeline' },
-      { href: '/gallery', label: 'Gallery' },
-      { href: '/glossary', label: 'Glossary' },
+      { href: '/about', label: 'footer.link.about' },
+      { href: '/timeline', label: 'footer.link.timeline' },
+      { href: '/gallery', label: 'footer.link.gallery' },
+      { href: '/glossary', label: 'footer.link.glossary' },
     ],
   },
   {
-    heading: 'Members',
+    heading: 'footer.group.members',
     links: [
-      { href: '/dashboard', label: 'Dashboard' },
-      { href: '/power-profile', label: 'Power Profile' },
-      { href: '/forms', label: 'Forms' },
-      { href: '/tools', label: 'Tools' },
-      { href: '/events', label: 'Events' },
+      { href: '/dashboard', label: 'footer.link.dashboard' },
+      { href: '/power-profile', label: 'footer.link.power' },
+      { href: '/forms', label: 'footer.link.forms' },
+      { href: '/tools', label: 'footer.link.tools' },
+      { href: '/events', label: 'footer.link.events' },
     ],
   },
 ];
 
 export default function SiteFooter() {
+  const t = useT();
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
@@ -44,19 +48,19 @@ export default function SiteFooter() {
             <path d="M20 3 L35 8 V19 C35 28 29 34 20 37 C11 34 5 28 5 19 V8 Z" stroke="currentColor" strokeWidth="1.6" />
           </svg>
           <div>
-            <span className="site-footer-name">Kingdom 710</span>
-            <span className="site-footer-tag">Three alliances. One kingdom. KvK-first.</span>
+            <span className="site-footer-name">{t('footer.name')}</span>
+            <span className="site-footer-tag">{t('footer.tag')}</span>
           </div>
         </div>
 
-        <nav className="site-footer-nav" aria-label="Footer">
+        <nav className="site-footer-nav" aria-label={t('footer.nav.aria')}>
           {FOOTER_GROUPS.map((group) => (
             <div className="site-footer-group" key={group.heading}>
-              <h2 className="site-footer-group-heading">{group.heading}</h2>
+              <h2 className="site-footer-group-heading">{t(group.heading)}</h2>
               <ul>
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href}>{link.label}</Link>
+                    <Link href={link.href}>{t(link.label)}</Link>
                   </li>
                 ))}
               </ul>
@@ -69,10 +73,10 @@ export default function SiteFooter() {
           target="_blank"
           rel="noopener noreferrer"
           className="site-footer-support"
-          title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
-          aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
+          title={t('footer.donate.aria')}
+          aria-label={t('footer.donate.aria')}
         >
-          ☕ Donate to K710 Hub
+          {t('footer.donate')}
         </Link>
       </div>
     </footer>

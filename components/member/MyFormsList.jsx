@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Icon from '../ui/icons';
-import { dashT as t } from './dashboardCopy.mjs';
+import { useLanguage } from '../i18n/LanguageProvider';
 import { FORM_PLAIN } from '../../lib/memberForms.mjs';
 import { resultSeenKey, isResultNew } from '../../lib/memberResults.mjs';
 import {
@@ -113,7 +113,7 @@ function FormRow({ form, language, t }) {
 // "My forms": exactly the four member forms (numbered, fixed order) while their gates are open, then an
 // "Also open now" strip (event votes + appointment results), then Power Profile as its own optional row.
 export default function MyFormsList({ status, loaded }) {
-  const language = undefined; // browser locale for dates
+  const { t, language } = useLanguage();
   const home = buildHome(status);
   const signedOut = !status?.signedIn || status?.degraded;
   const nothing = home.cards.length === 0 && home.extras.length === 0 && home.results.length === 0;
@@ -122,7 +122,7 @@ export default function MyFormsList({ status, loaded }) {
     <div className={styles.formsCol}>
       <section className={styles.panel} aria-labelledby="my-forms-title">
         <div className={styles.panelHead}>
-          <h2 id="my-forms-title">My forms{home.left > 0 ? <span> · {home.left} to do</span> : null}</h2>
+          <h2 id="my-forms-title">{t('dash.myForms')}{home.left > 0 ? <span> · {t('dash.todoCount', { count: home.left })}</span> : null}</h2>
           <Link href="/forms" className={styles.textLink}>{t('dash.more.allForms')}</Link>
         </div>
         {!loaded ? (

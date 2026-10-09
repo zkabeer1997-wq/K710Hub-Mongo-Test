@@ -13,8 +13,10 @@ import { Cinzel, Inter, JetBrains_Mono, Cormorant_Garamond, Fraunces } from 'nex
 import LanguageProvider from '../components/i18n/LanguageProvider';
 import BearScheduleProvider from '../components/BearScheduleProvider';
 import SiteChrome from '../components/SiteChrome';
-import FilipinoTagalogOptions from '../components/i18n/FilipinoTagalogOptions';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
+import { normalizeLanguage, getLanguage, LANGUAGE_COOKIE, DEFAULT_LANGUAGE } from '../lib/i18n/languages.mjs';
+import { loadMessages } from '../lib/i18n/catalog';
+import { engineFor, resolveEndpoint } from '../lib/i18n/catalogTools.mjs';
 import { SITE_URL } from '../lib/siteUrl';
 import { ToastProvider } from '../components/ui/Toast';
 import GlossaryProvider from '../components/GlossaryProvider';
@@ -44,12 +46,16 @@ export default async function RootLayout({ children }) {
   // stamp the per-request CSP nonce (set in proxy.js) onto its inline scripts.
   await headers();
   const glossaryTerms = await getGlossaryOverride();
+  // The visitor's saved language (cookie) makes the very first render already translated.
+  const cookieStore = await cookies();
+  const langCode = normalizeLanguage(cookieStore.get(LANGUAGE_COOKIE)?.value) || DEFAULT_LANGUAGE;
+  const language = getLanguage(langCode);
+  const initialMessages = await loadMessages(langCode);
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
+    <html lang={language.code === 'zh' ? 'zh-Hans' : language.code} dir={language.dir} data-scroll-behavior="smooth" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
       <body className="theme-console">
         <ToastProvider>
-          <LanguageProvider>
-            <FilipinoTagalogOptions />
+          <LanguageProvider initialLanguage={langCode} initialMessages={initialMessages} engine={engineFor(resolveEndpoint())}>
             <GlossaryProvider terms={glossaryTerms}>
               <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
             </GlossaryProvider>
