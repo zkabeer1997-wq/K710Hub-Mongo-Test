@@ -77,6 +77,8 @@
   "dash.allDone": { "text": "You're all caught up.", "note": "Calm message when every open form is done." },
   "dash.allDoneHint": { "text": "You can still change your answers any time while a form is open.", "note": "Second line under 'all caught up'." },
   "dash.nothingOpen": { "text": "Nothing to fill in right now. Check back when leadership opens a form.", "note": "Shown when no form is open. 'Leadership' means the kingdom's officers." },
+  "dash.myForms": { "text": "My forms", "note": "Heading of the forms card on the member dashboard." },
+  "dash.todoCount": { "text": "{count} to do", "note": "Small count after the My forms heading, for example 2 to do. {count} is a number." },
   "dash.formsHeading": { "text": "Your forms", "note": "Heading above the numbered list of form cards." },
   "dash.alsoOpen": { "text": "Also open now", "note": "Heading above short rows for extra forms (event votes) that are open." },
   "dash.loading": { "text": "Loading your forms…", "note": "Shown while the list of forms loads." },

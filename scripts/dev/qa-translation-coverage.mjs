@@ -53,14 +53,14 @@ function snapshotInPage() {
   while (node) {
     const text = node.data.replace(/\s+/g, ' ').trim();
     const el = node.parentElement;
-    if (text && el && !el.closest(SKIP) && visible(el) && !el.closest('.rt-status-wrap')) out.push({ kind: 'text', text, where: el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '') });
+    if (text && el && !el.closest(SKIP) && visible(el) && !el.closest('.rt-status-wrap')) out.push({ kind: 'text', applied: !!(window.__k710i18n && window.__k710i18n.isApplied(node)), text, where: el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '') });
     node = walker.nextNode();
   }
   for (const el of document.querySelectorAll('[placeholder],[title],[aria-label],img[alt]')) {
     if (el.closest(SKIP) || el.closest('.rt-status-wrap')) continue;
     for (const attr of ['placeholder', 'title', 'aria-label', 'alt']) {
       const v = el.getAttribute(attr);
-      if (v && v.trim()) out.push({ kind: attr, text: v.replace(/\s+/g, ' ').trim(), where: el.tagName.toLowerCase() });
+      if (v && v.trim()) out.push({ kind: attr, applied: !!(window.__k710i18n && window.__k710i18n.isApplied_attr(el, attr)), text: v.replace(/\s+/g, ' ').trim(), where: el.tagName.toLowerCase() });
     }
   }
   return out;
@@ -136,7 +136,7 @@ export async function main() {
       await page.waitForTimeout(400);
       const snap = await page.evaluate(snapshotInPage);
       const translatable = await page.evaluate((items) => items.map((i) => !!window.__k710i18n?.isTranslatable(i.text)), snap);
-      const still = snap.filter((item, i) => translatable[i] && englishSet.has(item.text));
+      const still = snap.filter((item, i) => translatable[i] && !item.applied && englishSet.has(item.text));
       const stats = await page.evaluate(() => window.__k710i18n?.stats() || { nodes: 0, attrs: 0 });
       const meta = await page.evaluate(() => ({ lang: document.documentElement.lang, dir: document.documentElement.dir, title: document.title }));
       const total = snap.filter((_, i) => translatable[i]).length;

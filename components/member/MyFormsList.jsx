@@ -122,7 +122,7 @@ export default function MyFormsList({ status, loaded }) {
     <div className={styles.formsCol}>
       <section className={styles.panel} aria-labelledby="my-forms-title">
         <div className={styles.panelHead}>
-          <h2 id="my-forms-title">My forms{home.left > 0 ? <span> · {home.left} to do</span> : null}</h2>
+          <h2 id="my-forms-title">{t('dash.myForms')}{home.left > 0 ? <span> · {t('dash.todoCount', { count: home.left })}</span> : null}</h2>
           <Link href="/forms" className={styles.textLink}>{t('dash.more.allForms')}</Link>
         </div>
         {!loaded ? (

@@ -81,6 +81,8 @@ export default function TranslationOverlay({ lang, messages, engine = 'google', 
         .map((u) => ({ key: u.key, kind: u.kind, attr: u.attr || null, tag: u.el?.tagName || null })),
       busy: () => window.__k710i18nBusy === true,
       stats: () => ({ nodes: stateRef.current.nodes.size, attrs: [...stateRef.current.attrs.values()].reduce((n, m) => n + m.size, 0) }),
+      isApplied: (node) => { const t = stateRef.current.nodes.get(node); return Boolean(t && node.data === t.applied); },
+      isApplied_attr: (el, attr) => { const t = stateRef.current.attrs.get(el)?.get(attr); return Boolean(t && el.getAttribute(attr) === t.applied); },
       isTranslatable: (text) => isTranslatableText(text, { glossaryRe }),
     };
     return () => { delete window.__k710i18n; };
