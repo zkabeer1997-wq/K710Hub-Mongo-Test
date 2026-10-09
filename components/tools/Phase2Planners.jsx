@@ -13,6 +13,16 @@ import {
   GOVERNOR_GEAR_LEVELS,
 } from "../../lib/phase2Data.mjs";
 import { useToolPersistence } from "../../lib/useToolPersistence";
+import { useProfileSeed } from "../../lib/useProfileSeed";
+import {
+  applyProfileCharms,
+  applyProfileGearToRows,
+  profileCharmsDiffer,
+  profileGearDiffers,
+  profileHasCharms,
+  profileHasGear,
+} from "../../lib/profileToTools.mjs";
+import ProfileSeedNotice from "./ProfileSeedNotice";
 import {
   DataLabel,
   FirstUseGuide,
@@ -261,6 +271,14 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
     restore,
     autoDetect: true,
   });
+  const profileSeed = useProfileSeed({
+    toolKey,
+    enabled: persistence.status !== "loading",
+    save: persistence.saveNow,
+    hasValues: (profile) => profileHasCharms(profile.charms),
+    differs: (profile) => profileCharmsDiffer(inputs.charms, profile.charms),
+    apply: (profile) => setInputs((current) => ({ ...current, charms: applyProfileCharms(current.charms, profile.charms) })),
+  });
   const charmCosts = packConfiguration?.costs || CHARM_COSTS;
   const ranked = useMemo(
     () =>
@@ -307,6 +325,7 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <ProfileSeedNotice seed={profileSeed} what="charm levels" />
         <PlannerGuide
           toolKey="governor-charm-stats"
           steps={[
@@ -940,6 +959,14 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
     restore,
     autoDetect: true,
   });
+  const profileSeed = useProfileSeed({
+    toolKey,
+    enabled: persistence.status !== "loading",
+    save: persistence.saveNow,
+    hasValues: (profile) => profileHasGear(profile.governor_gear),
+    differs: (profile) => profileGearDiffers(rows, profile.governor_gear),
+    apply: (profile) => setRows((current) => applyProfileGearToRows(current, profile.governor_gear)),
+  });
   const plan = useMemo(
     () => calculateGovernorGearPlan(rows, inputs),
     [rows, inputs],
@@ -958,6 +985,7 @@ export function GovernorGearPlanner({ toolKey = "governor-gear" }) {
     <div className={styles.workspace}>
       <section className={styles.panel}>
         <SaveState persistence={persistence} />
+        <ProfileSeedNotice seed={profileSeed} what="Governor Gear tiers" />
         <PlannerGuide
           toolKey="governor-gear"
           steps={[

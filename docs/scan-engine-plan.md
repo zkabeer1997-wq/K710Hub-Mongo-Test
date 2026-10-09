@@ -229,7 +229,14 @@ are in components/loadout/ (ScanLauncher, ScanReview); the image is decoded in t
 `npm run scan:eval` reports per-field accuracy over the labelled images; the honest charm figure is the leave-one-image-out one
 from `npm run scan:charms:eval`.
 
-Open: what the `P1` / `P2` tier labels on some tiles mean (reader returns no tier for them); T5/T6 and blue/green frames
-have no real example; charm levels 1 and 18-22 are art-only; no server endpoint or correction storage yet (corrections
-are produced in memory by the review step); the Flamedragon form still uses the old third-party scanner; hero_gear and
+Open: T5/T6 and blue/green frames
+have no real example; charm levels 1 and 18-22 are art-only; hero_gear and
 backpack_inventory scanners are not started.
+
+## Update 5: saved to the profile, old scanner removed
+
+- `P1` / `P2` labels are T1 / T2 (owner confirmed).
+- The old third-party scanner is gone: component, `/api/governor-gear-ocr`, `lib/charmVisionClient.js`, `lib/charmLevelGeometry.mjs`, and its use on the Flamedragon form.
+- "Use these values" on the review screen now saves straight into the member's power profile (`POST /api/power-profile/loadout`, same
+  sign-in and form-gate rules as the profile; only `governor_gear` and `charms` are written) and keeps the corrections per member in
+  `scan_corrections` (read value vs chosen value; never the image). Tools and calculators start from the saved profile (see the tools notes in the changelog of this change).

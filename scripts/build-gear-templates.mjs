@@ -78,7 +78,8 @@ const meanOf = (list) => { const m = new Float32Array(LABEL_W * LABEL_H); for (c
 const classes = [];
 for (const id of ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'P1', 'P2']) {
   const hasReal = byClass.has(id);
-  if (hasReal) classes.push({ id, tier: id[0] === 'T' ? Number(id.slice(1)) : null, source: 'real', hasReal, mean: meanOf(byClass.get(id)), n: byClass.get(id).length });
+  // "P1" / "P2" are T1 / T2 drawn with a P (owner confirmed): own glyph template, same tier
+  if (hasReal) classes.push({ id, tier: Number(id.slice(1)), source: 'real', hasReal, mean: meanOf(byClass.get(id)), n: byClass.get(id).length });
   if (id[0] !== 'T') continue;
   // art template for every tier too: crisp captures (e.g. straight device screenshots) look more like the art
   const list = art.filter((x) => x.tier === Number(id.slice(1))).map((x) => x.f.label.mask);

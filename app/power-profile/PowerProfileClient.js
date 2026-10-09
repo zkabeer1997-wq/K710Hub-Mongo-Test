@@ -77,6 +77,7 @@ function PowerProfileForm({ identity, intro }) {
   // Wizard-only UI state. Never read by handleSubmit and never sent to the
   // API - purely for the stepper/progress bar and the save-status line.
   const [dirty, setDirty] = useState(false);
+  const [scanSaveMsg, setScanSaveMsg] = useState('');
   const [errors, setErrors] = useState([]);
   const [errorSignal, setErrorSignal] = useState(0);
   const headingRefs = useRef([]);
@@ -193,6 +194,31 @@ function PowerProfileForm({ identity, intro }) {
       return next;
     });
     setDirty(true);
+  }
+
+  // "Use these values" on the scan review: the values (corrected or confirmed by the player) go straight into the
+  // saved profile so tools and calculators see them, and the corrections are kept for improving the reader.
+  async function saveScanned({ corrections = [], gear = {}, charms: nextCharms = {} } = {}) {
+    const wasDirty = dirty;
+    const gearStr = serializeGovernorGearSelections({ ...governorGear, ...gear });
+    const charmStr = serializeCharmSelections({ ...charms, ...nextCharms });
+    setScanSaveMsg('Saving your gear and charms to your profile...');
+    try {
+      const response = await fetch('/api/power-profile/loadout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ governor_gear: gearStr, charms: charmStr, corrections }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setScanSaveMsg(result.error || 'Could not save to your profile. Your values are on the board: press Save to keep them.');
+        return;
+      }
+      if (!wasDirty) setDirty(false);
+      setScanSaveMsg('Saved to your profile. Tools and calculators will now start from these gear and charm levels.');
+    } catch {
+      setScanSaveMsg('Could not save to your profile. Your values are on the board: press Save to keep them.');
+    }
   }
 
   function clearLoadout() {
@@ -373,12 +399,14 @@ function PowerProfileForm({ identity, intro }) {
               <p>Set the quality, tier and stars of each gear piece and the level of its three charms.</p>
             </div>
             {statusLine && <p className="save-status-line" aria-live="polite">{statusLine}</p>}
+            {scanSaveMsg && <p className="save-status-line" role="status" aria-live="polite">{scanSaveMsg}</p>}
             <LoadoutEditor
               gear={governorGear}
               charms={charms}
               onGearChange={updateGovernorGear}
               onCharmChange={updateCharm}
               onClear={clearLoadout}
+              onScanApplied={saveScanned}
             />
             <div className="wizard-nav">
               <button type="button" className="wizard-back" onClick={() => goToStep(0)}>Back</button>
