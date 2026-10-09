@@ -1,0 +1,8 @@
+/* Required troop tier + TG selects: the field wrapper takes the flex slot the bare label had, and the
+   inline error sits under its select (text, with an "Error:" prefix from .field-error, never colour only). */
+.unit-card .row > .troop-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.troop-required-mark { color: var(--text-muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+html[data-easy="true"] .troop-required-mark { font-size: 16px; }
+.troop-required-note { margin: 0 0 10px; color: var(--text-muted); font-size: 13px; }
+.troop-saved-note { margin: 10px 0 0; color: var(--text-muted); font-size: 13px; }
+html[data-easy="true"] .troop-required-note, html[data-easy="true"] .troop-saved-note, html[data-easy="true"] .unit-card .field-error { font-size: 16px; }

@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { KVK_ALLIANCES, KVK_AVAILABILITY_OPTIONS } from '../../lib/playerCombatOptions.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
-import { TROOP_FIELD_KEYS } from '../../lib/kvkAvailability.mjs';
+import { TROOP_FIELD_KEYS, troopFieldErrors } from '../../lib/kvkAvailability.mjs';
 import UpsertNotice from '../../components/member/UpsertNotice';
-import { HeroRosterPicker, TroopLevelFields } from '../../components/member/TroopHeroFields';
+import { HeroRosterPicker, TroopLevelFields, troopFieldId } from '../../components/member/TroopHeroFields';
 import IdentityFields from '../../components/member/IdentityFields';
 
 const AVAILABILITY_OPTIONS = KVK_AVAILABILITY_OPTIONS;
@@ -20,6 +20,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
   const [availability, setAvailability] = useState('');
   const [currentAlliance, setCurrentAlliance] = useState(identity?.alliance || '');
   const [troops, setTroops] = useState(() => Object.fromEntries(TROOP_FIELD_KEYS.map((key) => [key, ''])));
+  const [troopErrors, setTroopErrors] = useState({});
   const [heroes, setHeroes] = useState([]);
   // Where the troop/hero starting values came from, when not this cycle's saved answer.
   const [troopSource, setTroopSource] = useState(null);
@@ -82,6 +83,16 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
       setStatus('Enter your name and select alliance and availability.');
       return;
     }
+    // Troop tier + TG are required for every troop type: flag each blank select and focus the first.
+    const errors = troopFieldErrors(troops);
+    setTroopErrors(errors);
+    const firstInvalid = TROOP_FIELD_KEYS.find((key) => errors[key]);
+    if (firstInvalid) {
+      setIsError(true);
+      setStatus('Choose a tier and TG for Infantry, Cavalry and Archer before saving. See the messages marked Error.');
+      document.getElementById(troopFieldId(firstInvalid))?.focus();
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch('/api/kvk-availability', {
@@ -116,7 +127,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
         <h1>{intro.heading}</h1>
         <p>{intro.description}</p>
       </section>
-      <form className="public-form-card" onSubmit={handleSubmit}>
+      <form className="public-form-card" onSubmit={handleSubmit} noValidate>
         <div className="form-section-header">
           <span>KvK Availability</span>
           <h2>Tell us when you can play and what you are bringing.</h2>
@@ -176,7 +187,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
             known
             prefillOnly
             previousLabel={troopSource.kind === 'previous' ? troopSource.label : null}
-            fromLabel={troopSource.kind === 'profile' ? 'your Power Profile' : null}
+            fromLabel={troopSource.kind === 'profile' ? 'your saved profile' : null}
           />
         )}
         <section className="troop-section public-section">
@@ -185,9 +196,19 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
             <h3>Troop levels</h3>
             <p>Choose the best tier and TG for each troop type, as they stand for this KvK.</p>
           </div>
+          <p className="troop-required-note">Tier and TG are required for Infantry, Cavalry and Archer. They are remembered on your profile and filled in for you next time.</p>
           <TroopLevelFields
             values={troops}
-            onChange={(key, value) => setTroops((current) => ({ ...current, [key]: value }))}
+            errors={troopErrors}
+            onChange={(key, value) => {
+              setTroops((current) => ({ ...current, [key]: value }));
+              setTroopErrors((current) => {
+                if (!current[key]) return current;
+                const rest = { ...current };
+                delete rest[key];
+                return rest;
+              });
+            }}
           />
         </section>
         <section className="troop-section public-section">
@@ -202,7 +223,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
             onToggle={(hero) => setHeroes((current) => (current.includes(hero) ? current.filter((h) => h !== hero) : [...current, hero]))}
           />
         </section>
-        {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
+        {status && <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>{status}</div>}
         <button type="submit" disabled={loading}>
           {loading ? 'Submitting...' : 'Save KvK Availability'}
         </button>

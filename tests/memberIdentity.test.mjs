@@ -50,6 +50,7 @@ const reset = () => { for (const k of Object.keys(state.tables)) delete state.ta
 const rows = (t) => state.tables[t] || [];
 const FRESH = () => { reset(); state.tables.kingshot_users = [{ player_id: ME, nickname: 'Test Fresh', alliance_abbr: '710' }]; };
 
+const SIX = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7' }; // troop tier + TG are required on both member forms
 test('identity: a real Kingshot nickname wins over saved names', async () => {
   FRESH();
   state.tables[T.POWER_PROFILES] = [{ member_id: ME, name: 'Old Profile', updated_at: new Date() }];
@@ -90,7 +91,7 @@ test('KvK Availability: brand-new member saves; body/query member_id is ignored'
   const data = await get.json();
   assert.equal(data.identity.name, 'Test Fresh');
   assert.equal(data.identity.memberId, ME);
-  const res = await availRoute.POST(req({ name: 'Test Fresh', member_id: OTHER, current_alliance: '710', availability: 'Full battle (12-17 UTC)' }));
+  const res = await availRoute.POST(req({ name: 'Test Fresh', member_id: OTHER, current_alliance: '710', availability: 'Full battle (12-17 UTC)', ...SIX }));
   assert.equal(res.status, 200);
   assert.equal(rows(T.SUBMISSIONS).length, 1);
   assert.equal(rows(T.SUBMISSIONS)[0].member_id, ME);
@@ -115,7 +116,7 @@ test('Flamedragon: brand-new member saves; empty name falls back to the account 
   FRESH();
   const get = await (await dragonRoute.GET(req())).json();
   assert.equal(get.identity.name, 'Test Fresh');
-  const res = await dragonRoute.POST(req({ name: '', member_id: OTHER, current_alliance: '710', availability: 'Full battle (12-17 UTC)' }));
+  const res = await dragonRoute.POST(req({ name: '', member_id: OTHER, current_alliance: '710', availability: 'Full battle (12-17 UTC)', ...SIX }));
   assert.equal(res.status, 200, JSON.stringify(await res.clone().json()));
   const saved = rows(T.FLAMEDRAGON_FORMS);
   assert.equal(saved.length, 1);

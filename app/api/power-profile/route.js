@@ -4,7 +4,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
-import { publicPowerProfile, sanitizePowerProfileInput } from '../../../lib/powerProfiles.mjs';
+import { powerProfileDoneAt, publicPowerProfile, sanitizePowerProfileInput } from '../../../lib/powerProfiles.mjs';
 
 const PUBLIC_PROJECT = {
   member_id: 1,
@@ -37,7 +37,10 @@ export async function GET(request) {
   const memberId = session.memberId;
   try {
     const coll = await getCollection(COLLECTIONS.POWER_PROFILES);
-    const data = await coll.findOne({ member_id: memberId }, { projection: PUBLIC_PROJECT });
+    const stored = await coll.findOne({ member_id: memberId }, { projection: PUBLIC_PROJECT });
+    // The document may only hold troops + heroes remembered from the KvK / Flamedragon forms: that is
+    // not a saved Power Profile, so the page starts blank (and shows no "saved profile" line).
+    const data = powerProfileDoneAt(stored) ? stored : null;
     // `base`: name already known from other forms / the Kingshot profile, for a first-time profile.
     const base = data ? null : await loadMemberBase(memberId);
     return NextResponse.json(
@@ -73,10 +76,12 @@ export async function POST(request) {
   }
   try {
     const coll = await getCollection(COLLECTIONS.POWER_PROFILES);
-    const existing = await coll.findOne(
+    const existingDoc = await coll.findOne(
       { member_id: profile.member_id },
-      { projection: { member_id: 1 } }
+      { projection: { member_id: 1, updated_at: 1, created_at: 1, governor_gear: 1, charms: 1, hero_gear: 1, pet_power: 1, masters_power: 1, mystic_trial_score: 1 } }
     );
+    // A document that only remembers troops from the other forms is not a previously saved profile.
+    const existing = powerProfileDoneAt(existingDoc) ? existingDoc : null;
     const payload = {
       name: profile.name,
       member_id: profile.member_id,
