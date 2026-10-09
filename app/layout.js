@@ -16,6 +16,7 @@ import SiteChrome from '../components/SiteChrome';
 import { headers, cookies } from 'next/headers';
 import { normalizeLanguage, getLanguage, LANGUAGE_COOKIE, DEFAULT_LANGUAGE } from '../lib/i18n/languages.mjs';
 import { loadMessages } from '../lib/i18n/catalog';
+import { engineFor, resolveEndpoint } from '../lib/i18n/catalogTools.mjs';
 import { SITE_URL } from '../lib/siteUrl';
 import { ToastProvider } from '../components/ui/Toast';
 import GlossaryProvider from '../components/GlossaryProvider';
@@ -54,7 +55,7 @@ export default async function RootLayout({ children }) {
     <html lang={language.code === 'zh' ? 'zh-Hans' : language.code} dir={language.dir} data-scroll-behavior="smooth" className={`${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${fraunces.variable}`}>
       <body className="theme-console">
         <ToastProvider>
-          <LanguageProvider initialLanguage={langCode} initialMessages={initialMessages}>
+          <LanguageProvider initialLanguage={langCode} initialMessages={initialMessages} engine={engineFor(resolveEndpoint())}>
             <GlossaryProvider terms={glossaryTerms}>
               <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
             </GlossaryProvider>

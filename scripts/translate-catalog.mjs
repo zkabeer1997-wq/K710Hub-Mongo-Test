@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   diffCatalog, estimateChars, hashText, parseCsv, toCsv, translateKeys,
+  engineFor, redactSecrets, resolveEndpoint,
 } from '../lib/i18n/catalogTools.mjs';
 import { LANGUAGES, NON_ENGLISH } from '../lib/i18n/languages.mjs';
 
@@ -37,6 +38,17 @@ function loadApiKey() {
     for (const line of readFileSync(path.join(ROOT, '.env.local'), 'utf8').split('\n')) {
       const m = line.match(/^GOOGLE_TRANSLATE_API_KEY=(.*)$/);
       if (m) return m[1].replace(/^["']|["']$/g, '').trim();
+    }
+  } catch { /* no .env.local */ }
+  return '';
+}
+
+// GOOGLE_TRANSLATE_ENDPOINT (shell or .env.local) lets QA point this at the mock server.
+function loadEndpoint() {
+  if (process.env.GOOGLE_TRANSLATE_ENDPOINT) return process.env.GOOGLE_TRANSLATE_ENDPOINT;
+  try {
+    for (const line of readFileSync(path.join(ROOT, '.env.local'), 'utf8').split('\n')) {
+      if (line.startsWith('GOOGLE_TRANSLATE_ENDPOINT=')) return line.slice(26).replace(/^["']|["']$/g, '').trim();
     }
   } catch { /* no .env.local */ }
   return '';
@@ -131,6 +143,8 @@ async function main() {
     process.exit(1);
   }
 
+  const endpoint = resolveEndpoint({ GOOGLE_TRANSLATE_ENDPOINT: loadEndpoint() });
+  if (!args.dryRun && engineFor(endpoint) === 'mock') console.log('NOTE: GOOGLE_TRANSLATE_ENDPOINT is not Google. This writes FAKE text into i18n/locales: never commit it.\n');
   let totalChars = 0;
   for (const code of langs) {
     const { meta, strings } = readLocale(code);
@@ -147,7 +161,7 @@ async function main() {
     if (diff.todo.length) {
       const target = LANGUAGES.find((l) => l.code === code).google;
       const result = await translateKeys({
-        keys: diff.todo, source, target, glossary, apiKey,
+        keys: diff.todo, source, target, glossary, apiKey, endpoint,
         onBatch: (n, of) => console.log(`  ${code}: batch ${n}/${of}`),
       });
       Object.assign(next, result.strings);
@@ -170,6 +184,12 @@ async function main() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch((error) => { console.error(error.message); process.exit(1); });
+  main().catch((error) => {
+    console.error(redactSecrets(error.message));
+    if (error.status === 403) console.error('Google refused the key. In Google Cloud > APIs & Services > Credentials, open the key: Application restrictions must be None (a website / HTTP referrer restriction blocks server use) and API restrictions should be Cloud Translation API only. Also check that the Cloud Translation API is enabled and billing is on.');
+    else if (error.status === 400) console.error('Google rejected the request (HTTP 400). If the message above says the key is not valid, check GOOGLE_TRANSLATE_API_KEY.');
+    else if (error.status === 429) console.error('Quota exceeded. Wait a minute or raise the quota in Google Cloud.');
+    process.exit(1);
+  });
 }
 export { main };

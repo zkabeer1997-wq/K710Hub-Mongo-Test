@@ -97,3 +97,18 @@
 }
 .k710-language-head h2 { text-transform: none; letter-spacing: -0.01em; }
 .k710-language-native { justify-self: start; text-align: start; unicode-bidi: plaintext; }
+
+/* ---- Runtime translation status (components/i18n/TranslationOverlay.jsx) ---- */
+.rt-status-wrap { position: fixed; inset-inline: 0; inset-block-end: max(12px, env(safe-area-inset-bottom)); z-index: 880; display: flex; justify-content: center; pointer-events: none; padding-inline: 16px; }
+.rt-status {
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 10px; margin: 0; max-width: min(92vw, 460px);
+  padding: 8px 14px; border-radius: var(--radius-md); border: 1px solid var(--line, rgba(214, 184, 111, 0.28));
+  background: rgba(12, 15, 27, 0.94); color: var(--parchment, #f3ead8);
+  font: 500 13px/1.35 var(--font-body-loaded, system-ui, sans-serif);
+}
+.rt-status-warn { border-color: rgba(230, 150, 90, 0.55); }
+.rt-status-close {
+  min-width: 32px; min-height: 32px; border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; cursor: pointer; font-size: 20px; line-height: 1;
+}
+.rt-status-close:hover { background: rgba(255, 255, 255, 0.08); }
+.rt-status-close:focus-visible { outline: 2px solid var(--gold-hot, #f0c660); outline-offset: 2px; }

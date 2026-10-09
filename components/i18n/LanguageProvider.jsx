@@ -9,6 +9,7 @@ import {
   DEFAULT_LANGUAGE, LANGUAGE_COOKIE, LANGUAGE_STORAGE_KEY, getLanguage, normalizeLanguage,
 } from '../../lib/i18n/languages.mjs';
 import LanguagePicker from './LanguagePicker';
+import TranslationOverlay from './TranslationOverlay';
 
 // "Translate once, ship as files": the page text comes from i18n/en.json plus one lazily loaded
 // locale file (i18n/locales/<code>.json). No in-browser translation, no network call per visitor.
@@ -45,7 +46,7 @@ function writePreference(code) {
   try { document.cookie = `${LANGUAGE_COOKIE}=${code}; Path=/; Max-Age=31536000; SameSite=Lax`; } catch { /* cookies blocked */ }
 }
 
-export default function LanguageProvider({ children, initialLanguage = DEFAULT_LANGUAGE, initialMessages = {} }) {
+export default function LanguageProvider({ children, initialLanguage = DEFAULT_LANGUAGE, initialMessages = {}, engine = 'google' }) {
   const startCode = normalizeLanguage(initialLanguage) || DEFAULT_LANGUAGE;
   const [code, setCode] = useState(startCode);
   const [messages, setMessages] = useState(initialMessages);
@@ -112,6 +113,7 @@ export default function LanguageProvider({ children, initialLanguage = DEFAULT_L
   return (
     <LanguageContext.Provider value={value}>
       {children}
+      <TranslationOverlay lang={code} messages={messages} engine={engine} t={t} />
       {chooserOpen && <LanguagePicker current={code} t={t} onChoose={choose} onClose={closeLanguageChooser} />}
     </LanguageContext.Provider>
   );

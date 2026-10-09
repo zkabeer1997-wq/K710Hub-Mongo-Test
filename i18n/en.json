@@ -1,6 +1,10 @@
 {
   "_readme": "English source catalog. Edit the text here; run `npm run translate` to refresh the other nine languages. Every entry needs a short note for translators. {name} style placeholders must be kept exactly. Plural keys end in .one/.other (and .zero where used).",
 
+  "translate.working": { "text": "Translating…", "note": "Small status shown at the bottom of the screen while the rest of the page is being translated. Keep it very short." },
+  "translate.unavailable": { "text": "Translation is temporarily unavailable. The page stays in English.", "note": "Shown when the automatic translation service cannot be reached." },
+  "translate.dismiss": { "text": "Dismiss", "note": "Screen-reader name of the button that closes the translation notice." },
+
   "lang.button.label": { "text": "Language", "note": "Short label for the language picker button and dialog." },
   "lang.button.aria": { "text": "Language: {language}. Change language", "note": "Screen-reader name of the language button. {language} is the current language's own name, for example Español." },
   "lang.picker.title": { "text": "Choose your language", "note": "Heading of the language picker dialog." },
