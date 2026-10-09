@@ -19,11 +19,11 @@ async function load(file) {
   return { width: info.width, height: info.height, data: new Uint8ClampedArray(data) };
 }
 
-test('gear templates: five frame colours, T1-T6 label templates, P1/P2 recognised but without a tier value', () => {
+test('gear templates: five frame colours, T1-T6 label templates and the P-shaped T1 / T2 glyphs', () => {
   assert.deepEqual(GEAR_TEMPLATES.frames.map((f) => f.quality).sort(), ['blue', 'gold', 'green', 'purple', 'red']);
   const ids = new Set(GEAR_TEMPLATES.labels.map((l) => l.id));
   for (const id of ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'P1', 'P2']) assert.ok(ids.has(id), id);
-  assert.equal(GEAR_TEMPLATES.labels.find((l) => l.id === 'P1').tier, null);
+  assert.deepEqual([GEAR_TEMPLATES.labels.find((l) => l.id === 'P1').tier, GEAR_TEMPLATES.labels.find((l) => l.id === 'P2').tier], [1, 2]);
 });
 
 test('owner art: every one of the 348 gear tiles reads back its quality and tier', async () => {
@@ -53,15 +53,14 @@ test('the two full screenshots: all 12 gear pieces read exactly (quality, tier, 
   }
 });
 
-test('a tile with a label that is not T<n> (P1, P2) gets no tier value and a flag, never a guess', { skip: !haveFixtures }, async () => {
+test('tiles whose label looks like "P1" / "P2" are T1 / T2 on Mythic and Legendary pieces', { skip: !haveFixtures }, async () => {
   const tl = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gear-tier-labels.json'), 'utf8')).labels;
-  const entry = Object.entries(tl).find(([, v]) => v === 'P1');
-  assert.ok(entry);
-  const [file, slot] = entry[0].split(':');
-  const r = readGovernorGear(await load(path.join(FIXTURES, file))).find((x) => x.slot === slot);
-  assert.equal(r.tier.value, null);
-  assert.ok(r.tier.flags.some((f) => f.startsWith('unrecognised_tier_label')));
-  assert.ok(r.tier.confidence < 0.8);
+  const picks = [['P1', 1], ['P2', 2]].map(([cls, tier]) => ({ tier, entry: Object.entries(tl).filter(([, v]) => v === cls).slice(-1)[0] }));
+  for (const { tier, entry } of picks) {
+    const [file, slot] = entry[0].split(':');
+    const r = readGovernorGear(await load(path.join(FIXTURES, file))).find((x) => x.slot === slot);
+    assert.equal(r.tier.value, tier, entry[0]);
+  }
 });
 
 test('engine end to end: a full screenshot gives a schema-valid result with 6 gear pieces and 18 charms', { skip: !haveFixtures }, async () => {

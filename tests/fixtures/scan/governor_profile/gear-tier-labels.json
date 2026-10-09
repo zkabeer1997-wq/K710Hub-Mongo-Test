@@ -1,5 +1,5 @@
 {
- "_note": "Tier label text on the gear tiles of the cropped account images, read BY EYE from clusters of the label crops (G-numbers in the build log). Mixed clusters (two groups with T2/T3 together) are left out. \"none\" = no label shown. Used by scripts/build-gear-templates.mjs to learn how the label looks in real screenshots. The owner has not verified this file yet.",
+ "_note": "Tier label text on the gear tiles of the cropped account images, read BY EYE from clusters of the label crops (G-numbers in the build log). Mixed clusters (two groups with T2/T3 together) are left out. \"none\" = no label shown. Used by scripts/build-gear-templates.mjs to learn how the label looks in real screenshots. The owner has not verified this file yet. The 'P1' / 'P2' labels are T1 / T2 on Mythic and Legendary pieces (confirmed by the owner); the reader keeps the P-shaped glyph as its own template and reports tier 1 / 2.",
  "labels": {
   "acct-01.webp:ring": "none",
   "acct-01.webp:baton": "none",

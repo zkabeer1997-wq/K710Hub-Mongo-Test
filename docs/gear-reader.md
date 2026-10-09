@@ -13,9 +13,8 @@ cropped or zoomed images. Offsets (`gear.mjs`): tile centre 125 px above the mid
 
 ## What the real screenshots showed
 
-- The label is `T<n>` on most tiles, but some tiles show **`P1` or `P2`** (on both Mythic and Legendary tiles). That is not in
-  the confirmed tier list, so the reader returns **no tier value** for them, with the flag `unrecognised_tier_label_P1`
-  and low confidence, so the review screen asks the player. Waiting for the owner to say what P1 / P2 mean.
+- The label reads `T<n>` on most tiles, but some Mythic and Legendary tiles draw it as **`P1` / `P2`**. The owner confirmed these are **T1 / T2**,
+  so the reader keeps the P-shaped glyph as its own template and reports tier 1 / 2.
 - T5 and T6 have no real example yet: they are matched on the art only and flagged `tier_matched_on_art_only`.
 
 ## Evidence

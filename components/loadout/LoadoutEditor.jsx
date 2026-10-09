@@ -11,8 +11,8 @@ import './loadout.css';
  * Governor Gear and Charms: the board (popovers are the only editors) over ONE state (the form's gear / charms maps).
  * onGearChange(key, storedValue) / onCharmChange(key, storedValue) / onClear() are owned by the form,
  * which serialises them with the existing lib/powerProfiles.mjs helpers.
- * A screenshot scan is reviewed first; "Use these values" goes through the SAME setters. onScanApplied(corrections) is optional
- * and receives the owner's corrections (kept in memory only; nothing is stored here).
+ * A screenshot scan is reviewed first; "Use these values" goes through the SAME setters. onScanApplied({ corrections, gear, charms }) is optional (the Power Profile uses it to save the reviewed values to the member's profile)
+ * and receives the owner's corrections; this component itself stores nothing.
  */
 export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChange, onClear, onScanApplied }) {
   const [review, setReview] = useState(null);
@@ -46,7 +46,7 @@ export default function LoadoutEditor({ gear, charms, onGearChange, onCharmChang
     setActive(null);
     setOpen(null);
     setAnnounce('Scan values added to your board. Save when you are ready.');
-    onScanApplied?.(corrections);
+    onScanApplied?.({ corrections, gear: nextGear, charms: nextCharms });
   }
 
   function clearAll() {

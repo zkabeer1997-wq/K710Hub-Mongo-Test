@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import IdentityFields from '../../components/member/IdentityFields';
-import GovernorGearOcr from '../../components/GovernorGearOcr';
 import { HeroRosterPicker, TroopLevelFields } from '../../components/member/TroopHeroFields';
 import {
   ALLIANCES,
@@ -70,14 +69,6 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
   function updateGovernorGear(key, value) {
     setGovernorGear((current) => {
       const next = { ...current, [key]: value };
-      setForm((currentForm) => ({ ...currentForm, governor_gear: serializeGovernorGearSelections(next) }));
-      return next;
-    });
-  }
-
-  function applyGovernorGearScan(selections) {
-    setGovernorGear((current) => {
-      const next = { ...current, ...selections };
       setForm((currentForm) => ({ ...currentForm, governor_gear: serializeGovernorGearSelections(next) }));
       return next;
     });
@@ -215,7 +206,6 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
                 ))}
               </div>
               <h4 className="power-subheader">Governor Gear</h4>
-              <GovernorGearOcr onApply={applyGovernorGearScan} />
               <div className="governor-gear-grid">
                 {GOVERNOR_GEAR_SLOTS.map((slot) => (
                   <label key={slot.key}>

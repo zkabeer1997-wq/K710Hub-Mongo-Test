@@ -216,8 +216,8 @@ fail on existing data).
 counters in the `rate_limits` collection (atomic `$inc` upsert, TTL cleanup),
 so limits are shared across serverless instances. If Mongo errors, auth/abuse
 routes (admin login, interest submit, interest status) fall back to the
-per-instance in-memory limiter (still enforced); cost-only routes (translate-ui,
-governor-gear-ocr) pass `failOpen: true` and allow the request.
+per-instance in-memory limiter (still enforced); cost-only routes (translate-ui)
+pass `failOpen: true` and allow the request. (The old third-party gear scanner route, governor-gear-ocr, was removed; scanning now runs in the browser.)
 
 **CSRF / Origin.** `proxy.js` now also matches `/api/:path*` and rejects any
 POST/PUT/PATCH/DELETE whose `Origin` host differs from the request host, or
