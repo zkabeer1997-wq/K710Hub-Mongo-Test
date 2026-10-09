@@ -179,6 +179,15 @@ export default function AlliancesPanel() {
               <Input tone="console" value={form.leader_player_id} onChange={(e) => setForm((f) => ({ ...f, leader_player_id: e.target.value }))} />
             </Field>
           </div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <DriveStatusBanner />
+            <ImageUploadField
+              folder="alliance" label="Alliance photo (optional)" altRequired={false} cropAspect={PHOTO_CROP} removeLabel="Remove photo"
+              disabled={!driveReady || saving} value={form.image_id ? { id: form.image_id, url: `/api/site-image/${form.image_id}`, alt: form.image_alt } : null}
+              onChange={changePhoto} onAltChange={(text) => setForm((f) => ({ ...f, image_alt: text }))}
+              hint={`Shown at the top of this alliance's box on the Alliances page and as the banner on its own page. Use a wide photo at least ${ALLIANCE_IMAGE_MIN_WIDTH} pixels wide. It is cropped to the centre in 16:9 (as in the preview) and resized to ${ALLIANCE_IMAGE_WIDTH} x ${ALLIANCE_IMAGE_HEIGHT}. Without one, the alliance colour and tag show instead. The description is read aloud by screen readers; leave it empty for a purely decorative photo.`}
+            />
+          </div>
           <AllianceLeadersEditor leaders={form.leaders} disabled={saving} onChange={(leaders) => setForm((f) => ({ ...f, leaders }))} />
           <fieldset disabled={saving} style={{ border: '1px solid var(--edge)', padding: 16, display: 'grid', gap: 12, minWidth: 0 }}>
             <legend>Bear Hunt times (UTC)</legend>
@@ -195,15 +204,6 @@ export default function AlliancesPanel() {
             <Button variant="quiet" disabled={form.bear_times_utc.length >= 24} onClick={() => setForm(current => ({ ...current, bear_times_utc: [...current.bear_times_utc, ''] }))}>+ Add Bear Hunt time</Button>
           </fieldset>
           <AllianceEventEditor events={form.scheduled_events} disabled={saving} onChange={events => setForm(current => ({ ...current, scheduled_events: events }))} />
-          <div style={{ display: 'grid', gap: 8 }}>
-            <DriveStatusBanner />
-            <ImageUploadField
-              folder="alliance" label="Alliance photo (optional)" altRequired={false} cropAspect={PHOTO_CROP} removeLabel="Remove photo"
-              disabled={!driveReady || saving} value={form.image_id ? { id: form.image_id, url: `/api/site-image/${form.image_id}`, alt: form.image_alt } : null}
-              onChange={changePhoto} onAltChange={(text) => setForm((f) => ({ ...f, image_alt: text }))}
-              hint={`Shown at the top of this alliance's box on the Alliances page and as the banner on its own page. Use a wide photo at least ${ALLIANCE_IMAGE_MIN_WIDTH} pixels wide. It is cropped to the centre in 16:9 (as in the preview) and resized to ${ALLIANCE_IMAGE_WIDTH} x ${ALLIANCE_IMAGE_HEIGHT}. Without one, the alliance colour and tag show instead. The description is read aloud by screen readers; leave it empty for a purely decorative photo.`}
-            />
-          </div>
           <Field label="Blurb">
             <Textarea tone="console" rows={3} value={form.blurb} onChange={(e) => setForm((f) => ({ ...f, blurb: e.target.value }))} />
           </Field>
