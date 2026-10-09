@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { loadCycleRoster } from '../../../lib/eventCycles.server';
+import { getCurrentEventCycle, loadCycleRoster } from '../../../lib/eventCycles.server';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
 const ADMIN_PROJECTION = {
@@ -160,6 +160,9 @@ export async function POST(request) {
   };
 
   try {
+    // An admin-added participant belongs to the current cycle, like a member's own answer would.
+    const cycle = await getCurrentEventCycle('kvk').catch(() => null);
+    if (cycle) { record.event_cycle_id = cycle.id; record.event_cycle_label = cycle.label; }
     const submissions = await getCollection(COLLECTIONS.SUBMISSIONS);
     await submissions.insertOne(record);
 
@@ -176,6 +179,8 @@ export async function POST(request) {
       availability: record.availability,
       current_alliance: record.current_alliance,
       updated_at: record.updated_at,
+      event_cycle_id: record.event_cycle_id,
+      event_cycle_label: record.event_cycle_label,
     };
 
     const [row] = mergePowerProfilesIntoRows([data], []);

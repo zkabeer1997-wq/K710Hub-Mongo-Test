@@ -48,7 +48,7 @@ test('folder tree has the exact names and is created once, then cached', async (
   await tree.folderId('guide'); await tree.folderId('tool'); await tree.folderId('application', '1');
   assert.deepEqual(await listDir(path.join(drive.root, 'tree', ROOT_FOLDER_NAME)), ['Applications', 'Gallery images', 'Guides images', 'Hero images', 'Tools and calculators images']);
   assert.equal(ROOT_FOLDER_NAME, 'K710 Website');
-  assert.deepEqual(Object.values(SITE_FOLDERS), ['Gallery images', 'Guides images', 'Hero images', 'Tools and calculators images', 'Help images', 'Applications']);
+  assert.deepEqual(Object.values(SITE_FOLDERS), ['Gallery images', 'Guides images', 'Hero images', 'Tools and calculators images', 'Help images', 'Rally sheets', 'Applications']);
 });
 
 test('a cold instance reuses ids from the Mongo cache instead of creating folders again', async () => {

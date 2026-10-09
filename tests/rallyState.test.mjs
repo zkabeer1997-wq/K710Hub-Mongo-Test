@@ -31,6 +31,10 @@ function rally(id, overrides = {}) {
     name: id,
     memberIds: [],
     leadMemberId: '',
+    managerName: '',
+    rallyType: 'attack',
+    formationKind: 'balanced',
+    notes: '',
     troopWeights: { ...DEFAULT_TROOP_WEIGHTS },
     leadHeroes: {},
     leadHeroAssignments: {},
@@ -58,6 +62,10 @@ assert.equal(created.length, 1);
 assert.deepEqual(created[0], {
   id: 'rally-1',
   name: 'Rally 1',
+  managerName: '',
+  rallyType: 'attack',
+  formationKind: 'balanced',
+  notes: '',
   memberIds: [],
   leadMemberId: '',
   troopWeights: { infantry: 0, cavalry: 0, archer: 0 },
@@ -161,19 +169,21 @@ withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
 withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
 withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
 withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Thrud');
-assert.deepEqual(withHeroes[0].leadHeroes, { Saul: 3, Thrud: 1 });
+withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Thrud');
+withHeroes = incrementRallyLeadHero(withHeroes, 'a', 'Thrud');
+assert.deepEqual(withHeroes[0].leadHeroes, { Saul: 3, Thrud: 3 });
 assert.equal(getLeadHeroTotal(withHeroes[0]), MAX_LEAD_HEROES);
 
 // The cap applies to the combined total, not per hero.
 const overCap = incrementRallyLeadHero(withHeroes, 'a', 'Saul');
-assert.deepEqual(overCap[0].leadHeroes, { Saul: 3, Thrud: 1 }, 'a hero beyond the combined cap is refused');
+assert.deepEqual(overCap[0].leadHeroes, { Saul: 3, Thrud: 3 }, 'a hero beyond the combined cap is refused');
 
 const decremented = decrementRallyLeadHero(withHeroes, 'a', 'Saul');
-assert.deepEqual(decremented[0].leadHeroes, { Saul: 2, Thrud: 1 });
-assert.equal(getLeadHeroTotal(decremented[0]), 3, 'a freed slot lowers the total');
+assert.deepEqual(decremented[0].leadHeroes, { Saul: 2, Thrud: 3 });
+assert.equal(getLeadHeroTotal(decremented[0]), 5, 'a freed slot lowers the total');
 
 const droppedToZero = decrementRallyLeadHero(
-  decrementRallyLeadHero(decrementRallyLeadHero(withHeroes, 'a', 'Thrud'), 'nope', 'Thrud'),
+  decrementRallyLeadHero(decrementRallyLeadHero(decrementRallyLeadHero(decrementRallyLeadHero(withHeroes, 'a', 'Thrud'), 'a', 'Thrud'), 'a', 'Thrud'), 'nope', 'Thrud'),
   'a',
   'Missing',
 );
@@ -355,7 +365,7 @@ assert.deepEqual(parseStoredRallies('[{"id":"a"}]'), [], 'entries missing a name
 // Legacy stored state (leadHeroes as a plain array, from before hero counts)
 // still loads, with each hero converted to a count of 1.
 const stored = parseStoredRallies(JSON.stringify([
-  { id: 'a', name: 'Rally 1', memberIds: [101], leadHeroes: ['H1', 'H2', 'H3', 'H4', 'H5'] },
+  { id: 'a', name: 'Rally 1', memberIds: [101], leadHeroes: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7'] },
 ]));
 assert.deepEqual(stored[0].memberIds, ['101'], 'ids normalised to strings');
 assert.equal(
@@ -367,7 +377,7 @@ assert.deepEqual(stored[0].troopWeights, DEFAULT_TROOP_WEIGHTS, 'missing weights
 
 // A stored count above the cap is trimmed, not rejected outright.
 const overCapStored = parseStoredRallies(JSON.stringify([
-  { id: 'a', name: 'Rally 1', memberIds: [], leadHeroes: { Saul: 6 } },
+  { id: 'a', name: 'Rally 1', memberIds: [], leadHeroes: { Saul: 9 } },
 ]));
 assert.equal(overCapStored[0].leadHeroes.Saul, MAX_LEAD_HEROES);
 
@@ -402,6 +412,10 @@ assert.deepEqual(saved, [{
   position: 0,
   member_ids: ['202', '303', '101'],
   lead_member_id: '101',
+  manager_name: '',
+  rally_type: 'attack',
+  formation_kind: 'balanced',
+  notes: '',
   // The DB stores weights, lead-hero counts, and hero assignments together
   // in one `formation` column.
   formation: {
@@ -456,3 +470,95 @@ console.log('rallyState tests passed');
   assert.deepEqual(formatRallyRows(serializeRalliesForSave(hydrated)), hydrated, 'stable round trip');
   assert.deepEqual(formatRallyRows(apiPayload)[0].memberIds, [], 'double format loses members (why the client must not do it)');
 }
+
+// --- rally card fields, ordering and the new auto-fill rules ------------------
+
+import {
+  RALLY_JOINER_FLAG_ABOVE, effectiveFormation, moveRallyJoiner, planAutoFillAll,
+  rallySlotCount, setRallyField, sortRalliesByType,
+} from '../app/admin/dashboard/rallyState.mjs';
+
+const typed = createNextRally(createNextRally(createNextRally([], 'a', 'optional'), 'b', 'garrison'), 'c', 'attack');
+assert.deepEqual(sortRalliesByType(typed).map((r) => r.id), ['c', 'b', 'a'], 'Attack, Garrison, Optional');
+assert.equal(createNextRally([], 'x', 'nonsense')[0].rallyType, 'attack', 'unknown type falls back to attack');
+
+assert.equal(setRallyField([rally('a')], 'a', 'managerName', 'Danko')[0].managerName, 'Danko');
+assert.equal(setRallyField([rally('a')], 'a', 'rallyType', 'bogus')[0].rallyType, 'attack');
+assert.equal(setRallyField([rally('a')], 'a', 'notes', 'Reinforce & Pass Castle')[0].notes, 'Reinforce & Pass Castle');
+assert.deepEqual(setRallyField([rally('a')], 'a', 'unknownField', 'x'), [rally('a')], 'unknown fields ignored');
+
+assert.deepEqual(
+  moveRallyJoiner([rally('a', { memberIds: ['1', '2', '3'] })], 'a', '3', 0)[0].memberIds,
+  ['3', '1', '2'], 'joiner moved to the top',
+);
+assert.equal(rallySlotCount(rally('a')), 10);
+assert.equal(rallySlotCount(rally('a', { memberIds: Array.from({ length: 14 }, (_, i) => String(i)) })), 14, 'slots are not capped at 10');
+assert.equal(RALLY_JOINER_FLAG_ABOVE, 10);
+
+// Archer-heavy = cavalry is the lowest share: weigh infantry + archer only.
+assert.equal(effectiveFormation(rally('a', { formationKind: 'archer' })), 'archer');
+assert.equal(effectiveFormation(rally('a', { troopWeights: { infantry: 50, cavalry: 1, archer: 49 } })), 'archer');
+assert.equal(effectiveFormation(rally('a', { troopWeights: { infantry: 60, cavalry: 40, archer: 0 } })), 'cavalry');
+assert.equal(effectiveFormation(rally('a')), 'balanced');
+
+const lowCavStrongArch = member('arch-only', {
+  infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG5', archer_tier: 'T11', archer_tg: 'TG8',
+});
+const allRounder = member('all-round', {
+  infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T11', cavalry_tg: 'TG8', archer_tier: 'T10', archer_tg: 'TG5',
+});
+assert.equal(
+  autoAssignRallyMembers([rally('a', { formationKind: 'archer' })], 'a', [allRounder, lowCavStrongArch]).rallies[0].memberIds[0],
+  'arch-only', 'archer-heavy ignores cavalry level',
+);
+assert.equal(
+  autoAssignRallyMembers([rally('a', { formationKind: 'cavalry' })], 'a', [lowCavStrongArch, allRounder]).rallies[0].memberIds[0],
+  'all-round', 'cavalry-heavy ignores archer level',
+);
+
+// 3 full battle + 5 first half => 5 second half are needed so 8 joiners are present all battle.
+const split = [
+  ...Array.from({ length: 3 }, (_, i) => fullBattle(`f${i}`)),
+  ...Array.from({ length: 6 }, (_, i) => firstHalf(`h1-${i}`)),
+  ...Array.from({ length: 6 }, (_, i) => secondHalf(`h2-${i}`)),
+];
+const splitResult = autoAssignRallyMembers([rally('a')], 'a', split);
+assert.equal(splitResult.summary.fullCount, 3);
+assert.equal(splitResult.summary.firstHalfCount, 5);
+assert.equal(splitResult.summary.secondHalfCount, 5);
+assert.equal(splitResult.summary.totalMembers, 13, 'total joiners may exceed 8');
+assert.equal(splitResult.summary.complete, true);
+
+// Not enough second-half joiners: the rally is reported incomplete rather than silently padded.
+const thin = [fullBattle('x'), firstHalf('y')];
+assert.equal(autoAssignRallyMembers([rally('a')], 'a', thin).summary.complete, false);
+
+// Hero requirement: among equally strong joiners the hero holder is picked; a missing hero is skipped.
+const heroPool = Array.from({ length: 9 }, (_, i) => fullBattle(`p${i}`));
+heroPool[8] = { ...heroPool[8], heroes: ['Saul'] };
+const heroPlan = autoAssignRallyMembers([rally('a', { leadHeroes: { Saul: 1, Zoya: 1 } })], 'a', heroPool);
+assert.ok(heroPlan.rallies[0].memberIds.includes('p8'), 'Saul holder picked');
+assert.equal(heroPlan.summary.totalMembers, 8, 'a hero nobody has does not shrink the rally');
+
+// Auto-fill all: Attack/Garrison first, Optional only when those are complete.
+const pool20 = Array.from({ length: 20 }, (_, i) => fullBattle(`m${i}`));
+const plan = planAutoFillAll([
+  rally('opt', { rallyType: 'optional' }), rally('att', { rallyType: 'attack' }), rally('gar', { rallyType: 'garrison' }),
+], pool20);
+const byId = Object.fromEntries(plan.rallies.map((r) => [r.id, r.memberIds.length]));
+assert.deepEqual(byId, { opt: 4, att: 8, gar: 8 });
+assert.equal(plan.preview.placed, 20);
+assert.equal(plan.preview.unassigned, 0);
+assert.equal(plan.preview.perRally.find((r) => r.id === 'opt').complete, false);
+const pool10 = pool20.slice(0, 10);
+const planShort = planAutoFillAll([rally('opt', { rallyType: 'optional' }), rally('att'), rally('gar', { rallyType: 'garrison' })], pool10);
+assert.equal(planShort.rallies.find((r) => r.id === 'opt').memberIds.length, 0, 'optional untouched while a main rally is short');
+assert.equal(planShort.preview.perRally.find((r) => r.id === 'opt').skipped, true);
+
+// Re-running keeps joiners by default and clears them with replace.
+const kept = planAutoFillAll(plan.rallies, [...pool20, ...Array.from({ length: 4 }, (_, i) => fullBattle(`n${i}`))]);
+assert.equal(kept.preview.keptCount, 20);
+assert.equal(kept.rallies.find((r) => r.id === 'att').memberIds.length, 8, 'complete rallies are left alone');
+const replaced = planAutoFillAll(plan.rallies, pool20, { replace: true });
+assert.equal(replaced.preview.replacedCount, 20);
+assert.equal(replaced.preview.placed, 20);
