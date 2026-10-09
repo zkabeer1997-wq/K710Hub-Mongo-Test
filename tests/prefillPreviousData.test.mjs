@@ -57,6 +57,7 @@ const statuses = async () => Object.fromEntries((await (await statusRoute.GET(re
 const json = async (res) => res.json();
 
 const AVAIL = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)' };
+const SIX = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7' };
 const TROOPS = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7', heroes: ['Chenko', 'Saul'] };
 
 test('sanitizeKvkTroops: absent fields untouched, blanks clear, bad values rejected', () => {
@@ -86,14 +87,14 @@ test('resolveTroopPrefill: per-field fallback record > previous > profile, inval
 
 test('KvK availability accepts, validates and stores troop levels and heroes', async () => {
   reset();
-  assert.equal((await availRoute.POST(req({ body: { ...AVAIL, infantry_tier: 'T9' } }))).status, 400);
-  assert.equal((await availRoute.POST(req({ body: { ...AVAIL, heroes: ['Nope'] } }))).status, 400);
+  assert.equal((await availRoute.POST(req({ body: { ...AVAIL, ...TROOPS, infantry_tier: 'T9' } }))).status, 400);
+  assert.equal((await availRoute.POST(req({ body: { ...AVAIL, ...TROOPS, heroes: ['Nope'] } }))).status, 400);
   assert.equal((await availRoute.POST(req({ body: { ...AVAIL, ...TROOPS } }))).status, 200);
   const row = state.tables[T.SUBMISSIONS][0];
   assert.equal(row.infantry_tier, 'T11');
   assert.deepEqual(row.heroes, ['Chenko', 'Saul']);
-  // an old client that omits the fields does not wipe them
-  assert.equal((await availRoute.POST(req({ body: AVAIL }))).status, 200);
+  // troop tier + TG are required now: a client that omits them is rejected and nothing stored changes
+  assert.equal((await availRoute.POST(req({ body: AVAIL }))).status, 400);
   assert.deepEqual(state.tables[T.SUBMISSIONS][0].heroes, ['Chenko', 'Saul']);
   const got = await json(await availRoute.GET(req()));
   assert.equal(got.prefill.troops.cavalry_tg, 'TG6');
@@ -219,14 +220,14 @@ test('Flamedragon form shares the KvK hero list and troop validation', async () 
   assert.deepEqual(FD_HEROES, HEROES);
   assert.deepEqual(TIERS, TROOP_TIERS);
   assert.deepEqual(TGS, TROOP_TGS);
-  const ok = await dragonPost({ name: 'Ann', infantry_tier: 'T11', infantry_tg: 'TG8', heroes: ['Saul', 'Chenko'] });
+  const ok = await dragonPost({ name: 'Ann', ...SIX, heroes: ['Saul', 'Chenko'] });
   assert.equal(ok.status, 200);
   assert.deepEqual((await ok.json()).record.heroes, ['Saul', 'Chenko']);
-  const bad = await dragonPost({ name: 'Ann', heroes: ['Yeonwoo'] });
+  const bad = await dragonPost({ name: 'Ann', ...SIX, heroes: ['Yeonwoo'] });
   assert.equal(bad.status, 400);
   assert.match((await bad.json()).error, /heroes from the list/i);
-  assert.equal((await dragonPost({ name: 'Ann', archer_tier: 'T9' })).status, 400);
-  assert.equal((await dragonPost({ name: 'Ann', cavalry_tg: 'TG99' })).status, 400);
+  assert.equal((await dragonPost({ name: 'Ann', ...SIX, archer_tier: 'T9' })).status, 400);
+  assert.equal((await dragonPost({ name: 'Ann', ...SIX, cavalry_tg: 'TG99' })).status, 400);
 });
 
 test('Flamedragon: previously saved removed heroes are hidden on load and never block a re-save', async () => {
@@ -235,12 +236,12 @@ test('Flamedragon: previously saved removed heroes are hidden on load and never 
   const got = await json(await dragonRoute.GET(req()));
   assert.deepEqual(got.record.heroes, ['Saul']);
   // A stale client that still sends the retired hero it had saved is not rejected.
-  const res = await dragonPost({ name: 'Ann', heroes: ['Yeonwoo', 'Saul', 'Chenko'] });
+  const res = await dragonPost({ name: 'Ann', ...SIX, heroes: ['Yeonwoo', 'Saul', 'Chenko'] });
   assert.equal(res.status, 200);
   assert.deepEqual((await res.json()).record.heroes, ['Saul', 'Chenko']);
   // A retired hero that was never saved is still rejected.
-  assert.equal((await dragonPost({ name: 'Ann', heroes: ['Zoe'] })).status, 400);
+  assert.equal((await dragonPost({ name: 'Ann', ...SIX, heroes: ['Zoe'] })).status, 400);
   // A partial POST without heroes keeps the stored list untouched.
-  const keep = await dragonPost({ name: 'Ann', availability: 'Unavailable' });
+  const keep = await dragonPost({ name: 'Ann', ...SIX, availability: 'Unavailable' });
   assert.equal(keep.status, 200);
 });

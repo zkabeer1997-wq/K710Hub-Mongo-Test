@@ -56,6 +56,7 @@ const HOUR = 3600e3;
 const past = (h) => new Date(Date.now() - h * HOUR).toISOString();
 const future = (h) => new Date(Date.now() + h * HOUR).toISOString();
 
+const SIX = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7' }; // troop tier + TG are required on both member forms
 test('gateClosedMessage is plain language and null when open', () => {
   assert.equal(gateClosedMessage({ is_open: true }), null);
   assert.match(gateClosedMessage({ is_open: true, closes_at: past(2) }), /^This form is closed\. It closed on .* UTC\.$/);
@@ -99,7 +100,7 @@ test('member submit routes close and open on their window', async () => {
   assert.equal(res.status, 403);
   assert.match((await res.json()).error, /not open yet\. It opens on/);
   assert.equal((await requestsRoute.POST(req({ as: 'member', body: { current_alliance: '710', section: 'Forms', message: 'hi' } }))).status, 403);
-  assert.equal((await availRoute.POST(req({ as: 'member', body: { member_id: 'm1', name: 'A', current_alliance: '710', availability: 'Not Available' } }))).status, 403);
+  assert.equal((await availRoute.POST(req({ as: 'member', body: { member_id: 'm1', name: 'A', current_alliance: '710', availability: 'Not Available', ...SIX } }))).status, 403);
   res = await apptRoute.POST(req({ as: 'member', body: { day: 1, buff: 'construction', tg: 1, ttg: 0, speedup_days: 0, preferred_hours: ['05:00', '06:00', '07:00'] } }));
   assert.equal(res.status, 403);
   assert.match((await res.json()).error, /This form is closed/);
@@ -244,7 +245,7 @@ test('resubmitting in a new cycle snapshots the old row first; cycle=<id> reads 
   state.tables[T.SUBMISSIONS] = [{ member_id: 'm1', name: 'Ann', pin_hash: 'x', availability: 'Full battle (12-17 UTC)', event_cycle_id: first.id, event_cycle_label: first.label }];
   const second = (await (await post({ type: 'kvk', action: 'start_cycle', label: 'KvK 2', close_previous: false })).json()).state.cycle;
   state.tables[T.EVENT_CYCLE_SNAPSHOTS] = []; // prove the overwrite path snapshots on its own
-  const res = await availRoute.POST(req({ as: 'member', body: { member_id: 'm1', name: 'Ann', current_alliance: '710', availability: 'Not Available' } }));
+  const res = await availRoute.POST(req({ as: 'member', body: { member_id: 'm1', name: 'Ann', current_alliance: '710', availability: 'Not Available', ...SIX } }));
   assert.equal(res.status, 200);
   const snaps = state.tables[T.EVENT_CYCLE_SNAPSHOTS];
   assert.equal(snaps.length, 1);
@@ -262,7 +263,7 @@ test('resubmitting in a new cycle snapshots the old row first; cycle=<id> reads 
   const live = await (await rosterRoute.GET(req({ as: 'admin' }))).json();
   assert.equal(live.rows.length, 1);
   // Re-saving again in the same cycle does not add another snapshot.
-  await availRoute.POST(req({ as: 'member', body: { member_id: 'm1', name: 'Ann', current_alliance: '710', availability: 'Not Available' } }));
+  await availRoute.POST(req({ as: 'member', body: { member_id: 'm1', name: 'Ann', current_alliance: '710', availability: 'Not Available', ...SIX } }));
   assert.equal(state.tables[T.EVENT_CYCLE_SNAPSHOTS].length, 1);
 });
 

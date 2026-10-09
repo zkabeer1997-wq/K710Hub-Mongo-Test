@@ -4,6 +4,7 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayload, currentHeroesOnly } from '../../../lib/flamedragonForm.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
+import { saveTroopsToProfile } from '../../../lib/troopProfile.server.js';
 import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
 import { loadDragonFallback, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
@@ -49,7 +50,12 @@ export async function GET(request) {
       return out;
     };
     // No answer in any cycle yet: offer what is already known (Power Profile, KvK Availability, Kingshot name).
-    const fallback = record || previous ? null : await loadDragonFallback(session.memberId);
+    // Also when the member saved newer troops/heroes on the KvK form (kept on their profile) than this form's last answer.
+    let fallback = record ? null : await loadDragonFallback(session.memberId);
+    if (fallback && previous) {
+      const newer = fallback.troop_updated_at && new Date(fallback.troop_updated_at) > new Date(previous.updated_at || 0);
+      fallback = newer ? { ...fallback, prefer_troops: true } : null;
+    }
     const identity = await getMemberIdentity(session);
     return NextResponse.json({ member_id: session.memberId, identity, record: strip(record), previous: strip(previous), cycle, fallback });
   } catch (error) {
@@ -83,7 +89,7 @@ export async function POST(request) {
     // A partial body on an existing record keeps the stored name.
     const typedName = String(body?.name || '').trim();
     const named = existing && !('name' in body) ? { ...body, name: existing.name } : typedName ? body : { ...body, name: (await getMemberIdentity(session)).name };
-    record = sanitizeFlamedragonInput({ ...named, member_id: session.memberId, pin: 'session' }, { existingHeroes: existing?.heroes, allowedHeroes: await getActiveHeroNames() });
+    record = sanitizeFlamedragonInput({ ...named, member_id: session.memberId, pin: 'session' }, { existingHeroes: existing?.heroes, allowedHeroes: await getActiveHeroNames(), requireTroops: true });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
@@ -118,6 +124,13 @@ export async function POST(request) {
       payload.event_cycle_label = cycle.label;
     }
     await coll.updateOne({ member_id: record.member_id }, { $set: payload }, { upsert: true });
+    // Remember the troops (+ heroes when the form sent them) on the member's profile, Power Profile or not.
+    await saveTroopsToProfile(record.member_id, {
+      infantry_tier: record.infantry_tier, infantry_tg: record.infantry_tg,
+      cavalry_tier: record.cavalry_tier, cavalry_tg: record.cavalry_tg,
+      archer_tier: record.archer_tier, archer_tg: record.archer_tg,
+      ...(Array.isArray(body?.heroes) ? { heroes: record.heroes } : {}),
+    }, payload.updated_at);
     const data = await coll.findOne({ member_id: record.member_id }, { projection: PUBLIC_PROJECT });
     return NextResponse.json({
       status: existing ? 'updated' : 'created',

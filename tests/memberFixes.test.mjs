@@ -33,8 +33,9 @@ const req = (body) => ({
   cookies: { get: (k) => (k === 'k710_member_session' ? { value: token } : undefined) },
 });
 
+const SIX = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7' }; // troop tier + TG are required on both member forms
 test('KvK availability: first save creates the roster row instead of 404', async () => {
-  const res = await availability.POST(req({ name: 'New Member', member_id: '920000777', current_alliance: '710', availability: 'Full battle (12-17 UTC)' }));
+  const res = await availability.POST(req({ name: 'New Member', member_id: '920000777', current_alliance: '710', availability: 'Full battle (12-17 UTC)', ...SIX }));
   assert.equal(res.status, 200);
   const rows = state.tables[COLLECTIONS.SUBMISSIONS] || [];
   const row = rows.find((r) => r.member_id === '920000777');
@@ -42,14 +43,14 @@ test('KvK availability: first save creates the roster row instead of 404', async
   assert.equal(row.name, 'New Member');
   assert.equal(row.availability, 'Full battle (12-17 UTC)');
   // a second save updates the same row
-  const again = await availability.POST(req({ name: 'New Member', member_id: '920000777', current_alliance: 'RED', availability: 'Not Available' }));
+  const again = await availability.POST(req({ name: 'New Member', member_id: '920000777', current_alliance: 'RED', availability: 'Not Available', ...SIX }));
   assert.equal(again.status, 200);
   assert.equal(rows.filter((r) => r.member_id === '920000777').length, 1);
   assert.equal(rows.find((r) => r.member_id === '920000777').current_alliance, 'RED');
 });
 
 test('KvK availability: a spoofed member_id is ignored; the row is saved for the session id', async () => {
-  const res = await availability.POST(req({ name: 'X', member_id: '123456789', current_alliance: '710', availability: 'Not Available' }));
+  const res = await availability.POST(req({ name: 'X', member_id: '123456789', current_alliance: '710', availability: 'Not Available', ...SIX }));
   assert.equal(res.status, 200);
   const rows = state.tables[COLLECTIONS.SUBMISSIONS] || [];
   assert.equal(rows.some((r) => r.member_id === '123456789'), false);

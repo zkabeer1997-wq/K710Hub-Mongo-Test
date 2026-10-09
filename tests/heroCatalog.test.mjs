@@ -60,6 +60,7 @@ const upload = async (name = 'p.png') => {
   const res = await imagesRoute.POST(req({ form })); assert.equal(res.status, 201); return (await res.json()).image;
 };
 
+const SIX = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7' }; // troop tier + TG are required on both member forms
 test('seed: lazily created from code defaults, ten removed heroes inactive, order stable', async () => {
   reset();
   const all = await server.getHeroCatalog().list();
@@ -208,7 +209,7 @@ test('KvK Availability route: catalog list drives save validation and load/prefi
   const memberReq = (body) => ({ ...req({ admin: false, member: true, body }), headers: new Headers() });
   const loaded = await (await kvkRoute.GET(memberReq())).json();
   assert.deepEqual(loaded.row && loaded.prefill.heroes, ['Chenko'], 'inactive Saul dropped from prefill');
-  const base = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)' };
+  const base = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)', ...SIX };
   // re-saving with the stale inactive hero never errors (silently dropped)
   let res = await kvkRoute.POST(memberReq({ ...base, heroes: ['Saul', 'Chenko', 'Nova'] }));
   assert.equal(res.status, 200, await res.clone().text());
@@ -231,7 +232,7 @@ test('Flamedragon route + fallback use the catalog', async () => {
   const memberReq = (body) => ({ ...req({ admin: false, member: true, body }), headers: new Headers() });
   const got = await (await dragonRoute.GET(memberReq())).json();
   assert.deepEqual(got.record.heroes, ['Chenko']);
-  const res = await dragonRoute.POST(memberReq({ name: 'Ann', heroes: ['Saul', 'Chenko'] }));
+  const res = await dragonRoute.POST(memberReq({ name: 'Ann', ...SIX, heroes: ['Saul', 'Chenko'] }));
   assert.equal(res.status, 200, await res.clone().text());
 });
 
@@ -359,7 +360,7 @@ test('removed heroes are dropped on load and never a 400 on re-save; restore and
   const memberReq = (body) => ({ ...req({ admin: false, member: true, body }), headers: new Headers() });
   const loaded = await (await kvkRoute.GET(memberReq())).json();
   assert.deepEqual(loaded.prefill.heroes, ['Chenko']);
-  const base = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)' };
+  const base = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)', ...SIX };
   const saved = await kvkRoute.POST(memberReq({ ...base, heroes: ['Saul', 'Chenko'] }));
   assert.equal(saved.status, 200, await saved.clone().text());
   assert.equal((await kvkRoute.POST(memberReq({ ...base, heroes: ['Saul'] }))).status, 400, 'a removed hero chosen fresh is rejected like an inactive one');

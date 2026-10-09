@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { powerProfileDoneAt } from '../../../lib/powerProfiles.mjs';
 
 // General Power Profile -> tools linkage: returns the signed-in member's
 // saved power_profiles document so a calculator can pre-fill from it.
@@ -26,11 +27,14 @@ export async function GET(request) {
           masters_power: 1,
           mystic_trial_score: 1,
           updated_at: 1,
+          created_at: 1,
+          hero_gear: 1,
           _id: 0,
         },
       }
     );
-    return NextResponse.json({ profile: data || null });
+    // A document that only remembers troops from the KvK / Flamedragon forms is not a saved Power Profile.
+    return NextResponse.json({ profile: powerProfileDoneAt(data) ? data : null });
   } catch (error) {
     console.error('member-power-profile GET failed', error);
     return NextResponse.json({ error: 'Unable to load saved Power Profile profile.' }, { status: 500 });

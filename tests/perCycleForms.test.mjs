@@ -53,6 +53,7 @@ const statuses = async () => Object.fromEntries((await (await statusRoute.GET(re
 const PREP = { in_game_name: 'Ann', want_construction: 'Yes', avail_day1: ['12:00'] };
 const NOBLE = { in_game_name: 'Ann', want_troop_training: 'Yes', is_transfer: 'No', troop_speedup_days: '5', promoting_t11: 'No', avail_day4: ['00:00'] };
 
+const SIX = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7' }; // troop tier + TG are required on both member forms
 test('computeFormStatuses: carriedOver only when not done this cycle and an earlier answer exists', () => {
   const by = Object.fromEntries(computeFormStatuses({
     gates: {},
@@ -162,9 +163,9 @@ test('archiving and starting cycles never delete prep/noble rows; history counts
 test('joiner + dragon behave the same for members: not done after a new cycle, previous offered', async () => {
   reset();
   state.tables[T.SUBMISSIONS] = [{ member_id: 'm1', name: 'Ann', pin_hash: 'secret' }];
-  const body = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)' };
+  const body = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)', ...SIX };
   assert.equal((await availRoute.POST(req({ body }))).status, 200);
-  assert.equal((await dragonRoute.POST(req({ body: { name: 'Ann', infantry_tier: 'T10' } }))).status, 200);
+  assert.equal((await dragonRoute.POST(req({ body: { name: 'Ann', ...SIX, infantry_tier: 'T10' } }))).status, 200);
   let s = await statuses();
   assert.equal(s.joiner.submitted, true);
   assert.equal(s.dragon.submitted, true);
@@ -186,7 +187,7 @@ test('joiner + dragon behave the same for members: not done after a new cycle, p
   assert.equal(d.previous.infantry_tier, 'T10');
 
   assert.equal((await availRoute.POST(req({ body }))).status, 200);
-  assert.equal((await dragonRoute.POST(req({ body: { name: 'Ann', infantry_tier: 'T11' } }))).status, 200);
+  assert.equal((await dragonRoute.POST(req({ body: { name: 'Ann', ...SIX, infantry_tier: 'T11' } }))).status, 200);
   s = await statuses();
   assert.equal(s.joiner.submitted, true);
   assert.equal(s.dragon.carriedOver, false);

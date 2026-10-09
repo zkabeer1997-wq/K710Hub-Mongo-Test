@@ -5,31 +5,50 @@ import { HEROES, PROFILE_UNIT_FIELDS, TROOP_TGS, TROOP_TIERS } from '../../lib/p
 import { heroKey, staticImageUrl } from '../../lib/heroCatalog.mjs';
 import './easy-view-fixes.css';
 import './hero-picker.css';
+import './troop-required.css';
 
 // Troop level (tier + TG per troop type) and hero roster pickers. Used by the KvK Availability form,
 // where these are answered once per KvK cycle. Controlled: the parent owns `values` + `heroes`.
 
-export function TroopLevelFields({ values, onChange, disabled = false }) {
+/** DOM id of a troop select, so a form can move focus to the first invalid one. */
+export const troopFieldId = (key) => `troop-${key.replace(/_/g, '-')}`;
+
+// Tier and TG are REQUIRED for every troop type (heroes are not). `errors` is { [fieldKey]: message }
+// from troopFieldErrors(); an invalid select is flagged with aria-invalid + aria-describedby pointing at
+// its inline message, which reads "Error: ..." so it never relies on colour alone.
+export function TroopLevelFields({ values, onChange, disabled = false, errors = {} }) {
+  const select = (key, noun, options) => {
+    const id = troopFieldId(key);
+    const error = errors[key];
+    return (
+      <div className="troop-field">
+        <label htmlFor={id}>
+          {noun} <span className="troop-required-mark">(required)</span>
+        </label>
+        <select
+          id={id}
+          value={values[key] || ''}
+          disabled={disabled}
+          aria-required="true"
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          onChange={(e) => onChange(key, e.target.value)}
+        >
+          <option value="">Choose</option>
+          {options.map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
+        {error ? <p id={`${id}-error`} className="field-error">{error}</p> : null}
+      </div>
+    );
+  };
   return (
     <div className="unit-card-grid">
       {PROFILE_UNIT_FIELDS.map((unit) => (
         <div key={unit.key} className={`unit-card ${unit.key}`}>
           <h4>{unit.label}</h4>
           <div className="row">
-            <label>
-              Tier
-              <select value={values[unit.tier] || ''} disabled={disabled} onChange={(e) => onChange(unit.tier, e.target.value)}>
-                <option value="">Tier</option>
-                {TROOP_TIERS.map((tier) => <option key={tier} value={tier}>{tier}</option>)}
-              </select>
-            </label>
-            <label>
-              TG
-              <select value={values[unit.tg] || ''} disabled={disabled} onChange={(e) => onChange(unit.tg, e.target.value)}>
-                <option value="">TG</option>
-                {TROOP_TGS.map((tg) => <option key={tg} value={tg}>{tg}</option>)}
-              </select>
-            </label>
+            {select(unit.tier, 'Tier', TROOP_TIERS)}
+            {select(unit.tg, 'TG', TROOP_TGS)}
           </div>
         </div>
       ))}

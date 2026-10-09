@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import IdentityFields from '../../components/member/IdentityFields';
-import { HeroRosterPicker, TroopLevelFields } from '../../components/member/TroopHeroFields';
+import { HeroRosterPicker, TroopLevelFields, troopFieldId } from '../../components/member/TroopHeroFields';
+import { TROOP_FIELD_KEYS, troopFieldErrors } from '../../lib/kvkAvailability.mjs';
 import {
   ALLIANCES,
   currentHeroesOnly,
@@ -46,6 +47,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
     auto_help: '',
     pin: '',
   });
+  const [troopErrors, setTroopErrors] = useState({});
   const [heroes, setHeroes] = useState([]);
   const [charms, setCharms] = useState(blankCharmSelections());
   const [governorGear, setGovernorGear] = useState(blankGovernorGearSelections());
@@ -86,7 +88,12 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
       return;
     }
     // This cycle's saved form, otherwise last cycle's answers as a starting point (not saved until Submit).
-    const r = result.record || result.previous || result.fallback;
+    let r = result.record || result.previous || result.fallback;
+    // Newer troops/heroes saved on the KvK form (kept on the profile) replace the older cycle answer's.
+    if (!result.record && result.previous && result.fallback?.prefer_troops) {
+      const f = result.fallback;
+      r = { ...result.previous, heroes: f.heroes?.length ? f.heroes : result.previous.heroes, ...Object.fromEntries(TROOP_FIELD_KEYS.map((key) => [key, f[key] || result.previous[key]])) };
+    }
     if (r) {
       const charmSelections = parseCharmSelections(r.charms);
       const gearSelections = parseGovernorGearSelections(r.governor_gear);
@@ -133,6 +140,16 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
       setStatus('Please type your name.');
       return;
     }
+    // Troop tier + TG are required for every troop type: flag each blank select and focus the first.
+    const errors = troopFieldErrors(form);
+    setTroopErrors(errors);
+    const firstInvalid = TROOP_FIELD_KEYS.find((key) => errors[key]);
+    if (firstInvalid) {
+      setIsError(true);
+      setStatus('Choose a tier and TG for Infantry, Cavalry and Archer before submitting. See the messages marked Error.');
+      document.getElementById(troopFieldId(firstInvalid))?.focus();
+      return;
+    }
     setLoading(true);
     const response = await fetch('/api/flamedragon', {
       method: 'POST',
@@ -161,7 +178,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
           <h1>{fieldMetaIntro.heading}</h1>
           {fieldMetaIntro.description ? <p>{fieldMetaIntro.description}</p> : null}
         </section>
-        <form className="public-form-card" onSubmit={handleSubmit}>
+        <form className="public-form-card" onSubmit={handleSubmit} noValidate>
 
           <IdentityFields memberId={form.member_id} name={form.name} onNameChange={(v) => updateField('name', v)} label="In Game Name" known={Boolean(identity?.name)} />
 
@@ -180,7 +197,20 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
 
           <section className="troop-section public-section">
             <div className="section-title-row"><span>Army</span><h3>Troop levels</h3><p>Choose the best tier and TG for each troop type, as they stand for this battle.</p></div>
-            <TroopLevelFields values={form} onChange={updateField} />
+            <p className="troop-required-note">Tier and TG are required for Infantry, Cavalry and Archer. They are remembered on your profile and filled in for you next time.</p>
+            <TroopLevelFields
+              values={form}
+              errors={troopErrors}
+              onChange={(key, value) => {
+                updateField(key, value);
+                setTroopErrors((current) => {
+                  if (!current[key]) return current;
+                  const rest = { ...current };
+                  delete rest[key];
+                  return rest;
+                });
+              }}
+            />
           </section>
 
           <section className="troop-section public-section">
@@ -268,7 +298,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
             </div>
           </section>
 
-          {status && <div className={isError ? 'status error' : 'status'}>{status}</div>}
+          {status && <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>{status}</div>}
           <button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'Submit Flamedragon form'}</button>
         </form>
         </div>

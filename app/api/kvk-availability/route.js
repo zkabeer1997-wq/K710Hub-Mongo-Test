@@ -7,8 +7,9 @@ import { readKingshotSession } from '../../../lib/memberAuthKingshot';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { loadMemberBase, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
+import { saveTroopsToProfile } from '../../../lib/troopProfile.server.js';
 import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
-import { resolveTroopPrefill, sanitizeKvkTroops, troopFieldsOf } from '../../../lib/kvkAvailability.mjs';
+import { orderTroopSources, resolveTroopPrefill, sanitizeRequiredKvkTroops, troopFieldsOf } from '../../../lib/kvkAvailability.mjs';
 
 const ALLIANCES = ['710', 'RED', 'SKY'];
 const AVAILABILITY = [
@@ -65,11 +66,7 @@ export async function GET(request) {
     const heroList = await getActiveHeroNames(); // inactive heroes are dropped from what the form shows
     // Troop levels + heroes are per KvK cycle. Prefill: this cycle's answer, else the latest earlier
     // cycle's, else the old Power Profile values (where they used to be entered).
-    const prefill = resolveTroopPrefill([
-      { row: record, from: 'record' },
-      { row: previous, from: 'previous' },
-      { row: base.profile, from: 'profile' },
-    ], heroList);
+    const prefill = resolveTroopPrefill(orderTroopSources({ record, previous, profile: base.profile }), heroList);
     return NextResponse.json(
       {
         row: data, auth: session.via, record: pickJoiner(record, heroList), previous: pickJoiner(previous, heroList), cycle,
@@ -118,7 +115,7 @@ export async function POST(request) {
   try {
     const coll = await getCollection(COLLECTIONS.SUBMISSIONS);
     const existing = await coll.findOne({ member_id: memberId });
-    const troops = sanitizeKvkTroops(body, { allowedHeroes: await getActiveHeroNames(), existingHeroes: existing?.heroes });
+    const troops = sanitizeRequiredKvkTroops(body, { allowedHeroes: await getActiveHeroNames(), existingHeroes: existing?.heroes });
     if (troops.error) return NextResponse.json({ error: troops.error }, { status: 400 });
     // First save: a signed-in member with no roster row yet gets one created below
     // (upsert keyed on their session member id). No error, nothing for them to do.
@@ -158,6 +155,8 @@ export async function POST(request) {
       },
       { upsert: true }
     );
+    // Remember the troops + heroes on the member's profile too (only those fields), Power Profile or not.
+    await saveTroopsToProfile(memberId, troops.fields, now);
     const row = await coll.findOne(
       { member_id: memberId },
       {
