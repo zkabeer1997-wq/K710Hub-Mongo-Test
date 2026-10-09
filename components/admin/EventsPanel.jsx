@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import EventCalendar from '../events/EventCalendar';
 import EventFormDialog from './EventFormDialog';
@@ -25,7 +24,6 @@ async function api(url, options) {
 // Google-Calendar-style admin: click a day or drag a time range to add, click an event to edit or delete.
 // Everything saved here is what members see on /events (the API revalidates that page).
 export default function EventsPanel() {
-  const router = useRouter();
   const [rows, setRows] = useState([]);
   const [alliances, setAlliances] = useState(FALLBACK_ALLIANCES);
   const [guides, setGuides] = useState([]);
@@ -78,13 +76,6 @@ export default function EventsPanel() {
       form.start_time = start.slice(11, 16);
     }
     setDialog({ mode: 'edit', initial: form, event, occStart: occ.starts_at, seriesStart, recurring: Boolean(recurring), isDefault: Boolean(event.is_default) });
-  }
-
-  // KvK and Flamedragon cycle entries are run from their own admin event page.
-  function openOccurrence(occ) {
-    const page = CYCLE_PAGES[occ.event.slug];
-    if (page) { router.push(page); return; }
-    openEdit(occ);
   }
 
   const close = () => { if (!saving) setDialog(null); };
@@ -187,7 +178,7 @@ export default function EventsPanel() {
           label="Admin event calendar"
           spanMulti
           onCreate={openCreate}
-          onOpen={openOccurrence}
+          onOpen={openEdit}
           toolbarExtra={<Button onClick={() => openCreate()}>+ New event</Button>}
         />
       )}
@@ -226,6 +217,7 @@ export default function EventsPanel() {
         error={dialogError}
         onSave={save}
         onDelete={remove}
+        pageHref={dialog?.event ? CYCLE_PAGES[dialog.event.slug] : undefined}
         onClose={close}
       />
     </div>

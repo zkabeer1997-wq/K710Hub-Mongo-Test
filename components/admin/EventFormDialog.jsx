@@ -18,7 +18,7 @@ function localLabel(iso) {
  * Add / edit form. `mode`: 'create' | 'edit'. For a recurring event being edited, `scope` chooses
  * "all events" or "this event only". Parent handles saving and deleting.
  */
-export default function EventFormDialog({ open, initial, mode, recurring, isDefault, alliances, guides, busy, error, onSave, onDelete, onClose }) {
+export default function EventFormDialog({ open, initial, mode, recurring, isDefault, pageHref, alliances, guides, busy, error, onSave, onDelete, onClose }) {
   const [form, setForm] = useState(initial);
   const [scope, setScope] = useState('all');
   const [localError, setLocalError] = useState('');
@@ -77,6 +77,7 @@ export default function EventFormDialog({ open, initial, mode, recurring, isDefa
   return (
     <AdminDialog open={open} onClose={onClose} busy={busy} title={mode === 'edit' ? 'Edit event' : 'Add event'} variant="drawer" footer={footer}>
       <form id="event-form" className="evf" onSubmit={submit} noValidate>
+        {pageHref && <p className="evf-note"><a className="ec-link" href={pageHref}>Open the {pageHref.endsWith('kvk') ? 'KvK' : 'Flamedragon Tyrant'} page</a> to run this cycle (forms, rallies, appointments).</p>}
         {isDefault && <p className="evf-note">Built-in kingdom event. Saving creates your own copy that replaces the built-in one (no duplicates). Deleting hides it.</p>}
         <label className="evf-field">Event name
           <input className="evf-input" data-autofocus required value={form.title} placeholder="e.g. Strongest Governor" onChange={(e) => set({ title: e.target.value })} />

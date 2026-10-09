@@ -66,8 +66,10 @@ await page.goto(`${BASE}/admin/dashboard/alliance-events`, { waitUntil: 'network
 const bar = page.locator('.evcal-span').first();
 out('span bars', await page.locator('.evcal-span').count());
 await bar.click();
-await page.waitForURL(/events\/kvk/, { timeout: 8000 }).catch(() => {});
-out('KvK bar navigates to', page.url().replace(BASE, ''));
+await page.waitForTimeout(500);
+out('KvK bar opens edit dialog', await page.getByRole('dialog').first().innerText().then((t) => t.slice(0, 40).replace(/\n/g, ' ')).catch(() => 'NONE'));
+out('dialog page link', await page.getByRole('link', { name: /Open the KvK page/ }).getAttribute('href').catch(() => 'NONE'));
+await page.screenshot({ path: `${OUT}/gi-cal-dialog-1030.png` });
 
 // 7. Phone: Forms & copy and Pack editing
 const phone = await (await ctxFor(390)).newPage();

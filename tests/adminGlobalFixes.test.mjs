@@ -54,8 +54,8 @@ test('renamed labels keep their routes', () => {
 test('Forms & copy is grouped from the same lists the event pages use', () => {
   const byId = Object.fromEntries(FORM_GROUPS.map((g) => [g.id, g.keys]));
   assert.deepEqual(byId.kvk, KVK_FORM_KEYS);
-  assert.ok(byId.kvk.includes('lead'), 'Power Profile is a KvK form on both screens');
-  assert.ok(!byId.standing.includes('lead'));
+  assert.ok(!byId.kvk.includes('lead'), 'Power Profile is not an event form');
+  assert.deepEqual(byId.standing, ['lead', 'requests']);
   assert.deepEqual(byId.flamedragon, FLAMEDRAGON_FORM_KEYS);
   assert.deepEqual(byId.other, VOTE_FORM_KEYS);
   const listed = FORM_GROUPS.flatMap((g) => g.keys);
@@ -127,6 +127,13 @@ test('intake periods sort newest first', () => {
     { label: 'Oct', created_at: '2026-10-01T00:00:00Z' },
   ]);
   assert.deepEqual(sorted.map((p) => p.label), ['Nov', 'Oct', 'Sep']);
+});
+
+test('calendar cycle entries open the edit dialog with a link to the event page', () => {
+  const panel = read('components/admin/EventsPanel.jsx');
+  assert.ok(panel.includes('onOpen={openEdit}') && !panel.includes('router.push'));
+  assert.ok(panel.includes('pageHref='));
+  assert.ok(read('components/admin/EventFormDialog.jsx').includes('pageHref'));
 });
 
 test('multi-day events become one bar across the week', () => {

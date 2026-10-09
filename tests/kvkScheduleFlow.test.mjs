@@ -121,8 +121,8 @@ test('text export lists booked slots by day in UTC with a time-zone note', () =>
   assert.ok(!/Day 2 Research/.test(text));
 });
 
-test('KvK attached forms: Power Profile, Availability and Prep & Appointments only', () => {
-  assert.deepEqual(KVK_FORM_KEYS, ['lead', 'joiner', 'prep']);
+test('KvK attached forms: Availability and Prep & Appointments only (Power Profile is a standing form)', () => {
+  assert.deepEqual(KVK_FORM_KEYS, ['joiner', 'prep']);
   assert.equal(FORM_GATE_LABELS.prep, 'KvK Prep & Appointments');
   assert.ok(FORM_GATE_KEYS.includes('appointments')); // still readable for old data
 });
@@ -206,8 +206,8 @@ test('publish confirmation counts come from the saved schedule', async () => {
   assert.ok(state1.appointments.slots_booked > 0);
   assert.ok(state1.appointments.people_booked > 0);
   assert.equal(state1.appointments.prep_answers, golden.rows.length);
-  assert.deepEqual(state1.forms.map((f) => f.form_key), ['lead', 'joiner', 'prep']);
-  assert.equal(state1.counts.forms_total, 3);
+  assert.deepEqual(state1.forms.map((f) => f.form_key), ['joiner', 'prep']);
+  assert.equal(state1.counts.forms_total, 2);
 });
 
 test('old admin addresses redirect to the KvK / Flamedragon event tabs', async () => {
