@@ -9,9 +9,9 @@ import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } 
 import { loadMemberBase, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { saveTroopsToProfile } from '../../../lib/troopProfile.server.js';
 import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
+import { getAcceptedAllianceTags } from '../../../lib/allianceTags.server.js';
 import { orderTroopSources, resolveTroopPrefill, sanitizeRequiredKvkTroops, troopFieldsOf } from '../../../lib/kvkAvailability.mjs';
 
-const ALLIANCES = ['710', 'RED', 'SKY'];
 const AVAILABILITY = [
   'First half (12-14:30 UTC)',
   'Second half (14:30-17 UTC)',
@@ -104,7 +104,7 @@ export async function POST(request) {
   if (
     !name ||
     name.length > 120 ||
-    !ALLIANCES.includes(alliance) ||
+    !(await getAcceptedAllianceTags()).includes(alliance) ||
     !AVAILABILITY.includes(availability)
   ) {
     return NextResponse.json(

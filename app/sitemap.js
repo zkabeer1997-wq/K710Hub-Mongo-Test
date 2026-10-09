@@ -7,6 +7,7 @@ import { SITE_URL as BASE_URL } from '../lib/siteUrl';
 const STATIC_ROUTES = [
   { path: '/', priority: 1.0, changeFrequency: 'weekly' },
   { path: '/about', priority: 0.8, changeFrequency: 'weekly' },
+  { path: '/alliances', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/timeline', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/guides', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/events', priority: 0.8, changeFrequency: 'daily' },

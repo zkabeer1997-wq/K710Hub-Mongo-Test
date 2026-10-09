@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import './apply.css';
 import SealedPetition from '../../components/kingdom/world/SealedPetition';
 import Term from '../../components/ui/Term';
 import { processInterestImages } from './processInterestImages';
+import { useAlliances } from '../../lib/useAllianceTags';
+import { migrateOptionsFor } from '../../lib/allianceTags.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import FormErrorSummary from '../../components/FormErrorSummary';
 import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
@@ -26,14 +29,6 @@ import {
   validateNumericAnswer,
 } from '../../lib/interestForm.mjs';
 
-// Values are what leadership receives in the Inbox - keep the strings stable.
-// `label`/`hint` are only what the applicant reads.
-const MIGRATE_OPTIONS = [
-  { value: '710 (Bear 0200UTC and 1300UTC)', label: '710', hint: 'Bear Hunt at 02:00 and 13:00 UTC' },
-  { value: 'RED (Bear 1105UTC, 1900UTC and 2320UTC)', label: 'RED', hint: 'Bear Hunt at 11:05, 19:00 and 23:20 UTC' },
-  { value: 'SKY (Bear 1200UTC and 2000UTC)', label: 'SKY', hint: 'Bear Hunt at 12:00 and 20:00 UTC' },
-  { value: 'Other', label: 'Another alliance', hint: 'You will type its name' },
-];
 const TROOP_LEVEL_OPTIONS = ['TG8', 'TG7', 'TG6', 'TG5', 'Below TG5'].map((v) => ({ value: v, label: v }));
 const T11_OPTIONS = [
   { value: 'Infantry', label: 'Infantry' },
@@ -290,6 +285,7 @@ function buildSummary(form, screenshots) {
 }
 
 export default function InterestForm({ initialPeriod }) {
+  const migrateOptions = migrateOptionsFor(useAlliances());
   const [form, setForm] = useState(initialForm);
   const [screenshots, setScreenshots] = useState([]);
   const [processingImages, setProcessingImages] = useState(false);
@@ -653,7 +649,7 @@ export default function InterestForm({ initialPeriod }) {
           <li>Watch the Kingdom 710 Discord. Leadership announces the next window there.</li>
           <li>Already applied? <a href="/interest/status">Check your application</a>.</li>
           <li>Questions? Read the <a href="/help">Help page</a>.</li>
-          <li>Not sure which alliance fits you? <a href="/about#alliances">See the alliance schedules</a>.</li>
+          <li>Not sure which alliance fits you? <Link href="/alliances">See the alliance schedules</Link>.</li>
         </ul>
       </section>
     );
@@ -740,7 +736,7 @@ export default function InterestForm({ initialPeriod }) {
               hint="You can check the schedules first. Your answers stay saved if you leave."
               name="migrateAlliance"
               id="f-migrateAlliance"
-              options={MIGRATE_OPTIONS}
+              options={migrateOptions}
               value={form.migrateAlliance}
               onChange={(v) => updateField('migrateAlliance', v)}
               error={errMsg('migrateAlliance')}
@@ -755,7 +751,7 @@ export default function InterestForm({ initialPeriod }) {
                 </div>
               )}
             </Choices>
-            <p className="apply-hint"><a href="/about#alliances">See alliance schedules</a> (opens the About page).</p>
+            <p className="apply-hint"><Link href="/alliances">See alliance schedules</Link> (opens the Alliances page).</p>
           </>
         )}
 

@@ -2,6 +2,7 @@ import { validateAllianceEvents } from '../../../lib/allianceEvents.mjs';
 import { NextResponse } from 'next/server';
 import { revalidateAlliancePages } from '../../../lib/revalidateAlliancePages';
 import { validateBearTimes } from '../../../lib/bearHuntSchedule';
+import { validateLeaders, resolveLeaders, usesLegacyLeaders } from '../../../lib/allianceLeaders.mjs';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
@@ -24,7 +25,15 @@ export async function GET(request) {
     const coll = await getCollection(COLLECTIONS.ALLIANCES);
     const data = await coll.find({}).sort({ sort_order: 1 }).toArray();
     // strip Mongo _id for cleaner JSON
-    const alliances = (data || []).map(({ _id, ...rest }) => rest);
+    // Alliances that predate `leaders` get a suggested list (the R5 from the old Home page text) so the
+    // editor opens with it instead of empty; it only becomes stored data when an admin saves.
+    let home = {};
+    if ((data || []).some(usesLegacyLeaders)) {
+      try { home = await (await import('../../../lib/pageText.server.js')).getPageText('home'); } catch { home = {}; }
+    }
+    const alliances = (data || []).map(({ _id, ...rest }) => (
+      usesLegacyLeaders(rest) ? { ...rest, leaders_suggested: resolveLeaders(rest, home) } : rest
+    ));
     return NextResponse.json({ alliances });
   } catch (error) {
     console.error('admin-alliances' + ' failed', error);
@@ -63,9 +72,13 @@ export async function POST(request) {
   const { times, error: timeError } = validateBearTimes(body.bear_times_utc ?? []);
   if (timeError) return NextResponse.json({ error: timeError }, { status: 400 });
 
+  const { leaders, error: leadersError } = validateLeaders(body.leaders ?? []);
+  if (leadersError) return NextResponse.json({ error: leadersError }, { status: 400 });
+
   try {
     const coll = await getCollection(COLLECTIONS.ALLIANCES);
     const doc = {
+      leaders,
       bear_times_utc: times,
       scheduled_events: events,
       tag,

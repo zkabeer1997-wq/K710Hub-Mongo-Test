@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 
 const DESTINATIONS = [
   { href: '/', label: 'Home', note: 'Kingdom 710 website' },
-  { href: '/about#alliances', label: 'Alliance Schedules', note: 'Bear Hunt times and transfers' },
+  { href: '/alliances', label: 'Alliance Schedules', note: 'Bear Hunt times and transfers' },
   { href: '/interest', label: 'Transfer Form', note: 'Apply to join K710' },
   { href: '/dashboard', label: 'Dashboard', note: 'Member pages and forms' },
   { href: '/power-profile', label: 'Power Profile', note: 'Gear, heroes, troops, and power' },

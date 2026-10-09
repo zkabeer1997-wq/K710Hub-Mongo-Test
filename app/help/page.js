@@ -21,7 +21,7 @@ const BODIES = [
     body: (
       <>
         <p>
-          Kingdom 710 is a community of players in the mobile game Kingshot. We play together in three alliances
+          Kingdom 710 is a community of players in the mobile game Kingshot. We play together in several alliances
           and help each other win battles. This website is where we share events, guides and tools, and where new
           players can ask to join.
         </p>

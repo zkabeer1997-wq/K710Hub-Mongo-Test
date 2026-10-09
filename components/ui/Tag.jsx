@@ -9,10 +9,12 @@ const TONE_CLASS = {
   danger: 'ui-tag-danger',
 };
 
+import { bandProps } from '../../lib/alliances.mjs';
+
 export default function Tag({ tone = 'neutral', band, className = '', children, ...rest }) {
   if (band) {
     return (
-      <span className={`ui-tag k-wb ${className}`} data-band={band} {...rest}>
+      <span className={`ui-tag k-wb ${className}`} {...bandProps(band)} {...rest}>
         <span className="k-gem" aria-hidden="true" />
         {children}
       </span>

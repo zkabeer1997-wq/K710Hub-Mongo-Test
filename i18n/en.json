@@ -143,5 +143,28 @@
   "dash.moreNavAria": { "text": "More destinations", "note": "Screen-reader name of the list of links inside the More section." },
 
   "easy.label": { "text": "Easy view", "note": "Button that switches to larger text and bigger buttons." },
-  "easy.aria": { "text": "Easy view: larger text and buttons", "note": "Screen-reader name and tooltip of the Easy view button." }
+  "easy.aria": { "text": "Easy view: larger text and buttons", "note": "Screen-reader name and tooltip of the Easy view button." },
+
+  "alliances.discord.link": { "text": "Message on Discord", "note": "Small button next to a leader's name that opens their Discord profile. Keep Discord as is." },
+  "alliances.discord.aria": { "text": "Message {name} on Discord", "note": "Screen-reader name of the Discord button. {name} is a person's name and must stay exactly as written. Keep Discord as is." },
+  "alliances.bearHunts": { "text": "Bear Hunts", "note": "Small label above an alliance's daily Bear Hunt times. Bear Hunt is a game event and keeps its English name." },
+  "alliances.view": { "text": "View {tag}", "note": "Link at the bottom of an alliance box. {tag} is the alliance short name such as RED and must stay exactly as written." },
+  "alliances.status.open": { "text": "Recruiting", "note": "Status label of an alliance that is accepting new members." },
+  "alliances.status.selective": { "text": "Selective", "note": "Status label of an alliance that only accepts some applicants." },
+  "alliances.status.closed": { "text": "Closed", "note": "Status label of an alliance that is not accepting new members." },
+  "alliances.leadership.none": { "text": "Leadership will be listed here soon.", "note": "Calm line shown in the Leadership panel when no leaders have been added yet." },
+  "alliances.leadership.contact": { "text": "Contact", "note": "Small role label above a leadership contact given only as free text." },
+  "alliances.strip.status": { "text": "Status", "note": "Small caps label of the recruiting status cell at the top of an alliance page." },
+  "alliances.strip.members": { "text": "Members", "note": "Small caps label above the number of members of an alliance." },
+  "alliances.strip.language": { "text": "Language", "note": "Small caps label above the main language of an alliance." },
+  "alliances.strip.timezone": { "text": "Timezone", "note": "Small caps label above the timezone focus of an alliance." },
+  "alliances.eyebrow": { "text": "Kingdom 710 alliance · {tag}", "note": "Small line above the alliance name in the page banner. Kingdom 710 stays as is. {tag} is the alliance short name and must stay exactly as written." },
+  "alliances.back": { "text": "← All alliances", "note": "Link back to the list of all alliances. Keep the arrow." },
+  "alliances.panel.leadership": { "text": "Leadership", "note": "Heading of the panel that lists the alliance leaders (R5, R4, Transfer Manager)." },
+  "alliances.panel.bear": { "text": "Bear Hunt windows", "note": "Heading of the panel with the alliance's daily Bear Hunt times. Bear Hunt keeps its English name." },
+  "alliances.panel.join": { "text": "Join", "note": "Heading of the panel that invites visitors to apply to the alliance." },
+  "alliances.bear.calendar": { "text": "Add {tag} Bear Hunts to my calendar", "note": "Link that downloads a calendar file with the alliance's Bear Hunt times. {tag} is the alliance short name and must stay exactly as written." },
+  "alliances.bear.all": { "text": "See all alliance Bear Hunt times →", "note": "Link to the page listing every alliance. Keep the arrow." },
+  "alliances.join.line": { "text": "Ready to move? Send a transfer application and our officers will help you join {name}.", "note": "Short invitation in the Join panel. {name} is the alliance name and must stay exactly as written." },
+  "alliances.join.cta": { "text": "Join {name}", "note": "Button that opens the transfer application. {name} is the alliance name and must stay exactly as written." }
 }

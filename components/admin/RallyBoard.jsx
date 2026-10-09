@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AdminDialog from './AdminDialog';
 import ConfirmDialog from './ConfirmDialog';
 import styles from './RallyBoard.module.css';
-import { KVK_ALLIANCES } from '../../lib/playerCombatOptions.mjs';
+import { useAllianceTags } from '../../lib/useAllianceTags';
 import { timeBucket, timeLabel, troopCell } from '../../lib/rallyExport.mjs';
 import {
   MAX_LEAD_HEROES,
@@ -50,6 +50,7 @@ const saveText = (state) => {
 export default function RallyBoard({
   rallies, updateRallies, rows, membersById, heroOptions, eventType, eventName, saveState, onRetrySave, onOpenMember,
 }) {
+  const allianceTags = useAllianceTags();
   const [poolOpen, setPoolOpen] = useState(true);
   const [allianceFilter, setAllianceFilter] = useState('');
   const [timeFilter, setTimeFilter] = useState('');
@@ -227,7 +228,7 @@ export default function RallyBoard({
             <div className={styles.poolFilters}>
               <select className={styles.field} aria-label="Alliance" value={allianceFilter} onChange={(e) => setAllianceFilter(e.target.value)}>
                 <option value="">Any alliance</option>
-                {KVK_ALLIANCES.map((a) => <option key={a} value={a}>{a}</option>)}
+                {allianceTags.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
               <select className={styles.field} aria-label="Availability" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
                 <option value="">Any time</option>

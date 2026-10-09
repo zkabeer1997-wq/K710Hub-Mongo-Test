@@ -68,6 +68,17 @@
   --wb-red-deep:     #611620;
   --wb-sky:          #3f74bd;
   --wb-sky-deep:     #1f3f6d;
+  /* PHL: verdigris green. Any alliance tag without its own token rotates through --wb-x1..x4 (see lib/alliances.mjs bandHue). */
+  --wb-phl:          #3f8a67;
+  --wb-phl-deep:     #1f5238;
+  --wb-x1:           #c9733a; /* ember copper */
+  --wb-x1-deep:      #7a3d14;
+  --wb-x2:           #2f8c8c; /* teal */
+  --wb-x2-deep:      #165050;
+  --wb-x3:           #8a9440; /* olive */
+  --wb-x3-deep:      #4d5518;
+  --wb-x4:           #7d8795; /* steel */
+  --wb-x4-deep:      #3f4854;
 
   --t-primary:       #ece3d0;
   --t-secondary:     #a9afc0;

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useBearSchedule } from './BearScheduleProvider';
 import BearTimes from './BearTimes';
+import { bandProps } from '../lib/alliances.mjs';
 
 export default function PublicBearAlliances({ layout = 'home', initialAlliances = null, notes = {} }) {
   // Server render shows UTC; once mounted we upgrade to the viewer's local
@@ -15,7 +16,7 @@ export default function PublicBearAlliances({ layout = 'home', initialAlliances 
   if (layout === 'chamber') return (
     <div className="standards">
       {alliances.map(alliance => (
-        <article key={alliance.tag} className="standard k-wb" data-band={alliance.tag}>
+        <article key={alliance.tag} className="standard k-wb" {...bandProps(alliance.tag)}>
           <div className="standard-cloth" aria-hidden="true" />
           <span className="standard-gem" aria-hidden="true" />
           <span className="k-mark standard-role">{alliance.bear_times_utc.length} daily Bear Hunt {alliance.bear_times_utc.length === 1 ? 'time' : 'times'}</span>
