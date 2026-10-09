@@ -1,7 +1,9 @@
 import { Fragment } from 'react';
 import { cookies } from 'next/headers';
 import PublicBearAlliances from '../components/PublicBearAlliances';
-import { loadPublicBearScheduleOrNull, bearAllianceNotes } from '../lib/publicBearSchedule';
+import { loadPublicBearScheduleOrNull, bearAllianceNotes, stripLegacyBearCopy } from '../lib/publicBearSchedule';
+import { buildBearNotes } from '../lib/allianceNotes.mjs';
+import { loadLandingAlliances } from '../lib/alliancesPublic.server';
 import Link from 'next/link';
 import { getPageText } from '../lib/pageText.server';
 import HomeForgeIntro from '../components/kingdom/world/HomeForgeIntro';
@@ -69,6 +71,9 @@ export default async function HomePage() {
   const kvk = isMember ? null : await getKvkRecord();
   let galleryImages = [];
   try { galleryImages = await getGalleryImages({ limit: 10 }); } catch (error) { console.error('homepage gallery load failed', error); }
+  // Notes: the Home page text for the original three (unchanged), otherwise built from the alliance record.
+  let details = {};
+  try { details = Object.fromEntries((await loadLandingAlliances()).map((a) => [a.tag, a])); } catch { details = {}; }
   const content = { 'wb-1-desc': { text: t.wb_1_desc }, 'wb-2-desc': { text: t.wb_2_desc }, 'wb-3-desc': { text: t.wb_3_desc } };
 
   return (
@@ -169,7 +174,7 @@ export default async function HomePage() {
 
       <section className="home-v2-alliances" id="alliances">
         <SectionHeader eyebrow={t.wb_head_kicker} title={t.wb_head_title} />
-        <PublicBearAlliances initialAlliances={bearAlliances} notes={bearAllianceNotes(content)} />
+        <PublicBearAlliances initialAlliances={bearAlliances} notes={buildBearNotes({ alliances: bearAlliances || [], textNotes: bearAllianceNotes(content), details, stripBlurb: stripLegacyBearCopy })} />
       </section>
 
       <section className="home-v2-final">

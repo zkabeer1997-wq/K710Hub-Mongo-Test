@@ -4,10 +4,10 @@ import { randomUUID } from 'node:crypto';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
+import { getAcceptedAllianceTags } from '../../../lib/allianceTags.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
 const SECTIONS = ['Tools and Calculators', 'Forms', 'Events', 'Guides', 'General'];
-const ALLIANCES = ['710', 'RED', 'SKY'];
 const MAX_MESSAGE_LENGTH = 2000;
 
 export async function GET(request) {
@@ -56,7 +56,7 @@ export async function POST(request) {
   const currentAlliance = String(body?.current_alliance || '').trim();
   const section = String(body?.section || '').trim();
   const message = String(body?.message || '').trim();
-  if (!ALLIANCES.includes(currentAlliance)) {
+  if (!(await getAcceptedAllianceTags()).includes(currentAlliance)) {
     return NextResponse.json({ error: 'Select your current alliance.' }, { status: 400 });
   }
   if (!SECTIONS.includes(section)) {

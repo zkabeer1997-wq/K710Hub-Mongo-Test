@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useBearSchedule } from './BearScheduleProvider';
 import BearTimes from './BearTimes';
+import { bandProps } from '../lib/alliances.mjs';
 
 export default function PublicBearAlliances({ layout = 'home', initialAlliances = null, notes = {} }) {
   // Server render shows UTC; once mounted we upgrade to the viewer's local
@@ -15,7 +16,7 @@ export default function PublicBearAlliances({ layout = 'home', initialAlliances 
   if (layout === 'chamber') return (
     <div className="standards">
       {alliances.map(alliance => (
-        <article key={alliance.tag} className="standard k-wb" data-band={alliance.tag}>
+        <article key={alliance.tag} className="standard k-wb" {...bandProps(alliance.tag)}>
           <div className="standard-cloth" aria-hidden="true" />
           <span className="standard-gem" aria-hidden="true" />
           <span className="k-mark standard-role">{alliance.bear_times_utc.length} daily Bear Hunt {alliance.bear_times_utc.length === 1 ? 'time' : 'times'}</span>
@@ -30,10 +31,9 @@ export default function PublicBearAlliances({ layout = 'home', initialAlliances 
     </div>
   );
   return (
-    <div className="home-v2-alliance-line">
-      {alliances.map((alliance, index) => (
-        <div className="home-v2-alliance-fragment" key={alliance.tag}>
-          {index > 0 && <i />}
+    <div className="home-v2-alliance-line" data-count={Math.min(alliances.length, 6)}>
+      {alliances.map((alliance) => (
+        <div className="home-v2-alliance-fragment k-wb" {...bandProps(alliance.tag)} key={alliance.tag}>
           <Link href={`/alliances/${alliance.tag.toLowerCase()}`}>
             <b>{alliance.tag}</b><small>{alliance.name}</small>
             <em><BearTimes times={alliance.bear_times_utc} />{notes[alliance.tag] ? <span className="bear-note">{notes[alliance.tag]}</span> : null}</em>

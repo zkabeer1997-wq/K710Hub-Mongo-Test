@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useBearSchedule } from '../../components/BearScheduleProvider';
+import { bandProps } from '../../lib/alliances.mjs';
 
 // Renders the real Bear Hunt windows in the VIEWER's local time, not UTC -
 // kingdom846.com's events page is UTC-only, real friction for a kingdom
@@ -38,7 +39,7 @@ export default function BearHuntSchedule({ initialAlliances = null }) {
             return (
               <tr key={`${hunt.band}-${hunt.utc}`}>
                 <td>
-                  <span className="ui-tag" data-band={hunt.band}>{hunt.band}</span>
+                  <span className="ui-tag k-wb" {...bandProps(hunt.band)}>{hunt.band}</span>
                 </td>
                 <td>{localLabel}</td>
                 {mounted && <td className="events-hunts-utc">{hunt.utc} UTC</td>}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { KVK_ALLIANCES } from '../../../lib/playerCombatOptions.mjs';
+import { useAllianceTags } from '../../../lib/useAllianceTags';
 import { useFormFieldMeta } from '../../../lib/useFormFieldMeta';
 import { useToast } from '../../../components/ui/Toast';
 import IdentityFields from '../../../components/member/IdentityFields';
@@ -14,6 +14,7 @@ export default function WebsiteRequestForm({ identity }) {
   const [name, setName] = useState(identity?.name || '');
   const memberId = identity?.memberId || '';
   const [currentAlliance, setCurrentAlliance] = useState(identity?.alliance || '');
+  const allianceTags = useAllianceTags(currentAlliance);
   const [section, setSection] = useState('');
   const [message, setMessage] = useState('');
   const [needsSignIn, setNeedsSignIn] = useState(false);
@@ -132,7 +133,7 @@ export default function WebsiteRequestForm({ identity }) {
                 <label>{field.label}
                   <select value={currentAlliance} onChange={(e) => setCurrentAlliance(e.target.value)}>
                     <option value="">{field.placeholder}</option>
-                    {KVK_ALLIANCES.map((a) => <option key={a} value={a}>{a}</option>)}
+                    {allianceTags.map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </label>
               </section>

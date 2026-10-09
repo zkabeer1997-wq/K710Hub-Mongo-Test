@@ -1,0 +1,76 @@
+/* Alliances (Realm). Colour comes from --wb / --wb-deep set by .k-wb[data-band|data-hue]
+   (app/kingdom.css, tokens in app/tokens.css), so every tag is styled the same way. */
+
+.al-label{margin:0 0 8px;font:700 12px/1.2 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--color-ink-muted)}
+.al-muted{margin:0;color:var(--color-ink-muted);font-size:16px;line-height:1.6}
+.al-role{font:700 11px/1.2 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--color-ink-muted)}
+.al-name{font-weight:700;color:var(--color-ink)}
+
+/* Discord: small outlined button, only rendered when an admin stored a Discord id */
+.al-discord{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);color:var(--color-link);font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background-color .18s,border-color .18s}
+.al-discord:hover{background:color-mix(in srgb,var(--wb,var(--color-accent)) 12%,transparent);border-color:var(--wb-deep,var(--color-accent-text))}
+.al-discord:focus-visible,.al-box a:focus-visible,.al-panel a:focus-visible,.al-banner a:focus-visible{outline:2px solid var(--color-accent-strong);outline-offset:3px}
+
+/* ---------- landing grid: four equal boxes, 2 x 2 ---------- */
+.al-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,2.4vw,28px);align-items:stretch}
+.al-grid>li{display:flex;min-width:0}
+.al-box{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;gap:12px;width:100%;padding:clamp(20px,2.6vw,32px);background:var(--color-surface);border:1px solid var(--color-border);border-top:4px solid var(--wb);border-radius:var(--radius-md)}
+.al-mark{position:absolute;z-index:-1;right:-6px;top:-14px;font:800 clamp(88px,11vw,140px)/1 var(--font-display);letter-spacing:-.04em;color:var(--wb);opacity:.1;pointer-events:none;user-select:none}
+.al-box-top{display:flex;flex-wrap:wrap;gap:8px}
+.al-box-name{margin:0;text-transform:none;font-family:var(--font-display);font-size:clamp(26px,2.8vw,34px);line-height:1.1;letter-spacing:-.015em;text-wrap:balance}
+.al-box-name a{color:inherit;text-decoration:none}
+.al-box-name a:hover{text-decoration:underline}
+.al-box-blurb{margin:0;font-size:17px;line-height:1.6;color:var(--color-ink)}
+.al-box-meta{margin:0;font-size:15px;color:var(--color-ink-muted)}
+.al-r5{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.al-r5 li{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.al-r5-text{font-size:16px}
+.al-box-times{padding-top:12px;border-top:1px solid var(--color-border)}
+.al-box-more{margin-top:auto;padding-top:4px;display:inline-flex;align-items:center;min-height:44px;font-weight:700;font-size:15px;color:var(--color-link);text-decoration:none}
+.al-box-more:hover{text-decoration:underline}
+
+/* ---------- individual alliance page ---------- */
+.al-detail{background:var(--color-bg);color:var(--color-ink);min-height:60vh}
+.al-banner .ph--realm{background:linear-gradient(118deg,color-mix(in srgb,var(--wb-deep) 82%,#241709) 0%,#241709 74%);border-bottom:4px solid var(--wb)}
+.al-banner .ph--realm .ph-eyebrow{font-family:var(--font-mono);letter-spacing:.12em;text-transform:uppercase}
+.al-detail-inner{max-width:var(--page-max);margin:0 auto;padding:clamp(24px,4vw,40px) var(--page-gutter) 96px;display:flex;flex-direction:column;gap:clamp(16px,2.4vw,28px)}
+.al-strip{margin:0;display:grid;grid-template-columns:repeat(var(--cells,4),minmax(0,1fr));border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);overflow:hidden}
+.al-strip-cell{padding:16px 20px;border-left:1px solid var(--color-border);min-width:0}
+.al-strip-cell:first-child{border-left:0}
+.al-strip dt{margin:0 0 6px;font:700 11px/1.2 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--color-ink-muted)}
+.al-strip dd{margin:0;font-size:18px;font-weight:700;overflow-wrap:anywhere}
+.al-panels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2.4vw,28px);align-items:stretch}
+.al-panel{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(20px,2.4vw,28px);background:var(--color-surface);border:1px solid var(--color-border);border-top:4px solid var(--wb);border-radius:var(--radius-md);min-width:0}
+.al-panel-h{margin:0;text-transform:none;font-family:var(--font-display);font-size:clamp(22px,2.2vw,26px);line-height:1.15;letter-spacing:-.01em}
+.al-people{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column}
+.al-people li{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--color-border)}
+.al-people li:first-child{border-top:0;padding-top:0}
+.al-person{display:flex;flex-direction:column;gap:4px;min-width:0}
+.al-person .al-name{font-size:18px;overflow-wrap:anywhere}
+.al-bear-list{display:flex;gap:8px;flex-wrap:wrap}
+.al-link{display:inline-flex;align-items:center;min-height:44px;color:var(--color-link);font-size:15px;font-weight:700;text-decoration:none}
+.al-link:hover{text-decoration:underline}
+.al-join-cta{margin-top:auto}
+.al-panel .al-muted{margin-bottom:10px}
+
+@media(max-width:1023px){
+  .al-panels{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .al-panels>:last-child{grid-column:1/-1}
+}
+@media(max-width:700px){
+  .al-grid{grid-template-columns:1fr}
+  .al-panels{grid-template-columns:1fr}
+  .al-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .al-strip-cell:nth-child(odd){border-left:0}
+  .al-strip-cell:nth-child(n+3){border-top:1px solid var(--color-border)}
+}
+
+:root[data-easy='true'] .al-box-blurb,:root[data-easy='true'] .al-muted,:root[data-easy='true'] .al-r5-text{font-size:19px}
+:root[data-easy='true'] .al-box-meta,:root[data-easy='true'] .al-box-more,:root[data-easy='true'] .al-link,:root[data-easy='true'] .al-discord{font-size:18px}
+:root[data-easy='true'] .al-role,:root[data-easy='true'] .al-label,:root[data-easy='true'] .al-strip dt{font-size:13px}
+:root[data-easy='true'] .al-strip dd,:root[data-easy='true'] .al-person .al-name{font-size:20px}
+
+@media (prefers-reduced-motion:no-preference){
+  .al-box{animation:al-rise .4s ease-out both}
+}
+@keyframes al-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}

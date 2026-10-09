@@ -5,7 +5,6 @@ import IdentityFields from '../../components/member/IdentityFields';
 import { HeroRosterPicker, TroopLevelFields, troopFieldId } from '../../components/member/TroopHeroFields';
 import { TROOP_FIELD_KEYS, troopFieldErrors } from '../../lib/kvkAvailability.mjs';
 import {
-  ALLIANCES,
   currentHeroesOnly,
   AVAILABILITY_OPTIONS,
   VOICE_CHAT_OPTIONS,
@@ -22,10 +21,13 @@ import {
   serializeCharmSelections,
   serializeGovernorGearSelections,
 } from '../../lib/flamedragonForm.mjs';
+import { useAllianceTags } from '../../lib/useAllianceTags';
+import { withCurrentTag } from '../../lib/allianceTags.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 
 function FlamedragonForm({ identity, intro, heroCatalog }) {
+  const ALLIANCES = useAllianceTags();
   const { intro: fieldMetaIntro } = useFormFieldMeta('dragon');
   const [form, setForm] = useState({
     name: identity?.name || '',
@@ -184,7 +186,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
 
           <section className="troop-section public-section">
             <div className="section-title-row"><span>Alliance</span><h3>Current Alliance</h3><p>Select the alliance you are currently in.</p></div>
-            <label>Current Alliance<select value={form.current_alliance} onChange={(e) => updateField('current_alliance', e.target.value)}><option value="">Select alliance</option>{ALLIANCES.map((a) => <option key={a} value={a}>{a}</option>)}</select></label>
+            <label>Current Alliance<select value={form.current_alliance} onChange={(e) => updateField('current_alliance', e.target.value)}><option value="">Select alliance</option>{withCurrentTag(ALLIANCES, form.current_alliance).map((a) => <option key={a} value={a}>{a}</option>)}</select></label>
           </section>
 
           {onFile && (

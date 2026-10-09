@@ -2,6 +2,7 @@ import { validateAllianceEvents } from '../../../../lib/allianceEvents.mjs';
 import { NextResponse } from 'next/server';
 import { revalidateAlliancePages } from '../../../../lib/revalidateAlliancePages';
 import { validateBearTimes } from '../../../../lib/bearHuntSchedule';
+import { validateLeaders } from '../../../../lib/allianceLeaders.mjs';
 import { isAdminRequest } from '../../../../lib/adminAuth';
 import { getCollection } from '../../../../lib/mongo';
 import { COLLECTIONS } from '../../../../lib/mongoCollections';
@@ -40,6 +41,11 @@ export async function PUT(request, { params: paramsPromise }) {
     const { times, error: timeError } = validateBearTimes(body.bear_times_utc);
     if (timeError) return NextResponse.json({ error: timeError }, { status: 400 });
     update.bear_times_utc = times;
+  }
+  if (body.leaders !== undefined) {
+    const { leaders, error: leadersError } = validateLeaders(body.leaders);
+    if (leadersError) return NextResponse.json({ error: leadersError }, { status: 400 });
+    update.leaders = leaders;
   }
   if (body.name !== undefined) {
     const name = String(body.name).trim();

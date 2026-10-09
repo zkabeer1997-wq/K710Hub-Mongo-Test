@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import EditableSection from '../../components/EditableSection';
 import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
 import InterestForm from './InterestForm';
@@ -32,7 +33,7 @@ export default async function InterestPage() {
           eyebrow="Kingdom 710 · Transfer application"
           title="Apply to join Kingdom 710"
           lede="Answer a few questions about your account and your power. It takes about 5 minutes. You can stop and come back: your answers are saved on this device. Our officers read every application."
-          actions={<><a href="/about#alliances" className="registry-head-link">Check alliance schedules first →</a><a href="/help" className="registry-head-link">Need help?</a><a href="/interest/status" className="registry-head-link">Already applied? Check status</a></>}
+          actions={<><Link href="/alliances" className="registry-head-link">Check alliance schedules first →</Link><a href="/help" className="registry-head-link">Need help?</a><a href="/interest/status" className="registry-head-link">Already applied? Check status</a></>}
         />
 
         {(hasIntro || isAdmin) && (

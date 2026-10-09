@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import AllianceEventEditor from './AllianceEventEditor';
 import { validateAllianceEvents } from '../../lib/allianceEvents.mjs';
+import AllianceLeadersEditor from './AllianceLeadersEditor';
+import { validateLeaders } from '../../lib/allianceLeaders.mjs';
 import ConfirmDialog from './ConfirmDialog';
 import TableSkeleton from './TableSkeleton';
 import { Button, Field, Input, Select, Textarea, Table } from '../ui';
@@ -13,7 +15,7 @@ import { notifyBearScheduleChanged } from '../BearScheduleProvider';
 const STATUSES = ['open', 'selective', 'closed'];
 const EMPTY_FORM = {
   tag: '', name: '', blurb: '', leader_player_id: '', timezone_focus: '',
-  recruiting_status: 'open', language: '', roster_size: '', active: true, sort_order: 0, bear_times_utc: [], scheduled_events: [],
+  recruiting_status: 'open', language: '', roster_size: '', active: true, sort_order: 0, bear_times_utc: [], scheduled_events: [], leaders: [],
 };
 
 export default function AlliancesPanel() {
@@ -52,6 +54,8 @@ export default function AlliancesPanel() {
     setForm({
       bear_times_utc: row.bear_times_utc || [],
       scheduled_events: row.scheduled_events || [],
+      // No stored list yet: open with the R5 from the old Home page text so saving does not drop it.
+      leaders: (row.leaders || row.leaders_suggested || []).map((l) => ({ player_id: '', discord_id: '', ...l })),
       tag: row.tag, name: row.name, blurb: row.blurb || '',
       leader_player_id: row.leader_player_id || '', timezone_focus: row.timezone_focus || '',
       recruiting_status: row.recruiting_status, language: row.language || '',
@@ -71,11 +75,13 @@ export default function AlliancesPanel() {
       if (timeError) throw new Error(timeError);
       const { error: eventError } = validateAllianceEvents(form.scheduled_events);
       if (eventError) throw new Error(eventError);
+      const { leaders, error: leadersError } = validateLeaders(form.leaders);
+      if (leadersError) throw new Error(leadersError);
       const isNew = editingTag === 'new';
       const response = await fetch(isNew ? '/api/admin-alliances' : `/api/admin-alliances/${editingTag}`, {
         method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, leaders }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to save alliance.');
@@ -117,7 +123,7 @@ export default function AlliancesPanel() {
       {editingTag !== null && (
         <div className="k-plate" style={{ padding: 20, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 12 }}>
-            <Field label="Tag" hint="e.g. 710, RED, SKY">
+            <Field label="Tag" hint="2 to 10 letters or numbers, e.g. PHL. It appears on the site automatically.">
               <Input tone="console" value={form.tag} disabled={editingTag !== 'new'} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value.toUpperCase() }))} />
             </Field>
             <Field label="Display name">
@@ -143,10 +149,11 @@ export default function AlliancesPanel() {
             <Field label="Roster size">
               <Input tone="console" type="number" value={form.roster_size} onChange={(e) => setForm((f) => ({ ...f, roster_size: e.target.value }))} />
             </Field>
-            <Field label="Leadership contact (player ID or name)">
+            <Field label="Leadership contact (older field, shown only until Leaders below is saved)">
               <Input tone="console" value={form.leader_player_id} onChange={(e) => setForm((f) => ({ ...f, leader_player_id: e.target.value }))} />
             </Field>
           </div>
+          <AllianceLeadersEditor leaders={form.leaders} disabled={saving} onChange={(leaders) => setForm((f) => ({ ...f, leaders }))} />
           <fieldset disabled={saving} style={{ border: '1px solid var(--edge)', padding: 16, display: 'grid', gap: 12, minWidth: 0 }}>
             <legend>Bear Hunt times (UTC)</legend>
             <p style={{ margin: 0 }}>These daily times update the Events page, public alliance schedules, clock, and calendar download.</p>

@@ -1,21 +1,19 @@
-import { stripLegacyBearCopy } from '../../lib/publicBearSchedule';
 import Link from 'next/link';
-import { AllianceBearTimes } from '../../components/BearScheduleProvider';
+import AllianceGrid from '../../components/alliances/AllianceGrid';
+import { loadLandingAlliances } from '../../lib/alliancesPublic.server';
 import { getPageText } from '../../lib/pageText.server';
 import { splitParagraphs } from '../../lib/pageText.mjs';
 import EditableSection from '../../components/EditableSection';
 import './about.css';
 import { getBlocks } from '../../lib/contentBlocks';
-import { getCollection } from '../../lib/mongo';
-import { COLLECTIONS } from '../../lib/mongoCollections';
-import { Tag, PageHero } from '../../components/ui';
+import { PageHero } from '../../components/ui';
 import KvkRecord from '../../components/about/KvkRecord';
 import { getKvkRecord } from '../../lib/external/index.mjs';
 
 export const metadata = {
   title: 'About',
   description:
-    'Kingdom 710 is a multilingual Kingshot kingdom with three alliances: 710, RED and SKY. See our KvK record, alliances and how to join.',
+    'Kingdom 710 is a multilingual Kingshot kingdom with coordinated alliances, each with its own Bear Hunt times. See our KvK record, alliances and how to join.',
   alternates: { canonical: '/about' },
 };
 
@@ -27,35 +25,9 @@ function Paras({ text, className }) {
   return splitParagraphs(text).map((p, i) => <p key={i} className={className}>{p}</p>);
 }
 
-// Leader line lives in the Home page text as "R5: Name". Only shown if present.
-function leaderOf(text) {
-  const m = /R5\s*:\s*([^\n]+)/i.exec(text || '');
-  return m ? m[1].trim() : '';
-}
-
-const STATUS_LABEL = { open: 'Recruiting', selective: 'Selective', closed: 'Closed' };
-const STATUS_TONE = { open: 'success', selective: 'accent', closed: 'neutral' };
-
 async function loadAlliances() {
   try {
-    const coll = await getCollection(COLLECTIONS.ALLIANCES);
-    const data = await coll
-      .find({ active: true })
-      .project({
-        tag: 1,
-        name: 1,
-        blurb: 1,
-        timezone_focus: 1,
-        recruiting_status: 1,
-        language: 1,
-        roster_size: 1,
-        bear_times_utc: 1,
-        sort_order: 1,
-        _id: 0,
-      })
-      .sort({ sort_order: 1 })
-      .toArray();
-    return data || [];
+    return await loadLandingAlliances();
   } catch (error) {
     console.error('about alliances load failed', error);
     return [];
@@ -73,7 +45,6 @@ export default async function AboutPage() {
   ]);
   const steps = [1, 2, 3].map((n) => ({ n, title: t[`step${n}_title`], body: t[`step${n}_body`], href: STEP_HREFS[n], link: t[`step${n}_link`] }));
 
-  const leaders = { '710': leaderOf(home.wb_1_desc), RED: leaderOf(home.wb_2_desc), SKY: leaderOf(home.wb_3_desc) };
   const hasSources = sourcesBlocks.length > 0;
 
   return (
@@ -126,32 +97,10 @@ export default async function AboutPage() {
         {alliances.length === 0 ? (
           <p className="about-empty">The alliance directory is unavailable right now. Please try again shortly.</p>
         ) : (
-          <ol className="about-alliance-list">
-            {alliances.map((a) => {
-              const blurb = stripLegacyBearCopy(a.blurb);
-              const leader = leaders[a.tag];
-              return (
-                <li key={a.tag} className="about-alliance">
-                  <div className="about-alliance-id">
-                    <Tag band={a.tag}>{a.tag}</Tag>
-                    <h3><Link href={`/alliances/${String(a.tag).toLowerCase()}`}>{a.name}</Link></h3>
-                    <Tag tone={STATUS_TONE[a.recruiting_status] || 'neutral'}>{STATUS_LABEL[a.recruiting_status] || a.recruiting_status}</Tag>
-                  </div>
-                  <div className="about-alliance-main">
-                    {blurb && <p className="about-alliance-blurb">{blurb}</p>}
-                    <p className="about-alliance-meta">
-                      {[leader && `R5: ${leader}`, a.timezone_focus, a.language, a.roster_size != null && `${a.roster_size} members`].filter(Boolean).join(' · ')}
-                    </p>
-                    <Link className="about-more" href={`/alliances/${String(a.tag).toLowerCase()}`}>View {a.tag}<span aria-hidden="true"> →</span></Link>
-                  </div>
-                  <div className="about-alliance-times">
-                    <p className="about-mini-label">Bear Hunts</p>
-                    <AllianceBearTimes tag={a.tag} initialTimes={a.bear_times_utc} />
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
+          <>
+            <AllianceGrid alliances={alliances} compact />
+            <Link className="about-more" href="/alliances">See every alliance, its leaders and Bear Hunt times<span aria-hidden="true"> →</span></Link>
+          </>
         )}
       </section>
 

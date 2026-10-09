@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { KVK_ALLIANCES, KVK_AVAILABILITY_OPTIONS } from '../../lib/playerCombatOptions.mjs';
+import { KVK_AVAILABILITY_OPTIONS } from '../../lib/playerCombatOptions.mjs';
+import { useAllianceTags } from '../../lib/useAllianceTags';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 import { TROOP_FIELD_KEYS, troopFieldErrors } from '../../lib/kvkAvailability.mjs';
@@ -10,7 +11,6 @@ import { HeroRosterPicker, TroopLevelFields, troopFieldId } from '../../componen
 import IdentityFields from '../../components/member/IdentityFields';
 
 const AVAILABILITY_OPTIONS = KVK_AVAILABILITY_OPTIONS;
-const ALLIANCES = KVK_ALLIANCES;
 
 export default function PlayerRecordForm({ identity, heroCatalog }) {
   const { intro } = useFormFieldMeta('joiner');
@@ -19,6 +19,7 @@ export default function PlayerRecordForm({ identity, heroCatalog }) {
   const [name, setName] = useState(identity?.name || '');
   const [availability, setAvailability] = useState('');
   const [currentAlliance, setCurrentAlliance] = useState(identity?.alliance || '');
+  const ALLIANCES = useAllianceTags(currentAlliance);
   const [troops, setTroops] = useState(() => Object.fromEntries(TROOP_FIELD_KEYS.map((key) => [key, ''])));
   const [troopErrors, setTroopErrors] = useState({});
   const [heroes, setHeroes] = useState([]);

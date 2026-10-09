@@ -283,6 +283,12 @@
 .k-wb { --wb: var(--wb-710); --wb-deep: var(--wb-710-deep); }
 .k-wb[data-band='RED'] { --wb: var(--wb-red); --wb-deep: var(--wb-red-deep); }
 .k-wb[data-band='SKY'] { --wb: var(--wb-sky); --wb-deep: var(--wb-sky-deep); }
+.k-wb[data-band='PHL'] { --wb: var(--wb-phl); --wb-deep: var(--wb-phl-deep); }
+/* Any other alliance tag: data-hue (1-4) is set by lib/alliances.mjs bandProps(). */
+.k-wb[data-hue='1'] { --wb: var(--wb-x1); --wb-deep: var(--wb-x1-deep); }
+.k-wb[data-hue='2'] { --wb: var(--wb-x2); --wb-deep: var(--wb-x2-deep); }
+.k-wb[data-hue='3'] { --wb: var(--wb-x3); --wb-deep: var(--wb-x3-deep); }
+.k-wb[data-hue='4'] { --wb: var(--wb-x4); --wb-deep: var(--wb-x4-deep); }
 
 /* Gem: enamel/gemstone marker, used on the chronometer ring. */
 .k-gem {
@@ -976,6 +982,8 @@
 .muster-banner[data-band='710'] { background: linear-gradient(180deg, #c1922f, #4a3712); }
 .muster-banner[data-band='RED'] { background: linear-gradient(180deg, #96263a, #3f0e18); }
 .muster-banner[data-band='SKY'] { background: linear-gradient(180deg, #3a68a8, #142b48); }
+.muster-banner[data-band='PHL'] { background: linear-gradient(180deg, #3f8a67, #163a28); }
+.muster-banner[data-hue] { background: linear-gradient(180deg, var(--wb, #c1922f), var(--wb-deep, #4a3712)); }
 
 /* braziers standing deep in the room, near the back wall */
 .muster-brazier {

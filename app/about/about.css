@@ -40,7 +40,8 @@
 .about-record .kvr-sources a{text-decoration:underline}
 .about-record .about-editable{margin-top:24px}
 
-/* alliances: editorial ribbon rows */
+/* alliances: compact equal boxes (components/alliances) */
+.about-alliances .al-grid{margin-bottom:16px}
 .about-alliances{padding-block:clamp(72px,10vw,128px);scroll-margin-top:72px}
 .about-section-head{max-width:60ch;margin-bottom:clamp(24px,4vw,40px)}
 .about-section-head p:last-child{margin:14px 0 0;font-size:17px;line-height:1.6;color:var(--color-ink-muted)}

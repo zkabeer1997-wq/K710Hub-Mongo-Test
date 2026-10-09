@@ -37,11 +37,11 @@ const req = (admin, body, url = 'http://localhost/api/admin-page-text') => ({
 const D = pt.ABOUT_TEXT_DEFAULTS;
 
 test('defaults hold the current About copy (golden)', () => {
-  assert.equal(D.hero_title, 'Three alliances. One kingdom.');
-  assert.match(D.hero_lede, /^Kingdom 710 is a multilingual Kingshot kingdom made up of three alliances: 710, RED and SKY\./);
+  assert.equal(D.hero_title, 'One kingdom. Many alliances.');
+  assert.match(D.hero_lede, /^Kingdom 710 is a multilingual Kingshot kingdom made up of coordinated alliances, each with its own Bear Hunt schedule\./);
   assert.equal(D.story_heading, 'How we run things');
   assert.equal(D.record_heading, 'Our KvK record');
-  assert.equal(D.alliances_heading, '710, RED and SKY');
+  assert.equal(D.alliances_heading, 'Our alliances');
   assert.equal(D.join_heading, 'How to join in three steps');
   assert.equal(D.step1_title, 'Send your application');
   assert.equal(D.step3_title, 'Move in when a window opens');
@@ -49,7 +49,7 @@ test('defaults hold the current About copy (golden)', () => {
   assert.equal(D.faq[0].q, 'How long does the transfer take?');
   assert.equal(D.close_heading, 'Ready to move?');
   assert.equal(D.hero_apply_label, 'Apply to join');
-  assert.equal(D.banner_small, '710 · RED · SKY');
+  assert.equal(D.banner_small, 'Kingshot kingdom');
 });
 
 test('Realm jargon is reworded in the defaults', () => {
@@ -251,7 +251,7 @@ test('golden: Guides defaults equal the listing copy; the page and directory rea
 
 test('About reads the shared story paragraphs and leaders from the Home registry', () => {
   const about = src('app/about/page.js');
-  assert.ok(about.includes("getPageText('home')") && about.includes('home.why_2_body') && about.includes('home.wb_1_desc'));
+  assert.ok(about.includes("getPageText('home')") && about.includes('home.why_2_body') && about.includes('loadLandingAlliances'));
   assert.ok(!about.includes('getHomeContent'));
   assert.ok(pt.getPageDef('about').sections.find((s) => s.id === 'story').help.includes('Home'));
 });

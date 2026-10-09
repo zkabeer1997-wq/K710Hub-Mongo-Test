@@ -24,6 +24,6 @@ export default async function Image({ params }) {
   return renderOgCard({
     eyebrow: a?.tag ? `Alliance ${a.tag} · Kingdom 710` : 'Kingdom 710 · Alliances',
     title: a?.name || 'Kingdom 710 Alliances',
-    subtitle: a?.blurb || 'Three coordinated alliances: 710, RED and SKY.',
+    subtitle: a?.blurb || 'Coordinated alliances with their own Bear Hunt times.',
   });
 }
