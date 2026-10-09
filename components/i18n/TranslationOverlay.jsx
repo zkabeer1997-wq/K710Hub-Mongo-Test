@@ -72,7 +72,7 @@ export default function TranslationOverlay({ lang, messages, engine = 'google', 
   const firstRun = useRef(true);
   const isCatalogText = useMemo(() => buildCatalogMatcher(messages), [messages]);
   const live = useRef({ lang, isCatalogText });
-  live.current = { lang, isCatalogText };
+  useEffect(() => { live.current = { lang, isCatalogText }; }, [lang, isCatalogText]);
 
   // Debug / tooling hook: the pre-warm crawler and the coverage test read the page's units from here.
   useEffect(() => {
@@ -140,6 +140,16 @@ export default function TranslationOverlay({ lang, messages, engine = 'google', 
       if (needsRescan) { dirty.add(root); schedule(); }
     }
 
+    // Rate limited (too many requests from this address): try the same strings again in a little while.
+    const attempts = new Map();
+    function retryLater(keys) {
+      const again = keys.filter((key) => (attempts.get(key) || 0) < 3);
+      again.forEach((key) => attempts.set(key, (attempts.get(key) || 0) + 1));
+      keys.filter((key) => !again.includes(key)).forEach((key) => failed.add(key));
+      if (!again.length) return;
+      window.setTimeout(() => { if (!active) return; again.forEach((key) => { asked.add(key); queue.push(key); }); pump(); }, 15000);
+    }
+
     function startSlowTimer() {
       if (slowTimer) return;
       slowTimer = window.setTimeout(() => { slowTimer = 0; if (inFlight > 0) setStatus('translating'); }, SLOW_MS);
@@ -161,6 +171,7 @@ export default function TranslationOverlay({ lang, messages, engine = 'google', 
           signal: controller.signal,
         });
         window.clearTimeout(abort);
+        if (response.status === 429) { retryLater(keys); ok = true; }
         const data = response.ok ? await response.json() : null;
         if (data && Array.isArray(data.translations)) {
           let got = 0;
@@ -170,7 +181,7 @@ export default function TranslationOverlay({ lang, messages, engine = 'google', 
           });
           ok = data.status !== 'unavailable' && data.status !== 'budget';
           if (got) saveSoon();
-        } else keys.forEach((key) => failed.add(key));
+        } else if (response.status !== 429) keys.forEach((key) => failed.add(key));
       } catch {
         keys.forEach((key) => failed.add(key));
       } finally {
