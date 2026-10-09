@@ -19,6 +19,7 @@ import { saveStatusLabel } from '../../lib/powerProfileWizard.mjs';
 import { LoadingRow } from '../../components/ui';
 import FormErrorSummary from '../../components/FormErrorSummary';
 import { useWizardUrlStep } from '../../lib/useWizardUrlStep';
+import TourLauncher from '../../components/tour/TourLauncher';
 import { completionText, reviewLines } from '../../lib/loadout.mjs';
 import { draftKey, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
 
@@ -328,10 +329,10 @@ function PowerProfileForm({ identity, intro }) {
       <div className="armory-rack-l" aria-hidden="true" />
       <div className="armory-rack-r" aria-hidden="true" />
       <div className="armory-inner">
-        <PageHero tone="console" className="armory-page-hero" eyebrow={formIntro.kicker} title={formIntro.heading} lede={formIntro.description} />
+        <PageHero tone="console" className="armory-page-hero" eyebrow={formIntro.kicker} title={formIntro.heading} lede={formIntro.description} actions={<TourLauncher id="power" />} />
         {intro}
 
-        <nav className="wizard-stepper" aria-label="Power Profile steps">
+        <nav className="wizard-stepper" aria-label="Power Profile steps" data-tour="power-steps">
           <div
             className="wizard-stepper-progress"
             role="progressbar"
@@ -375,7 +376,7 @@ function PowerProfileForm({ identity, intro }) {
               <h2 ref={(el) => { headingRefs.current[0] = el; }} tabIndex={-1}>Your details</h2>
               <p>We filled in your name and Member ID from your sign-in. Check that your name is right. Your Member ID is your login, so it cannot be changed here.</p>
             </div>
-            <IdentityFields memberId={form.member_id} name={form.name} onNameChange={(v) => updateField('name', v)} known={Boolean(identity?.name)} inputProps={{ id: 'pp-name' }} invalid={Boolean(fieldProps('name')['aria-invalid'])} describedBy={fieldProps('name')['aria-describedby']} />
+            <IdentityFields tourAnchor="power-details" memberId={form.member_id} name={form.name} onNameChange={(v) => updateField('name', v)} known={Boolean(identity?.name)} inputProps={{ id: 'pp-name' }} invalid={Boolean(fieldProps('name')['aria-invalid'])} describedBy={fieldProps('name')['aria-describedby']} />
             {fieldError('name')}
             {/* Reserved height: the row appearing on blur must not shift the Next button mid-click. */}
             <div className="lookup-slot" aria-live="polite">{lookingUp && <LoadingRow>Looking up your profile…</LoadingRow>}</div>
@@ -422,7 +423,7 @@ function PowerProfileForm({ identity, intro }) {
               <p>Confirm everything below, then save your Power Profile.</p>
             </div>
 
-            <div className="wizard-review-grid">
+            <div className="wizard-review-grid" data-tour="power-review">
               <div className="wizard-review-card">
                 <h4>Your details</h4>
                 <dl>
@@ -458,7 +459,7 @@ function PowerProfileForm({ identity, intro }) {
             {status && <div className={isError ? 'status error' : 'status'} role={isError ? 'alert' : 'status'}>{status}</div>}
             <div className="wizard-nav">
               <button type="button" className="wizard-back" onClick={() => goToStep(1)}>Back</button>
-              <button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Power Profile'}</button>
+              <button type="submit" disabled={loading} data-tour="power-save">{loading ? 'Saving...' : 'Save Power Profile'}</button>
             </div>
           </section>
         </form>

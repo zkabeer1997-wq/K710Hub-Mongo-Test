@@ -6,6 +6,7 @@ import GiftCodeRewards from '../GiftCodeRewards';
 import { useMemberFormStatus } from '../../lib/useMemberFormStatus';
 import { dashboardLinks } from '../../lib/memberForms.mjs';
 import MyFormsList from './MyFormsList';
+import TourLauncher from '../tour/TourLauncher';
 import styles from './MemberDashboard.module.css';
 
 function formatNumber(value) {
@@ -42,6 +43,7 @@ export default function MemberDashboard({ profile, adminAccessRequested, busy, o
           eyebrow="Secure player access · Kingdom 710"
           title="Dashboard"
           lede={`Welcome back, ${displayName}. Your account is connected. Choose where to go next.`}
+          actions={<TourLauncher id="dash" ready={loaded} />}
         />
         <div className={styles.assurance}>
           <strong>Signed in with Kingshot</strong>
@@ -49,7 +51,7 @@ export default function MemberDashboard({ profile, adminAccessRequested, busy, o
         </div>
       </header>
 
-      <section className={styles.account} aria-label="Your account">
+      <section className={styles.account} aria-label="Your account" data-tour="dash-account">
         <div className={styles.accountTop}>
           <span><i aria-hidden="true" /> Account connected</span>
           <span className={styles.role} data-role={role}>{role}</span>
@@ -75,13 +77,13 @@ export default function MemberDashboard({ profile, adminAccessRequested, busy, o
 
       <MyFormsList status={status} loaded={loaded} />
 
-      <nav className={styles.links} aria-label="Member destinations">
+      <nav className={styles.links} aria-label="Member destinations" data-tour="dash-links">
         {links.map((link) => (
           <Link key={link.key} href={link.href}><span>{link.label}</span><b aria-hidden="true">→</b></Link>
         ))}
       </nav>
 
-      <section className={styles.gifts} aria-labelledby="dashboard-gift-codes-title">
+      <section className={styles.gifts} aria-labelledby="dashboard-gift-codes-title" data-tour="dash-gifts">
         <h2 id="dashboard-gift-codes-title">Gift codes</h2>
         <GiftCodeRewards />
       </section>

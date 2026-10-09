@@ -24,7 +24,7 @@ export default function LoadoutBoard({ gear, charms, active, open, onActivate, o
     />
   ) : null);
   const column = (side) => LOADOUT_PIECES.filter((p) => p.side === side).map((piece) => (
-    <div key={piece.id} className="lo-piece" data-piece={piece.id}>
+    <div key={piece.id} className="lo-piece" data-piece={piece.id} data-tour={piece.id === LOADOUT_PIECES[0].id ? 'power-board' : undefined}>
       <GearSlotButton
         piece={piece}
         value={gear[piece.gearKey]}

@@ -20,6 +20,7 @@ import { engineFor, resolveEndpoint } from '../lib/i18n/catalogTools.mjs';
 import { SITE_URL } from '../lib/siteUrl';
 import { ToastProvider } from '../components/ui/Toast';
 import GlossaryProvider from '../components/GlossaryProvider';
+import TourProvider from '../components/tour/TourProvider';
 import { getGlossaryOverride } from '../lib/pageText.server';
 
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['600', '800', '900'], display: 'swap', variable: '--font-display-loaded' });
@@ -57,7 +58,9 @@ export default async function RootLayout({ children }) {
         <ToastProvider>
           <LanguageProvider initialLanguage={langCode} initialMessages={initialMessages} engine={engineFor(resolveEndpoint())}>
             <GlossaryProvider terms={glossaryTerms}>
-              <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
+              <TourProvider>
+                <BearScheduleProvider><SiteChrome>{children}</SiteChrome></BearScheduleProvider>
+              </TourProvider>
             </GlossaryProvider>
           </LanguageProvider>
         </ToastProvider>

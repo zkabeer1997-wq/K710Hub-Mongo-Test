@@ -185,10 +185,10 @@ function Where({ children }) {
 }
 
 // A group of big tappable choice cards (radio or checkbox).
-function Choices({ legend, hint, name, options, value, onChange, multiple = false, id, error, errorId, children }) {
+function Choices({ legend, hint, name, options, value, onChange, multiple = false, id, error, errorId, children, tour }) {
   const isOn = (v) => (multiple ? value.includes(v) : value === v);
   return (
-    <fieldset className="apply-group" id={id} aria-describedby={error ? errorId : undefined}>
+    <fieldset className="apply-group" id={id} aria-describedby={error ? errorId : undefined} data-tour={tour}>
       <legend>{legend}</legend>
       {hint && <p className="apply-hint">{hint}</p>}
       <div className={`apply-choices ${options.length <= 2 ? 'is-pair' : ''}`}>
@@ -215,10 +215,10 @@ function Choices({ legend, hint, name, options, value, onChange, multiple = fals
 
 // Text/number field with persistent label, hint and live feedback. Module
 // level so React keeps the same input mounted while typing.
-function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, autoComplete = 'off', live, liveBad = false, maxLength, children }) {
+function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, autoComplete = 'off', live, liveBad = false, maxLength, children, tour }) {
   const { form, updateField, gp, errMsg, fe } = ctx;
   return (
-    <div className="wizard-field apply-field">
+    <div className="wizard-field apply-field" data-tour={tour}>
       <label htmlFor={`f-${k}`}>{label}</label>
       <p id={`f-${k}-hint`} className="apply-hint">{hint}</p>
       <input
@@ -245,7 +245,7 @@ function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, auto
 function StepProgress({ step, onJump }) {
   const pct = Math.round(((step + 1) / ACTS.length) * 100);
   return (
-    <nav className="apply-progress" aria-label="Application steps">
+    <nav className="apply-progress" aria-label="Application steps" data-tour="interest-progress">
       <p className="apply-progress-label">
         <span>Step {step + 1} of {ACTS.length}</span>
         <strong>{ACTS[step].label}</strong>
@@ -707,7 +707,7 @@ export default function InterestForm({ initialPeriod }) {
         {step === 0 && (
           <>
             {actHead('Your account', 'So we can find you in the game and message you.')}
-            <aside className="apply-ready" aria-label="Before you start">
+            <aside className="apply-ready" aria-label="Before you start" data-tour="interest-ready">
               <h3>Before you start</h3>
               <p><strong>About 5 minutes.</strong> You can stop and come back: your answers are saved on this device.</p>
               <ul>
@@ -718,7 +718,7 @@ export default function InterestForm({ initialPeriod }) {
             </aside>
             <FormErrorSummary errors={errors} focusSignal={errorSignal} />
             <div className="apply-fields">
-              <TextField ctx={ctx} k="inGameName" label={L('inGameName')} hint="The name other players see in Kingshot." autoComplete="off" />
+              <TextField ctx={ctx} k="inGameName" tour="interest-identity" label={L('inGameName')} hint="The name other players see in Kingshot." autoComplete="off" />
               <TextField ctx={ctx} k="playerId" label={L('playerId')} hint="Numbers only." mode="numeric" live={playerIdHint(form.playerId)}>
                 <Where>Open Kingshot and tap your picture in the top-left corner. Your Player ID is the number shown there.</Where>
               </TextField>
@@ -740,6 +740,7 @@ export default function InterestForm({ initialPeriod }) {
               hint="You can check the schedules first. Your answers stay saved if you leave."
               name="migrateAlliance"
               id="f-migrateAlliance"
+              tour="interest-move"
               options={MIGRATE_OPTIONS}
               value={form.migrateAlliance}
               onChange={(v) => updateField('migrateAlliance', v)}
@@ -768,6 +769,7 @@ export default function InterestForm({ initialPeriod }) {
               hint={<><Term term="TrueGold">TG</Term> is the troop level (TG8 is higher than TG7). Look at your troop camps, not your castle level.</>}
               name="highestTroopLevel"
               id="f-highestTroopLevel"
+              tour="interest-power"
               options={TROOP_LEVEL_OPTIONS}
               value={form.highestTroopLevel}
               onChange={(v) => updateField('highestTroopLevel', v)}
@@ -836,7 +838,7 @@ export default function InterestForm({ initialPeriod }) {
           <>
             {actHead('Screenshots', 'Add 1 to 4 pictures from your phone gallery. They help officers check your account.')}
             <FormErrorSummary errors={errors} focusSignal={errorSignal} />
-            <div className="apply-capture">
+            <div className="apply-capture" data-tour="interest-shots">
               <h3>What to take a picture of</h3>
               <svg viewBox="0 0 330 150" role="img" aria-label="Diagram: three phone screens. 1: a battle report that shows your name. 2: your Governor Gear and charms. 3: your hero gear and Masters." className="apply-capture-svg">
                 {[0, 1, 2].map((i) => (
@@ -896,7 +898,7 @@ export default function InterestForm({ initialPeriod }) {
             <p className="review-once-note"><strong>Send this only once.</strong> If you already applied, do not send again. Use <a href="/interest/status">Check my application</a> instead.</p>
             <div className="review-groups">
               {reviewGroups.map((group) => (
-                <section key={group.title} className="review-group" aria-labelledby={`review-${group.stepIndex}`}>
+                <section key={group.title} className="review-group" aria-labelledby={`review-${group.stepIndex}`} data-tour={group.stepIndex === 0 ? 'interest-review' : undefined}>
                   <div className="review-group-head">
                     <h3 id={`review-${group.stepIndex}`}>{group.title}</h3>
                     <button type="button" className="k-btn k-btn-quiet" onClick={() => { setErrors([]); setStep(group.stepIndex); }} aria-label={`Change ${group.title}`}>Change</button>
@@ -927,7 +929,7 @@ export default function InterestForm({ initialPeriod }) {
       </div>
 
       {!pendingDraft && (
-      <div className="petition-step-nav apply-bar-nav">
+      <div className="petition-step-nav apply-bar-nav" data-tour="interest-nav" data-tour-reserve>
         <p className="apply-saved">{isFinalStep ? 'Nothing is sent until you press the button.' : 'Your answers are saved on this device.'}</p>
         <div className="petition-step-actions">
           {step > 0 && (

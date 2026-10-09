@@ -52,7 +52,7 @@ export default function ScanLauncher({ onReview, disabled = false }) {
   }
 
   return (
-    <div className="lo-scan">
+    <div className="lo-scan" data-tour="power-scan">
       <p className="lo-note" id="lo-scan-note">
         In the game, open Governor Profile (the screen with your six gear pieces and charm gems) and take a screenshot. Add it here.
         The picture stays on your phone and is never saved.
