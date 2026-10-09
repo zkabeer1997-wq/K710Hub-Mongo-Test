@@ -8,6 +8,15 @@ import TableSkeleton from './TableSkeleton';
 import { Button, Table } from '../ui';
 import MemberDetailsDrawer from './MemberDetailsDrawer';
 import RallyBoard from './RallyBoard';
+import {
+  assignFilterLabel,
+  assignedMemberIds,
+  compactTroopLevels,
+  filterByAssignment,
+  heroChips,
+  planBulkAddToRally,
+  splitAvailability,
+} from '../../lib/eventPage.mjs';
 import { buildKvkMembersWorkbook, formatUnitLevel, kvkMemberExportRows, KVK_MEMBER_HEADERS } from '../../lib/kvkMembersExport.mjs';
 import ExportToGoogleDrive from './ExportToGoogleDrive';
 import { useEscapeToClose } from '../../lib/useEscapeToClose';
@@ -21,7 +30,7 @@ import {
 import {
   hydrateRallies,
   assignMemberToRally,
-  getTroopLevelSummary,
+  createNextRally,
   normalizeRalliesForRows,
   parseStoredRallies,
   removeRowsAndAssignments,
@@ -44,7 +53,7 @@ const EMPTY_MEMBER = {
 
 const COLUMNS = [
   { key: 'name', label: 'Player Name' },
-  { key: 'infantry_tg', label: 'Troop Levels' },
+  { key: 'infantry_tg', label: 'Troops' },
   { key: 'heroes', label: 'Heroes' },
   { key: 'current_alliance', label: 'Alliance' },
   { key: 'availability', label: 'Availability' },
@@ -77,6 +86,8 @@ export default function RosterWorkspace({
   workbookSheetName,
   allowClearTestData = false,
   cycleType = null,
+  assignFilter = '',
+  onAssignFilterChange = null,
 }) {
   const [rows, setRows] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState(null);
@@ -117,8 +128,8 @@ export default function RosterWorkspace({
   const [addMemberStatus, setAddMemberStatus] = useState('');
   const [showAddMember, setShowAddMember] = useState(false);
   const [confirmState, setConfirmState] = useState(null);
-  const [draggingMemberId, setDraggingMemberId] = useState(null);
-  const [dragOverRallyId, setDragOverRallyId] = useState(null);
+  // Participants ticked for a bulk action (member ids as strings).
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [cycles, setCycles] = useState([]);
   // 'current', 'all', or a past cycle id. Chosen by the event page (History tab).
   const seasonFilter = cycleFilter;
@@ -299,17 +310,6 @@ export default function RosterWorkspace({
     setActionStatus(`Cleared ${deletedMemberIds.length} test entries.`);
   }
 
-  function handleDragStart(event, memberId) {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', String(memberId));
-    setDraggingMemberId(String(memberId));
-  }
-
-  function handleDragEnd() {
-    setDraggingMemberId(null);
-    setDragOverRallyId(null);
-  }
-
   function handleAssignFromDropdown(memberId, rallyId) {
     if (!rallyId) {
       updateRallies((current) => removeMemberFromRallies(current, memberId));
@@ -384,14 +384,16 @@ export default function RosterWorkspace({
   // Built-in heroes plus any hero name a member saved (including heroes since switched off or added in Admin > Heroes).
   const heroFilterOptions = useMemo(() => [...new Set([...HEROES, ...seasonFilteredRows.flatMap((row) => (Array.isArray(row.heroes) ? row.heroes : []))])], [seasonFilteredRows]);
 
+  const assignedIds = useMemo(() => assignedMemberIds(rallies), [rallies]);
+
   const filteredSorted = useMemo(() => {
-    const result = seasonFilteredRows.filter(row =>
+    const result = filterByAssignment(seasonFilteredRows, assignFilter, assignedIds).filter(row =>
       (!allianceFilter || row.current_alliance===allianceFilter) && (!availabilityFilter || row.availability===availabilityFilter) &&
       (!heroFilter || row.heroes?.includes(heroFilter)) && (!tierFilter || [row.infantry_tier,row.cavalry_tier,row.archer_tier].includes(tierFilter)) &&
       searchRow(row,search,['name','member_id','heroes','current_alliance','availability','governor_gear','charms','infantry_tier','cavalry_tier','archer_tier'])
     );
     return result.sort((a,b)=>compareValues(a[sortKey],b[sortKey])*(sortDir==='asc'?1:-1));
-  }, [seasonFilteredRows,search,sortKey,sortDir,allianceFilter,availabilityFilter,heroFilter,tierFilter]);
+  }, [seasonFilteredRows,assignFilter,assignedIds,search,sortKey,sortDir,allianceFilter,availabilityFilter,heroFilter,tierFilter]);
 
   // Scoped to the season filter above (not the full roster) so the Rally
   // Planner only shows and can select members from the season currently
@@ -408,6 +410,61 @@ export default function RosterWorkspace({
     });
     return assignments;
   }, [rallies]);
+
+  const leadRallyByMemberId = useMemo(() => {
+    const leads = new Map();
+    rallies.forEach((rally) => { if (rally.leadMemberId) leads.set(String(rally.leadMemberId), rally.name); });
+    return leads;
+  }, [rallies]);
+
+  // ---- bulk select + "Add selected to rally" ----
+  const selectedVisible = useMemo(
+    () => filteredSorted.filter((row) => selectedIds.has(String(row.member_id))),
+    [filteredSorted, selectedIds],
+  );
+  const allVisibleSelected = filteredSorted.length > 0 && selectedVisible.length === filteredSorted.length;
+  const selectAllRef = useRef(null);
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = selectedVisible.length > 0 && !allVisibleSelected;
+  }, [selectedVisible.length, allVisibleSelected]);
+
+  function toggleSelected(memberId) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      const id = String(memberId);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allVisibleSelected) filteredSorted.forEach((row) => next.delete(String(row.member_id)));
+      else filteredSorted.forEach((row) => next.add(String(row.member_id)));
+      return next;
+    });
+  }
+
+  function handleBulkAdd(rallyId) {
+    const nameOf = (id) => membersById.get(String(id))?.name || String(id);
+    let base = rallies;
+    let targetId = rallyId;
+    if (rallyId === '__new__') {
+      targetId = `rally-${rallies.length + 1}-${Date.now()}`;
+      base = createNextRally(rallies, targetId);
+    }
+    const plan = planBulkAddToRally(base, targetId, selectedVisible.map((row) => row.member_id), assignMemberToRally, nameOf);
+    setActionStatus('');
+    setActionError('');
+    if (plan.added.length) {
+      updateRallies(plan.rallies);
+      setActionStatus(plan.message);
+    } else {
+      setActionError(plan.message);
+    }
+    setSelectedIds(new Set());
+  }
 
   const toolbar = (
     <div className="roster-toolbar">
@@ -449,22 +506,85 @@ export default function RosterWorkspace({
       {error && <div className="status error" role="alert">{error}</div>}
       {!loading && !error && view === 'participants' && (
         <>
-          <TableFilters query={search} onQuery={setSearch} placeholder="Name, player ID, hero, or equipment" shown={filteredSorted.length} total={seasonFilteredRows.length} onReset={()=>{setSearch('');setAllianceFilter('');setAvailabilityFilter('');setHeroFilter('');setTierFilter('');setSortKey('updated_at');setSortDir('desc');}} filters={[
-            {key:'alliance',label:'Alliance',value:allianceFilter,onChange:setAllianceFilter,options:[...new Set(seasonFilteredRows.map(r=>r.current_alliance).filter(Boolean))].sort()},
-            {key:'availability',label:'Availability',value:availabilityFilter,onChange:setAvailabilityFilter,options:[...new Set(seasonFilteredRows.map(r=>r.availability).filter(Boolean))].sort()},
-            {key:'hero',label:'Hero',value:heroFilter,onChange:setHeroFilter,options:heroFilterOptions},
-            {key:'tier',label:'Any troop tier',value:tierFilter,onChange:setTierFilter,options:TROOP_TIERS},
-          ]}/>
+          {seasonFilteredRows.length > 0 && (
+            <TableFilters compact query={search} onQuery={setSearch} placeholder="Name, player ID, hero, or equipment" shown={filteredSorted.length} total={seasonFilteredRows.length} onReset={()=>{setSearch('');setAllianceFilter('');setAvailabilityFilter('');setHeroFilter('');setTierFilter('');setSortKey('updated_at');setSortDir('desc');if (assignFilter && onAssignFilterChange) onAssignFilterChange('');}} filters={[
+              {key:'alliance',label:'Alliance',value:allianceFilter,onChange:setAllianceFilter,options:[...new Set(seasonFilteredRows.map(r=>r.current_alliance).filter(Boolean))].sort()},
+              {key:'availability',label:'Availability',value:availabilityFilter,onChange:setAvailabilityFilter,options:[...new Set(seasonFilteredRows.map(r=>r.availability).filter(Boolean))].sort()},
+              {key:'hero',label:'Hero',value:heroFilter,onChange:setHeroFilter,options:heroFilterOptions},
+              {key:'tier',label:'Any troop tier',value:tierFilter,onChange:setTierFilter,options:TROOP_TIERS},
+            ]}/>
+          )}
+
+          {assignFilter ? (
+            <div className="roster-filter-chip" role="status">
+              <span>Showing only: <strong>{assignFilterLabel(assignFilter)}</strong> ({filteredSorted.length})</span>
+              {onAssignFilterChange ? <button type="button" className="ec-link-btn" onClick={() => onAssignFilterChange('')}>Show everyone</button> : null}
+            </div>
+          ) : null}
 
           {toolbar}
+
+          {selectedVisible.length > 0 && (
+            <div className="roster-bulk" role="region" aria-label="Bulk actions">
+              <strong>{selectedVisible.length} selected</strong>
+              <details
+                className="roster-more roster-bulk-menu"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.currentTarget.removeAttribute('open');
+                    e.currentTarget.querySelector('summary')?.focus();
+                  }
+                }}
+              >
+                <summary>Add selected to rally</summary>
+                <div className="roster-more-menu">
+                  {rallies.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={(e) => { e.currentTarget.closest('details')?.removeAttribute('open'); handleBulkAdd(r.id); }}
+                    >
+                      {r.name || 'Rally'}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="roster-bulk-new"
+                    onClick={(e) => { e.currentTarget.closest('details')?.removeAttribute('open'); handleBulkAdd('__new__'); }}
+                  >
+                    + New rally{rallies.length === 0 ? ' (none yet)' : ''}
+                  </button>
+                </div>
+              </details>
+              <button type="button" className="ec-link-btn" onClick={() => setSelectedIds(new Set())}>Clear selection</button>
+            </div>
+          )}
+
+          {seasonFilteredRows.length === 0 ? (
+            <p className="ec-empty">No applicants in this cycle yet. Members show up here as they send the forms.</p>
+          ) : filteredSorted.length === 0 ? (
+            <p className="ec-empty">No participants match these filters.</p>
+          ) : (
           <div className="admin-workspace">
-          <div className="admin-table-wrap">
-            <Table className="admin-table stack-table">
+          <div className="admin-table-wrap roster-table-wrap">
+            <Table className="admin-table stack-table roster-table">
               <thead>
                 <tr>
-                  <th><span className="sr-only">Drag</span></th>
+                  <th className="roster-col-check" data-stack-label="Select">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAll}
+                      aria-label={`Select all ${filteredSorted.length} shown`}
+                    />
+                  </th>
                   {COLUMNS.map((col) => (
-                    <th key={col.key}>
+                    <th
+                      key={col.key}
+                      className={col.key === 'name' ? 'roster-col-name' : col.key === 'updated_at' ? 'roster-updated' : col.key === 'current_alliance' ? 'roster-alliance' : undefined}
+                      aria-sort={sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
+                    >
                       <button type="button" className="admin-sort-btn" onClick={() => handleSort(col.key)}>
                         {col.label}{sortKey === col.key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                       </button>
@@ -475,51 +595,88 @@ export default function RosterWorkspace({
                 </tr>
               </thead>
               <tbody>
-                {filteredSorted.map((row) => (
-                  <tr key={row.member_id}>
-                    <td>
-                      <span
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, row.member_id)}
-                        onDragEnd={handleDragEnd}
-                        style={{ cursor: 'grab' }}
-                        role="img" aria-label="Drag to assign a rally"
-                      >⠿</span>
-                    </td>
-                    <td>
-                      <button type="button" className="admin-sort-btn" onClick={() => setSelectedMemberId(row.member_id)}>
-                        {row.name || '—'}
-                      </button>
-                      <div className="admin-row-message">{row.member_id}</div>
-                    </td>
-                    <td style={{ maxWidth: 150, whiteSpace: 'normal' }}>{getTroopLevelSummary(row)}</td>
-                    <td style={{ maxWidth: 190, whiteSpace: 'normal' }}>{(row.heroes || []).join(', ') || '—'}</td>
-                    <td>{row.current_alliance || '—'}</td>
-                    <td style={{ maxWidth: 150, whiteSpace: 'normal' }}>{row.availability || '—'}</td>
-                    <td>{row.updated_at ? new Date(row.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</td>
-                    <td>
-                      <select
-                        aria-label={`Rally for ${row.name || row.member_id}`}
-                        value={rallyIdByMemberId.get(String(row.member_id)) || ''}
-                        onChange={(e) => handleAssignFromDropdown(row.member_id, e.target.value)}
-                      >
-                        <option value="">Unassigned</option>
-                        {rallies.map((r) => (
-                          <option key={r.id} value={r.id}>{r.name}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <Button variant="quiet" onClick={() => deleteMember(row)} disabled={deletingIds.includes(String(row.member_id))}>
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredSorted.map((row) => {
+                  const id = String(row.member_id);
+                  const heroes = heroChips(row.heroes);
+                  const troops = compactTroopLevels(row);
+                  const avail = splitAvailability(row.availability);
+                  const leadOf = leadRallyByMemberId.get(id);
+                  const isSelected = selectedIds.has(id);
+                  return (
+                    <tr key={row.member_id} className={isSelected ? 'is-selected' : undefined}>
+                      <td className="roster-col-check">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelected(id)}
+                          aria-label={`Select ${row.name || row.member_id}`}
+                        />
+                      </td>
+                      <td className="roster-col-name">
+                        <div className="roster-namecell">
+                        <button type="button" className="admin-sort-btn roster-name-btn" onClick={() => setSelectedMemberId(row.member_id)}>
+                          {row.name || '—'}
+                        </button>
+                        <div className="roster-id">{row.member_id}</div>
+                        <div className="roster-meta">{[row.current_alliance, row.updated_at ? new Date(row.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''].filter(Boolean).join(' · ')}</div>
+                      </div>
+                      </td>
+                      <td className="roster-troops">
+                        <div>{troops ? troops.split(' · ').map((unit, i, all) => <span key={unit} className="roster-unit">{unit}{i < all.length - 1 ? ' ·' : ''}</span>) : '—'}</div>
+                      </td>
+                      <td>
+                        {heroes.all.length ? (
+                          <div className="roster-heroes">
+                            {heroes.all.map((hero, i) => (
+                              <span key={hero} className={`roster-hero${i >= heroes.shown.length ? ' roster-hero-extra' : ''}`}>{hero}</span>
+                            ))}
+                            {heroes.restCount > 0 && (
+                              <span
+                                className="roster-hero-more"
+                                tabIndex={0}
+                                aria-label={`${heroes.restCount} more heroes: ${heroes.rest.join(', ')}`}
+                              >
+                                +{heroes.restCount}
+                                <span className="roster-hero-tip" aria-hidden="true">{heroes.all.join(', ')}</span>
+                              </span>
+                            )}
+                          </div>
+                        ) : '—'}
+                      </td>
+                      <td className="roster-alliance">{row.current_alliance || '—'}</td>
+                      <td className="roster-avail">
+                        {avail.label ? <><span>{avail.label}</span>{avail.detail ? <small>{avail.detail}</small> : null}</> : '—'}
+                      </td>
+                      <td className="roster-updated">{row.updated_at ? new Date(row.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</td>
+                      <td>
+                        {leadOf ? (
+                          <span className="roster-lead-note">Lead of {leadOf}</span>
+                        ) : (
+                          <select
+                            aria-label={`Rally for ${row.name || row.member_id}`}
+                            value={rallyIdByMemberId.get(id) || ''}
+                            onChange={(e) => handleAssignFromDropdown(row.member_id, e.target.value)}
+                          >
+                            <option value="">Unassigned</option>
+                            {rallies.map((r) => (
+                              <option key={r.id} value={r.id}>{r.name}</option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                      <td>
+                        <button type="button" className="roster-remove" onClick={() => deleteMember(row)} disabled={deletingIds.includes(id)} aria-label={`Remove ${row.name || row.member_id}`}>
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </div>
           </div>
+          )}
         </>
       )}
       {!loading && !error && view === 'rallies' && (

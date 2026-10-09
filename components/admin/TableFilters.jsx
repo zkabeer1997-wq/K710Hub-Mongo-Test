@@ -1,8 +1,8 @@
 'use client';
 import { useId } from 'react';
-export default function TableFilters({ query, onQuery, placeholder = 'Search names or player IDs', filters = [], onReset, shown, total, children }) {
+export default function TableFilters({ query, onQuery, placeholder = 'Search names or player IDs', filters = [], onReset, shown, total, compact = false, children }) {
   const id = useId();
-  return <section className="table-filters" aria-label="Search and filters">
+  return <section className={`table-filters${compact ? ' is-compact' : ''}`} aria-label="Search and filters">
     <div className="table-filters-main">
       <label htmlFor={`${id}-search`}>Search<input id={`${id}-search`} type="search" value={query} placeholder={placeholder} onChange={e => onQuery(e.target.value)} /></label>
       <button type="button" onClick={onReset} className="table-filters-reset">Clear filters</button>
