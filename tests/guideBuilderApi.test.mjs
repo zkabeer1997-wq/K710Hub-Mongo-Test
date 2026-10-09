@@ -35,6 +35,7 @@ const { setDriveStorageFactory } = await import('../lib/driveStorage.server.js')
 const fakeDrive = await tmpFakeDrive();
 setDriveStorageFactory(() => fakeDrive);
 process.env.ADMIN_PASSWORD = 'guide-builder-test-only';
+process.env.GUIDE_IMAGE_ACCESS_TTL_MS = '0';
 const token = await mintAdminToken();
 const request = (body, authenticated = true, url = 'http://localhost/api/x') => ({ url, cookies: { get: () => (authenticated ? { value: token } : undefined) }, json: async () => body, formData: async () => body });
 const params = slug => ({ params: Promise.resolve({ slug }) });
@@ -111,7 +112,7 @@ test('uploads return a short /api/guide-images address, are listed per guide and
   const listed = await (await library(request({}, true, 'http://localhost/api/admin-guide-images?guide=builder-guide'))).json();
   assert.deepEqual(listed.images.map(i => i.src), [body.src]);
   assert.equal((await (await library(request({}, true, 'http://localhost/api/admin-guide-images?guide=other'))).json()).images.length, 0);
-  const served = await serveImage(request({}, false), { params: Promise.resolve({ file: body.src.split('/').pop() }) });
+  const served = await serveImage(request({}, true), { params: Promise.resolve({ file: body.src.split('/').pop() }) });
   assert.equal(served.status, 200);
   assert.deepEqual(Buffer.from(await served.arrayBuffer()), png);
   const layoutWithUpload = { ...layout, areas: { ...layout.areas, main: [{ id: 'u1', type: 'image', src: body.src, alt: 'A pixel' }] } };

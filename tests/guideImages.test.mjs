@@ -5,6 +5,7 @@ import { driveHookLoad, driveHookResolve, tmpFakeDrive } from './helpers/driveTe
 import { mintAdminToken } from '../lib/adminAuth.js';
 import { validateDraft, validateGuide, GUIDE_FIELDS } from '../lib/guideValidation.mjs';
 import { guideCardImageUrl, guideImageAccess, guideImageExists, releaseGuideImage, visibleCardImageId } from '../lib/guideImages.mjs';
+import { guideBodyImageAccess } from '../lib/guideBodyImages.mjs';
 import { squareCropRect } from '../lib/squareCrop.mjs';
 import { withoutPlaceholder } from '../lib/siteImages.mjs';
 import { placeholderResponse } from '../lib/galleryImageDelivery.mjs';
@@ -35,10 +36,13 @@ const { POST: createGuide, GET: listGuides } = await import('../app/api/admin-gu
 const { PUT: draftPut } = await import('../app/api/admin-guides/[slug]/draft/route.js');
 const imagesRoute = await import('../app/api/admin-drive/images/route.js');
 const siteImageRoute = await import('../app/api/site-image/[id]/route.js');
+const bodyImageRoute = await import('../app/api/guide-images/[file]/route.js');
+const bodyUpload = await import('../app/api/admin-guide-images/route.js');
 const { setDriveStorageFactory } = await import('../lib/driveStorage.server.js');
 const fakeDrive = await tmpFakeDrive();
 setDriveStorageFactory(() => fakeDrive);
 process.env.ADMIN_PASSWORD = 'guide-images-test-only';
+process.env.GUIDE_IMAGE_ACCESS_TTL_MS = '0';
 process.env.MEMBER_SESSION_SECRET = 'guide-images-member-test-only';
 const { createMemberToken } = await import('../lib/memberAuth.js');
 const memberToken = await createMemberToken('m1');
@@ -260,4 +264,58 @@ test('site-image route: members-only guide pictures need a member or admin sessi
   // Making the guide public later makes the picture public again.
   await PUT(request({ ...meta, slug: 'qa-test-acc-mem', is_published: true, access_level: 'public', image_id: membersPic }), params('qa-test-acc-mem'));
   assert.equal((await fetchAs(membersPic, 'anon')).status, 200);
+});
+
+test('guideBodyImageAccess: strictest reference wins; layout, legacy body and tabs count; unreferenced is admin-only', () => {
+  const F = '33333333-3333-4333-8333-333333333333.png';
+  const pubLayout = { is_published: true, access_level: 'public', layout: { areas: { main: [{ type: 'image', src: `/api/guide-images/${F}` }] } } };
+  const memBody = { is_published: true, access_level: 'members', body: `![a](/api/guide-images/${F})` };
+  assert.equal(guideBodyImageAccess([pubLayout], F), 'public');
+  assert.equal(guideBodyImageAccess([memBody], F), 'members');
+  assert.equal(guideBodyImageAccess([pubLayout, memBody], F), 'members');
+  assert.equal(guideBodyImageAccess([{ ...memBody, body: '', f2p_content: `x ${F}` }], F), 'members');
+  assert.equal(guideBodyImageAccess([{ ...pubLayout, is_published: false }], F), 'admin');
+  assert.equal(guideBodyImageAccess([pubLayout], '44444444-4444-4444-8444-444444444444.png'), 'admin');
+  assert.equal(guideBodyImageAccess([{ ...pubLayout, draft: { access_level: 'members', layout: pubLayout.layout } }], F), 'members');
+});
+
+test('guide body images: members-only guides need a member or admin; public unchanged; shared and unreferenced are restricted', async () => {
+  const as = (who) => ({ url: 'http://localhost/api/guide-images/x', headers: new Headers(), cookies: { get: (k) => (who === 'admin' && k === 'tff_admin_session' ? { value: token } : who === 'member' && k === 'k710_member_session' ? { value: memberToken } : undefined) } });
+  const upload = async () => {
+    const form = new FormData(); form.set('guide', 'qa-test-body'); form.set('file', new File([PNG], 'b.png', { type: 'image/png' }));
+    const res = await bodyUpload.POST(request(form));
+    assert.equal(res.status, 201);
+    return (await res.json()).src;
+  };
+  const get = (src, who) => bodyImageRoute.GET(as(who), { params: Promise.resolve({ file: src.split('/').pop() }) });
+  const layoutWith = (src) => ({ version: 1, template: 'sidebar-right', areas: { main: [{ id: 'i1', type: 'image', src, alt: 'pixel' }], sidebar: [] } });
+  const pubSrc = await upload(); const memSrc = await upload(); const sharedSrc = await upload(); const looseSrc = await upload();
+  const mk = async (slug, access, src) => {
+    await createGuide(request({ ...meta, slug, is_published: false, access_level: access }));
+    assert.equal((await PUT(request({ ...meta, slug, is_published: true, access_level: access, layout: layoutWith(src) }), params(slug))).status, 200);
+  };
+  await mk('qa-test-body-pub', 'public', pubSrc);
+  await mk('qa-test-body-mem', 'members', memSrc);
+  await mk('qa-test-body-sh-a', 'public', sharedSrc);
+  await mk('qa-test-body-sh-b', 'members', sharedSrc);
+
+  const pub = await get(pubSrc, 'anon');
+  assert.equal(pub.status, 200);
+  assert.match(pub.headers.get('cache-control'), /^public, max-age=3600/);
+  assert.doesNotMatch(pub.headers.get('cache-control'), /immutable/);
+  for (const src of [memSrc, sharedSrc]) {
+    const anon = await get(src, 'anon');
+    assert.equal(anon.status, 404);
+    assert.equal(await anon.text(), 'Not found');
+    assert.match(anon.headers.get('cache-control'), /no-store/);
+    for (const who of ['member', 'admin']) {
+      const ok = await get(src, who);
+      assert.equal(ok.status, 200);
+      assert.match(ok.headers.get('cache-control'), /private, no-store/);
+      assert.deepEqual(Buffer.from(await ok.arrayBuffer()), PNG);
+    }
+  }
+  assert.equal((await get(looseSrc, 'anon')).status, 404);
+  assert.equal((await get(looseSrc, 'member')).status, 404);
+  assert.equal((await get(looseSrc, 'admin')).status, 200);
 });
