@@ -23,6 +23,7 @@ const NAV_ITEMS = [
       { href: '/timeline', labelKey: 'chrome.nav.timeline' },
       { href: '/gallery', labelKey: 'chrome.nav.gallery' },
       { href: '/glossary', labelKey: 'chrome.nav.glossary' },
+      { href: '/lore', labelKey: 'chrome.nav.lore' },
     ],
   },
   { type: 'link', href: '/guides', labelKey: 'chrome.nav.guides' },

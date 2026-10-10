@@ -22,7 +22,7 @@ function isMemberPage(pathname) {
 }
 
 function routeTone(pathname) {
-  if (pathname === '/' || pathname.startsWith('/about') || pathname.startsWith('/timeline') || pathname.startsWith('/events') || pathname.startsWith('/gallery') || pathname.startsWith('/guides') || pathname.startsWith('/alliances') || pathname.startsWith('/interest') || pathname.startsWith('/glossary') || pathname.startsWith('/help')) return 'realm';
+  if (pathname === '/' || pathname.startsWith('/about') || pathname.startsWith('/timeline') || pathname.startsWith('/events') || pathname.startsWith('/gallery') || pathname.startsWith('/guides') || pathname.startsWith('/alliances') || pathname.startsWith('/interest') || pathname.startsWith('/glossary') || pathname.startsWith('/lore') || pathname.startsWith('/help')) return 'realm';
   if (pathname.startsWith('/admin')) return 'admin';
   return 'console';
 }

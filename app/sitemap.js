@@ -1,6 +1,7 @@
 import { guidesTable } from '../lib/guideAccess.mjs';
 import { getCollection } from '../lib/mongo';
 import { COLLECTIONS } from '../lib/mongoCollections';
+import { loreSlug } from '../lib/lore.mjs';
 
 import { SITE_URL as BASE_URL } from '../lib/siteUrl';
 
@@ -13,6 +14,7 @@ const STATIC_ROUTES = [
   { path: '/events', priority: 0.8, changeFrequency: 'daily' },
   { path: '/gallery', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/glossary', priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/lore', priority: 0.6, changeFrequency: 'weekly' },
   { path: '/help', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/interest', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/dashboard', priority: 0.5, changeFrequency: 'yearly' },
@@ -59,8 +61,26 @@ async function allianceEntries() {
   }
 }
 
+async function loreEntries() {
+  try {
+    const coll = await getCollection(COLLECTIONS.LORE_STORIES);
+    const data = await coll
+      .find({ published: { $ne: false } })
+      .project({ number: 1, updated_at: 1, _id: 0 })
+      .toArray();
+    return (data || []).map((s) => ({
+      url: `${BASE_URL}/lore/${loreSlug(s.number)}`,
+      lastModified: s.updated_at ? new Date(s.updated_at) : undefined,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function sitemap() {
-  const [guides, alliances] = await Promise.all([guideEntries(), allianceEntries()]);
+  const [guides, alliances, lore] = await Promise.all([guideEntries(), allianceEntries(), loreEntries()]);
 
   const staticEntries = STATIC_ROUTES.map((route) => ({
     url: `${BASE_URL}${route.path}`,
@@ -68,5 +88,5 @@ export default async function sitemap() {
     priority: route.priority,
   }));
 
-  return [...staticEntries, ...guides, ...alliances];
+  return [...staticEntries, ...guides, ...alliances, ...lore];
 }

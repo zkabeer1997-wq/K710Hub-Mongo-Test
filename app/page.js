@@ -17,6 +17,8 @@ import SectionHeader from '../components/ui/SectionHeader';
 import HeroSignInLink from '../components/signin/HeroSignInLink';
 import MembersTag from '../components/signin/MembersTag';
 import { routeNeedsSignIn } from '../lib/signinNext.mjs';
+import LatestLoreTeaser from '../components/lore/LatestLoreTeaser';
+import { loadPublishedStories } from '../lib/lore.server';
 import { jsonLdString, organizationJsonLd, websiteJsonLd } from '../lib/jsonLd';
 import './home-extras.css';
 
@@ -74,6 +76,9 @@ export default async function HomePage() {
   const kvk = isMember ? null : await getKvkRecord();
   let galleryImages = [];
   try { galleryImages = await getGalleryImages({ limit: 10 }); } catch (error) { console.error('homepage gallery load failed', error); }
+  // Newest 710 Lore story for the small teaser near the bottom (hidden when there are none).
+  const loreStories = await loadPublishedStories();
+  const latestStory = loreStories[loreStories.length - 1] || null;
   // Notes: the Home page text for the original three (unchanged), otherwise built from the alliance record.
   let details = {};
   try { details = Object.fromEntries((await loadLandingAlliances()).map((a) => [a.tag, a])); } catch { details = {}; }
@@ -180,6 +185,8 @@ export default async function HomePage() {
         <SectionHeader eyebrow={t.wb_head_kicker} title={t.wb_head_title} />
         <PublicBearAlliances initialAlliances={bearAlliances} notes={buildBearNotes({ alliances: bearAlliances || [], textNotes: bearAllianceNotes(content), details, stripBlurb: stripLegacyBearCopy })} />
       </section>
+
+      <LatestLoreTeaser story={latestStory} />
 
       <section className="home-v2-final">
         <div><span className="k-mark">{t.final_kicker}</span><h2>{t.final_title.split('\n').map((line, i) => <Fragment key={i}>{i > 0 && <br />}{line}</Fragment>)}</h2></div>
