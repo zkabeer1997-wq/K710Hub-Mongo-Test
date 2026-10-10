@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T04:30:12.678Z"
+    "generatedAt": "2026-10-10T17:23:50.585Z"
   },
   "strings": {
     "translate.working": "Çevriliyor…",
@@ -13,7 +13,7 @@
     "translate.dismiss": "Azletmek",
     "footer.nav.aria": "Altbilgi",
     "footer.name": "Kingdom 710",
-    "footer.tag": "Üç ittifak. Tek krallık. KvK - ilk.",
+    "footer.tag": "Birçok ittifak. Tek krallık. KvK - ilk.",
     "footer.group.explore": "Keşfetmek",
     "footer.group.about": "Hakkında",
     "footer.group.members": "Üyeler",

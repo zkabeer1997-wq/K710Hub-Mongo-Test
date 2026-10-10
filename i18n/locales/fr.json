@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T04:30:12.066Z"
+    "generatedAt": "2026-10-10T17:23:50.161Z"
   },
   "strings": {
     "translate.working": "Traduction…",
@@ -13,7 +13,7 @@
     "translate.dismiss": "Rejeter",
     "footer.nav.aria": "Pied de page",
     "footer.name": "Kingdom 710",
-    "footer.tag": "Trois alliances. Un royaume. KvK - premier.",
+    "footer.tag": "De nombreuses alliances. Un seul royaume. KvK - premier.",
     "footer.group.explore": "Explorer",
     "footer.group.about": "À propos",
     "footer.group.members": "Membres",

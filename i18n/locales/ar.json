@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T04:30:11.658Z"
+    "generatedAt": "2026-10-10T17:23:49.800Z"
   },
   "strings": {
     "translate.working": "جارٍ الترجمة...",
@@ -13,7 +13,7 @@
     "translate.dismiss": "رفض",
     "footer.nav.aria": "تذييل الصفحة",
     "footer.name": "Kingdom 710",
-    "footer.tag": "ثلاثة تحالفات. مملكة واحدة. KvK - أولاً.",
+    "footer.tag": "تحالفات عديدة. مملكة واحدة. KvK - أولاً.",
     "footer.group.explore": "استكشف",
     "footer.group.about": "عن المملكة",
     "footer.group.members": "الأعضاء",

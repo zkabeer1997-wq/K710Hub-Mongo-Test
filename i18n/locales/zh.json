@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T04:30:12.346Z"
+    "generatedAt": "2026-10-10T17:23:50.351Z"
   },
   "strings": {
     "translate.working": "正在翻译……",
@@ -13,7 +13,7 @@
     "translate.dismiss": "解雇",
     "footer.nav.aria": "页脚",
     "footer.name": "Kingdom 710",
-    "footer.tag": "三大联盟，一个王国KvK首战。",
+    "footer.tag": "众多联盟，一个王国KvK首创。",
     "footer.group.explore": "探索",
     "footer.group.about": "关于",
     "footer.group.members": "成员",

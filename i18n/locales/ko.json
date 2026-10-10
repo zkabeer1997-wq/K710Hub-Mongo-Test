@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T04:30:11.248Z"
+    "generatedAt": "2026-10-10T17:23:49.453Z"
   },
   "strings": {
     "translate.working": "번역 중…",
@@ -13,7 +13,7 @@
     "translate.dismiss": "해고하다",
     "footer.nav.aria": "보행인",
     "footer.name": "Kingdom 710",
-    "footer.tag": "세 개의 동맹. 하나의 왕국. KvK - 첫 번째.",
+    "footer.tag": "수많은 동맹. 하나의 왕국. KvK -최초.",
     "footer.group.explore": "탐구하다",
     "footer.group.about": "에 대한",
     "footer.group.members": "회원들",

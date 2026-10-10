@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T04:30:11.858Z"
+    "generatedAt": "2026-10-10T17:23:50.013Z"
   },
   "strings": {
     "translate.working": "Traductorio…",
@@ -13,7 +13,7 @@
     "translate.dismiss": "Despedir",
     "footer.nav.aria": "Pie de página",
     "footer.name": "Kingdom 710",
-    "footer.tag": "Tres alianzas. Un reino. KvK -primero.",
+    "footer.tag": "Muchas alianzas. Un reino. KvK -primero.",
     "footer.group.explore": "Explorar",
     "footer.group.about": "Acerca de",
     "footer.group.members": "Miembros",

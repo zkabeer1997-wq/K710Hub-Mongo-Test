@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T04:30:13.062Z"
+    "generatedAt": "2026-10-10T17:23:50.990Z"
   },
   "strings": {
     "translate.working": "翻訳中…",
@@ -13,7 +13,7 @@
     "translate.dismiss": "却下する",
     "footer.nav.aria": "フッター",
     "footer.name": "Kingdom 710",
-    "footer.tag": "三つの同盟。一つの王国。KvK KvK対キングス）第一戦。",
+    "footer.tag": "多くの同盟。一つの王国KvK - 初。",
     "footer.group.explore": "探検する",
     "footer.group.about": "について",
     "footer.group.members": "メンバー",
