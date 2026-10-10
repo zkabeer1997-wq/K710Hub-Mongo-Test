@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useMemberFormStatus } from '../../lib/useMemberFormStatus';
 import { useEffect, useState } from 'react';
 import Icon from '../ui/icons';
 import './deadline-ticker.css';
@@ -13,6 +15,11 @@ import { formatCountdown, formatUtc, isDueSoon } from '../../lib/deadlines.mjs';
 export default function DeadlineTicker() {
   const [items, setItems] = useState(null);
   const [now, setNow] = useState(null);
+  const pathname = usePathname();
+  const { status, loaded } = useMemberFormStatus('ticker');
+  // The sign-in card (and /dashboard while signed out) is a gate: on phones the
+  // ticker would push the Player ID box down, so CSS hides it there.
+  const onGate = pathname === '/login' || (pathname === '/dashboard' && !(loaded && status.signedIn));
 
   useEffect(() => {
     let alive = true;
@@ -35,7 +42,7 @@ export default function DeadlineTicker() {
   if (live.length === 0) return null;
 
   return (
-    <aside className="deadline-ticker" aria-label="Upcoming dates" aria-live="off">
+    <aside className={`deadline-ticker${onGate ? ' deadline-ticker--gate' : ''}`} aria-label="Upcoming dates" aria-live="off">
       <ul className="deadline-ticker-list">
         {live.map((item) => {
           const remaining = item.at - now;

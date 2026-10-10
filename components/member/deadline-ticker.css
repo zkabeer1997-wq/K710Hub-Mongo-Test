@@ -28,3 +28,13 @@
   html body .deadline-ticker-flag { font-size: 14px; }
   html body .deadline-ticker-label { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 }
+
+/* Phones: one line only (the next date), and none at all on the sign-in gate so
+   the Player ID box stays near the top. Desktop is unchanged. */
+@media (max-width: 640px) {
+  html body .deadline-ticker .deadline-ticker-item:nth-child(n + 2) { display: none; }
+  html body .deadline-ticker .deadline-ticker-item { border-bottom: 0; }
+  html body .deadline-ticker .deadline-ticker-item a { min-height: 40px; flex-wrap: nowrap; }
+  html body .deadline-ticker .deadline-ticker-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html body .deadline-ticker.deadline-ticker--gate { display: none; }
+}

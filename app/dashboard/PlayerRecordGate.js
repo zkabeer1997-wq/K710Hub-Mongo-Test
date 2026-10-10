@@ -1,15 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './member-login.module.css';
 import { PageHero } from '../../components/ui';
 import MemberDashboard from '../../components/member/MemberDashboard';
+import { useT } from '../../components/i18n/LanguageProvider';
+import { isSafeNext, nextPageKey } from '../../lib/signinNext.mjs';
 
-function isSafeNext(next) {
-  return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//');
-}
+// How long the "you're signed in" confirmation shows before going to `next`.
+const CONFIRM_MS = 1200;
+// The "Didn't get a code?" box opens by itself after this long (the link is always there).
+const CODE_WAIT_MS = 30_000;
 
 function isAdminRole(role) {
   return role === 'admin' || role === 'superadmin';
@@ -33,6 +36,7 @@ async function api(path, options = {}) {
 
 export default function PlayerRecordGate({ banner, next, adminAccessRequested = false }) {
   const router = useRouter();
+  const t = useT();
   const safeNext = useMemo(() => (isSafeNext(next) ? next : ''), [next]);
   const [view, setView] = useState('loading');
   const [playerId, setPlayerId] = useState('');
@@ -41,6 +45,23 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   const [deniedKingdom, setDeniedKingdom] = useState(null);
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
+  const [justSignedIn, setJustSignedIn] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const redirectTimer = useRef(null);
+  const helpToggled = useRef(false);
+
+  useEffect(() => () => clearTimeout(redirectTimer.current), []);
+
+  // Code step: open the help box by itself once the wait is over. (The link to
+  // open it is visible from the start.)
+  useEffect(() => {
+    if (view !== 'code') return undefined;
+    setHelpOpen(false);
+    helpToggled.current = false;
+    // Do not reopen a box the member has already opened or closed themselves.
+    const id = setTimeout(() => { if (!helpToggled.current) setHelpOpen(true); }, CODE_WAIT_MS);
+    return () => clearTimeout(id);
+  }, [view]);
 
   useEffect(() => {
     let active = true;
@@ -74,6 +95,11 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
   async function submitPlayer(event) {
     event.preventDefault();
     clearStatus();
+    if (!String(playerId).trim()) {
+      setStatus(t('signin.error.empty'));
+      document.getElementById('kingshot-player-id')?.focus();
+      return;
+    }
     if (!/^\d{4,20}$/.test(String(playerId).trim())) {
       setStatus('That Player ID does not look right. Use only numbers, at least 4 digits. Check the number in your Kingshot profile.');
       document.getElementById('kingshot-player-id')?.focus();
@@ -104,21 +130,50 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
     }
   }
 
+  // "Try again" in the help box: the same two calls as step 1 and the game step
+  // (start, then send-code from the game screen), keeping the Player ID typed on
+  // this screen. If the page was reloaded and the ID is unknown, start over instead.
+  async function tryAgain() {
+    clearStatus();
+    if (!/^\d{4,20}$/.test(String(playerId).trim())) {
+      await startOver();
+      return;
+    }
+    setBusy(true);
+    try {
+      await api('/api/login/start', { method: 'POST', body: { playerId } });
+      setView('game');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Signed in: say so for a moment, then go to the page that was asked for.
+  function finishSignIn(nextProfile) {
+    setCode('');
+    setProfile(nextProfile);
+    setJustSignedIn(true);
+    window.dispatchEvent(new Event('k710-auth-changed'));
+    if (safeNext && (!safeNext.startsWith('/admin') || isAdminRole(nextProfile?.role))) {
+      setView('done');
+      redirectTimer.current = setTimeout(() => {
+        router.push(safeNext);
+        router.refresh();
+      }, CONFIRM_MS);
+    } else {
+      setView('profile');
+    }
+  }
+
   async function submitCode(event) {
     event.preventDefault();
     clearStatus();
     setBusy(true);
     try {
       const data = await api('/api/login/verify', { method: 'POST', body: { code } });
-      setCode('');
-      setProfile(data.profile);
-      window.dispatchEvent(new Event('k710-auth-changed'));
-      if (safeNext && (!safeNext.startsWith('/admin') || isAdminRole(data.profile?.role))) {
-        router.push(safeNext);
-        router.refresh();
-      } else {
-        setView('profile');
-      }
+      finishSignIn(data.profile);
     } catch (error) {
       setCode('');
       if (error.code === 'KINGDOM_ACCESS_DENIED') {
@@ -142,15 +197,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
         method: 'POST',
         body: { code },
       });
-      setCode('');
-      setProfile(data.profile);
-      window.dispatchEvent(new Event('k710-auth-changed'));
-      if (safeNext && (!safeNext.startsWith('/admin') || isAdminRole(data.profile?.role))) {
-        router.push(safeNext);
-        router.refresh();
-      } else {
-        setView('profile');
-      }
+      finishSignIn(data.profile);
     } catch (error) {
       setCode('');
       setStatus(error.message);
@@ -168,6 +215,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
     setProfile(null);
     setDeniedKingdom(null);
     setStatus('');
+    setJustSignedIn(false);
     setView('player');
     setBusy(false);
     window.dispatchEvent(new Event('k710-auth-changed'));
@@ -178,6 +226,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
     await api('/api/logout', { method: 'POST' }).catch(() => {});
     setProfile(null);
     setPlayerId('');
+    setJustSignedIn(false);
     setView('player');
     setBusy(false);
     window.dispatchEvent(new Event('k710-auth-changed'));
@@ -192,9 +241,10 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
         <div className={styles.grid} aria-hidden="true" />
         <div className={styles.glow} aria-hidden="true" />
         {banner && <div className={styles.banner}>{banner}</div>}
+        {justSignedIn && <p className={styles.signedInNote} role="status"><span aria-hidden="true">✓</span> {t('signin.done')}</p>}
         <MemberDashboard profile={profile} adminAccessRequested={adminAccessRequested} busy={busy} onLogout={logout} />
         <p className={styles.disclaimer}>
-          Not affiliated with Century Games. Authentication is completed through the official Kingshot store.
+          <span>{t('signin.trust')}</span> <span>{t('signin.disclaimer')}</span>
         </p>
       </main>
     );
@@ -233,14 +283,22 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
 
         <div className={styles.leftColumn}>
           {banner && <div className={styles.banner}>{banner}</div>}
-          {!banner && safeNext && view !== 'profile' && view !== 'loading' && (
-            <div className={styles.banner} role="status">
-              <strong>Please sign in first.</strong> The page you asked for is for signed-in members. After you sign in we will take you there.{' '}
-              <Link href="/help#signin">Need help signing in?</Link>
-            </div>
-          )}
 
           <section className={styles.card} aria-live="polite" aria-busy={busy}>
+          {safeNext && view !== 'profile' && view !== 'loading' && view !== 'done' && (
+            <div className={styles.nextBanner}>
+              <span className={styles.nextBannerIcon} aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                  <rect x="5" y="11" width="14" height="9" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
+              </span>
+              <div>
+                <strong>{t(nextPageKey(safeNext))}</strong>
+                <span>{t('signin.next.after')}</span>
+              </div>
+            </div>
+          )}
           {view === 'loading' && (
             <div className={styles.loading}>
               <span />
@@ -260,7 +318,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                 <form onSubmit={submitPlayer} className={styles.form} noValidate>
                   <header>
                     <h2>Your Player ID</h2>
-                    <p>You can find it in Kingshot: tap your picture in the top-left corner, then look for “Player ID” (a number).</p>
+                    <p id="kingshot-player-id-hint">You can find it in Kingshot: tap your picture in the top-left corner, then look for “Player ID” (a number).</p>
                   </header>
                   <label htmlFor="kingshot-player-id">Player ID</label>
                   <div className={styles.inputWrap}>
@@ -273,15 +331,31 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                       autoComplete="username"
                       placeholder="123456789"
                       maxLength={20}
-                      aria-describedby={status ? 'kingshot-login-status' : undefined}
+                      aria-describedby={status?.trim() ? 'kingshot-player-id-hint kingshot-login-status' : 'kingshot-player-id-hint'}
                       aria-invalid={status && view === 'player' ? 'true' : undefined}
                       autoFocus
                     />
                   </div>
-                  {status?.trim() ? <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div> : null}
+                  {status?.trim() ? (
+                    <p id="kingshot-login-status" className={styles.error} role="alert">
+                      <span className={styles.errorIcon} aria-hidden="true">!</span>
+                      <span>{status}</span>
+                    </p>
+                  ) : null}
                   <button className={styles.primary} type="submit" disabled={busy}>
                     <span>{busy ? 'Connecting…' : 'Continue'}</span><b aria-hidden="true">→</b>
                   </button>
+                  {/* TODO(owner): add a screenshot of where the Player ID shows in Kingshot at
+                      /public/help/player-id.png, then render it here with
+                      <img src="/help/player-id.png" alt="..." onError={(e) => { e.currentTarget.hidden = true; }} />.
+                      Until the file exists this is text only (no broken image, no 404). */}
+                  <details className={styles.where}>
+                    <summary>{t('signin.where.summary')}</summary>
+                    <div>
+                      <p>{t('signin.where.text')}</p>
+                      <Link href="/help#signin" className={styles.link}>{t('signin.where.more')}</Link>
+                    </div>
+                  </details>
                 </form>
               )}
 
@@ -328,6 +402,29 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                   <button className={styles.textButton} type="button" onClick={startOver} disabled={busy}>
                     Start again with a different Player ID
                   </button>
+                  <button
+                    className={styles.textButton}
+                    type="button"
+                    aria-expanded={helpOpen}
+                    aria-controls="code-help"
+                    onClick={() => { helpToggled.current = true; setHelpOpen((open) => !open); }}
+                  >
+                    {t('signin.code.didnt')}
+                  </button>
+                  {helpOpen && (
+                    <div id="code-help" className={styles.helpBox}>
+                      <h3>{t('signin.code.didnt')}</h3>
+                      <ul>
+                        <li>{t('signin.code.helpOpen')}</li>
+                        <li>{playerId.trim() ? t('signin.code.helpId', { id: playerId.trim() }) : t('signin.code.helpIdUnknown')}</li>
+                        <li>{t('signin.code.helpWait')}</li>
+                      </ul>
+                      <button className={styles.secondary} type="button" onClick={tryAgain} disabled={busy}>
+                        {t('signin.code.tryAgain')}
+                      </button>
+                      <Link href="/help#nocode" className={styles.link}>{t('signin.code.moreHelp')}</Link>
+                    </div>
+                  )}
                 </form>
               )}
 
@@ -363,8 +460,23 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
                 </form>
               )}
 
-              {status?.trim() && view !== 'player' ? <div id="kingshot-login-status" className={styles.error} role="alert">{status}</div> : null}
+              {status?.trim() && view !== 'player' ? (
+                <p id="kingshot-login-status" className={styles.error} role="alert">
+                  <span className={styles.errorIcon} aria-hidden="true">!</span>
+                  <span>{status}</span>
+                </p>
+              ) : null}
+              <p className={styles.helpRow}>
+                <Link href="/help#signin" className={styles.link}>{t('signin.help.link')}</Link>
+              </p>
             </>
+          )}
+
+          {view === 'done' && (
+            <div className={styles.done} role="status">
+              <span className={styles.doneIcon} aria-hidden="true">✓</span>
+              <p>{t('signin.done')}</p>
+            </div>
           )}
 
           {view === 'denied' && (
@@ -388,7 +500,7 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
       </div>
 
       <p className={styles.disclaimer}>
-        Not affiliated with Century Games. Authentication is completed through the official Kingshot store.
+        <span>{t('signin.trust')}</span> <span>{t('signin.disclaimer')}</span>
       </p>
     </main>
   );
