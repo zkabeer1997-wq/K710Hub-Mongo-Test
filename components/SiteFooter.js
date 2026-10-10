@@ -63,7 +63,10 @@ export default function SiteFooter() {
               <ul>
                 {/* Signed out: "Sign in" leads the Members column. */}
                 {signedOut && group.heading === 'footer.group.members' && (
-                  <li><Link href="/login">{t('signin.link')}</Link></li>
+                  <li>
+                    <Link href="/login">{t('signin.member.link')}</Link>
+                    <small className="site-footer-sub">{t('signin.member.sub')}</small>
+                  </li>
                 )}
                 {group.links.map((link) => (
                   <li key={link.href}>

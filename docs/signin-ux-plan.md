@@ -37,3 +37,9 @@ Branch: `feat/signin-ux` (from `main`). UI only: no change to auth logic, sessio
 6. Verify: `npm test`, eslint, Playwright at 1440x900 and 390x844 with before/after screenshots.
 
 Not built (owner to decide): the one-time "Text too small? Turn on bigger text" prompt.
+
+## Follow-up: header audiences and language button
+
+- Signed-out header button reads "Member sign in" (phones under 520px: "Sign in" shown, accessible name "Member sign in"). Apply keeps its short label with title and name "Apply to transfer into Kingdom 710". The Members dropdown, mobile MEMBERS section and footer lead with "Member sign in" plus "For players already in Kingdom 710".
+- Language button: globe + "Language ·" + the language in its own script + caret (desktop, 1400px and wider); globe + own name + caret from 760 to 1399px; globe + code + caret on phones. The phone menu starts with a full-width "Language: <own name>" row.
+- Phones: crest-only brand under 480px, UTC clock moved into the menu footer, tighter gaps so 360px does not overflow. Signed-out visitors also lose the header clock below 1520px to keep one row.

@@ -42,7 +42,7 @@ const NAV_ITEMS = [
 
 // The signed-in Members menu also lists every form with its live status
 // (red dot = open and not yet submitted, badge = outside its window).
-const SIGN_IN_ITEM = { href: '/login', labelKey: 'signin.link' };
+const SIGN_IN_ITEM = { href: '/login', labelKey: 'signin.member.link', subKey: 'signin.member.sub' };
 
 function membersChildren(base, status, signedOut = false) {
   if (status?.signedIn && !status.forms?.length) return base;
@@ -209,7 +209,10 @@ function NavDropdown({ item, pathname, openGroup, setOpenGroup, memberStatus, si
                 aria-current={isActivePath(pathname, child.href) ? 'page' : undefined}
                 onClick={() => setOpenGroup(null)}
               >
-                <span>{child.labelKey ? t(child.labelKey) : child.label}</span>
+                <span className="site-nav-item-text">
+                  <span>{child.labelKey ? t(child.labelKey) : child.label}</span>
+                  {child.subKey && <span className="site-nav-sub">{t(child.subKey)}</span>}
+                </span>
                 <FormStatusMark status={child.status} />
               </Link>
             );
@@ -332,10 +335,17 @@ export default function SiteHeader() {
               className="site-nav-cta site-nav-signin"
               aria-current={isActivePath(pathname, '/login') ? 'page' : undefined}
             >
-              {t('signin.link')}
+              {t('signin.member.link')}
             </Link>
           )}
-          <Link href="/interest" className="site-nav-cta">{t('chrome.nav.apply')}</Link>
+          <Link
+            href="/interest"
+            className="site-nav-cta"
+            title={t('signin.apply.title')}
+            aria-label={t('signin.apply.title')}
+          >
+            {t('chrome.nav.apply')}
+          </Link>
           <Link
             href={SUPPORT_URL}
             target="_blank"
@@ -350,12 +360,18 @@ export default function SiteHeader() {
 
         <UtcClock />
         {signedOut && (
-          <Link href="/login" className="site-nav-cta site-header-signin" aria-current={isActivePath(pathname, '/login') ? 'page' : undefined}>
-            {t('signin.link')}
+          <Link
+            href="/login"
+            className="site-nav-cta site-header-signin"
+            aria-label={t('signin.member.link')}
+            aria-current={isActivePath(pathname, '/login') ? 'page' : undefined}
+          >
+            <span className="signin-long" aria-hidden="true">{t('signin.member.link')}</span>
+            <span className="signin-short" aria-hidden="true">{t('signin.link')}</span>
           </Link>
         )}
         <EasyViewToggle className="easy-view-toggle--header" />
-        <LanguageSwitcher className="lang-switch--header" />
+        <LanguageSwitcher className="lang-switch--header" variant="header" />
 
         <button
           type="button"
@@ -379,7 +395,7 @@ export default function SiteHeader() {
         <>
         <div className="site-nav-backdrop" aria-hidden="true" onClick={() => setOpen(false)} />
         <nav className="site-nav-mobile" id="site-nav-mobile" ref={mobileRef} aria-label="Mobile site">
-          <LanguageSwitcher className="lang-switch--mobile" showLabel onOpen={() => setOpen(false)} />
+          <LanguageSwitcher className="lang-switch--mobile" variant="menu" onOpen={() => setOpen(false)} />
           <EasyViewToggle className="easy-view-toggle--mobile" />
           {NAV_ITEMS.map((item) => {
             if (item.type === 'group') {
@@ -397,7 +413,10 @@ export default function SiteHeader() {
                       onClick={() => setOpen(false)}
                       className={isActivePath(pathname, child.href) ? 'active' : ''}
                     >
-                      <span>{child.labelKey ? t(child.labelKey) : child.label}</span>
+                      <span className="site-nav-item-text">
+                        <span>{child.labelKey ? t(child.labelKey) : child.label}</span>
+                        {child.subKey && <span className="site-nav-sub">{t(child.subKey)}</span>}
+                      </span>
                       <FormStatusMark status={child.status} />
                     </Link>
                   ))}
@@ -416,9 +435,9 @@ export default function SiteHeader() {
             );
           })}
           {signedOut && (
-            <Link href="/login" onClick={() => setOpen(false)} className="site-nav-cta site-nav-signin">{t('signin.link')}</Link>
+            <Link href="/login" onClick={() => setOpen(false)} className="site-nav-cta site-nav-signin">{t('signin.member.link')}</Link>
           )}
-          <Link href="/interest" onClick={() => setOpen(false)} className="site-nav-cta">{t('chrome.nav.apply')}</Link>
+          <Link href="/interest" onClick={() => setOpen(false)} className="site-nav-cta" title={t('signin.apply.title')} aria-label={t('signin.apply.title')}>{t('chrome.nav.apply')}</Link>
           <Link
             href={SUPPORT_URL}
             target="_blank"
@@ -430,6 +449,7 @@ export default function SiteHeader() {
           >
             ☕ {t('chrome.nav.donate')}
           </Link>
+          <div className="site-nav-mobile-clock"><UtcClock /></div>
         </nav>
         </>
       )}
