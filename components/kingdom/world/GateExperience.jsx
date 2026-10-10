@@ -88,7 +88,7 @@ export default function GateExperience() {
             <span className="k-mark">Kingdom 710</span>
             <h1 className="k-display gate-title">The Gate Stands Open</h1>
             <p className="k-narrative gate-lede">
-              Three alliances. One kingdom. Choose the road that brings you in.
+              Many alliances. One kingdom. Choose the road that brings you in.
             </p>
           </header>
           <nav className="gate-roads" aria-label="Choose your road">

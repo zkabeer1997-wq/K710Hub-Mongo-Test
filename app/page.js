@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import PublicBearAlliances from '../components/PublicBearAlliances';
 import { loadPublicBearScheduleOrNull, bearAllianceNotes, stripLegacyBearCopy } from '../lib/publicBearSchedule';
 import { buildBearNotes } from '../lib/allianceNotes.mjs';
+import { liveAllianceCopy } from '../lib/allianceCopy.mjs';
 import { loadLandingAlliances } from '../lib/alliancesPublic.server';
 import Link from 'next/link';
 import { getPageText } from '../lib/pageText.server';
@@ -77,6 +78,8 @@ export default async function HomePage() {
   // Notes: the Home page text for the original three (unchanged), otherwise built from the alliance record.
   let details = {};
   try { details = Object.fromEntries((await loadLandingAlliances()).map((a) => [a.tag, a])); } catch { details = {}; }
+  const allianceTags = Object.keys(details);
+  const liveCopy = (text) => liveAllianceCopy(text, allianceTags);
   const content = { 'wb-1-desc': { text: t.wb_1_desc }, 'wb-2-desc': { text: t.wb_2_desc }, 'wb-3-desc': { text: t.wb_3_desc } };
 
   return (
@@ -108,14 +111,14 @@ export default async function HomePage() {
             <>
               <span className="k-mark">{t.hero_kicker}</span>
               <h1>{t.hero_title}</h1>
-              <p>{t.hero_sub}</p>
+              <p>{liveCopy(t.hero_sub)}</p>
               <div className="home-v2-actions home-v2-actions-guest">
                 <Link href="/interest" className="home-v2-primary">{t.hero_apply_label}</Link>
                 <HeroSignInLink />
                 <a href="#alliances" className="home-v2-secondary">{t.hero_schedules_label}</a>
               </div>
               <dl className="home-v2-facts" aria-label="Kingdom 710 at a glance">
-                <div><dt>{t.fact_alliances_label}</dt><dd>3</dd></div>
+                <div><dt>{t.fact_alliances_label}</dt><dd>{allianceTags.length || 3}</dd></div>
                 <div><dt>{t.fact_record_label}</dt><dd>{kvk.record.wins}–{kvk.record.losses}</dd></div>
                 <div><dt>{t.fact_rank_label}</dt><dd>#{kvk.ranking.rank}</dd></div>
               </dl>
@@ -153,7 +156,7 @@ export default async function HomePage() {
       <section className="home-v2-story">
         <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
         <div className="home-v2-story-copy">
-          <SectionHeader eyebrow={t.why_head_kicker} title={t.why_head_title} lede={t.why_head_sub} />
+          <SectionHeader eyebrow={t.why_head_kicker} title={t.why_head_title} lede={liveCopy(t.why_head_sub)} />
           <div className="home-v2-doctrine">
             {DOCTRINE.map((d) => <div key={d.n}><b>{d.n}</b><span><strong>{t[d.titleKey]}</strong><small>{t[d.bodyKey]}</small></span></div>)}
           </div>

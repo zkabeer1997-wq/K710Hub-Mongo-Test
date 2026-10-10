@@ -7,7 +7,7 @@
 
   "footer.nav.aria": {"text":"Footer","note":"Screen-reader name of the footer navigation."},
   "footer.name": {"text":"Kingdom 710","note":"Name of the kingdom in the footer. Keep Kingdom 710 as is."},
-  "footer.tag": {"text":"Three alliances. One kingdom. KvK-first.","note":"Short slogan under the kingdom name. KvK stays KvK."},
+  "footer.tag": {"text":"Many alliances. One kingdom. KvK-first.","note":"Short slogan under the kingdom name. KvK stays KvK."},
   "footer.group.explore": {"text":"Explore","note":"Footer column heading."},
   "footer.group.about": {"text":"About","note":"Footer column heading."},
   "footer.group.members": {"text":"Members","note":"Footer column heading for pages that need a member sign-in."},

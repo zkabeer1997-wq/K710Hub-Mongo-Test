@@ -35,6 +35,7 @@ export default function AccessManager({ actorPlayerId }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [promoting, setPromoting] = useState(null); // { user, role }
+  const [removing, setRemoving] = useState(null); // user whose access is being removed
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -151,6 +152,40 @@ export default function AccessManager({ actorPlayerId }) {
     }
   }
 
+  async function changeAccess(user, action, reason = '') {
+    setSaving(user.player_id);
+    setMessage('');
+    setError('');
+    try {
+      const response = await fetch('/api/admin-member-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: user.player_id, action, reason }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Access could not be changed.');
+      setUsers((current) =>
+        current.map((item) =>
+          item.player_id === user.player_id
+            ? action === 'remove'
+              ? { ...item, access_role: 'member', access_removed_at: result.removedAt, access_removed_reason: reason, personal_code_configured: false }
+              : { ...item, access_removed_at: null, access_removed_reason: '' }
+            : item
+        )
+      );
+      setDrafts((current) => ({ ...current, [user.player_id]: 'member' }));
+      setMessage(
+        action === 'remove'
+          ? `${user.nickname} has been signed out everywhere and can no longer sign in.`
+          : `${user.nickname} can sign in again. If they used a personal code, create a new one.`
+      );
+    } catch (changeError) {
+      setError(changeError.message);
+    } finally {
+      setSaving('');
+    }
+  }
+
   async function logout() {
     await fetch('/api/logout', { method: 'POST' }).catch(() => {});
     router.push('/');
@@ -228,7 +263,7 @@ export default function AccessManager({ actorPlayerId }) {
                       <Avatar user={user} />
                     </span>
                     <div>
-                      <strong>{user.nickname}</strong>
+                      <strong>{user.nickname}{user.access_removed_at ? <em className={styles.removedTag}> · Access removed</em> : null}</strong>
                       <span>
                         #{user.player_id}
                         {user.alliance_abbr ? ` · [${user.alliance_abbr}]` : ''}
@@ -266,7 +301,21 @@ export default function AccessManager({ actorPlayerId }) {
                           ? 'Saving…'
                           : 'Apply role'}
                     </button>
-                    {revealedCodes[user.player_id] ? (
+                    {user.access_removed_at ? (
+                      <button type="button" disabled={saving === user.player_id} onClick={() => changeAccess(user, 'restore')}>
+                        Restore access
+                      </button>
+                    ) : !isSelf && user.access_role !== 'superadmin' ? (
+                      <button
+                        type="button"
+                        className={styles.removeButton}
+                        disabled={saving === user.player_id}
+                        onClick={() => setRemoving(user)}
+                      >
+                        Remove access
+                      </button>
+                    ) : null}
+                    {user.access_removed_at ? null : revealedCodes[user.player_id] ? (
                       <div className={styles.codeReveal}>
                         <span>Shown once</span>
                         <code>{revealedCodes[user.player_id]}</code>
@@ -300,9 +349,20 @@ export default function AccessManager({ actorPlayerId }) {
           </div>
         )}
         <p className={styles.note}>
+          Remove access signs a person out everywhere and stops them signing in again, for example when they leave 710. Restore access reverses it.
+        </p>
+        <p className={styles.note}>
           A personal code is a private code for one account. Creating or resetting one shows the new code once, so copy it straight away.
         </p>
       </section>
+      <ConfirmDialog
+        open={Boolean(removing)}
+        title={removing ? `Remove ${removing.nickname}'s access?` : ''}
+        message="They are signed out everywhere straight away and cannot sign in again until you restore them. Their roster row and form answers are kept."
+        confirmLabel="Remove access"
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => { const u = removing; setRemoving(null); changeAccess(u, 'remove'); }}
+      />
       <ConfirmDialog
         open={Boolean(promoting)}
         title={promoting ? `Make ${promoting.user.nickname} ${ROLE_COPY[promoting.role].toLowerCase()}?` : ''}

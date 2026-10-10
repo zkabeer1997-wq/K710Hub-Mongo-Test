@@ -11,7 +11,7 @@ export default function GuideLayoutPage({ guide, prev, next, isAdmin = false, me
     <main className={`armory guide-page ${styles.page}`}>
       <div className={`guide-inner ${styles.inner}`}>
         <div className={styles.noPrint}>
-          <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Guides', href: `/guides${query}` }]} current={guide.title} />
+          <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Guides', href: `/guides${query}` }]} current={guide.title} />
         </div>
         {isAdmin ? (
           <div className={styles.adminBar}>

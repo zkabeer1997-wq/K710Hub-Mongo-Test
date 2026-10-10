@@ -65,8 +65,8 @@ const BODIES = [
       <>
         <p>
           Check that Kingshot is open and that you typed the right Player ID. Wait one minute and try once more.
-          If it still does not work, the page will offer a <strong>personal code</strong>. Ask your alliance leader
-          for your personal code. It is 6 numbers.
+          If it still does not work, the page will offer a <strong>personal code</strong>. Message an R5 on Discord
+          for your personal code. The <Link href="/alliances">Alliances</Link> page lists each alliance&apos;s R5s. It is 6 numbers.
         </p>
       </>
     ),
@@ -92,11 +92,11 @@ const BODIES = [
     body: (
       <>
         <p>
-          At the top of every page there is a button called <strong>Easy view</strong>. It makes the text larger,
+          At the top of every page there is a button called <strong>Bigger text</strong> (marked <strong>Aa</strong>). It makes the text larger,
           the buttons bigger, and it turns off moving pictures. Press it again to go back.
         </p>
         <p>
-          The button with letters such as <strong>EN</strong> changes the language of the website.
+          The language button (it shows the language name, or letters such as <strong>EN</strong> on a phone) changes the language of the website.
         </p>
       </>
     ),
@@ -107,7 +107,7 @@ const BODIES = [
       <>
         <p>
           Most forms can be sent again. Open the form, change your answers and press Send. Your newest answers are
-          the ones we use. If you applied to join and need to change something, tell your alliance leader and give
+          the ones we use. If you applied to join and need to change something, message an R5 on Discord and give
           them your reference number.
         </p>
       </>
@@ -118,9 +118,9 @@ const BODIES = [
     body: (
       <>
         <p>
-          Ask your alliance leader in the game. If you are not in the kingdom yet, send an application and an
-          officer will answer you there. You can also read <Link href="/about">About Kingdom 710</Link> to see who
-          leads each alliance.
+          Message an R5 on Discord. The <Link href="/alliances">Alliances</Link> page lists the R5s of each alliance,
+          with a Discord link where they have shared one. If you are not in the kingdom yet, send an application and an
+          officer will answer you there.
         </p>
       </>
     ),
@@ -149,7 +149,7 @@ export default async function HelpPage() {
       <PageHero
         eyebrow="Kingdom 710"
         title="Help"
-        lede="Short answers in plain words. If you cannot find what you need, ask your alliance leader."
+        lede="Short answers in plain words. If you cannot find what you need, message an R5 on Discord."
       />
       <div className="help-inner">
         <nav className="help-toc" aria-label="Help topics">

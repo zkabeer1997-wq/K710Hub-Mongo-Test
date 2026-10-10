@@ -87,7 +87,7 @@ export default async function GuidesPage({ searchParams }) {
   return (
     <main className="theme-realm guides-page">
       <PageHero
-        before={<Breadcrumbs items={[{ label: 'Members', href: backHref }]} current="Guides" />}
+        before={<Breadcrumbs items={[{ label: 'Home', href: '/' }]} current="Guides" />}
         eyebrow={t.hero_eyebrow}
         title={t.hero_title}
         lede={t.hero_lede}

@@ -29,6 +29,7 @@ export default function AllianceDetail({ alliance, blurb, others = [], kvk = nul
   ].filter(Boolean);
   const legacyContact = alliance.legacy_leaders ? text(alliance.leader_player_id) : '';
   const tag = String(alliance.tag);
+  const hasBearTimes = Array.isArray(alliance.bear_times_utc) && alliance.bear_times_utc.length > 0;
 
   return (
     <div className="al-detail al-scope k-wb" {...bandProps(tag)}>
@@ -62,7 +63,7 @@ export default function AllianceDetail({ alliance, blurb, others = [], kvk = nul
             <h2 id="al-bear-h" className="al-panel-h">{t('alliances.panel.bearHunt')}</h2>
             <AllianceBearTimes tag={tag} initialTimes={alliance.bear_times_utc} variant="rows" rowLabel={(i) => t('alliances.bear.hunt', { n: i + 1 })} />
             <div className="al-panel-links">
-              <a className="al-link" href={`/api/events/bear-hunt.ics?alliance=${tag}`} download>{t('alliances.bear.calendar', { tag })}</a>
+              {hasBearTimes && <a className="al-link" href={`/api/events/bear-hunt.ics?alliance=${tag}`} download>{t('alliances.bear.calendar', { tag })}</a>}
               <Link className="al-link" href="/alliances">{t('alliances.bear.all')}</Link>
             </div>
           </section>
