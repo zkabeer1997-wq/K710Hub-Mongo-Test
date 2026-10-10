@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useT } from './i18n/LanguageProvider';
 
 const KEY = 'k710-easy-view';
 
@@ -13,6 +14,8 @@ function apply(on) {
 // is remembered on this device only (localStorage), and the page works without it.
 export default function EasyViewToggle({ className = '' }) {
   const [on, setOn] = useState(false);
+  const t = useT();
+  const label = t(on ? 'signin.easy.on' : 'signin.easy.off');
 
   useEffect(() => {
     try {
@@ -40,11 +43,12 @@ export default function EasyViewToggle({ className = '' }) {
       type="button"
       className={`easy-view-toggle ${className}`.trim()}
       aria-pressed={on}
+      aria-label={label}
       onClick={toggle}
-      title="Bigger text and simpler pages"
+      title={t('signin.easy.title')}
     >
       <span className="easy-view-aa" aria-hidden="true">Aa</span>
-      <span className="easy-view-label">Easy view: {on ? 'On' : 'Off'}</span>
+      <span className="easy-view-label">{label}</span>
     </button>
   );
 }

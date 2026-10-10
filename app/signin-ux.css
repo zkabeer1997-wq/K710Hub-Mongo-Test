@@ -1,0 +1,58 @@
+/* Member sign-in entry points: header, menu, home hero and "Members" tags.
+   Reuses the existing gold CTA look (.site-nav-cta); no new palette. */
+
+/* ---- Header "Sign in" (phones; on desktop the nav carries it) ---- */
+.site-header-signin {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  /* Colours come from .site-nav-cta (the same gold as Apply). */
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-header-signin:focus-visible { outline: 2px solid var(--gold-hot); outline-offset: 2px; }
+@media (max-width: 759px) {
+  .site-header-signin { display: inline-flex; }
+}
+/* Very narrow phones: make room for Sign in by letting the UTC clock go (it is
+   still shown on the pages where the member is signed in). */
+@media (max-width: 480px) {
+  .site-header--signed-out .utc-clock { display: none; }
+  .site-header--signed-out .site-header-signin { margin-inline-start: auto; }
+  .site-header--signed-out .site-header-inner { gap: 8px; }
+}
+
+/* Mobile menu: two solid buttons at the end (Sign in, then Apply). */
+.site-nav-mobile .site-nav-cta { justify-content: center; margin: 6px 0 0; }
+.site-nav-mobile .site-nav-signin { margin-top: 12px; }
+
+/* ---- Home hero: Sign in next to Apply, equal weight ---- */
+.home-v2-signin { text-decoration: none; }
+@media (max-width: 640px) {
+  .home-v2-actions-guest { flex-direction: column; align-items: stretch; gap: 12px; }
+  .home-v2-actions-guest > a { width: 100%; min-height: 52px; text-align: center; }
+}
+
+/* ---- "Members" tag on links that need sign-in ---- */
+.members-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--gold-hot) 55%, transparent);
+  border-radius: 4px;
+  color: var(--gold-hot);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.members-tag svg { flex: none; }

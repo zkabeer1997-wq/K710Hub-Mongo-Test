@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { SUPPORT_URL } from '../lib/supportLink';
-import { useMemberFormStatus } from '../lib/useMemberFormStatus';
+import { refreshMemberFormStatus, useMemberFormStatus } from '../lib/useMemberFormStatus';
 import { withResults } from '../lib/memberResults.mjs';
 import UtcClock from './member/UtcClock';
 import FormStatusMark from './member/FormStatusMark';
@@ -42,10 +42,14 @@ const NAV_ITEMS = [
 
 // The signed-in Members menu also lists every form with its live status
 // (red dot = open and not yet submitted, badge = outside its window).
-function membersChildren(base, status) {
+const SIGN_IN_ITEM = { href: '/login', labelKey: 'signin.link' };
+
+function membersChildren(base, status, signedOut = false) {
   if (status?.signedIn && !status.forms?.length) return base;
   if (!status?.signedIn) {
-    return base.flatMap((c) => (c.href === '/forms' ? [{ href: '/power-profile', labelKey: 'chrome.nav.powerProfile' }, c] : [c]));
+    const items = base.flatMap((c) => (c.href === '/forms' ? [{ href: '/power-profile', labelKey: 'chrome.nav.powerProfile' }, c] : [c]));
+    // Signed out: "Sign in" leads the Members menu.
+    return signedOut ? [SIGN_IN_ITEM, ...items] : items;
   }
   return [
     ...base,
@@ -79,10 +83,10 @@ function isHoverCapable() {
 // dismiss it.
 const HOVER_CLOSE_DELAY_MS = 150;
 
-function NavDropdown({ item, pathname, openGroup, setOpenGroup, memberStatus }) {
+function NavDropdown({ item, pathname, openGroup, setOpenGroup, memberStatus, signedOut }) {
   const t = useT();
   const isOpen = openGroup === item.id;
-  const children = item.id === 'members' ? membersChildren(item.children, memberStatus) : item.children;
+  const children = item.id === 'members' ? membersChildren(item.children, memberStatus, signedOut) : item.children;
   const links = children.filter((child) => !child.separator);
   const groupActive = links.some((child) => isActivePath(pathname, child.href));
   const groupPending = item.id === 'members' && links.some((child) => child.status?.needsInput);
@@ -225,8 +229,18 @@ export default function SiteHeader() {
   const toggleRef = useRef(null);
   const mobileRef = useRef(null);
   const headerRef = useRef(null);
-  const { status: memberStatus } = useMemberFormStatus(pathname);
+  const { status: memberStatus, loaded: memberLoaded } = useMemberFormStatus(pathname);
+  // Only show "Sign in" once the session check has answered, so a signed-in
+  // member never sees it flash by.
+  const signedOut = memberLoaded && !memberStatus.signedIn;
   const t = useT();
+
+  // After the sign-in card (or sign out) changes the session, re-read it so the
+  // header switches without waiting for the next page load.
+  useEffect(() => {
+    window.addEventListener('k710-auth-changed', refreshMemberFormStatus);
+    return () => window.removeEventListener('k710-auth-changed', refreshMemberFormStatus);
+  }, []);
 
   // Close the mobile menu on route change.
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -277,7 +291,7 @@ export default function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="site-header" ref={headerRef}>
+    <header className={`site-header${signedOut ? ' site-header--signed-out' : ''}`} ref={headerRef}>
       <div className="site-header-inner">
         <Link href="/" className="site-brand" onClick={() => setOpen(false)}>
           <svg viewBox="0 0 40 40" fill="none" aria-hidden="true" className="site-brand-crest">
@@ -297,6 +311,7 @@ export default function SiteHeader() {
                   openGroup={openGroup}
                   setOpenGroup={setOpenGroup}
                   memberStatus={memberStatus}
+                  signedOut={signedOut}
                 />
               );
             }
@@ -311,6 +326,15 @@ export default function SiteHeader() {
               </Link>
             );
           })}
+          {signedOut && (
+            <Link
+              href="/login"
+              className="site-nav-cta site-nav-signin"
+              aria-current={isActivePath(pathname, '/login') ? 'page' : undefined}
+            >
+              {t('signin.link')}
+            </Link>
+          )}
           <Link href="/interest" className="site-nav-cta">{t('chrome.nav.apply')}</Link>
           <Link
             href={SUPPORT_URL}
@@ -325,6 +349,11 @@ export default function SiteHeader() {
         </nav>
 
         <UtcClock />
+        {signedOut && (
+          <Link href="/login" className="site-nav-cta site-header-signin" aria-current={isActivePath(pathname, '/login') ? 'page' : undefined}>
+            {t('signin.link')}
+          </Link>
+        )}
         <EasyViewToggle className="easy-view-toggle--header" />
         <LanguageSwitcher className="lang-switch--header" />
 
@@ -354,7 +383,7 @@ export default function SiteHeader() {
           <EasyViewToggle className="easy-view-toggle--mobile" />
           {NAV_ITEMS.map((item) => {
             if (item.type === 'group') {
-              const kids = item.id === 'members' ? membersChildren(item.children, memberStatus) : item.children;
+              const kids = item.id === 'members' ? membersChildren(item.children, memberStatus, signedOut) : item.children;
               const groupActive = kids.some((child) => !child.separator && isActivePath(pathname, child.href));
               return (
                 <div key={item.id} className="site-nav-mobile-group">
@@ -386,6 +415,9 @@ export default function SiteHeader() {
               </Link>
             );
           })}
+          {signedOut && (
+            <Link href="/login" onClick={() => setOpen(false)} className="site-nav-cta site-nav-signin">{t('signin.link')}</Link>
+          )}
           <Link href="/interest" onClick={() => setOpen(false)} className="site-nav-cta">{t('chrome.nav.apply')}</Link>
           <Link
             href={SUPPORT_URL}
