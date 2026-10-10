@@ -35,6 +35,13 @@
     grid-row: 1;
   }
 }
+/* Phones: the Player ID card comes first so the box is on screen without
+   scrolling. The DOM keeps the heading first (reading order for screen readers);
+   there is nothing focusable in the intro, so the Tab order is unaffected. */
+@media (max-width: 640px) {
+  .leftColumn { order: -1; }
+  .page { padding-top: 20px; }
+}
 .leftColumn,
 .rightColumn {
   display: flex;
@@ -97,11 +104,32 @@
 .inputWrap input,
 .codeInput {
   width: 100%;
+  /* `height` as well as min-height: a global form-input rule sets min-height 44px
+     with higher specificity, which min-height alone would not beat. */
+  height: 48px;
+  min-height: 48px;
   border: 0;
   background: transparent;
   color: inherit;
+  /* 16px or more stops iOS Safari from zooming the page when the box is focused. */
+  font-size: 16px;
   padding: 12px 0;
   outline: none;
+}
+/* The wrapper draws the box and the focus ring; the global form-input style would
+   otherwise add a second, darker box inside it. */
+.inputWrap input,
+.inputWrap input:focus,
+.inputWrap input:focus-visible {
+  border: 0 !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.inputWrap:focus-within,
+.codeInput:focus-visible {
+  border-color: var(--color-accent-strong, #f3d99a);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-strong, #f3d99a) 55%, transparent);
 }
 .codeInput {
   padding: 12px 14px;
@@ -118,11 +146,23 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 16px;
+  min-height: 48px;
+  font-size: 16px;
   border-radius: 10px;
   border: 0;
   cursor: pointer;
   font-weight: 700;
 }
+.primary:focus-visible,
+.secondary:focus-visible,
+.textButton:focus-visible,
+.link:focus-visible,
+.where summary:focus-visible {
+  outline: 2px solid var(--color-accent-strong, #f3d99a);
+  outline-offset: 3px;
+}
+.primary:disabled,
+.secondary:disabled { opacity: 0.6; cursor: not-allowed; }
 .primary {
   background: var(--color-accent, #d9a94e);
   color: #1a1408;
@@ -138,11 +178,118 @@
   color: var(--color-accent-strong, #d9a94e);
   cursor: pointer;
   padding: 8px 0;
+  min-height: 44px;
+  font-size: 16px;
+  text-align: start;
   font-weight: 600;
 }
+/* Error text: 16px, an icon so it never relies on colour alone, and the same
+   coral as the Apply form errors (about 9:1 on the card). */
 .error {
-  color: #e08070;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  color: #ffb4a8;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.errorIcon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: #ffb4a8;
+  color: #2a0a05;
   font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+}
+:global(:root[data-easy="true"]) .error { font-size: 20px; }
+:global(:root[data-easy="true"]) .errorIcon { width: 26px; height: 26px; font-size: 18px; line-height: 26px; }
+
+/* Links inside the card use the site link colour, underlined, with a focus ring. */
+.link {
+  color: var(--color-link, #f3d99a);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.link:hover { color: #fff3d0; }
+.helpRow { margin: 4px 0 0; font-size: 16px; }
+.helpRow .link { display: inline-flex; align-items: center; min-height: 44px; }
+.note { margin: 0; font-size: 16px; color: var(--color-ink-muted, #8a8578); }
+
+/* "Sign in to open Forms" banner inside the card. */
+.nextBanner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-accent, #d9a94e) 55%, transparent);
+  background: color-mix(in srgb, var(--color-accent, #d9a94e) 12%, transparent);
+}
+.nextBannerIcon { flex: none; margin-top: 2px; color: var(--color-accent-strong, #f3d99a); }
+.nextBanner strong { display: block; font-size: 17px; }
+.nextBanner span:not(.nextBannerIcon) { display: block; margin-top: 2px; font-size: 15px; color: var(--color-ink-muted, #8a8578); }
+
+/* "Where is my Player ID?" disclosure. */
+.where { margin-top: 4px; }
+.where summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-link, #f3d99a);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.where > div { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 4px 0 8px; }
+.where p { margin: 0; font-size: 16px; line-height: 1.5; }
+
+/* "Didn't get a code?" help box. */
+.helpBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #3a3630);
+  background: #12110f;
+}
+.helpBox h3 { margin: 0; font-size: 17px; }
+.helpBox ul { margin: 0; padding-inline-start: 20px; font-size: 16px; line-height: 1.5; }
+
+/* Confirmation after a successful sign-in. */
+.done { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.done p { margin: 0; font-size: 18px; font-weight: 700; }
+.doneIcon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-accent, #d9a94e);
+  color: #1a1408;
+  font-weight: 800;
+  line-height: 32px;
+  text-align: center;
+}
+.signedInNote {
+  position: relative;
+  z-index: 1;
+  max-width: 980px;
+  margin: 0 auto 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-accent-strong, #f3d99a);
 }
 .profile {
   padding-top: 4px;
@@ -255,10 +402,11 @@
   z-index: 1;
   max-width: 980px;
   margin: 24px auto 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-ink-muted, #8a8578);
   text-align: center;
 }
+.disclaimer span { display: inline-block; }
 .stepRow {
   display: flex;
   align-items: center;
@@ -436,3 +584,7 @@
   opacity: 0.7;
 }
 
+
+/* Easy view: the shared rule asks for 52px controls. */
+:global(:root[data-easy="true"]) .inputWrap input,
+:global(:root[data-easy="true"]) .codeInput { height: 54px; font-size: 20px; }

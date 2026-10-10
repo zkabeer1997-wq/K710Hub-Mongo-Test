@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { SUPPORT_URL } from '../lib/supportLink';
+import { useMemberFormStatus } from '../lib/useMemberFormStatus';
 import { useT } from './i18n/LanguageProvider';
 
 // Mirrors the top-nav structure in SiteHeader.js: the standalone links
@@ -40,6 +41,8 @@ const FOOTER_GROUPS = [
 
 export default function SiteFooter() {
   const t = useT();
+  const { status, loaded } = useMemberFormStatus('footer');
+  const signedOut = loaded && !status.signedIn;
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
@@ -58,6 +61,13 @@ export default function SiteFooter() {
             <div className="site-footer-group" key={group.heading}>
               <h2 className="site-footer-group-heading">{t(group.heading)}</h2>
               <ul>
+                {/* Signed out: "Sign in" leads the Members column. */}
+                {signedOut && group.heading === 'footer.group.members' && (
+                  <li>
+                    <Link href="/login">{t('signin.member.link')}</Link>
+                    <small className="site-footer-sub">{t('signin.member.sub')}</small>
+                  </li>
+                )}
                 {group.links.map((link) => (
                   <li key={link.href}>
                     <Link href={link.href}>{t(link.label)}</Link>

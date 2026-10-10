@@ -14,6 +14,9 @@ import NextBearHunt from '../components/NextBearHunt';
 import { getMemberHome } from '../lib/memberHome.server';
 import { getKvkRecord } from '../lib/external/index.mjs';
 import SectionHeader from '../components/ui/SectionHeader';
+import HeroSignInLink from '../components/signin/HeroSignInLink';
+import MembersTag from '../components/signin/MembersTag';
+import { routeNeedsSignIn } from '../lib/signinNext.mjs';
 import { jsonLdString, organizationJsonLd, websiteJsonLd } from '../lib/jsonLd';
 import './home-extras.css';
 
@@ -106,8 +109,9 @@ export default async function HomePage() {
               <span className="k-mark">{t.hero_kicker}</span>
               <h1>{t.hero_title}</h1>
               <p>{t.hero_sub}</p>
-              <div className="home-v2-actions">
+              <div className="home-v2-actions home-v2-actions-guest">
                 <Link href="/interest" className="home-v2-primary">{t.hero_apply_label}</Link>
+                <HeroSignInLink />
                 <a href="#alliances" className="home-v2-secondary">{t.hero_schedules_label}</a>
               </div>
               <dl className="home-v2-facts" aria-label="Kingdom 710 at a glance">
@@ -167,7 +171,7 @@ export default async function HomePage() {
         </div>
         <div className="home-v2-command-list">
           {COMMAND.map((item) => (
-            <Link key={item.href} href={item.href}><b>{item.n}</b><span><strong>{t[item.titleKey]}</strong><small>{t[item.subKey]}</small></span><i>↗</i></Link>
+            <Link key={item.href} href={item.href}><b>{item.n}</b><span><strong>{t[item.titleKey]}</strong><small>{t[item.subKey]}</small>{!isMember && routeNeedsSignIn(item.href) && <MembersTag />}</span><i>↗</i></Link>
           ))}
         </div>
       </section>
