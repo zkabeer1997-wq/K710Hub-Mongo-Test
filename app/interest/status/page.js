@@ -104,7 +104,7 @@ function InterestStatusInner() {
 
       <aside className="apply-lost">
         <h2>Lost your code?</h2>
-        <p>We cannot show applications without the code, to keep everyone&apos;s data private. Ask an officer on the Kingdom 710 Discord and tell them your in-game name. You can also read the <Link href="/help">Help page</Link>.</p>
+        <p>We cannot show applications without the code, to keep everyone&apos;s data private. Message an R5 on Discord and tell them your in-game name. The <Link href="/alliances">Alliances</Link> page lists the R5s. You can also read the <Link href="/help">Help page</Link>.</p>
       </aside>
     </>
   );

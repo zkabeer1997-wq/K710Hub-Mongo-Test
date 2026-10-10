@@ -35,7 +35,7 @@ export default function EventsExplorer({ events, initialNow }) {
               {rows.map(({ event, occurrence }) => (
                 <tr key={event.slug}>
                   <th scope="row"><Link href={eventHref(event)}>{event.title}</Link></th>
-                  <td>{event.all_day ? <time dateTime={occurrence.starts_at}>{occurrence.starts_at.slice(0, 10)} (all day, UTC)</time> : <DualTime value={occurrence.starts_at} />}</td>
+                  <td>{!event.all_day && occurrence.ends_at && Date.parse(occurrence.starts_at) <= now && Date.parse(occurrence.ends_at) > now ? <span>In progress · ends <DualTime value={occurrence.ends_at} /></span> : event.all_day ? <time dateTime={occurrence.starts_at}>{occurrence.starts_at.slice(0, 10)} (all day, UTC)</time> : <DualTime value={occurrence.starts_at} />}</td>
                   <td>{event.recurrence_frequency && event.recurrence_frequency !== 'none' ? recurrenceLabel(event) : 'Once'}</td>
                   <td>{eventAllianceLabel(event)}</td>
                   <td>{event.guide_slug ? <Link href={`/guides/${event.guide_slug}`}>Read guide</Link> : <Link href={`/events/${event.slug}`}>Details</Link>}</td>

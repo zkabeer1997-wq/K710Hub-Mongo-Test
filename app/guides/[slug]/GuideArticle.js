@@ -143,7 +143,7 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
       <main className="armory guide-page">
         <div className="armory-atmos" aria-hidden="true" />
         <div className="armory-inner guide-inner">
-          <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }]} current="Guides" />
+          <Breadcrumbs items={[{ label: 'Home', href: '/' }]} current="Guides" />
           <div className="guide-error k-narrative">{error || 'Guide not found.'}</div>
         </div>
         <style jsx>{`.guide-inner{width:min(940px,100%);padding-top:clamp(82px,10vh,118px)}.guide-back{color:var(--brass);text-decoration:none}.guide-error{margin-top:40px;color:var(--parchment-dim)}`}</style>
@@ -158,7 +158,7 @@ export default function GuideArticle({ slug, initialGuide, initialIsAdmin = fals
       <span className="armory-rack-r" aria-hidden="true" />
 
       <div className="armory-inner guide-inner">
-        <Breadcrumbs items={[{ label: 'Members', href: `/dashboard${query}` }, { label: 'Guides', href: guidesHref }]} current={guide.title} />
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Guides', href: guidesHref }]} current={guide.title} />
         {isAdmin && <div className="guide-topbar"><span className="guide-admin-badge">Admin editing available</span><Link href={`/admin/dashboard/guides/${slug}`} className="guide-back">Open in page builder</Link></div>}
 
         <header className="guide-header">

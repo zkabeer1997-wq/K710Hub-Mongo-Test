@@ -15,7 +15,6 @@ const STATIC_ROUTES = [
   { path: '/glossary', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/help', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/interest', priority: 0.9, changeFrequency: 'monthly' },
-  { path: '/dashboard', priority: 0.5, changeFrequency: 'yearly' },
 ];
 
 function guidesCollectionName() {
@@ -41,6 +40,21 @@ async function guideEntries() {
   }
 }
 
+async function eventEntries() {
+  try {
+    const coll = await getCollection(COLLECTIONS.EVENTS);
+    const data = await coll.find({ published: true }).project({ slug: 1, updated_at: 1, _id: 0 }).toArray();
+    return (data || []).filter((e) => e.slug).map((e) => ({
+      url: `${BASE_URL}/events/${e.slug}`,
+      lastModified: e.updated_at ? new Date(e.updated_at) : undefined,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 async function allianceEntries() {
   try {
     const coll = await getCollection(COLLECTIONS.ALLIANCES);
@@ -60,7 +74,7 @@ async function allianceEntries() {
 }
 
 export default async function sitemap() {
-  const [guides, alliances] = await Promise.all([guideEntries(), allianceEntries()]);
+  const [guides, alliances, events] = await Promise.all([guideEntries(), allianceEntries(), eventEntries()]);
 
   const staticEntries = STATIC_ROUTES.map((route) => ({
     url: `${BASE_URL}${route.path}`,
@@ -68,5 +82,5 @@ export default async function sitemap() {
     priority: route.priority,
   }));
 
-  return [...staticEntries, ...guides, ...alliances];
+  return [...staticEntries, ...guides, ...alliances, ...events];
 }

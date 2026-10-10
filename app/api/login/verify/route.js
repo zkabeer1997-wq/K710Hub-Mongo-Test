@@ -21,6 +21,7 @@ import {
   memberSessionCookieOptions,
 } from '../../../../lib/memberAuthKingshot';
 import { recordLoginEvent } from '../../../../lib/kingshotLoginAudit';
+import { isAccessRemoved, ACCESS_REMOVED_MESSAGE } from '../../../../lib/memberAccessRemoval.mjs';
 import { ensureInitialKingshotOwner } from '../../../../lib/kingshotAccountBootstrap';
 
 function json(body, init = {}) {
@@ -73,6 +74,12 @@ export async function POST(request) {
 
     const coll = await getCollection('kingshot_users');
     const existing = await coll.findOne({ player_id: flow.playerId });
+    if (isAccessRemoved(existing)) {
+      await recordLoginEvent(request, 'access_removed', flow.playerId, {});
+      const removed = json({ error: ACCESS_REMOVED_MESSAGE, code: 'ACCESS_REMOVED' }, { status: 403 });
+      removed.cookies.set(LOGIN_FLOW_COOKIE_NAME, '', loginFlowCookieOptions(0));
+      return removed;
+    }
 
     const storedUser = toStoredUser({
       playerId: flow.playerId,

@@ -22,7 +22,7 @@ export default function GalleryGrid({ images }) {
       <div className="gallery-grid" style={{ columns: `${Math.max(1, Math.min(3, images.length))} 290px` }}>
         {images.map((image) => (
           <button key={image.id} type="button" className="gallery-item" onClick={() => setSelected(image)} aria-label={`Open ${image.title || image.alt_text}`}>
-            <img src={image.image_url} alt={image.alt_text} loading="lazy" />
+            <img src={image.image_url} alt={image.alt_text} loading="lazy" decoding="async" {...(image.width && image.height ? { width: image.width, height: image.height } : {})} />
             {(image.title || image.caption) && (
               <span><strong>{image.title}</strong>{image.caption && <small>{image.caption}</small>}</span>
             )}
