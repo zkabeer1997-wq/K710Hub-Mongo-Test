@@ -95,6 +95,19 @@ export default function LorePanel() {
     }
   }
 
+  async function importFirstStories() {
+    setError(''); setStatus('');
+    try {
+      const response = await fetch('/api/admin-lore/import', { method: 'POST' });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Unable to add the stories.');
+      setStatus(result.inserted ? `${result.inserted} stories added. Add a photo to each one if you like.` : 'All ten stories are already there.');
+      await load();
+    } catch (err) {
+      setError(err.message || 'Unable to add the stories.');
+    }
+  }
+
   async function confirmDelete() {
     if (!confirmRow) return;
     try {
@@ -158,6 +171,7 @@ export default function LorePanel() {
       {status && <p className="guide-message success" role="status">{status}</p>}
       <div style={{ margin: '16px 0' }}>
         <Button onClick={openCreate}>+ New story</Button>
+        {!loading && rows.length < 10 && <Button variant="quiet" onClick={importFirstStories} style={{ marginLeft: 8 }}>Add the first 10 stories</Button>}
       </div>
       {loading ? (
         <TableSkeleton rows={4} columns={4} />
