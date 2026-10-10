@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:49.453Z"
+    "generatedAt": "2026-10-10T17:45:05.120Z"
   },
   "strings": {
     "translate.working": "번역 중…",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "출시 일정",
     "footer.link.gallery": "갱도",
     "footer.link.glossary": "어휘",
+    "footer.link.lore": "710 로어",
     "footer.link.dashboard": "계기반",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "양식",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "출시 일정",
     "chrome.nav.gallery": "갱도",
     "chrome.nav.glossary": "어휘",
+    "chrome.nav.lore": "710 로어",
     "chrome.nav.guides": "가이드",
     "chrome.nav.help": "돕다",
     "chrome.nav.members": "회원들",

@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:50.161Z"
+    "generatedAt": "2026-10-10T17:45:05.861Z"
   },
   "strings": {
     "translate.working": "Traduction…",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "Calendrier de sortie",
     "footer.link.gallery": "Galerie",
     "footer.link.glossary": "Glossaire",
+    "footer.link.lore": "710 Lore",
     "footer.link.dashboard": "Tableau de bord",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "Formulaires",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "Calendrier de sortie",
     "chrome.nav.gallery": "Galerie",
     "chrome.nav.glossary": "Glossaire",
+    "chrome.nav.lore": "710 Lore",
     "chrome.nav.guides": "Guides",
     "chrome.nav.help": "Aide",
     "chrome.nav.members": "Membres",

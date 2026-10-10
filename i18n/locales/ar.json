@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:49.800Z"
+    "generatedAt": "2026-10-10T17:45:05.517Z"
   },
   "strings": {
     "translate.working": "جارٍ الترجمة...",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "الجدول الزمني للإصدار",
     "footer.link.gallery": "المعرض",
     "footer.link.glossary": "مسرد المصطلحات",
+    "footer.link.lore": "710 لور",
     "footer.link.dashboard": "لوحة التحكم",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "النماذج",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "الجدول الزمني للإصدار",
     "chrome.nav.gallery": "معرض",
     "chrome.nav.glossary": "مسرد المصطلحات",
+    "chrome.nav.lore": "710 لور",
     "chrome.nav.guides": "الأدلة",
     "chrome.nav.help": "المساعدة",
     "chrome.nav.members": "أعضاء",

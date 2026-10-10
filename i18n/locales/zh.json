@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:50.351Z"
+    "generatedAt": "2026-10-10T17:45:06.171Z"
   },
   "strings": {
     "translate.working": "正在翻译……",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "发布时间表",
     "footer.link.gallery": "画廊",
     "footer.link.glossary": "词汇表",
+    "footer.link.lore": "710传说",
     "footer.link.dashboard": "仪表板",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "表格",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "发布时间表",
     "chrome.nav.gallery": "画廊",
     "chrome.nav.glossary": "词汇表",
+    "chrome.nav.lore": "710传说",
     "chrome.nav.guides": "指南",
     "chrome.nav.help": "帮助",
     "chrome.nav.members": "成员",

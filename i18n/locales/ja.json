@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:50.990Z"
+    "generatedAt": "2026-10-10T17:45:06.660Z"
   },
   "strings": {
     "translate.working": "翻訳中…",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "リリーススケジュール",
     "footer.link.gallery": "ギャラリー",
     "footer.link.glossary": "用語集",
+    "footer.link.lore": "710伝承",
     "footer.link.dashboard": "ダッシュボード",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "フォーム",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "リリーススケジュール",
     "chrome.nav.gallery": "ギャラリー",
     "chrome.nav.glossary": "用語集",
+    "chrome.nav.lore": "710伝承",
     "chrome.nav.guides": "ガイド",
     "chrome.nav.help": "ヘルプ",
     "chrome.nav.members": "メンバー",

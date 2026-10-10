@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:50.585Z"
+    "generatedAt": "2026-10-10T17:45:06.327Z"
   },
   "strings": {
     "translate.working": "Çevriliyor…",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "Yayın Takvimi",
     "footer.link.gallery": "Galeri",
     "footer.link.glossary": "Sözlük",
+    "footer.link.lore": "710 Lore",
     "footer.link.dashboard": "Kontrol Paneli",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "Formlar",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "Yayın Takvimi",
     "chrome.nav.gallery": "Galeri",
     "chrome.nav.glossary": "Sözlük",
+    "chrome.nav.lore": "710 Lore",
     "chrome.nav.guides": "Rehberler",
     "chrome.nav.help": "Yardım",
     "chrome.nav.members": "Üyeler",

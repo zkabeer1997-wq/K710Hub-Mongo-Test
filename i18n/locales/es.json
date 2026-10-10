@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:50.013Z"
+    "generatedAt": "2026-10-10T17:45:05.696Z"
   },
   "strings": {
     "translate.working": "Traductorio…",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "Cronograma de lanzamiento",
     "footer.link.gallery": "Galería",
     "footer.link.glossary": "Glosario",
+    "footer.link.lore": "710 Saber",
     "footer.link.dashboard": "Panel",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "Formularios",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "Cronograma de lanzamiento",
     "chrome.nav.gallery": "Galería",
     "chrome.nav.glossary": "Glosario",
+    "chrome.nav.lore": "710 Saber",
     "chrome.nav.guides": "Guías",
     "chrome.nav.help": "Ayuda",
     "chrome.nav.members": "Miembros",

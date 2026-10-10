@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:49.644Z"
+    "generatedAt": "2026-10-10T17:45:05.286Z"
   },
   "strings": {
     "translate.working": "Nagsasalin…",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "Takdang Panahon ng Paglabas",
     "footer.link.gallery": "Galeriya",
     "footer.link.glossary": "Glosaryo",
+    "footer.link.lore": "710 Lore",
     "footer.link.dashboard": "Dashboard",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "Mga Form",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "Takdang Panahon ng Paglabas",
     "chrome.nav.gallery": "Galeriya",
     "chrome.nav.glossary": "Glosaryo",
+    "chrome.nav.lore": "710 Lore",
     "chrome.nav.guides": "Mga Gabay",
     "chrome.nav.help": "Tulong",
     "chrome.nav.members": "Mga Miyembro",

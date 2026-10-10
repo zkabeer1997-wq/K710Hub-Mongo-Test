@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-10T17:23:50.781Z"
+    "generatedAt": "2026-10-10T17:45:06.486Z"
   },
   "strings": {
     "translate.working": "अनुवाद जारी है…",
@@ -25,6 +25,7 @@
     "footer.link.timeline": "रिलीज की समयरेखा",
     "footer.link.gallery": "गैलरी",
     "footer.link.glossary": "शब्दकोष",
+    "footer.link.lore": "710 विद्या",
     "footer.link.dashboard": "डैशबोर्ड",
     "footer.link.power": "Power Profile",
     "footer.link.forms": "फार्म",
@@ -52,6 +53,7 @@
     "chrome.nav.timeline": "रिलीज की समयरेखा",
     "chrome.nav.gallery": "गैलरी",
     "chrome.nav.glossary": "शब्दकोष",
+    "chrome.nav.lore": "710 विद्या",
     "chrome.nav.guides": "गाइड",
     "chrome.nav.help": "मदद",
     "chrome.nav.members": "सदस्यों",

@@ -337,7 +337,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "tl": {
     "translate.working": "ae47b9e3823e",
@@ -677,7 +679,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "ar": {
     "translate.working": "ae47b9e3823e",
@@ -1017,7 +1021,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "es": {
     "translate.working": "ae47b9e3823e",
@@ -1357,7 +1363,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "fr": {
     "translate.working": "ae47b9e3823e",
@@ -1697,7 +1705,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "zh": {
     "translate.working": "ae47b9e3823e",
@@ -2037,7 +2047,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "tr": {
     "translate.working": "ae47b9e3823e",
@@ -2377,7 +2389,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "hi": {
     "translate.working": "ae47b9e3823e",
@@ -2717,7 +2731,9 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   },
   "ja": {
     "translate.working": "ae47b9e3823e",
@@ -3057,6 +3073,8 @@
     "signin.member.link": "56a697470d2b",
     "signin.member.sub": "f98c9068245c",
     "signin.apply.title": "bb899c271d26",
-    "lang.menu.row": "c7206476b102"
+    "lang.menu.row": "c7206476b102",
+    "footer.link.lore": "63f4f597a5e1",
+    "chrome.nav.lore": "63f4f597a5e1"
   }
 }
