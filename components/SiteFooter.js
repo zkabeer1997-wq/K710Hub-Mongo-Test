@@ -25,6 +25,7 @@ const FOOTER_GROUPS = [
       { href: '/timeline', label: 'footer.link.timeline' },
       { href: '/gallery', label: 'footer.link.gallery' },
       { href: '/glossary', label: 'footer.link.glossary' },
+      { href: '/lore', label: 'footer.link.lore' },
     ],
   },
   {

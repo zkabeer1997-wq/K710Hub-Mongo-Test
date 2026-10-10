@@ -2,6 +2,7 @@
 // server dependency). The geometry lives in lib/squareCrop.mjs (coverCropRect) so it is unit tested.
 // cropToSquareFile (guide pictures) and cropToAspectFile (alliance photos) share one implementation.
 import { GUIDE_IMAGE_MIN_SIDE, coverCropRect } from '../../lib/squareCrop.mjs';
+import { fitWithin } from '../../lib/lore.mjs';
 
 export class CropError extends Error {}
 
@@ -58,4 +59,39 @@ export async function cropToSquareFile(blob, { size = 512, minSide = GUIDE_IMAGE
   });
   // Keep the historical file name (<name>-<size>.<ext>).
   return new File([file], file.name.replace(`-${size}x${size}.`, `-${size}.`), { type: file.type });
+}
+
+/**
+ * Lore photos: keep the original aspect ratio, shrink so the long side is at most `maxSide` (never enlarge),
+ * and encode WebP (JPEG where WebP is unavailable), stepping quality down to fit `maxBytes`.
+ * @param {Blob} blob
+ * @param {{maxSide?:number, minSide?:number, maxBytes?:number, name?:string}} options
+ * @returns {Promise<File>}
+ */
+export async function resizeToMaxFile(blob, { maxSide = 1400, minSide = 0, maxBytes = 0, name = 'picture' } = {}) {
+  let bitmap;
+  try { bitmap = await createImageBitmap(blob); }
+  catch { throw new CropError('This file could not be read as an image. Try a JPG, PNG or WebP.'); }
+  try {
+    if (Math.max(bitmap.width, bitmap.height) < minSide) {
+      throw new CropError(`This image is too small (${bitmap.width} x ${bitmap.height}). Use one that is at least ${minSide} pixels on its longer side.`);
+    }
+    const { width, height } = fitWithin(bitmap.width, bitmap.height, maxSide);
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    let out = await canvasToBlob(canvas, 'image/webp', 0.86);
+    if (!out || out.type !== 'image/webp') out = await canvasToBlob(canvas, 'image/jpeg', 0.88);
+    for (const q of [0.74, 0.62, 0.5]) {
+      if (!out || !maxBytes || out.size <= maxBytes) break;
+      out = await canvasToBlob(canvas, out.type, q);
+    }
+    if (!out) throw new CropError('The picture could not be prepared. Try a different image.');
+    if (maxBytes && out.size > maxBytes) throw new CropError('This picture is too detailed to shrink under 2 MB. Try a simpler image.');
+    const ext = out.type === 'image/webp' ? 'webp' : 'jpg';
+    const base = String(name).replace(/\.[^.]+$/, '').replace(/[^\w.-]+/g, '-').slice(0, 60) || 'picture';
+    return new File([out], `${base}-${width}x${height}.${ext}`, { type: out.type });
+  } finally { bitmap.close?.(); }
 }

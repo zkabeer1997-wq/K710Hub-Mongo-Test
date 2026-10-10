@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import AddImageButtons from './AddImageButtons';
-import { cropToAspectFile, cropToSquareFile, CropError } from './cropSquare';
+import { cropToAspectFile, cropToSquareFile, resizeToMaxFile, CropError } from './cropSquare';
 import styles from './ImageUploadField.module.css';
 
 /**
@@ -27,6 +27,8 @@ import styles from './ImageUploadField.module.css';
  *                  re-crop Drive picks after they are copied; the preview then shows the square crop
  *  - cropAspect   { width, height, minWidth, minHeight, maxBytes, tooSmall }: crop to a centred rectangle of that aspect and
  *                  resize to width x height in the browser (alliance photos, 16:9). Same flow as cropSquare, wide preview
+ *  - resizeMax    { maxSide, minSide, maxBytes }: keep the original aspect ratio and only shrink in the browser so the
+ *                  long side is at most maxSide (lore photos); the preview shows the whole photo
  *  - removeLabel  text of the remove button (default "Remove image")
  *  - showAlt      false hides the description box (decorative images)
  *  - hint          replaces the default help line under the buttons
@@ -51,14 +53,14 @@ function postForm(endpoint, form, onProgress) {
   });
 }
 
-export default function ImageUploadField({ onAltChange, folder, value = null, onChange, label = 'Image', altRequired = true, subfolder, deleteOnRemove = false, endpoint = '/api/admin-drive/images', maxMb = 8, disabled = false, cropSquare = 0, cropAspect = null, removeLabel = 'Remove image', hint = '', showAlt = true }) {
+export default function ImageUploadField({ onAltChange, folder, value = null, onChange, label = 'Image', altRequired = true, subfolder, deleteOnRemove = false, endpoint = '/api/admin-drive/images', maxMb = 8, disabled = false, cropSquare = 0, cropAspect = null, resizeMax = null, removeLabel = 'Remove image', hint = '', showAlt = true }) {
   const id = useId();
   const [alt, setAlt] = useState(value?.alt || '');
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
-  const crops = Boolean(cropSquare || cropAspect);
-  const prepare = (blob, name) => (cropAspect ? cropToAspectFile(blob, { ...cropAspect, name }) : cropToSquareFile(blob, { size: cropSquare, name }));
+  const crops = Boolean(cropSquare || cropAspect || resizeMax);
+  const prepare = (blob, name) => (resizeMax ? resizeToMaxFile(blob, { ...resizeMax, name }) : cropAspect ?cropToAspectFile(blob, { ...cropAspect, name }) : cropToSquareFile(blob, { size: cropSquare, name }));
 
   function needAlt() {
     if (altRequired && !alt.trim()) { setError('Describe the image first (for people using screen readers).'); return true; }
