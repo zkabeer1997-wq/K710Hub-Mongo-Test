@@ -7,6 +7,7 @@ import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { saveTroopsToProfile } from '../../../lib/troopProfile.server.js';
 import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
 import { loadDragonFallback, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
+import { loadLoginMystic } from '../../../lib/loginMystic.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
 
 const PUBLIC_PROJECT = {
@@ -42,9 +43,12 @@ export async function GET(request) {
     // earlier-cycle answer, offered as a pre-filled starting point.
     const { cycle, record, previous } = await loadMemberCycleRecord('dragon', session.memberId);
     const heroList = await getActiveHeroNames();
+    // The Mystic Trial value from the member's Kingshot sign-in (what the dashboard shows) wins over a typed one.
+    const loginMystic = await loadLoginMystic(session.memberId);
     const strip = (row) => {
       if (!row) return null;
       const out = publicFlamedragonRecord(Object.fromEntries(Object.entries(row).filter(([k]) => k in PUBLIC_PROJECT || k === 'event_cycle_label')));
+      if (loginMystic !== null) out.mystic_trial_score = String(loginMystic);
       // Heroes retired from the shared list are not offered again (the stored data is untouched).
       if (Array.isArray(out.heroes)) out.heroes = currentHeroesOnly(out.heroes, heroList);
       return out;
@@ -56,6 +60,7 @@ export async function GET(request) {
       const newer = fallback.troop_updated_at && new Date(fallback.troop_updated_at) > new Date(previous.updated_at || 0);
       fallback = newer ? { ...fallback, prefer_troops: true } : null;
     }
+    if (fallback && loginMystic !== null) fallback = { ...fallback, mystic_trial_score: String(loginMystic) };
     const identity = await getMemberIdentity(session);
     return NextResponse.json({ member_id: session.memberId, identity, record: strip(record), previous: strip(previous), cycle, fallback });
   } catch (error) {
@@ -117,6 +122,8 @@ export async function POST(request) {
       updated_at: new Date(),
     };
     const payload = buildMergeSafePayload(fullPayload, body, existing);
+    const loginMystic = await loadLoginMystic(record.member_id);
+    if (loginMystic !== null) payload.mystic_trial_score = String(loginMystic);
     const cycle = await getCurrentEventCycle('flamedragon').catch(() => null);
     await snapshotIfFromPastCycle('flamedragon', existing, cycle);
     if (cycle) {

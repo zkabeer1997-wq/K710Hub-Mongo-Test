@@ -107,7 +107,7 @@ test('Power Profile no longer writes troop levels or heroes and keeps the old on
   const res = await profileRoute.POST(req({ body: { name: 'Ann', member_id: 'm1', pet_power: '2M', infantry_tier: 'T11', heroes: ['Thrud'] } }));
   assert.equal(res.status, 200);
   const stored = state.tables[T.POWER_PROFILES][0];
-  assert.equal(stored.pet_power, '2M');
+  assert.equal(stored.pet_power, '2000000', 'typed 2M is stored as plain digits');
   assert.equal(stored.infantry_tier, 'T10', 'old value kept, new one ignored');
   assert.deepEqual(stored.heroes, ['Zoe']);
 });
