@@ -240,3 +240,12 @@ backpack_inventory scanners are not started.
 - "Use these values" on the review screen now saves straight into the member's power profile (`POST /api/power-profile/loadout`, same
   sign-in and form-gate rules as the profile; only `governor_gear` and `charms` are written) and keeps the corrections per member in
   `scan_corrections` (read value vs chosen value; never the image). Tools and calculators start from the saved profile (see the tools notes in the changelog of this change).
+
+## Update 6: backpack_inventory scanner (engine 0.3.0)
+
+`runScan('backpack_inventory', pixels)` reads Backpack > Resources (TG, TTG, TG Dust by icon) and Backpack > Speedups (category x
+denomination x quantity), finding the tile grid in the image itself, with a digit template reader (per-digit confidence, comma-grouping
+check). It is built into the KvK Prep & Appointments form and the Noble Advisor form (components/scan/BackpackScan.jsx), saves a small
+snapshot (`backpack_scan`, `backpack_sources`) and corrections (`scan_corrections`, kind `backpack_inventory`), and never changes ranking.
+Owner rules: scan fills what the member owns; research days include general speedups, troop days do not; green plus = healing, ignored.
+Details, accuracy and how to add fixtures: docs/backpack-scan.md.

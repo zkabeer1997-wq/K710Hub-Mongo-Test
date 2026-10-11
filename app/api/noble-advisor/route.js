@@ -3,6 +3,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { validateNobleAdvisor, normalizeNobleSlots } from '../../../lib/nobleAdvisor.mjs';
+import { sanitizeScanCorrections } from '../../../lib/backpackScan.server.mjs';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
@@ -30,6 +31,20 @@ export async function GET(request) {
     );
   } catch {
     return NextResponse.json({ error: 'Unable to load your booking.' }, { status: 500, headers });
+  }
+}
+
+// What the reader said vs what the member chose, kept per member like the Governor Gear scanner does. Best effort:
+// a failure here never blocks the booking. The scan image is never sent.
+async function saveScanCorrections(memberId, snapshot, raw) {
+  const corrections = sanitizeScanCorrections(raw);
+  if (!snapshot || !corrections.length) return;
+  try {
+    const coll = await getCollection(COLLECTIONS.SCAN_CORRECTIONS);
+    const now = new Date();
+    await coll.insertMany(corrections.map((c) => ({ ...c, member_id: memberId, kind: 'backpack_inventory', engine_version: snapshot.engine_version || '', created_at: now })));
+  } catch (error) {
+    console.error('noble-advisor scan corrections failed', error);
   }
 }
 
@@ -73,6 +88,7 @@ export async function POST(request) {
       },
       { upsert: true }
     );
+    await saveScanCorrections(session.memberId, record.backpack_scan, typed.scan_corrections);
     return NextResponse.json({ ok: true, cycle: { id: cycle.id, label: cycle.label } }, { headers });
   } catch {
     return NextResponse.json({ error: 'Unable to save your booking.' }, { status: 500, headers });

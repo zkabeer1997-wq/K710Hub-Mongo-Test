@@ -14,6 +14,7 @@ import { searchRow } from '../../../../lib/adminTable.mjs';
 import { SLOT_OPTIONS, slotRange, findScheduleType, typeTitle } from '../../../../lib/kvkAppointments.mjs';
 import { scheduleAsText, scheduleSheets } from '../../../../lib/kvkScheduleBridge.mjs';
 import { buildXlsx } from '../prep-ministers/xlsx.mjs';
+import ScanMark from '../../../../components/admin/ScanMark';
 
 // ONE guided flow for KvK appointments: Review answers -> Build schedule -> Adjust -> Publish -> Share.
 // Source of truth: the "KvK Prep & Appointments" answers (ranking inputs + 30-minute availability).
@@ -235,9 +236,9 @@ export default function AppointmentsFlow({ onChanged = null }) {
                         {visibleRows.map((r) => (
                           <tr key={r.member_id}>
                             <td><strong>{r.in_game_name || '-'}</strong> <small>{r.member_id}</small></td>
-                            <td>{detail(r, 1)}</td>
-                            <td>{detail(r, 2)}</td>
-                            <td>{detail(r, 4)}</td>
+                            <td>{detail(r, 1)}<ScanMark row={r} fields={['ttg_used', 'tg_used']} /></td>
+                            <td>{detail(r, 2)}<ScanMark row={r} fields={['research_speedup_days', 'tg_dust']} /></td>
+                            <td>{detail(r, 4)}<ScanMark row={r} fields={['troop_speedup_days']} /></td>
                             <td>{[r.avail_day1, r.avail_day2, r.avail_day4, r.avail_day5].map((a) => list(a).length).join(' / ')}</td>
                             <td>{DAYS.map((d) => asgFor(assignments, d.day, r.member_id)).filter(Boolean).map((a) => `D${a.day} ${a.slot}`).join(', ') || '-'}</td>
                           </tr>

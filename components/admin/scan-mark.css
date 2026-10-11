@@ -1,0 +1,8 @@
+/* Minimal admin marker for backpack-scanned numbers. No redesign: a small tag, an amber hint, a tiny details toggle. */
+.admin-scan-mark { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 2px; font-size: 12px; line-height: 1.3; }
+.admin-scan-tag { padding: 0 6px; border: 1px solid var(--brass-bright, #d9b878); border-radius: 4px; color: var(--brass-bright, #d9b878); font-weight: 700; cursor: help; }
+.admin-scan-diff { color: #ffcf7a; font-weight: 600; }
+.admin-scan-diff::before { content: "\26A0\FE0E  "; }
+.admin-scan-details { flex: 1 1 100%; }
+.admin-scan-details summary { cursor: pointer; color: var(--text-muted, #a3aabf); }
+.admin-scan-details span { display: block; margin-top: 2px; color: var(--text-muted, #a3aabf); overflow-wrap: anywhere; }

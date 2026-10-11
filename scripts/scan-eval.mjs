@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { FixtureLabels } from '../lib/scan/schemas.mjs';
 import { KINDS } from '../lib/scan/kinds/index.mjs';
 import { runScan, ENGINE_VERSION } from '../lib/scan/engine.mjs';
+import { evalBackpackInventory } from './lib/backpackEval.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const fixturesRoot = join(root, 'tests', 'fixtures', 'scan');
@@ -50,7 +51,9 @@ async function loadPixels(file) {
 
 async function main() {
   const sets = discover();
-  if (sets.length === 0) {
+  const backpackDir = join(fixturesRoot, 'backpack-inventory');
+  const hasBackpack = existsSync(join(backpackDir, 'labels.json'));
+  if (sets.length === 0 && !hasBackpack) {
     console.log(NONE);
     return 0;
   }
@@ -83,13 +86,14 @@ async function main() {
       }
     }
   }
-  if (perField.size > 0) {
+  if (sets.length === 0) { /* only backpack fixtures */ } else if (perField.size > 0) {
     for (const [field, s] of perField) console.log(`  ${field}: ${((100 * s.ok) / s.n).toFixed(1)}% (${s.ok}/${s.n})`);
     console.log(`overall: ${((100 * correct) / total).toFixed(1)}% (${correct}/${total})`);
   } else {
     console.log(`No accuracy to report (${notImplemented} fixture(s) skipped: engine not implemented).`);
   }
   if (failures.length > 0) { console.log('failures:'); for (const f of failures) console.log(`  ${f}`); }
+  if (hasBackpack) await evalBackpackInventory(backpackDir, loadPixels);
   return invalid > 0 ? 1 : 0;
 }
 

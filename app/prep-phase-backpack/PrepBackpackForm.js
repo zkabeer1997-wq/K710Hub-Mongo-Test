@@ -11,11 +11,17 @@ import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
 import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 import IdentityFields from '../../components/member/IdentityFields';
 import TourLauncher from '../../components/tour/TourLauncher';
+import BackpackScan from '../../components/scan/BackpackScan';
+import ScanFieldNote from '../../components/scan/ScanFieldNote';
+import { formatDays, scannedValueFor } from '../../lib/backpackScan.mjs';
 
 const CONSTRUCTION_UPGRADES = ['TG5', 'TG6', 'TG7', 'TG8'];
 const T11_TROOPS = ['T11 Infantry', 'T11 Cavalry', 'T11 Archers'];
 const ONE_PER_DAY = 'Pick every half hour you can be online. Leadership gives each person at most one time per day.';
 const TIME_HELPER = 'Pick every half hour you can be online (times are UTC; your local time is shown).';
+
+// Form box -> saved field, for the five boxes the backpack scan can fill.
+const SCAN_BOXES = { ttgUsed: 'ttg_used', tgUsed: 'tg_used', tgDust: 'tg_dust', researchSpeedupDays: 'research_speedup_days', troopSpeedupDays: 'troop_speedup_days' };
 
 const initialForm = {
   inGameName: '',
@@ -70,6 +76,8 @@ export default function PrepBackpackForm({ identity }) {
   const [serverError, setServerError] = useState('');
   const [saved, setSaved] = useState(null);
   const savedRef = useRef(null);
+  // Backpack scan: the saved snapshot, where each box came from ('scan' | 'typed'), and corrections made in the review.
+  const [scan, setScan] = useState({ snapshot: null, sources: {}, corrections: [] });
   const formRef = useRef(null);
 
   // Start from this cycle's saved booking; if there is none yet, start from last cycle's answers
@@ -102,6 +110,11 @@ export default function PrepBackpackForm({ identity }) {
           promotingT11: r.promoting_t11 || '',
           notes: r.notes || '',
         });
+        if (r.backpack_scan && typeof r.backpack_scan === 'object') {
+          const sources = {};
+          for (const [boxKey, apiKey] of Object.entries(SCAN_BOXES)) if (r.backpack_sources?.[apiKey]) sources[boxKey] = r.backpack_sources[apiKey];
+          setScan({ snapshot: r.backpack_scan, sources, corrections: [] });
+        }
         setAvail({ availDay1: r.avail_day1 || [], availDay2: r.avail_day2 || [], availDay4: r.avail_day4 || [], availDay5: r.avail_day5 || [] });
         if ((r.avail_day5 || []).length) setOverflow('Yes');
         else if (data?.record) setOverflow('No');
@@ -113,6 +126,7 @@ export default function PrepBackpackForm({ identity }) {
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (SCAN_BOXES[key]) setScan((prev) => (prev.sources[key] === 'scan' ? { ...prev, sources: { ...prev.sources, [key]: 'typed' } } : prev));
     setErrors((prev) => (prev[key] || prev.name ? { ...prev, [key]: undefined, name: key === 'inGameName' ? undefined : prev.name } : prev));
   }
   function toggleCheckbox(key, value) {
@@ -127,6 +141,23 @@ export default function PrepBackpackForm({ identity }) {
       setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
     };
   }
+  function applyScan({ fill, snapshot, corrections }) {
+    setForm((prev) => ({ ...prev, ...fill }));
+    setScan((prev) => {
+      const sources = { ...prev.sources };
+      for (const boxKey of Object.keys(SCAN_BOXES)) {
+        if (boxKey in fill) sources[boxKey] = 'scan';
+        else if (String(form[boxKey] || '').trim() && sources[boxKey] !== 'scan') sources[boxKey] = 'typed';
+      }
+      return { snapshot, sources, corrections: [...prev.corrections, ...corrections].slice(0, 80) };
+    });
+  }
+  const scanNote = (boxKey) => {
+    const source = scan.sources[boxKey];
+    const scanned = scannedValueFor(SCAN_BOXES[boxKey], scan.snapshot);
+    const text = scanned === null || scanned === undefined ? '' : (boxKey.endsWith('Days') ? formatDays(scanned) : String(scanned));
+    return <ScanFieldNote source={source} at={scan.snapshot?.scanned_at} scanned={text} />;
+  };
   const setAllSlots = (key) => () => setAvail((prev) => ({ ...prev, [key]: [...NOBLE_TIME_SLOTS] }));
   const clearSlots = (key) => () => setAvail((prev) => ({ ...prev, [key]: [] }));
 
@@ -177,6 +208,11 @@ export default function PrepBackpackForm({ identity }) {
       avail_day5: times(STEPS[3]),
       notes: form.notes,
     };
+    if (scan.snapshot) {
+      payload.backpack_scan = scan.snapshot;
+      payload.backpack_sources = Object.fromEntries(Object.entries(scan.sources).map(([boxKey, source]) => [SCAN_BOXES[boxKey], source]));
+      if (scan.corrections.length) payload.scan_corrections = scan.corrections;
+    }
     try {
       const response = await fetch('/api/prep-backpack', {
         method: 'POST',
@@ -188,6 +224,7 @@ export default function PrepBackpackForm({ identity }) {
         setServerError(result.error || 'Something went wrong. Please try again.');
         return;
       }
+      setScan((prev) => (prev.corrections.length ? { ...prev, corrections: [] } : prev));
       setSaved({ label: result.cycle?.label || '' });
       refreshMemberFormStatus();
       requestAnimationFrame(() => { savedRef.current?.scrollIntoView({ block: 'center', behavior: 'auto' }); savedRef.current?.focus(); });
@@ -228,6 +265,19 @@ export default function PrepBackpackForm({ identity }) {
         {errors.name ? <p className="prep-err" id="prep-name-err">{errors.name}</p> : null}
       </section>
 
+      <section className="prep2-block" aria-label="Backpack scan">
+        <BackpackScan
+          targets={[
+            { key: 'ttgUsed', source: 'ttg', label: 'How much TTG do you own?', current: form.ttgUsed },
+            { key: 'tgUsed', source: 'tg', label: 'How much TG do you own?', current: form.tgUsed },
+            { key: 'tgDust', source: 'tg_dust', label: 'How much TG Dust do you own?', current: form.tgDust },
+            { key: 'researchSpeedupDays', source: 'research_days', label: 'How many days of research speedups do you own? (include general speedups)', current: form.researchSpeedupDays },
+            { key: 'troopSpeedupDays', source: 'troop_days', label: 'How many days of troop speedups do you own?', current: form.troopSpeedupDays },
+          ]}
+          onApply={applyScan}
+        />
+      </section>
+
       {STEPS.map((step, index) => {
         const a = answer(step);
         const wantId = `prep-${step.id}`;
@@ -262,8 +312,8 @@ export default function PrepBackpackForm({ identity }) {
                         </label>
                       ))}
                     </div>
-                    <label className="prep2-field">How much TTG will you use?<input value={form.ttgUsed} inputMode="decimal" onChange={(e) => updateField('ttgUsed', e.target.value)} /></label>
-                    <label className="prep2-field">How much TG will you use?<input value={form.tgUsed} inputMode="decimal" onChange={(e) => updateField('tgUsed', e.target.value)} /></label>
+                    <label className="prep2-field">How much TTG do you own?<input value={form.ttgUsed} inputMode="decimal" onChange={(e) => updateField('ttgUsed', e.target.value)} />{scanNote('ttgUsed')}</label>
+                    <label className="prep2-field">How much TG do you own?<input value={form.tgUsed} inputMode="decimal" onChange={(e) => updateField('tgUsed', e.target.value)} />{scanNote('tgUsed')}</label>
                   </>
                 ) : null}
                 {step.id === 'day2' ? (
@@ -277,8 +327,8 @@ export default function PrepBackpackForm({ identity }) {
                         </label>
                       ))}
                     </div>
-                    <label className="prep2-field">How much TG Dust will you use?<input value={form.tgDust} inputMode="decimal" onChange={(e) => updateField('tgDust', e.target.value)} /></label>
-                    <label className="prep2-field">How many days of speedups will you use? (include general speedups)<input value={form.researchSpeedupDays} inputMode="decimal" onChange={(e) => updateField('researchSpeedupDays', e.target.value)} /></label>
+                    <label className="prep2-field">How much TG Dust do you own?<input value={form.tgDust} inputMode="decimal" onChange={(e) => updateField('tgDust', e.target.value)} />{scanNote('tgDust')}</label>
+                    <label className="prep2-field">How many days of research speedups do you own? (include general speedups)<input value={form.researchSpeedupDays} inputMode="decimal" onChange={(e) => updateField('researchSpeedupDays', e.target.value)} />{scanNote('researchSpeedupDays')}</label>
                   </>
                 ) : null}
                 {step.id === 'day4' ? (
@@ -290,7 +340,7 @@ export default function PrepBackpackForm({ identity }) {
                         <option value="No">No</option>
                       </select>
                     </label>
-                    <label className="prep2-field">How many days of speedups will you use? (600+ days gets more times)<input value={form.troopSpeedupDays} inputMode="decimal" onChange={(e) => updateField('troopSpeedupDays', e.target.value)} /></label>
+                    <label className="prep2-field">How many days of troop speedups do you own? (600+ days gets more times)<input value={form.troopSpeedupDays} inputMode="decimal" onChange={(e) => updateField('troopSpeedupDays', e.target.value)} />{scanNote('troopSpeedupDays')}</label>
                     <label className="prep2-field">Are you promoting to T11 troops?
                       <select value={form.promotingT11} onChange={(e) => updateField('promotingT11', e.target.value)}>
                         <option value="">Select</option>
