@@ -1389,3 +1389,4 @@
    PR 3's button/input bugs were - the fix is the same shape: an override
    scoped to where the ground actually differs from what the component
    assumed, using --hero-ink instead of --color-ink. */
+.wizard-review-note { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-dim); }
