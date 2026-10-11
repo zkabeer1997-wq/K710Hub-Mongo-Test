@@ -10,6 +10,7 @@ import { searchRow, compareValues, numericValue } from '../../../../lib/adminTab
 import { TIME_SLOTS, NOBLE_TIME_SLOTS } from '../../../../lib/nobleAdvisor.mjs';
 import { schedule, OPEN_SPOT } from '../prepScheduler.mjs';
 import { buildXlsx } from './xlsx.mjs';
+import ScanMark from '../../../../components/admin/ScanMark';
 
 const ALL_COLUMNS = [
   { key: 'in_game_name', label: 'In-game name' },
@@ -33,6 +34,7 @@ const ALL_COLUMNS = [
   { key: 'created_at', label: 'Submitted' },
 ];
 
+const SCAN_COLUMNS = ['ttg_used', 'tg_used', 'tg_dust', 'research_speedup_days', 'troop_speedup_days'];
 const SEARCH_KEYS = ['in_game_name', 'member_id'];
 
 function cellValue(row, key) {
@@ -245,7 +247,7 @@ export default function PrepMinistersTable({ noble = false, hideSchedule = false
               <thead><tr>{COLUMNS.map((col) => (<th key={col.key} aria-sort={sortKey===col.key ? (sortDir==='asc'?'ascending':'descending') : 'none'}><button type="button" className="admin-sort-btn" onClick={()=>{setSortKey(col.key);setSortDir(sortKey===col.key && sortDir==='asc'?'desc':'asc');}}>{col.label}{sortKey===col.key ? (sortDir==='asc'?' ↑':' ↓') : ''}</button></th>))}</tr></thead>
               <tbody>
                 {visibleRows.map((row) => (
-                  <tr key={row.id}>{COLUMNS.map((col) => (<td key={col.key}>{col.key === 'created_at' ? cellValue(row, col.key) : (<input className="admin-cell-input" value={cellValue(row, col.key)} onChange={(e) => updateCell(row.id, col.key, e.target.value)} />)}</td>))}</tr>
+                  <tr key={row.id}>{COLUMNS.map((col) => (<td key={col.key}>{col.key === 'created_at' ? cellValue(row, col.key) : (<><input className="admin-cell-input" value={cellValue(row, col.key)} onChange={(e) => updateCell(row.id, col.key, e.target.value)} />{SCAN_COLUMNS.includes(col.key) ? <ScanMark row={row} fields={[col.key]} /> : null}</>)}</td>))}</tr>
                 ))}
               </tbody>
             </Table>

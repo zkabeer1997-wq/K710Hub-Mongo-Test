@@ -61,7 +61,8 @@ export function SlotPicker({ label, sublabel, selected, onToggle, slots = TIME_S
 
 
 // slots / showLocal: Noble Advisor passes NOBLE_TIME_SLOTS + showLocal; KvK Prep Backpack passes nothing.
-export default function NobleAdvisorFields({ form, updateField, availDay4, onToggle, slots = TIME_SLOTS, showLocal = false }) {
+// speedupNote / speedupExtra (optional): a small note under the troop days box and a block right below it (the backpack scan card).
+export default function NobleAdvisorFields({ form, updateField, availDay4, onToggle, slots = TIME_SLOTS, showLocal = false, speedupNote = null, speedupExtra = null }) {
  return (
       <section className="form-block">
         <span className="minister-day-badge">Day 4</span>
@@ -81,7 +82,8 @@ export default function NobleAdvisorFields({ form, updateField, availDay4, onTog
             <option value="No">No</option>
           </select>
         </label>
-        <label>How many days of speedups will you use? (600+ days gets more slots)<input value={form.troopSpeedupDays} onChange={(e) => updateField('troopSpeedupDays', e.target.value)} /></label>
+        <label>How many days of troop speedups do you own? (600+ days gets more slots)<input value={form.troopSpeedupDays} onChange={(e) => updateField('troopSpeedupDays', e.target.value)} />{speedupNote}</label>
+        {speedupExtra}
         <label>Promoting to T11 troops?
           <select value={form.promotingT11} onChange={(e) => updateField('promotingT11', e.target.value)}>
             <option value="">Select</option>
