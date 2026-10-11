@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PACKS as DEFAULT_PACKS, SHOP_ITEMS as DEFAULT_ITEMS, VALUE_REFERENCE, VALUE_TIERS, optimizeEssencePacks } from '../../lib/flamedragonShop.mjs';
 
 const EMPTY_CART = Object.fromEntries(DEFAULT_ITEMS.map((item) => [item.key, 0]));
-const DEFAULT_LIMITS = Object.fromEntries(DEFAULT_PACKS.map((pack) => [pack.key, pack.defaultMax]));
+const limitsFor = (packs) => Object.fromEntries(packs.map((pack) => [pack.key, pack.defaultMax]));
 
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, Math.floor(Number(value) || 0)));
@@ -21,6 +21,8 @@ function money(cents) {
 export default function FlamedragonShopOptimizer({ configuration }) {
   const PACKS = configuration?.packs || DEFAULT_PACKS;
   const SHOP_ITEMS = configuration?.items || DEFAULT_ITEMS;
+  // Defaults come from the active pack list so admin-added packs get a limit too.
+  const DEFAULT_LIMITS = useMemo(() => limitsFor(PACKS), [PACKS]);
   const [cart, setCart] = useState(EMPTY_CART);
   const [ownedEssence, setOwnedEssence] = useState(0);
   const [daysRemaining, setDaysRemaining] = useState(1);
@@ -57,7 +59,7 @@ export default function FlamedragonShopOptimizer({ configuration }) {
     }
     load();
     return () => { cancelled = true; if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, []);
+  }, [DEFAULT_LIMITS]);
 
   useEffect(() => {
     if (!hydrated) return undefined;

@@ -1,0 +1,25 @@
+/* Shared bits for the Packs/Tools add/edit panels (Console: compact, no ornament). */
+.panel { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line, #2a2f38); }
+.subhead { margin: 14px 0 8px; font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: 0; text-transform: none; }
+.count { margin-left: 8px; font-weight: 400; color: var(--text-dim); font-size: 12px; }
+.listHead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 12px; }
+.formWrap { margin: 0 0 16px; padding: 12px 14px 0; border: 1px solid var(--line, #2a2f38); border-radius: 8px; background: color-mix(in srgb, #10141b 70%, transparent); }
+.formWrap > .subhead:first-child { margin-top: 0; }
+.formGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 16px; margin: 0 0 8px; }
+.columnList { list-style: none; margin: 0 0 8px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px 12px; }
+.columnList li { display: flex; gap: 6px; align-items: center; }
+.columnList input { flex: 1 1 auto; }
+.columnList button { min-height: 36px; padding: 4px 10px; font-size: 12.5px; }
+.rowTools { display: inline-flex; flex-wrap: nowrap; gap: 4px; }
+.orderCell { min-width: 210px; white-space: nowrap; }
+.rowTools > button { min-height: 32px; padding: 4px 10px; font-size: 12.5px; }
+.dangerQuiet { color: var(--danger); }
+.dangerQuiet:hover:not(:disabled) { border-color: var(--danger); }
+@media (max-width: 640px) {
+  .formGrid { grid-template-columns: 1fr; }
+  .columnList { grid-template-columns: 1fr; }
+  .rowTools { flex-wrap: wrap; width: 100%; }
+  .orderCell { min-width: 0; white-space: normal; }
+  .rowTools > button { min-height: 44px; flex: 1 1 auto; }
+  .listHead > button { min-height: 44px; flex: 1 1 100%; }
+}

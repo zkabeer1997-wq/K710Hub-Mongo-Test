@@ -6,7 +6,7 @@ import { Button, Field, Input, Select } from '../ui';
 import ConfirmDialog from './ConfirmDialog';
 import styles from './ToolDataEditor.module.css';
 
-// Shared editor behind Admin > Tools > Pack editing (kind="pack") and Tool database
+// Shared editor behind Admin > Packs/Tools > Pack editing (kind="pack") and Tool database
 // (kind="calc"). It only ever loads and saves the values of its own kind, so a pack page
 // can never overwrite calculator data and vice versa (the API enforces the same rule).
 
@@ -55,6 +55,8 @@ export default function ToolDataEditor({ kind, intro, otherHref, otherLabel, ext
   const [query, setQuery] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  // Extra views (editable reference tables, databases) report their own unsaved state here.
+  const [extraDirty, setExtraDirty] = useState(false);
 
   useEffect(() => {
     fetch(`/api/admin-tool-settings?kind=${kind}`, { cache: 'no-store' })
@@ -87,6 +89,7 @@ export default function ToolDataEditor({ kind, intro, otherHref, otherLabel, ext
     setSelected(key);
     setValues(tools.find((t) => t.key === key)?.quantities || {});
     setDirty(false);
+    setExtraDirty(false);
     setStatus({ text: '', tone: '' });
     setQuery('');
   }
@@ -132,7 +135,7 @@ export default function ToolDataEditor({ kind, intro, otherHref, otherLabel, ext
       <p className={styles.note}>{intro} <Link href={otherHref}>{otherLabel}</Link></p>
       <div className={styles.toolbar}>
         <Field label="Tool" htmlFor={`tool-${kind}-tool`}>
-          <Select id={`tool-${kind}-tool`} tone="console" value={selected} disabled={saving || dirty} onChange={(e) => choose(e.target.value)}>
+          <Select id={`tool-${kind}-tool`} tone="console" value={selected} disabled={saving || dirty || extraDirty} onChange={(e) => choose(e.target.value)}>
             {tools.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
             {extraViews.map((v) => <option key={v.key} value={v.key}>{v.label}</option>)}
           </Select>
@@ -145,10 +148,10 @@ export default function ToolDataEditor({ kind, intro, otherHref, otherLabel, ext
       </div>
       <div aria-live="polite">
         {status.text && <p className={styles.status} data-tone={status.tone} role="status">{status.text}</p>}
-        {dirty && !status.text && <p className={styles.status} data-tone="info">Unsaved changes. Save or discard them before changing tools.</p>}
+        {(dirty || extraDirty) && !status.text && <p className={styles.status} data-tone="info">Unsaved changes. Save or discard them before changing tools.</p>}
       </div>
 
-      {extra ? extra.render(styles) : null}
+      {extra ? extra.render(styles, { setDirty: setExtraDirty }) : null}
 
       {!extra && tool && (
         <>
