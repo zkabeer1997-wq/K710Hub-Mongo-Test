@@ -38,9 +38,9 @@
           { "denomination": "1m", "category": "research", "quantity": 145 },
           { "denomination": "5m", "category": "research", "quantity": 94 },
           { "denomination": "1h", "category": "research", "quantity": 20 },
-          { "denomination": "1m", "category": "other", "quantity": 549 },
-          { "denomination": "5m", "category": "other", "quantity": 2282 },
-          { "denomination": "1h", "category": "other", "quantity": 13 }
+          { "denomination": "1m", "category": "healing", "quantity": 549 },
+          { "denomination": "5m", "category": "healing", "quantity": 2282 },
+          { "denomination": "1h", "category": "healing", "quantity": 13 }
         ]
       }
     }

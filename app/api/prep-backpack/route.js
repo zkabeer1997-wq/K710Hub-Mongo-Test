@@ -6,6 +6,8 @@ import { readMemberSession } from '../../../lib/memberAuth';
 import { loadMemberBase, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
 import { normalizePrepRowSlots, validatePrepSlots, PREP_SLOT_KEYS } from '../../../lib/nobleAdvisor.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord } from '../../../lib/eventCycles.server.js';
+import { sanitizeBackpackScan, sanitizeFieldSources, PREP_SCAN_FIELDS } from '../../../lib/backpackScan.mjs';
+import { sanitizeScanCorrections } from '../../../lib/backpackScan.server.mjs';
 
 export const dynamic = 'force-dynamic';
 const HEADERS = { 'Cache-Control': 'private, no-store' };
@@ -78,6 +80,15 @@ export async function POST(request) {
       payload[key] = checked.slots;
     }
 
+    // A backpack scan snapshot rides along when the member filled numbers from a screenshot (the image is never sent).
+    // Ranking never reads it: the scheduler keeps using the typed/filled fields above.
+    if (Object.hasOwn(data, 'backpack_scan')) {
+      const scan = sanitizeBackpackScan(data.backpack_scan);
+      if (scan.error) return NextResponse.json({ error: scan.error }, { status: 400 });
+      payload.backpack_scan = scan.snapshot;
+      payload.backpack_sources = scan.snapshot ? sanitizeFieldSources(data.backpack_sources, PREP_SCAN_FIELDS) : {};
+    }
+
     if (!payload.member_id || !payload.in_game_name) {
       return NextResponse.json({ error: 'Missing Member ID or in-game name.' }, { status: 400 });
     }
@@ -94,6 +105,16 @@ export async function POST(request) {
       { $set: payload, $setOnInsert: { created_at: new Date() } },
       { upsert: true }
     );
+    const corrections = payload.backpack_scan ? sanitizeScanCorrections(data.scan_corrections) : [];
+    if (corrections.length) {
+      try {
+        const log = await getCollection(COLLECTIONS.SCAN_CORRECTIONS);
+        const now = new Date();
+        await log.insertMany(corrections.map((c) => ({ ...c, member_id: payload.member_id, kind: 'backpack_inventory', engine_version: payload.backpack_scan.engine_version || '', created_at: now })));
+      } catch (error) {
+        console.error('prep-backpack scan corrections failed', error); // best effort: never blocks the booking
+      }
+    }
     return NextResponse.json({ ok: true, cycle: { id: cycle.id, label: cycle.label } });
   } catch (error) {
     console.error('prep-backpack' + ' failed', error);
