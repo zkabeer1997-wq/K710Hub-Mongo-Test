@@ -11,8 +11,8 @@ import {
 
 const base = { name: 'Ann', member_id: 'm1' };
 
-test('Pet / Masters Power accept the same formats as the transfer form and store plain digits', () => {
-  for (const [typed, digits] of [['1500000', '1500000'], ['1,500,000', '1500000'], ['1.5M', '1500000'], ['1,5 m', '1500000'], ['450k', '450000'], ['0', '0']]) {
+test('Pet / Masters Power accept whole numbers (commas allowed) up to 100 million and store plain digits', () => {
+  for (const [typed, digits] of [['1500000', '1500000'], ['1,500,000', '1500000'], ['0', '0'], ['100,000,000', '100000000']]) {
     const checked = checkPowerNumber('pet_power', typed);
     assert.equal(checked.ok, true, typed);
     assert.equal(checked.digits, digits, typed);
@@ -21,26 +21,26 @@ test('Pet / Masters Power accept the same formats as the transfer form and store
 });
 
 test('Pet / Masters Power reject text, negatives, decimals without a suffix and absurd sizes with a clear message', () => {
-  for (const typed of ['lots', '-5', '12.5', '1e9', '12abc']) {
+  for (const typed of ['lots', '-5', '12.5', '1e9', '12abc', '1.5M', '450k', '2m']) {
     const checked = checkPowerNumber('pet_power', typed);
     assert.equal(checked.ok, false, typed);
     assert.match(checked.error, /^Pet Power: /, typed);
   }
-  const big = checkPowerNumber('masters_power', '2,000,000,000');
+  const big = checkPowerNumber('masters_power', '100,000,001');
   assert.equal(big.ok, false);
-  assert.match(big.error, /Masters Power cannot be more than 1,000,000,000/);
-  assert.equal(checkPowerNumber('masters_power', '1,000,000,000').ok, true);
+  assert.match(big.error, /Masters Power cannot be more than 100,000,000/);
+  assert.equal(checkPowerNumber('masters_power', '100,000,000').ok, true);
   assert.equal(checkPowerNumber('pet_power', '9'.repeat(30)).ok, false);
 });
 
 test('powerNumberErrors lists every bad box by key', () => {
-  assert.deepEqual(powerNumberErrors({ pet_power: '1.5M', masters_power: '' }), []);
+  assert.deepEqual(powerNumberErrors({ pet_power: '1,500,000', masters_power: '' }), []);
   const found = powerNumberErrors({ pet_power: 'abc', masters_power: 'x5b' });
   assert.deepEqual(found.map((e) => e.key), ['pet_power', 'masters_power']);
 });
 
 test('sanitizePowerProfileInput normalizes the numbers, names the bad field and ignores a typed Mystic Trial', () => {
-  const ok = sanitizePowerProfileInput({ ...base, pet_power: '1.5M', masters_power: ' 2,000,000 ', mystic_trial_score: '99999' });
+  const ok = sanitizePowerProfileInput({ ...base, pet_power: '1,500,000', masters_power: ' 2,000,000 ', mystic_trial_score: '99999' });
   assert.equal(ok.pet_power, '1500000');
   assert.equal(ok.masters_power, '2000000');
   assert.equal(ok.mystic_trial_score, '', 'the member never types Mystic Trial');
@@ -50,7 +50,7 @@ test('sanitizePowerProfileInput normalizes the numbers, names the bad field and 
 
 test('displayPowerNumber adds separators to valid numbers and leaves other text for the member to fix', () => {
   assert.equal(displayPowerNumber('1500000'), '1,500,000');
-  assert.equal(displayPowerNumber('1.5M'), '1,500,000');
+  assert.equal(displayPowerNumber('1.5M'), '1.5M', 'letters are left for the member to fix');
   assert.equal(displayPowerNumber(''), '');
   assert.equal(displayPowerNumber(null), '');
   assert.equal(displayPowerNumber('about two million'), 'about two million');

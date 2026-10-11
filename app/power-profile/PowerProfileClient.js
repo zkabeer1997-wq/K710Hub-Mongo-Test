@@ -446,9 +446,9 @@ function PowerProfileForm({ identity, intro }) {
                   <input
                     {...fieldProps('pet_power')}
                     type="text"
-                    inputMode="decimal"
+                    inputMode="numeric"
                     autoComplete="off"
-                    maxLength={16}
+                    maxLength={11}
                     placeholder={t('profile.number.placeholder')}
                     value={form.pet_power}
                     onChange={(e) => updateField('pet_power', e.target.value)}
@@ -465,9 +465,9 @@ function PowerProfileForm({ identity, intro }) {
                   <input
                     {...fieldProps('masters_power')}
                     type="text"
-                    inputMode="decimal"
+                    inputMode="numeric"
                     autoComplete="off"
-                    maxLength={16}
+                    maxLength={11}
                     placeholder={t('profile.number.placeholder')}
                     value={form.masters_power}
                     onChange={(e) => updateField('masters_power', e.target.value)}

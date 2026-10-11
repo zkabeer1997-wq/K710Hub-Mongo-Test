@@ -36,7 +36,7 @@ const reset = ({ login, saved } = {}) => {
   state.tables[COLLECTIONS.POWER_PROFILES] = saved === undefined ? [] : [{ member_id: 'm1', name: 'Ann', mystic_trial_score: saved, updated_at: new Date('2026-01-01') }];
   state.tables[COLLECTIONS.KINGSHOT_USERS] = login === undefined ? [] : [{ player_id: 'm1', kingdom_id: 710, mystic_trial: login }];
 };
-const BODY = { name: 'Ann', pet_power: '1.5M', masters_power: '2,250,000' };
+const BODY = { name: 'Ann', pet_power: '1,500,000', masters_power: '2,250,000' };
 
 test('POST saves Pet / Masters Power as plain digits', async () => {
   reset();
