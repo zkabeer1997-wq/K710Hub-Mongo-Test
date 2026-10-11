@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "kind": "backpack_inventory",
+  "note": "Read by eye from the two owner screenshots (1284x2778). 'quantities' lists every full tile in reading order (4 columns); null = not labelled. 'shield' = a translucent shield icon sits behind the digits.",
+  "images": {
+    "resources.png": {
+      "device": "phone 1284x2778",
+      "tab": "resources",
+      "backpack": {
+        "tg": 8018,
+        "ttg": 280,
+        "tg_dust": 11,
+        "quantities": [
+          8018, 280, 11, 4445,
+          8405, 1980, 11022, 25,
+          190590, 314628, 8432, 16,
+          656, 450, 38898, 1170,
+          119131, 34492, 24890, 334,
+          34, 38791, 1170, 119076,
+          34122, 24891, 334, 48
+        ],
+        "shield": [6, 7, 11, 12, 13, 15, 17, 19, 20, 22, 24, 26, 27]
+      }
+    },
+    "speedups.png": {
+      "device": "phone 1284x2778",
+      "tab": "speedups",
+      "backpack": {
+        "speedups": [
+          { "denomination": "5m", "category": "general", "quantity": 260 },
+          { "denomination": "1h", "category": "general", "quantity": 20 },
+          { "denomination": "1m", "category": "construction", "quantity": 11031 },
+          { "denomination": "5m", "category": "construction", "quantity": 6808 },
+          { "denomination": "1h", "category": "construction", "quantity": 542 },
+          { "denomination": "1m", "category": "troop", "quantity": 373 },
+          { "denomination": "5m", "category": "troop", "quantity": 272 },
+          { "denomination": "1h", "category": "troop", "quantity": 31 },
+          { "denomination": "1m", "category": "research", "quantity": 145 },
+          { "denomination": "5m", "category": "research", "quantity": 94 },
+          { "denomination": "1h", "category": "research", "quantity": 20 },
+          { "denomination": "1m", "category": "other", "quantity": 549 },
+          { "denomination": "5m", "category": "other", "quantity": 2282 },
+          { "denomination": "1h", "category": "other", "quantity": 13 }
+        ]
+      }
+    }
+  }
+}
