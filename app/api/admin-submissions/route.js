@@ -3,6 +3,7 @@ import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { getCurrentEventCycle, loadCycleRoster } from '../../../lib/eventCycles.server';
+import { loadLoginMysticMap } from '../../../lib/loginMystic.server.js';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
 const ADMIN_PROJECTION = {
@@ -76,7 +77,7 @@ export async function GET(request) {
     }
 
     return NextResponse.json({
-      rows: mergePowerProfilesIntoRows(data || [], powerProfiles || []),
+      rows: mergePowerProfilesIntoRows(data || [], powerProfiles || [], await loadLoginMysticMap()),
       powerProfilesConfigured,
     });
   } catch (error) {

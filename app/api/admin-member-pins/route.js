@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { loadLoginMysticMap } from '../../../lib/loginMystic.server.js';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
 
 const BCRYPT_HASH_RE = /^\$2[aby]\$\d{2}\$/;
@@ -69,7 +70,7 @@ export async function GET(request) {
         .toArray(),
     ]);
 
-    const merged = mergePowerProfilesIntoRows(data || [], profiles || []);
+    const merged = mergePowerProfilesIntoRows(data || [], profiles || [], await loadLoginMysticMap());
 
     return noStoreJson({
       rows: merged.map(({ pin_hash, power_profile, ...row }) => ({

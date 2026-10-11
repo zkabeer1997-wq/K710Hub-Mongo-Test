@@ -52,7 +52,7 @@ const profile = () => (state.tables[T.POWER_PROFILES] || []).find((p) => p.membe
 
 const AVAIL = { name: 'Ann', member_id: 'm1', current_alliance: '710', availability: 'Full battle (12-17 UTC)' };
 const SIX = { infantry_tier: 'T11', infantry_tg: 'TG8', cavalry_tier: 'T10', cavalry_tg: 'TG6', archer_tier: 'T11', archer_tg: 'TG7' };
-const OWN = { name: 'Ann', governor_gear: 'Infantry 1: Red T0', charms: 'Archer Charm 1: 5', hero_gear: 'x', pet_power: '1M', masters_power: '2M', mystic_trial_score: '9' };
+const OWN = { name: 'Ann', governor_gear: 'Infantry 1: Red T0', charms: 'Archer Charm 1: 5', hero_gear: 'x', pet_power: '1000000', masters_power: '2000000', mystic_trial_score: '9' };
 
 // ---- pure helpers ----
 
@@ -176,7 +176,7 @@ test('KvK POST: troops + heroes are saved to the profile without a Power Profile
   p = profile();
   assert.equal(p.infantry_tier, 'T11', 'the Power Profile save does not wipe troops');
   assert.deepEqual(p.heroes, ['Chenko', 'Saul']);
-  assert.equal(p.pet_power, '1M');
+  assert.equal(p.pet_power, '1000000');
   const before = { ...p };
   assert.equal((await availRoute.POST(req({ body: { ...AVAIL, ...SIX, infantry_tier: 'T10', heroes: ['Saul'] } }))).status, 200);
   p = profile();
@@ -247,7 +247,7 @@ test('a troops-only profile does not flip Power Profile status, completion badge
   const after = Object.fromEntries((await json(await statusRoute.GET(req()))).forms.map((f) => [f.key, f]));
   assert.equal(after.lead.submitted, true);
   assert.ok((await getMemberFormCompletions('m1')).lead);
-  assert.equal((await json(await profileRoute.GET(req()))).profile.pet_power, '1M');
+  assert.equal((await json(await profileRoute.GET(req()))).profile.pet_power, '1000000');
   assert.equal(profile().infantry_tier, 'T11');
 });
 

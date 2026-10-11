@@ -1,14 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '../../components/i18n/LanguageProvider';
 import IdentityFields from '../../components/member/IdentityFields';
 import PageHero from '../../components/ui/PageHero';
 import LoadoutEditor from '../../components/loadout/LoadoutEditor';
 import '../../components/member/easy-view-fixes.css';
 import {
+POWER_NUMBER_KEYS,
 POWER_PROFILE_FIELDS,
 blankCharmSelections,
 blankGovernorGearSelections,
+checkPowerNumber,
+displayPowerNumber,
+powerNumberErrors,
 parseCharmSelections,
 parseGovernorGearSelections,
 serializeCharmSelections,
@@ -25,6 +30,9 @@ import { draftKey, mergeDraft, parseDraft, serializeDraft } from '../../lib/wiza
 
 const DRAFT_KEY = draftKey('power-profile');
 
+// Same grouping the member dashboard uses for the Mystic Trial figure, so the two always read the same.
+const formatCount = (value) => (value == null || value === '' || Number.isNaN(Number(value)) ? String(value || '') : new Intl.NumberFormat().format(Number(value)));
+
 // Draft selections (slot -> value) over the saved ones: only non-blank draft values replace them.
 function mergeNonBlank(saved, draft) {
   const out = { ...saved };
@@ -34,13 +42,16 @@ function mergeNonBlank(saved, draft) {
   return out;
 }
 
-// Per-step validation (only step 1 has required fields; the API rejects a
-// profile without a name and Member ID). Returns [{ id, key, message }].
+// Per-step validation (step 1 has the required name / Member ID; step 2 checks the optional Pet Power and
+// Masters Power numbers). The API checks the same rules. Returns [{ id, key, message }].
 function stepErrors(index, form) {
   const found = [];
   if (index === 0) {
     if (!String(form.name || '').trim()) found.push({ id: 'pp-name', key: 'name', message: 'Your name is required.' });
     if (!String(form.member_id || '').trim()) found.push({ id: 'pp-member_id', key: 'member_id', message: 'Member ID is required.' });
+  }
+  if (index === 1) {
+    for (const { key, message } of powerNumberErrors(form)) found.push({ id: `pp-${key}`, key, message });
   }
   return found;
 }
@@ -65,8 +76,10 @@ function PowerProfileForm({ identity, intro }) {
     hero_gear: '',
     pet_power: '',
     masters_power: '',
-    mystic_trial_score: '',
   });
+  // Mystic Trial is read-only: { value, source: 'login' | 'saved' | 'none' } from GET /api/power-profile.
+  const [mystic, setMystic] = useState({ value: '', source: 'none' });
+  const t = useT();
   const [governorGear, setGovernorGear] = useState(blankGovernorGearSelections());
   const [charms, setCharms] = useState(blankCharmSelections());
   const [onFile, setOnFile] = useState(null);
@@ -97,15 +110,15 @@ function PowerProfileForm({ identity, intro }) {
   function goToStep(index) {
     const bounded = Math.max(0, Math.min(STEPS.length - 1, index));
     if (bounded > step) {
-      const found = stepErrors(step === 0 ? 0 : -1, form);
-      if (found.length) {
-        setErrors(found);
-        setErrorSignal((n) => n + 1);
-        return;
-      }
-      if (bounded > 0) {
-        const first = stepErrors(0, form);
-        if (first.length) { setStep(0); setErrors(first); setErrorSignal((n) => n + 1); return; }
+      // Every step we pass on the way forward must be valid; the first problem stops us on its own step.
+      for (let i = 0; i < bounded; i++) {
+        const found = stepErrors(i, form);
+        if (found.length) {
+          if (i !== step) setStep(i);
+          setErrors(found);
+          setErrorSignal((n) => n + 1);
+          return;
+        }
       }
     }
     setErrors([]);
@@ -167,6 +180,12 @@ function PowerProfileForm({ identity, intro }) {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => (current.some((e) => e.key === key) ? current.filter((e) => e.key !== key) : current));
     setDirty(true);
+  }
+
+  // Pet / Masters Power: thousands separators once the box is left and the number is valid.
+  function formatPowerOnBlur(key) {
+    const checked = checkPowerNumber(key, form[key]);
+    if (checked.ok && !checked.empty) setForm((current) => ({ ...current, [key]: displayPowerNumber(checked.digits) }));
   }
 
   const errorFor = (key) => errors.find((e) => e.key === key);
@@ -239,6 +258,7 @@ function PowerProfileForm({ identity, intro }) {
     try {
       response = await fetch('/api/power-profile', { cache: 'no-store' });
       result = await response.json();
+      if (result && result.mystic) setMystic(result.mystic);
     } catch {
       return;
     } finally {
@@ -263,9 +283,8 @@ function PowerProfileForm({ identity, intro }) {
         governor_gear: serializeGovernorGearSelections(gearSelections) || result.profile.governor_gear || '',
         charms: serializeCharmSelections(charmSelections) || result.profile.charms || '',
         hero_gear: pick('hero_gear'),
-        pet_power: pick('pet_power'),
-        masters_power: pick('masters_power'),
-        mystic_trial_score: pick('mystic_trial_score'),
+        pet_power: displayPowerNumber(pick('pet_power')),
+        masters_power: displayPowerNumber(pick('masters_power')),
       }));
     } else {
       setOnFile(null);
@@ -284,12 +303,14 @@ function PowerProfileForm({ identity, intro }) {
     event.preventDefault();
     setStatus('');
     setIsError(false);
-    const missing = stepErrors(0, form);
-    if (missing.length) {
-      setStep(0);
-      setErrors(missing);
-      setErrorSignal((n) => n + 1);
-      return;
+    for (let i = 0; i < 2; i++) {
+      const missing = stepErrors(i, form);
+      if (missing.length) {
+        setStep(i);
+        setErrors(missing);
+        setErrorSignal((n) => n + 1);
+        return;
+      }
     }
     setErrors([]);
     setLoading(true);
@@ -301,11 +322,19 @@ function PowerProfileForm({ identity, intro }) {
     const result = await response.json();
     setLoading(false);
     if (!response.ok) {
+      if (POWER_NUMBER_KEYS.includes(result.field)) {
+        // The server disagreed with one of the number boxes: show it on that box, like a local check.
+        setStep(1);
+        setErrors([{ id: `pp-${result.field}`, key: result.field, message: result.error }]);
+        setErrorSignal((n) => n + 1);
+        return;
+      }
       setIsError(true);
       setStatus(result.error || 'Could not save Power Profile.');
       return;
     }
     setOnFile(result.profile);
+    if (result.mystic) setMystic(result.mystic);
     try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     setDirty(false);
     setStatus(result.status === 'created' ? 'Power Profile created.' : 'Power Profile updated.');
@@ -321,6 +350,7 @@ function PowerProfileForm({ identity, intro }) {
     event.preventDefault();
   }
 
+  const mysticField = POWER_PROFILE_FIELDS.find((field) => field.key === 'mystic_trial_score');
   const statusLine = saveStatusLabel({ loading, isError, dirty, status });
 
   return (
@@ -409,6 +439,47 @@ function PowerProfileForm({ identity, intro }) {
               onClear={clearLoadout}
               onScanApplied={saveScanned}
             />
+            <div className="member-identity" data-tour="power-extra">
+              <div className="member-identity-field">
+                <label>
+                  <span className="member-identity-label">{t('profile.pet.label')}</span>
+                  <input
+                    {...fieldProps('pet_power')}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    maxLength={16}
+                    placeholder={t('profile.number.placeholder')}
+                    value={form.pet_power}
+                    onChange={(e) => updateField('pet_power', e.target.value)}
+                    onBlur={() => formatPowerOnBlur('pet_power')}
+                    aria-describedby={['pp-pet_power-hint', fieldProps('pet_power')['aria-describedby']].filter(Boolean).join(' ')}
+                  />
+                </label>
+                <p className="member-identity-hint" id="pp-pet_power-hint">{t('profile.number.hint')}</p>
+                {fieldError('pet_power')}
+              </div>
+              <div className="member-identity-field">
+                <label>
+                  <span className="member-identity-label">{t('profile.masters.label')}</span>
+                  <input
+                    {...fieldProps('masters_power')}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    maxLength={16}
+                    placeholder={t('profile.number.placeholder')}
+                    value={form.masters_power}
+                    onChange={(e) => updateField('masters_power', e.target.value)}
+                    onBlur={() => formatPowerOnBlur('masters_power')}
+                    aria-describedby={['pp-masters_power-hint', fieldProps('masters_power')['aria-describedby']].filter(Boolean).join(' ')}
+                  />
+                </label>
+                <p className="member-identity-hint" id="pp-masters_power-hint">{t('profile.number.hint')}</p>
+                {fieldError('masters_power')}
+              </div>
+            </div>
+            <FormErrorSummary errors={errors} focusSignal={errorSignal} id="form-error-summary-gear" />
             <div className="wizard-nav">
               <button type="button" className="wizard-back" onClick={() => goToStep(0)}>Back</button>
               <button type="button" className="wizard-next" onClick={() => goToStep(2)}>Next: Review &amp; Submit</button>
@@ -447,10 +518,16 @@ function PowerProfileForm({ identity, intro }) {
               <div className="wizard-review-card">
                 <h4>Additional Power</h4>
                 <dl>
-                  {POWER_PROFILE_FIELDS.map((field) => (
+                  {POWER_PROFILE_FIELDS.filter((field) => field.key !== 'mystic_trial_score').map((field) => (
                     <div key={field.key}><dt>{field.label}</dt><dd>{form[field.key] || '-'}</dd></div>
                   ))}
+                  <div data-testid="review-mystic">
+                    <dt>{mysticField.label}</dt>
+                    <dd>{mystic.value ? formatCount(mystic.value) : t('profile.mystic.none')}</dd>
+                  </div>
                 </dl>
+                <p className="wizard-review-note">{mystic.source === 'login' ? t('profile.mystic.login') : mystic.source === 'saved' ? t('profile.mystic.saved') : t('profile.mystic.missing')}</p>
+                <button type="button" className="wizard-review-edit" onClick={() => goToStep(1)}>Edit</button>
               </div>
             </div>
 

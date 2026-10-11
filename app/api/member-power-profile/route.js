@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { powerProfileDoneAt } from '../../../lib/powerProfiles.mjs';
+import { loadLoginMystic } from '../../../lib/loginMystic.server.js';
+import { powerProfileDoneAt, resolveMysticScore } from '../../../lib/powerProfiles.mjs';
 
 // General Power Profile -> tools linkage: returns the signed-in member's
 // saved power_profiles document so a calculator can pre-fill from it.
@@ -34,7 +35,10 @@ export async function GET(request) {
       }
     );
     // A document that only remembers troops from the KvK / Flamedragon forms is not a saved Power Profile.
-    return NextResponse.json({ profile: powerProfileDoneAt(data) ? data : null });
+    if (!powerProfileDoneAt(data)) return NextResponse.json({ profile: null });
+    // Same Mystic Trial value as the dashboard and the member's own review (sign-in value first).
+    const mystic = resolveMysticScore({ login: await loadLoginMystic(session.memberId), saved: data.mystic_trial_score });
+    return NextResponse.json({ profile: { ...data, mystic_trial_score: mystic.value || data.mystic_trial_score } });
   } catch (error) {
     console.error('member-power-profile GET failed', error);
     return NextResponse.json({ error: 'Unable to load saved Power Profile profile.' }, { status: 500 });

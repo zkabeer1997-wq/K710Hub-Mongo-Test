@@ -4,7 +4,8 @@ import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { readMemberSession } from '../../../lib/memberAuth';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
 import { loadMemberBase } from '../../../lib/memberPrefill.server.js';
-import { powerProfileDoneAt, publicPowerProfile, sanitizePowerProfileInput } from '../../../lib/powerProfiles.mjs';
+import { loadLoginMystic } from '../../../lib/loginMystic.server.js';
+import { powerProfileDoneAt, publicPowerProfile, resolveMysticScore, sanitizePowerProfileInput } from '../../../lib/powerProfiles.mjs';
 
 const PUBLIC_PROJECT = {
   member_id: 1,
@@ -43,8 +44,10 @@ export async function GET(request) {
     const data = powerProfileDoneAt(stored) ? stored : null;
     // `base`: name already known from other forms / the Kingshot profile, for a first-time profile.
     const base = data ? null : await loadMemberBase(memberId);
+    // Mystic Trial is read-only here: the sign-in value wins, else whatever was saved before.
+    const mystic = resolveMysticScore({ login: await loadLoginMystic(memberId), saved: stored?.mystic_trial_score });
     return NextResponse.json(
-      { profile: publicPowerProfile(data), ...(base ? { base: { name: base.name, from: base.from } } : {}) },
+      { profile: publicPowerProfile(data), mystic, ...(base ? { base: { name: base.name, from: base.from } } : {}) },
       { headers: { 'Cache-Control': 'private, no-store' } }
     );
   } catch (error) {
@@ -72,7 +75,7 @@ export async function POST(request) {
     profile = sanitizePowerProfileInput({ ...(rawBody && typeof rawBody === 'object' ? rawBody : {}), member_id: session.memberId });
   } catch (error) {
     // sanitize* throws deliberate, user-facing validation messages only.
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: error.message, ...(error.field ? { field: error.field } : {}) }, { status: 400 });
   }
   try {
     const coll = await getCollection(COLLECTIONS.POWER_PROFILES);
@@ -82,6 +85,10 @@ export async function POST(request) {
     );
     // A document that only remembers troops from the other forms is not a previously saved profile.
     const existing = powerProfileDoneAt(existingDoc) ? existingDoc : null;
+    // Mystic Trial is never typed: the sign-in value wins (even over an older saved/typed one); with no
+    // sign-in value the previously saved one is kept.
+    const mystic = resolveMysticScore({ login: await loadLoginMystic(profile.member_id), saved: existingDoc?.mystic_trial_score });
+    profile.mystic_trial_score = mystic.value;
     const payload = {
       name: profile.name,
       member_id: profile.member_id,
@@ -99,6 +106,7 @@ export async function POST(request) {
     const data = await coll.findOne({ member_id: profile.member_id }, { projection: PUBLIC_PROJECT });
     return NextResponse.json({
       profile: publicPowerProfile(data),
+      mystic,
       status: existing ? 'updated' : 'created',
     });
   } catch (error) {

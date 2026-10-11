@@ -413,5 +413,14 @@
   "backpack.applied.one": { "text": "Filled {count} box from your backpack scan.", "note": "Status after the numbers were put in the form. Keep {count} exactly." },
   "backpack.applied.other": { "text": "Filled {count} boxes from your backpack scan.", "note": "Status after the numbers were put in the form. Keep {count} exactly." },
   "backpack.fieldNote.scan": { "text": "From your backpack scan on {date}", "note": "Small note under a form box that holds a scanned number. Keep {date} exactly." },
-  "backpack.fieldNote.typed": { "text": "You changed this. Your scan said {value}.", "note": "Small note under a form box the member edited after a scan. Keep {value} exactly." }
+  "backpack.fieldNote.typed": { "text": "You changed this. Your scan said {value}.", "note": "Small note under a form box the member edited after a scan. Keep {value} exactly." },
+  "profile.pet.label": {"text": "Pet Power", "note": "Label of the box where a player types their total Pet Power on the Power Profile. Keep Pet Power in English as a game term."},
+  "profile.masters.label": {"text": "Masters Power", "note": "Label of the box where a player types their total Masters Power on the Power Profile. Keep Masters Power in English as a game term."},
+  "profile.number.placeholder": {"text": "for example 1,500,000", "note": "Example shown inside the Pet Power and Masters Power boxes. Keep the digits and commas as they are."},
+  "profile.number.hint": {"text": "Optional. Type the number from your game, like 1,500,000 or 1.5M.", "note": "Help line under the Pet Power and Masters Power boxes. 1.5M means one and a half million. Keep the example as written."},
+  "profile.mystic.login": {"text": "From your Kingshot sign-in", "note": "Small note under the Mystic Trial number on the Power Profile review. It tells the player the number was read from the game when they signed in, so they cannot type it. Keep Kingshot and Mystic Trial in English."},
+  "profile.mystic.saved": {"text": "Not available from your Kingshot sign-in right now. Showing the last value on file.", "note": "Small note under the Mystic Trial number on the Power Profile review when the sign-in gave no number but an earlier saved number exists. Keep Kingshot and Mystic Trial in English."},
+  "profile.mystic.missing": {"text": "Not available yet. It appears here after you sign in with Kingshot and the game shares it.", "note": "Small note on the Power Profile review when no Mystic Trial number is known yet. Keep Kingshot and Mystic Trial in English."},
+  "profile.mystic.none": {"text": "Not available", "note": "Shown instead of a Mystic Trial number on the Power Profile review when none is known yet. Keep it very short."},
+  "lang.menu.row": {"text": "Language:", "note": "Label before the current language's own name in the first row of the phone menu, for example: Language: Espa\u00f1ol."}
 }
