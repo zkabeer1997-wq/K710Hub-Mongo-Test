@@ -22,7 +22,7 @@ export default function ToolDatabasePage() {
     router.refresh();
   }
   return (
-    <AdminShell onLogout={logout} title="Tool database" subtitle="Raw calculator data: per-level and per-tier upgrade requirements">
+    <AdminShell onLogout={logout} title="Packs/Tools" subtitle="Tool database: calculator data and your own tables">
       <SectionTabs tabs={TOOL_TABS} label="Tools sections" />
       <ToolDataEditor
         kind="calc"

@@ -15,7 +15,7 @@ export default function ToolEditingPage() {
     router.refresh();
   }
   return (
-    <AdminShell onLogout={logout} title="Pack editing" subtitle="Real-money packs: price in USD, contents and purchase limits">
+    <AdminShell onLogout={logout} title="Packs/Tools" subtitle="Pack editing: real-money packs, their USD price, contents and purchase limits">
       <SectionTabs tabs={TOOL_TABS} label="Tools sections" />
       <ToolDataEditor
         kind="pack"

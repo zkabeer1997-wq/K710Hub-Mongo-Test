@@ -25,8 +25,6 @@ test('sidebar labels equal the page titles (H1)', () => {
     '/admin/dashboard/help-images': 'app/admin/dashboard/help-images/page.js',
     '/admin/dashboard/page-text': 'app/admin/dashboard/page-text/page.js',
     '/admin/dashboard/tool-editing': 'app/admin/dashboard/tool-editing/page.js',
-    '/admin/dashboard/tool-database': 'app/admin/dashboard/tool-database/page.js',
-    '/admin/dashboard/tool-images': 'app/admin/dashboard/tool-images/page.js',
     '/admin/dashboard/form-gates': 'app/admin/dashboard/form-gates/page.js',
     '/admin/dashboard/integrations': 'app/admin/dashboard/integrations/page.js',
     '/admin/dashboard/page-addresses': 'app/admin/dashboard/page-addresses/page.js',
@@ -41,7 +39,13 @@ test('sidebar labels equal the page titles (H1)', () => {
 
 test('renamed labels keep their routes', () => {
   const label = (href) => items.find((i) => i.href === href)?.label;
-  assert.equal(label('/admin/dashboard/tool-editing'), 'Pack editing');
+  assert.equal(label('/admin/dashboard/tool-editing'), 'Packs/Tools');
+  assert.ok(!items.some((i) => ['Pack editing', 'Tool database', 'Tool images'].includes(i.label)), 'the three tool tabs are one sidebar item');
+  const tools = items.find((i) => i.href === '/admin/dashboard/tool-editing');
+  for (const route of ['tool-editing', 'tool-database', 'tool-images']) {
+    assert.ok(isNavActive(`/admin/dashboard/${route}`, tools), `${route} highlights Packs/Tools`);
+    assert.equal(read(`app/admin/dashboard/${route}/page.js`).match(/title="([^"]+)"/)?.[1], 'Packs/Tools', `${route} H1`);
+  }
   assert.equal(label('/admin/dashboard/form-gates'), 'Forms & copy');
   assert.equal(label('/admin/dashboard/alliance-events'), 'Calendar');
   assert.equal(label('/admin/dashboard/integrations'), 'Integrations');

@@ -14,7 +14,7 @@ export default function ToolImagesPage() {
     router.refresh();
   }
   return (
-    <AdminShell onLogout={logout} title="Tool images" subtitle="The picture shown on each Tools & Calculators tile">
+    <AdminShell onLogout={logout} title="Packs/Tools" subtitle="Tool images: the picture shown on each Tools & Calculators tile">
       <SectionTabs tabs={TOOL_TABS} label="Tools sections" />
       <ToolImagesEditor />
     </AdminShell>

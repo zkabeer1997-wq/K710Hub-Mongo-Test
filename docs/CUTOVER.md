@@ -108,7 +108,7 @@ and **Choose from Drive** (Google Picker, or the fake picker in local dev), with
 picture from this computer. Choose from Drive: pick one already in Google Drive." Drive not connected disables both
 ("Connect Google Drive first"); Picker keys missing disables only Choose from Drive ("Google Picker is not set up yet" +
 setup steps). They stack on phones. Places: Admin > Gallery, Heroes (per-hero picture and bulk "name each file after the
-hero"), Tools > Tool images, **Help images**, and the guide builder (image block, image grid, selected picture, Images tab,
+hero"), Packs/Tools > Tool images, **Help images**, and the guide builder (image block, image grid, selected picture, Images tab,
 "reuse a picture" modal). `ImageUploadField.jsx` (`folder`, `value`, `onChange`, `label`, `altRequired`, `subfolder`,
 `deleteOnRemove`) wraps AddImageButtons with preview, description and Remove for hero/tool/help
 (`POST /api/admin-drive/images`, folders `hero`, `tool`, `help`). `DriveImagePicker.jsx` is the bare picker;
@@ -284,7 +284,7 @@ SuperAdmins can rename public pages in Admin > Settings > Page addresses (collec
 
 ## Tool images (Tools & Calculators tiles)
 
-Admin > Tools > Tool images lets an admin replace the icon on each /tools tile with an image stored in the Drive folder "K710 Website/Tools and calculators images". Mongo `tool_images` holds `{tool_key (unique), site_image_id, alt, updated_at, updated_by}`; the image is a `site_images` record (folder `tool`) served at `/api/site-image/<id>`. No override means the built-in icon. Reads are cached 30 s (invalidated on admin writes) and fail open to the built-in icons. Valid tool keys are the tiles in `lib/toolHubTools.mjs`. APIs: `/api/admin-tool-images` (GET/PUT/DELETE, admin), `/api/tool-images` (public, same-origin urls only). Limits: PNG/JPG/WebP/GIF, 4 MB, alt text required; no server-side downscale.
+Admin > Packs/Tools > Tool images lets an admin replace the icon on each /tools tile with an image stored in the Drive folder "K710 Website/Tools and calculators images". Mongo `tool_images` holds `{tool_key (unique), site_image_id, alt, updated_at, updated_by}`; the image is a `site_images` record (folder `tool`) served at `/api/site-image/<id>`. No override means the built-in icon. Reads are cached 30 s (invalidated on admin writes) and fail open to the built-in icons. Valid tool keys are the tiles in `lib/toolHubTools.mjs`. APIs: `/api/admin-tool-images` (GET/PUT/DELETE, admin), `/api/tool-images` (public, same-origin urls only). Limits: PNG/JPG/WebP/GIF, 4 MB, alt text required; no server-side downscale.
 
 
 ### Hero catalog (KvK Availability + Flamedragon forms)
