@@ -293,8 +293,9 @@ export function CharmStatPlanner({ memberId = "", packConfiguration, toolKey = "
           mode: inputs.optimizationGoal,
         },
         { minimumBalance: inputs.minimumBalance },
+        packConfiguration?.charmLevels || undefined,
       ),
-    [inputs, charmCosts],
+    [inputs, charmCosts, packConfiguration?.charmLevels],
   );
   const charmTargetCost = useMemo(() => inputs.charms.reduce((total, charm) => {
     for (let level = charm.current + 1; level <= charm.target; level += 1) {
