@@ -10,6 +10,7 @@ import {
   MAX_COLUMNS, MAX_ROWS, isDatabaseId, newDatabaseId, reorderDatabases, sortDatabases, validateDatabase,
 } from '../lib/toolDatabases.mjs';
 import { CHARM_LEVELS } from '../lib/phase2Data.mjs';
+import { rankCharmUpgrades } from '../lib/progressionPhase2.mjs';
 import { PACKS as ADVENTURE_PACKS, optimizeShellPacks, packLimits } from '../lib/adventureStall.mjs';
 import { PACKS as DRAGON_PACKS, optimizeEssencePacks } from '../lib/flamedragonShop.mjs';
 
@@ -171,4 +172,20 @@ test('database ordering and ids', () => {
   assert.equal(reorderDatabases(docs, 'db-zzzzzz', 'down'), null);
   assert.ok(isDatabaseId(newDatabaseId()));
   assert.ok(!isDatabaseId('db-') && !isDatabaseId('../etc') && !isDatabaseId(1));
+});
+
+test('Charms Optimizer ranking uses an override table when given one, built-ins otherwise', () => {
+  const charms = [{ id: 'a', type: 'Cavalry', current: 1, target: 2 }];
+  const costs = Array.from({ length: 23 }, (_, i) => (i ? [1, 1] : null));
+  const inventory = { guides: 100, designs: 100 };
+  const weights = { troops: {}, stats: {}, amplification: 1, mode: 'stats' };
+  const base = rankCharmUpgrades(charms, costs, inventory, weights);
+  const stepOf = (r) => (r.upgrades || r.steps || r)[0];
+  const rows = builtInRows('charm-levels').map((r) => ({ ...r }));
+  rows[1].power = 5;
+  const levels = charmLevelsFromRows(mergeReferenceRows('charm-levels', rows));
+  const changed = rankCharmUpgrades(charms, costs, inventory, weights, {}, levels);
+  assert.equal(stepOf(base).power, CHARM_LEVELS[2].power);
+  assert.equal(stepOf(changed).power, 5);
+  assert.equal(stepOf(rankCharmUpgrades(charms, costs, inventory, weights, {}, undefined)).power, CHARM_LEVELS[2].power);
 });
