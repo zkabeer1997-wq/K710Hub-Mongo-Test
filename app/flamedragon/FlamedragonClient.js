@@ -211,8 +211,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
     const numberProblems = powerNumberErrors(form).map(({ key, message }) => ({ id: `fd-${key}`, key, message }));
     setPowerErrors(numberProblems);
     if (numberProblems.length) {
-      setErrorSignal((n) => n + 1);
-      document.getElementById(numberProblems[0].id)?.focus();
+      setErrorSignal((n) => n + 1); // the error summary takes focus; each entry links to its box
       return;
     }
     setLoading(true);
@@ -228,7 +227,6 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
         // The server disagreed with one of the number boxes: show it on that box, like the local check.
         setPowerErrors([{ id: `fd-${result.field}`, key: result.field, message: result.error }]);
         setErrorSignal((n) => n + 1);
-        document.getElementById(`fd-${result.field}`)?.focus();
         return;
       }
       setIsError(true);
