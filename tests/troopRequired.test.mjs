@@ -204,16 +204,20 @@ test('Flamedragon POST: 400 naming what is missing; nothing is saved', async () 
   assert.equal(profile(), undefined);
 });
 
-test('Flamedragon POST: remembers troops + heroes on the profile; only those fields change later', async () => {
+// Deliberately changed with the Flamedragon / Power Profile integration: gear, charms, Pet Power and Masters Power
+// are now SHARED with the Power Profile, so a Flamedragon save writes them across (see tests/dragonPowerProfile.test.mjs).
+// This test keeps guarding everything that is NOT shared: hero_gear, the Mystic Trial value, the name, and the
+// troop/hero behaviour (a save without a heroes list leaves profile heroes alone).
+test('Flamedragon POST: remembers troops + heroes on the profile; hero_gear, name and Mystic Trial are never touched', async () => {
   reset();
   state.tables[T.POWER_PROFILES] = [{ member_id: 'm1', ...OWN, updated_at: new Date('2026-09-01T00:00:00Z') }];
-  const stamp = new Date('2026-09-01T00:00:00Z').getTime();
-  assert.equal((await dragonRoute.POST(req({ body: { name: 'Ann', ...SIX, heroes: ['Saul'], pet_power: 'dragon-form-value', charms: 'Archer Charm 1: 1' } }))).status, 200);
+  assert.equal((await dragonRoute.POST(req({ body: { name: 'Ann', ...SIX, heroes: ['Saul'], pet_power: '3,000,000', charms: 'Archer Charm 1: Level 5' } }))).status, 200);
   let p = profile();
   assert.equal(p.infantry_tier, 'T11');
   assert.deepEqual(p.heroes, ['Saul']);
-  for (const key of ['governor_gear', 'charms', 'hero_gear', 'pet_power', 'masters_power', 'mystic_trial_score']) assert.equal(p[key], OWN[key], `${key} on the profile is not overwritten by the Flamedragon form`);
-  assert.equal(new Date(p.updated_at).getTime(), stamp, 'the Power Profile save time is not bumped');
+  for (const key of ['governor_gear', 'masters_power', 'hero_gear', 'mystic_trial_score', 'name']) assert.equal(p[key], OWN[key], `${key} is not overwritten when the save did not send it`);
+  assert.equal(p.pet_power, '3000000', 'a shared field the save sent is written across');
+  assert.equal(p.charms, 'Archer Charm 1: Level 5');
   // A save without a heroes list leaves profile heroes alone.
   assert.equal((await dragonRoute.POST(req({ body: { name: 'Ann', ...SIX, cavalry_tg: 'TG5' } }))).status, 200);
   p = profile();

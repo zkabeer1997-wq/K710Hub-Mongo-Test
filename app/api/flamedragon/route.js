@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
-import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayload, currentHeroesOnly } from '../../../lib/flamedragonForm.mjs';
+import { publicFlamedragonRecord, sanitizeFlamedragonInput, buildMergeSafePayload, currentHeroesOnly, resolvePowerPrefill, SHARED_POWER_KEYS } from '../../../lib/flamedragonForm.mjs';
 import { getCurrentEventCycle, loadMemberCycleRecord, snapshotIfFromPastCycle } from '../../../lib/eventCycles.server';
 import { checkFormOpen } from '../../../lib/formGates.server.js';
-import { saveTroopsToProfile } from '../../../lib/troopProfile.server.js';
+import { saveTroopsToProfile, saveLoadoutToProfile } from '../../../lib/troopProfile.server.js';
 import { getActiveHeroNames } from '../../../lib/heroCatalog.server.js';
-import { loadDragonFallback, getMemberIdentity } from '../../../lib/memberPrefill.server.js';
+import { loadDragonFallback, getMemberIdentity, loadProfilePower } from '../../../lib/memberPrefill.server.js';
 import { loadLoginMystic } from '../../../lib/loginMystic.server.js';
 import { readMemberSession } from '../../../lib/memberAuth';
+import { resolveMysticScore } from '../../../lib/powerProfiles.mjs';
 
 const PUBLIC_PROJECT = {
   member_id: 1,
@@ -62,7 +63,11 @@ export async function GET(request) {
     }
     if (fallback && loginMystic !== null) fallback = { ...fallback, mystic_trial_score: String(loginMystic) };
     const identity = await getMemberIdentity(session);
-    return NextResponse.json({ member_id: session.memberId, identity, record: strip(record), previous: strip(previous), cycle, fallback });
+    // Gear, charms, Pet Power and Masters Power are shared with the Power Profile: start from whichever was saved last
+    // (this form's answer or the profile), and show the Mystic Trial read-only from the sign-in.
+    const power = resolvePowerPrefill({ answer: record || previous, profile: await loadProfilePower(session.memberId) });
+    const mystic = resolveMysticScore({ login: loginMystic, saved: (record || previous || fallback)?.mystic_trial_score });
+    return NextResponse.json({ member_id: session.memberId, identity, record: strip(record), previous: strip(previous), cycle, fallback, power, mystic });
   } catch (error) {
     console.error('flamedragon GET failed', error);
     return NextResponse.json({ error: 'Could not load your form. Please try again.' }, { status: 500 });
@@ -96,7 +101,7 @@ export async function POST(request) {
     const named = existing && !('name' in body) ? { ...body, name: existing.name } : typedName ? body : { ...body, name: (await getMemberIdentity(session)).name };
     record = sanitizeFlamedragonInput({ ...named, member_id: session.memberId, pin: 'session' }, { existingHeroes: existing?.heroes, allowedHeroes: await getActiveHeroNames(), requireTroops: true });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: error.message, ...(error.field ? { field: error.field } : {}) }, { status: 400 });
   }
   try {
     const coll = await getCollection(COLLECTIONS.FLAMEDRAGON_FORMS);
@@ -123,7 +128,11 @@ export async function POST(request) {
     };
     const payload = buildMergeSafePayload(fullPayload, body, existing);
     const loginMystic = await loadLoginMystic(record.member_id);
+    // Mystic Trial is read-only on this form: the sign-in value wins; otherwise a typed value is ignored and an
+    // earlier stored one is kept.
     if (loginMystic !== null) payload.mystic_trial_score = String(loginMystic);
+    else if (existing) delete payload.mystic_trial_score;
+    else payload.mystic_trial_score = null;
     const cycle = await getCurrentEventCycle('flamedragon').catch(() => null);
     await snapshotIfFromPastCycle('flamedragon', existing, cycle);
     if (cycle) {
@@ -138,6 +147,13 @@ export async function POST(request) {
       archer_tier: record.archer_tier, archer_tg: record.archer_tg,
       ...(Array.isArray(body?.heroes) ? { heroes: record.heroes } : {}),
     }, payload.updated_at);
+    // The shared power details also go onto the Power Profile (only the keys this save sent), whether or not the
+    // Power Profile form is open: this save is gated by the Flamedragon form, not the Power Profile's.
+    await saveLoadoutToProfile(
+      record.member_id,
+      Object.fromEntries(SHARED_POWER_KEYS.filter((key) => body && Object.prototype.hasOwnProperty.call(body, key)).map((key) => [key, record[key]])),
+      { now: payload.updated_at, name: record.name },
+    );
     const data = await coll.findOne({ member_id: record.member_id }, { projection: PUBLIC_PROJECT });
     return NextResponse.json({
       status: existing ? 'updated' : 'created',

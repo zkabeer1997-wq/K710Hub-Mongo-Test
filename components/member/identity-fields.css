@@ -11,3 +11,9 @@
 }
 .member-identity-locked svg { flex: none; color: var(--brass, var(--gold)); }
 @media (max-width: 640px) { .member-identity { grid-template-columns: minmax(0, 1fr); } }
+
+/* Flamedragon Tyrant form: the gear / charms / power block is shared with the Power Profile. */
+.power-shared-note { margin: 0 0 10px; font-size: 14px; line-height: 1.45; color: var(--t-secondary, var(--text-muted)); }
+.power-shared-note-fresh { color: var(--t-primary, var(--text)); }
+.mystic-readout-value { margin: 0; min-height: 44px; display: flex; align-items: center; padding: 0 12px; border: 1px dashed var(--edge-strong, var(--line)); border-radius: 8px; background: rgba(255, 255, 255, 0.03); font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--t-primary, var(--text)); }
+.power-mystic-row { margin-top: 12px; }

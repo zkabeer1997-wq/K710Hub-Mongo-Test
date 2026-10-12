@@ -9,16 +9,20 @@ import { sanitizeLoadoutSave } from '../../../../lib/loadoutSave.mjs';
 
 // Saves a reviewed screenshot scan (or any board change) into the signed-in member's own power profile, so the
 // tools and calculators start from it. Only governor_gear and charms are written; every other profile field is
-// left alone. The scan image is never sent here. Corrections (what the reader said vs what the player chose)
+// left alone. `source: 'dragon'` (scan used on the Flamedragon form) follows that form's gate instead of the Power Profile's. The scan image is never sent here. Corrections (what the reader said vs what the player chose)
 // are kept per member in scan_corrections: they are how the reader gets measured and improved.
 export async function POST(request) {
   const session = await readMemberSession(request);
   if (!session) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
-  const gateCheck = await checkFormOpen('lead');
-  if (!gateCheck.open) return NextResponse.json({ error: gateCheck.error }, { status: 403 });
 
   let body;
-  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }); }
+  let unreadable = false;
+  try { body = await request.json(); } catch { unreadable = true; }
+  // Which form the scan was used on decides the gate: the Power Profile ('lead', the default for anything else)
+  // or the Flamedragon Tyrant form ('dragon'), whose scan must keep working while the Power Profile is closed.
+  const gateCheck = await checkFormOpen(body && typeof body === 'object' && body.source === 'dragon' ? 'dragon' : 'lead');
+  if (!gateCheck.open) return NextResponse.json({ error: gateCheck.error }, { status: 403 });
+  if (unreadable) return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   let clean;
   try { clean = sanitizeLoadoutSave(body); } catch (error) { return NextResponse.json({ error: error.message }, { status: 400 }); }
 

@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import IdentityFields from '../../components/member/IdentityFields';
 import TourLauncher from '../../components/tour/TourLauncher';
+import LoadoutEditor from '../../components/loadout/LoadoutEditor';
+import AdditionalPowerFields from '../../components/member/AdditionalPowerFields';
+import MysticTrialReadout from '../../components/member/MysticTrialReadout';
+import FormErrorSummary from '../../components/FormErrorSummary';
+import { useT } from '../../components/i18n/LanguageProvider';
 import { HeroRosterPicker, TroopLevelFields, troopFieldId } from '../../components/member/TroopHeroFields';
 import { TROOP_FIELD_KEYS, troopFieldErrors } from '../../lib/kvkAvailability.mjs';
 import {
@@ -10,11 +15,6 @@ import {
   AVAILABILITY_OPTIONS,
   VOICE_CHAT_OPTIONS,
   AUTO_HELP_OPTIONS,
-  CHARM_SLOTS,
-  CHARM_LEVEL_OPTIONS,
-  GOVERNOR_GEAR_SLOTS,
-  GOVERNOR_GEAR_OPTIONS,
-  POWER_PROFILE_FIELDS,
   blankCharmSelections,
   blankGovernorGearSelections,
   parseCharmSelections,
@@ -22,6 +22,7 @@ import {
   serializeCharmSelections,
   serializeGovernorGearSelections,
 } from '../../lib/flamedragonForm.mjs';
+import { POWER_NUMBER_KEYS, displayPowerNumber, powerNumberErrors } from '../../lib/powerProfiles.mjs';
 import { useAllianceTags } from '../../lib/useAllianceTags';
 import { withCurrentTag } from '../../lib/allianceTags.mjs';
 import { useFormFieldMeta } from '../../lib/useFormFieldMeta';
@@ -29,6 +30,7 @@ import { refreshMemberFormStatus } from '../../lib/useMemberFormStatus';
 
 function FlamedragonForm({ identity, intro, heroCatalog }) {
   const ALLIANCES = useAllianceTags();
+  const t = useT();
   const { intro: fieldMetaIntro } = useFormFieldMeta('dragon');
   const [form, setForm] = useState({
     name: identity?.name || '',
@@ -44,7 +46,6 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
     governor_gear: '',
     pet_power: '',
     masters_power: '',
-    mystic_trial_score: '',
     availability: '',
     voice_chat: '',
     auto_help: '',
@@ -54,6 +55,12 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
   const [heroes, setHeroes] = useState([]);
   const [charms, setCharms] = useState(blankCharmSelections());
   const [governorGear, setGovernorGear] = useState(blankGovernorGearSelections());
+  // Mystic Trial is read-only: { value, source: 'login' | 'saved' | 'none' } from GET /api/flamedragon.
+  const [mystic, setMystic] = useState({ value: '', source: 'none' });
+  const [powerFromProfile, setPowerFromProfile] = useState(false);
+  const [scanSaveMsg, setScanSaveMsg] = useState('');
+  const [powerErrors, setPowerErrors] = useState([]);
+  const [errorSignal, setErrorSignal] = useState(0);
   const [onFile, setOnFile] = useState(null);
   const [status, setStatus] = useState('');
   const [isError, setIsError] = useState(false);
@@ -77,6 +84,37 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
       setForm((currentForm) => ({ ...currentForm, governor_gear: serializeGovernorGearSelections(next) }));
       return next;
     });
+  }
+
+  function updatePower(key, value) {
+    updateField(key, value);
+    setPowerErrors((current) => (current.some((e) => e.key === key) ? current.filter((e) => e.key !== key) : current));
+  }
+
+  function clearLoadout() {
+    setGovernorGear(blankGovernorGearSelections());
+    setCharms(blankCharmSelections());
+    setForm((current) => ({ ...current, governor_gear: '', charms: '' }));
+  }
+
+  // "Use these values" on the scan review: the reviewed gear and charms go straight onto the member's Power
+  // Profile too (the same save the Power Profile uses, under this form's open/closed switch), and the
+  // corrections are kept for improving the reader. The screenshot itself never leaves the browser.
+  async function saveScanned({ corrections = [], gear = {}, charms: nextCharms = {} } = {}) {
+    const gearStr = serializeGovernorGearSelections({ ...governorGear, ...gear });
+    const charmStr = serializeCharmSelections({ ...charms, ...nextCharms });
+    setScanSaveMsg(t('dragon.power.scanSaving'));
+    try {
+      const response = await fetch('/api/power-profile/loadout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'dragon', governor_gear: gearStr, charms: charmStr, corrections }),
+      });
+      const result = await response.json().catch(() => ({}));
+      setScanSaveMsg(response.ok ? t('dragon.power.scanSaved') : (result.error || t('dragon.power.scanFailed')));
+    } catch {
+      setScanSaveMsg(t('dragon.power.scanFailed'));
+    }
   }
 
   function toggleHero(hero) {
@@ -117,15 +155,31 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
         archer_tg: r.archer_tg || '',
         charms: serializeCharmSelections(charmSelections) || r.charms || '',
         governor_gear: serializeGovernorGearSelections(gearSelections) || r.governor_gear || '',
-        pet_power: r.pet_power || '',
-        masters_power: r.masters_power || '',
-        mystic_trial_score: r.mystic_trial_score || '',
+        pet_power: displayPowerNumber(r.pet_power || ''),
+        masters_power: displayPowerNumber(r.masters_power || ''),
         availability: r.availability || '',
         voice_chat: r.voice_chat || '',
         auto_help: r.auto_help || '',
       }));
     } else {
       setOnFile(null);
+    }
+    if (result.mystic) setMystic(result.mystic);
+    // Gear, charms, Pet and Masters Power are shared with the Power Profile: start from whichever was saved last.
+    const p = result.power;
+    if (p && (p.governor_gear || p.charms || p.pet_power || p.masters_power)) {
+      const gearSelections = parseGovernorGearSelections(p.governor_gear);
+      const charmSelections = parseCharmSelections(p.charms);
+      setGovernorGear(gearSelections);
+      setCharms(charmSelections);
+      setPowerFromProfile(p.from === 'profile');
+      setForm((current) => ({
+        ...current,
+        governor_gear: serializeGovernorGearSelections(gearSelections),
+        charms: serializeCharmSelections(charmSelections),
+        pet_power: displayPowerNumber(p.pet_power),
+        masters_power: displayPowerNumber(p.masters_power),
+      }));
     }
   }
 
@@ -153,6 +207,13 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
       document.getElementById(troopFieldId(firstInvalid))?.focus();
       return;
     }
+    // Pet / Masters Power follow the Power Profile rule; flag a bad number on its own box and focus it.
+    const numberProblems = powerNumberErrors(form).map(({ key, message }) => ({ id: `fd-${key}`, key, message }));
+    setPowerErrors(numberProblems);
+    if (numberProblems.length) {
+      setErrorSignal((n) => n + 1); // the error summary takes focus; each entry links to its box
+      return;
+    }
     setLoading(true);
     const response = await fetch('/api/flamedragon', {
       method: 'POST',
@@ -162,11 +223,19 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
     const result = await response.json();
     setLoading(false);
     if (!response.ok) {
+      if (POWER_NUMBER_KEYS.includes(result.field)) {
+        // The server disagreed with one of the number boxes: show it on that box, like the local check.
+        setPowerErrors([{ id: `fd-${result.field}`, key: result.field, message: result.error }]);
+        setErrorSignal((n) => n + 1);
+        return;
+      }
       setIsError(true);
       setStatus(result.error || 'Could not save your Flamedragon form.');
       return;
     }
     setIsError(false);
+    setPowerErrors([]);
+    setPowerFromProfile(false);
     setOnFile(result.record);
     refreshMemberFormStatus();
     setStatus(result.status === 'created' ? 'Submitted! Your entry has been created.' : 'Updated! Your entry has been saved.');
@@ -223,48 +292,21 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
           </section>
 
           <section className="troop-section public-section">
-            <div className="section-title-row" data-tour="dragon-power"><span>Power data</span><h3>Charms, Gear and Power</h3><p>Set your charm levels, governor gear, and power stats.</p></div>
-            <div className="power-field-grid">
-              <h4 className="power-subheader">Charm Levels</h4>
-              <div className="charm-grid">
-                {CHARM_SLOTS.map((slot) => (
-                  <label key={slot.key}>
-                    {slot.label}
-                    <select value={charms[slot.key]} onChange={(event) => updateCharm(slot.key, event.target.value)}>
-                      <option value="">Select level</option>
-                      {CHARM_LEVEL_OPTIONS.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-              <h4 className="power-subheader">Governor Gear</h4>
-              <div className="governor-gear-grid">
-                {GOVERNOR_GEAR_SLOTS.map((slot) => (
-                  <label key={slot.key}>
-                    {slot.label}
-                    <select value={governorGear[slot.key]} onChange={(event) => updateGovernorGear(slot.key, event.target.value)}>
-                      <option value="">Select gear</option>
-                      {GOVERNOR_GEAR_OPTIONS.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-              <h4 className="power-subheader">Power</h4>
-              {POWER_PROFILE_FIELDS.filter(field => field.key !== 'mystic_trial_score').map((field) => (
-                <label key={field.key}>
-                  {field.label}
-                  <input value={form[field.key]} onChange={(event) => updateField(field.key, event.target.value)} placeholder={field.label} />
-                </label>
-              ))}
-              <label>
-                Mystic Trial Total Score
-                <input value={form.mystic_trial_score} onChange={(event) => updateField('mystic_trial_score', event.target.value)} placeholder="e.g. 1500" />
-              </label>
-            </div>
+            <div className="section-title-row" data-tour="dragon-power"><span>Power data</span><h3>Charms, Gear and Power</h3><p>Scan a screenshot or tap the board to set your governor gear and charms, then add your Pet and Masters Power.</p></div>
+            <p className="power-shared-note">{t('dragon.power.shared')}</p>
+            {powerFromProfile && <p className="power-shared-note power-shared-note-fresh" role="status">{t('dragon.power.fromProfile')}</p>}
+            {scanSaveMsg && <p className="save-status-line" role="status" aria-live="polite">{scanSaveMsg}</p>}
+            <LoadoutEditor
+              gear={governorGear}
+              charms={charms}
+              onGearChange={updateGovernorGear}
+              onCharmChange={updateCharm}
+              onClear={clearLoadout}
+              onScanApplied={saveScanned}
+            />
+            <AdditionalPowerFields idPrefix="fd" values={form} onChange={updatePower} errors={powerErrors} />
+            <div className="member-identity power-mystic-row"><MysticTrialReadout mystic={mystic} /></div>
+            <FormErrorSummary errors={powerErrors} focusSignal={errorSignal} id="form-error-summary-power" />
           </section>
           <section className="troop-section public-section" data-tour="dragon-timing">
             <div className="section-title-row"><span>Timing</span><h3>Battle Availability</h3><p>Select the window rally planners should count on.</p></div>
