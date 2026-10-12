@@ -5,13 +5,15 @@ import { useT } from '../../components/i18n/LanguageProvider';
 import IdentityFields from '../../components/member/IdentityFields';
 import PageHero from '../../components/ui/PageHero';
 import LoadoutEditor from '../../components/loadout/LoadoutEditor';
+import AdditionalPowerFields from '../../components/member/AdditionalPowerFields';
 import '../../components/member/easy-view-fixes.css';
 import {
 POWER_NUMBER_KEYS,
+formatCount,
+mysticNoteKey,
 POWER_PROFILE_FIELDS,
 blankCharmSelections,
 blankGovernorGearSelections,
-checkPowerNumber,
 displayPowerNumber,
 powerNumberErrors,
 parseCharmSelections,
@@ -29,9 +31,6 @@ import { completionText, reviewLines } from '../../lib/loadout.mjs';
 import { draftKey, mergeDraft, parseDraft, serializeDraft } from '../../lib/wizardState.mjs';
 
 const DRAFT_KEY = draftKey('power-profile');
-
-// Same grouping the member dashboard uses for the Mystic Trial figure, so the two always read the same.
-const formatCount = (value) => (value == null || value === '' || Number.isNaN(Number(value)) ? String(value || '') : new Intl.NumberFormat().format(Number(value)));
 
 // Draft selections (slot -> value) over the saved ones: only non-blank draft values replace them.
 function mergeNonBlank(saved, draft) {
@@ -180,12 +179,6 @@ function PowerProfileForm({ identity, intro }) {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => (current.some((e) => e.key === key) ? current.filter((e) => e.key !== key) : current));
     setDirty(true);
-  }
-
-  // Pet / Masters Power: thousands separators once the box is left and the number is valid.
-  function formatPowerOnBlur(key) {
-    const checked = checkPowerNumber(key, form[key]);
-    if (checked.ok && !checked.empty) setForm((current) => ({ ...current, [key]: displayPowerNumber(checked.digits) }));
   }
 
   const errorFor = (key) => errors.find((e) => e.key === key);
@@ -439,46 +432,7 @@ function PowerProfileForm({ identity, intro }) {
               onClear={clearLoadout}
               onScanApplied={saveScanned}
             />
-            <div className="member-identity" data-tour="power-extra">
-              <div className="member-identity-field">
-                <label>
-                  <span className="member-identity-label">{t('profile.pet.label')}</span>
-                  <input
-                    {...fieldProps('pet_power')}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    maxLength={11}
-                    placeholder={t('profile.number.placeholder')}
-                    value={form.pet_power}
-                    onChange={(e) => updateField('pet_power', e.target.value)}
-                    onBlur={() => formatPowerOnBlur('pet_power')}
-                    aria-describedby={['pp-pet_power-hint', fieldProps('pet_power')['aria-describedby']].filter(Boolean).join(' ')}
-                  />
-                </label>
-                <p className="member-identity-hint" id="pp-pet_power-hint">{t('profile.number.hint')}</p>
-                {fieldError('pet_power')}
-              </div>
-              <div className="member-identity-field">
-                <label>
-                  <span className="member-identity-label">{t('profile.masters.label')}</span>
-                  <input
-                    {...fieldProps('masters_power')}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    maxLength={11}
-                    placeholder={t('profile.number.placeholder')}
-                    value={form.masters_power}
-                    onChange={(e) => updateField('masters_power', e.target.value)}
-                    onBlur={() => formatPowerOnBlur('masters_power')}
-                    aria-describedby={['pp-masters_power-hint', fieldProps('masters_power')['aria-describedby']].filter(Boolean).join(' ')}
-                  />
-                </label>
-                <p className="member-identity-hint" id="pp-masters_power-hint">{t('profile.number.hint')}</p>
-                {fieldError('masters_power')}
-              </div>
-            </div>
+            <AdditionalPowerFields tourAnchor="power-extra" idPrefix="pp" values={form} onChange={updateField} errors={errors} />
             <FormErrorSummary errors={errors} focusSignal={errorSignal} id="form-error-summary-gear" />
             <div className="wizard-nav">
               <button type="button" className="wizard-back" onClick={() => goToStep(0)}>Back</button>
@@ -526,7 +480,7 @@ function PowerProfileForm({ identity, intro }) {
                     <dd>{mystic.value ? formatCount(mystic.value) : t('profile.mystic.none')}</dd>
                   </div>
                 </dl>
-                <p className="wizard-review-note">{mystic.source === 'login' ? t('profile.mystic.login') : mystic.source === 'saved' ? t('profile.mystic.saved') : t('profile.mystic.missing')}</p>
+                <p className="wizard-review-note">{t(mysticNoteKey(mystic.source))}</p>
                 <button type="button" className="wizard-review-edit" onClick={() => goToStep(1)}>Edit</button>
               </div>
             </div>
