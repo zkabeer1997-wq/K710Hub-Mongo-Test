@@ -305,7 +305,7 @@ function FlamedragonForm({ identity, intro, heroCatalog }) {
               onScanApplied={saveScanned}
             />
             <AdditionalPowerFields idPrefix="fd" values={form} onChange={updatePower} errors={powerErrors} />
-            <div className="member-identity"><MysticTrialReadout mystic={mystic} /></div>
+            <div className="member-identity power-mystic-row"><MysticTrialReadout mystic={mystic} /></div>
             <FormErrorSummary errors={powerErrors} focusSignal={errorSignal} id="form-error-summary-power" />
           </section>
           <section className="troop-section public-section" data-tour="dragon-timing">
