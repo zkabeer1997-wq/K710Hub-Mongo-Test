@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-11T13:38:21.925Z"
+    "generatedAt": "2026-10-12T16:46:26.757Z"
   },
   "strings": {
     "translate.working": "Çevriliyor…",
@@ -225,7 +225,7 @@
     "tour.dragon.4.title": "Kahraman kadrosu",
     "tour.dragon.4.body": "Bu savaş için kullanabileceğiniz kahramanları seçin.",
     "tour.dragon.5.title": "Charms , ekipman ve güç",
-    "tour.dragon.5.body": "Büyü seviyelerinizi ve Governor Gear ayarlayın, ardından güç numaralarınızı ve Mystic Trial toplam puanınızı girin.",
+    "tour.dragon.5.body": "Governor Gear ve Büyü seviyelerinizi ayarlamak için bir ekran görüntüsü tarayın veya panoya dokunun, ardından Evcil Hayvanınızın ve Masters Gücünü girin. Mystic Trial toplamınız oturum açma bilgilerinizden okunur. Bu bilgiler Power Profile de kaydedilir, bu nedenle bunları yalnızca bir kez girmeniz yeterlidir.",
     "tour.dragon.6.title": "Müsaitlik ve iki soru",
     "tour.dragon.6.body": "Ralli planlamacılarının güvenebileceği pencereyi seçin. Bunun altında iki kısa soru var: Savaş sırasında sesli sohbet yapabiliyor musunuz ve Otomatik Yardım özelliğiniz var mı?",
     "tour.dragon.7.title": "Formunuzu gönderin",
@@ -417,6 +417,11 @@
     "profile.mystic.login": "Kingshot oturum açma bilgilerinizden",
     "profile.mystic.saved": "Şu anda Kingshot oturumunuzdan erişilemiyor. Kayıtlı son değer gösteriliyor.",
     "profile.mystic.missing": "Henüz mevcut değil. Kingshot hesabınızla giriş yaptıktan ve oyun bunu paylaştıktan sonra burada görünecektir.",
-    "profile.mystic.none": "Müsait değil"
+    "profile.mystic.none": "Müsait değil",
+    "dragon.power.shared": "Bu Power Profile Profile'ınıza da kaydedilir, bu nedenle yalnızca bir kez girmeniz yeterlidir.",
+    "dragon.power.fromProfile": "Bu bilgileri, son Flamedragon Tyrant cevabınızdan daha yeni ayrıntılar içeren Power Profile doldurduk.",
+    "dragon.power.scanSaving": "Ekipmanlarınızı ve tılsımlarınızı Power Profile kaydetme...",
+    "dragon.power.scanSaved": "Power Profile de kaydedildi. Flamedragon Tyrant formunuzu göndermek için Gönder'e basın.",
+    "dragon.power.scanFailed": "Şu anda Power Profile Profile'ınıza kaydedilemedi. Değerleriniz panoda: formu gönderdiğinizde kaydedilirler."
   }
 }

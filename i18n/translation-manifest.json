@@ -201,7 +201,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -409,7 +409,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "tl": {
     "translate.working": "ae47b9e3823e",
@@ -613,7 +618,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -821,7 +826,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "ar": {
     "translate.working": "ae47b9e3823e",
@@ -1025,7 +1035,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -1233,7 +1243,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "es": {
     "translate.working": "ae47b9e3823e",
@@ -1437,7 +1452,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -1645,7 +1660,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "fr": {
     "translate.working": "ae47b9e3823e",
@@ -1849,7 +1869,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -2057,7 +2077,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "zh": {
     "translate.working": "ae47b9e3823e",
@@ -2261,7 +2286,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -2469,7 +2494,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "tr": {
     "translate.working": "ae47b9e3823e",
@@ -2673,7 +2703,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -2881,7 +2911,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "hi": {
     "translate.working": "ae47b9e3823e",
@@ -3085,7 +3120,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -3293,7 +3328,12 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   },
   "ja": {
     "translate.working": "ae47b9e3823e",
@@ -3497,7 +3537,7 @@
     "tour.dragon.4.title": "8cae2da83940",
     "tour.dragon.4.body": "b96692da6eb8",
     "tour.dragon.5.title": "4c5f3dc6159a",
-    "tour.dragon.5.body": "d39505c628a6",
+    "tour.dragon.5.body": "60852c2a9377",
     "tour.dragon.6.title": "360dfed25512",
     "tour.dragon.6.body": "50435391d3d3",
     "tour.dragon.7.title": "d9eff9262e86",
@@ -3705,6 +3745,11 @@
     "profile.mystic.login": "817926d85e5a",
     "profile.mystic.saved": "2ad45db2f0c1",
     "profile.mystic.missing": "2049279264c3",
-    "profile.mystic.none": "d1a17af19f53"
+    "profile.mystic.none": "d1a17af19f53",
+    "dragon.power.shared": "c55b60d1d9cc",
+    "dragon.power.fromProfile": "1d5c687b650d",
+    "dragon.power.scanSaving": "6a9d920cf40f",
+    "dragon.power.scanSaved": "21e348753023",
+    "dragon.power.scanFailed": "292ef22c2e67"
   }
 }

@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-11T13:38:22.136Z"
+    "generatedAt": "2026-10-12T16:46:26.963Z"
   },
   "strings": {
     "translate.working": "अनुवाद जारी है…",
@@ -225,7 +225,7 @@
     "tour.dragon.4.title": "हीरो रोस्टर",
     "tour.dragon.4.body": "इस लड़ाई के लिए आपके पास जो भी हीरो उपलब्ध हैं, उन्हें चुनें।",
     "tour.dragon.5.title": "Charms , उपकरण और शक्ति",
-    "tour.dragon.5.body": "अपने चार्म लेवल और Governor Gear सेट करें, फिर अपनी पावर संख्या और अपने Mystic Trial कुल स्कोर टाइप करें।",
+    "tour.dragon.5.body": "अपने Governor Gear और चार्म लेवल सेट करने के लिए स्क्रीनशॉट स्कैन करें या बोर्ड पर टैप करें, फिर अपने पालतू जानवर और Masters पावर को टाइप करें। आपके साइन-इन से आपके Mystic Trial कुल स्कोर लिया जाएगा। ये विवरण आपके Power Profile में भी सेव हो जाते हैं, इसलिए आपको इन्हें केवल एक बार ही दर्ज करना होगा।",
     "tour.dragon.6.title": "उपलब्धता और दो प्रश्न",
     "tour.dragon.6.body": "रैली आयोजकों को जिस विंडो पर भरोसा करना चाहिए, उसे चुनें। इसके नीचे दो छोटे प्रश्न दिए गए हैं: क्या आप युद्ध के दौरान वॉइस चैट कर सकते हैं, और क्या आपके पास ऑटो हेल्प है?",
     "tour.dragon.7.title": "अपना फॉर्म जमा करें",
@@ -417,6 +417,11 @@
     "profile.mystic.login": "आपके Kingshot साइन-इन से",
     "profile.mystic.saved": "यह सुविधा आपके Kingshot साइन-इन से अभी उपलब्ध नहीं है। फ़ाइल में मौजूद अंतिम मान दिखाया जा रहा है।",
     "profile.mystic.missing": "अभी उपलब्ध नहीं है। Kingshot से साइन इन करने के बाद यह यहाँ दिखाई देगा और गेम इसे साझा करेगा।",
-    "profile.mystic.none": "उपलब्ध नहीं है"
+    "profile.mystic.none": "उपलब्ध नहीं है",
+    "dragon.power.shared": "यह आपके Power Profile में भी सेव हो जाता है, इसलिए आपको इसे केवल एक बार ही दर्ज करना होगा।",
+    "dragon.power.fromProfile": "हमने ये जानकारी आपकी Power Profile से भरी है, जिसमें आपके पिछले Flamedragon Tyrant जवाब की तुलना में अधिक नई जानकारी है।",
+    "dragon.power.scanSaving": "अपने गियर और चार्म्स को अपने Power Profile में सेव करना...",
+    "dragon.power.scanSaved": "यह आपके Power Profile में भी सेव हो गया है। अपना Flamedragon Tyrant फॉर्म भेजने के लिए सबमिट बटन दबाएं।",
+    "dragon.power.scanFailed": "आपके Power Profile में अभी सहेजा नहीं जा सका। आपके मान बोर्ड पर मौजूद हैं: फॉर्म सबमिट करने पर वे सहेजे जाते हैं।"
   }
 }

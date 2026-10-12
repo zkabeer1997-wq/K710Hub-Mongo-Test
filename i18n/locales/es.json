@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-11T13:38:21.323Z"
+    "generatedAt": "2026-10-12T16:46:26.051Z"
   },
   "strings": {
     "translate.working": "Traductorio…",
@@ -225,7 +225,7 @@
     "tour.dragon.4.title": "Lista de héroes",
     "tour.dragon.4.body": "Selecciona los héroes que tienes disponibles para esta batalla.",
     "tour.dragon.5.title": "Charms , equipo y poder",
-    "tour.dragon.5.body": "Establece tus niveles de Encanto y Governor Gear , luego escribe tus números de poder y tu puntuación total Mystic Trial .",
+    "tour.dragon.5.body": "Escanea una captura de pantalla o toca el tablero para establecer tus niveles Governor Gear y Encanto, luego ingresa el Poder de tu Mascota y Masters . El total de tu Mystic Trial se obtiene de tu inicio de sesión. Estos detalles también se guardan en tu Power Profile , así que solo los ingresas una vez.",
     "tour.dragon.6.title": "Disponibilidad y dos preguntas",
     "tour.dragon.6.body": "Elige la ventana que los organizadores de rally deberían tener en cuenta. Debajo hay dos preguntas breves: ¿puedes usar el chat de voz durante la batalla? y ¿tienes la función de Ayuda Automática?",
     "tour.dragon.7.title": "Envíe su formulario",
@@ -417,6 +417,11 @@
     "profile.mystic.login": "Desde tu inicio de sesión en Kingshot",
     "profile.mystic.saved": "No está disponible en tu cuenta Kingshot en este momento. Se muestra el último valor registrado.",
     "profile.mystic.missing": "Aún no está disponible. Aparecerá aquí después de que inicies sesión con Kingshot y el juego lo comparta.",
-    "profile.mystic.none": "No disponible"
+    "profile.mystic.none": "No disponible",
+    "dragon.power.shared": "También se guarda en tu Power Profile , así que solo tendrás que introducirlo una vez.",
+    "dragon.power.fromProfile": "Hemos rellenado estos campos a partir de tu Power Profile , que contiene información más reciente que tu última respuesta Flamedragon Tyrant .",
+    "dragon.power.scanSaving": "Guarda tu equipo y amuletos en tu Power Profile ...",
+    "dragon.power.scanSaved": "También se guardará en tu Power Profile . Pulsa Enviar para enviar tu formulario Flamedragon Tyrant .",
+    "dragon.power.scanFailed": "No se pudo guardar en tu Power Profile en este momento. Tus valores están en el tablero: se guardan cuando envías el formulario."
   }
 }

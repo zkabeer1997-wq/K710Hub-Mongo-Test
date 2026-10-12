@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-11T13:38:20.822Z"
+    "generatedAt": "2026-10-12T16:46:25.651Z"
   },
   "strings": {
     "translate.working": "Nagsasalin…",
@@ -225,7 +225,7 @@
     "tour.dragon.4.title": "Listahan ng mga bayani",
     "tour.dragon.4.body": "Piliin ang mga bayaning mayroon ka para sa labanang ito.",
     "tour.dragon.5.title": "Charms , kagamitan at kapangyarihan",
-    "tour.dragon.5.body": "Itakda ang iyong mga Charm level at Governor Gear , pagkatapos ay i-type ang iyong mga power number at ang iyong kabuuang iskor Mystic Trial .",
+    "tour.dragon.5.body": "I-scan ang screenshot o i-tap ang board para itakda ang iyong mga antas Governor Gear at Charm, pagkatapos ay i-type ang iyong Pet at Masters Power. Ang kabuuang Mystic Trial mo ay babasahin mula sa iyong pag-sign-in. Ang mga detalyeng ito ay sine-save din sa iyong Power Profile , kaya isang beses mo lang ilalagay ang mga ito.",
     "tour.dragon.6.title": "Availability at dalawang tanong",
     "tour.dragon.6.body": "Piliin ang dapat asahan ng mga tagaplano ng window rally. Sa ibaba ay may dalawang maiikling tanong: maaari ka bang mag-voice chat habang nasa labanan, at mayroon ka bang Auto Help.",
     "tour.dragon.7.title": "Isumite ang iyong form",
@@ -417,6 +417,11 @@
     "profile.mystic.login": "Mula sa iyong pag-sign in Kingshot",
     "profile.mystic.saved": "Hindi available sa iyong pag-sign-in Kingshot sa ngayon. Ipinapakita ang huling halaga na nasa file.",
     "profile.mystic.missing": "Hindi pa available. Lumalabas ito rito pagkatapos mong mag-sign in gamit ang Kingshot at ibinahagi ito ng laro.",
-    "profile.mystic.none": "Hindi magagamit"
+    "profile.mystic.none": "Hindi magagamit",
+    "dragon.power.shared": "Naka-save na rin sa Power Profile mo, kaya isang beses mo lang ito ilalagay.",
+    "dragon.power.fromProfile": "Pinunan namin ang mga ito mula sa iyong Power Profile , na may mas bagong mga detalye kaysa sa iyong huling sagot Flamedragon Tyrant .",
+    "dragon.power.scanSaving": "Sine-save ang iyong mga gamit at charms sa iyong Power Profile ...",
+    "dragon.power.scanSaved": "Na-save na rin sa iyong Power Profile . Pindutin ang Submit para ipadala ang iyong Flamedragon Tyrant form.",
+    "dragon.power.scanFailed": "Hindi ma-save sa iyong Power Profile ngayon. Nasa board ang iyong mga value: sine-save ang mga ito kapag isinumite mo ang form."
   }
 }

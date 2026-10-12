@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-11T13:38:21.012Z"
+    "generatedAt": "2026-10-12T16:46:25.861Z"
   },
   "strings": {
     "translate.working": "جارٍ الترجمة...",
@@ -225,7 +225,7 @@
     "tour.dragon.4.title": "قائمة الأبطال",
     "tour.dragon.4.body": "اختر الأبطال المتاحين لديك لهذه المعركة.",
     "tour.dragon.5.title": "Charms والمعدات والقوة",
-    "tour.dragon.5.body": "حدد مستويات سحرك ومعدات Governor Gear ، ثم اكتب أرقام قوتك ومجموع نقاطك Mystic Trial .",
+    "tour.dragon.5.body": "امسح لقطة شاشة أو انقر على اللوحة لضبط مستويات Governor Gear والتعاويذ، ثم أدخل قوة حيوانك الأليف وقوة Masters . سيتم قراءة إجمالي Mystic Trial من بيانات تسجيل دخولك. تُحفظ هذه التفاصيل في Power Profile أيضًا، لذا لن تحتاج إلى إدخالها إلا مرة واحدة.",
     "tour.dragon.6.title": "التوافر وسؤالان",
     "tour.dragon.6.body": "اختر الفترة الزمنية التي يجب على منظمي التجمعات الاعتماد عليها. ستجد أدناه سؤالين قصيرين: هل يمكنك إجراء محادثة صوتية أثناء المعركة، وهل لديك خاصية المساعدة التلقائية؟",
     "tour.dragon.7.title": "أرسل النموذج الخاص بك",
@@ -417,6 +417,11 @@
     "profile.mystic.login": "من خلال تسجيل الدخول إلى Kingshot",
     "profile.mystic.saved": "غير متاح من خلال تسجيل دخولك إلى Kingshot الآن. يتم عرض آخر قيمة مسجلة.",
     "profile.mystic.missing": "غير متوفر بعد. سيظهر هنا بعد تسجيل الدخول باستخدام Kingshot ومشاركة اللعبة له.",
-    "profile.mystic.none": "غير متوفر"
+    "profile.mystic.none": "غير متوفر",
+    "dragon.power.shared": "يتم حفظ هذا في Power Profile الخاص بك أيضًا، لذلك لن تقوم بإدخاله إلا مرة واحدة.",
+    "dragon.power.fromProfile": "لقد قمنا بتعبئة هذه البيانات من Power Profile الخاص بك، والذي يحتوي على تفاصيل أحدث من إجابتك الأخيرة عن Flamedragon Tyrant .",
+    "dragon.power.scanSaving": "حفظ معداتك وسحرك في Power Profile الخاص بك ...",
+    "dragon.power.scanSaved": "تم حفظها في Power Profile الخاص بك أيضًا. اضغط على \"إرسال\" لإرسال نموذج Flamedragon Tyrant .",
+    "dragon.power.scanFailed": "تعذر حفظ البيانات في Power Profile الخاص بك الآن. بياناتك موجودة على اللوحة: يتم حفظها عند إرسال النموذج."
   }
 }

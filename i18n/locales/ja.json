@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-11T13:38:22.372Z"
+    "generatedAt": "2026-10-12T16:46:27.224Z"
   },
   "strings": {
     "translate.working": "翻訳中…",
@@ -225,7 +225,7 @@
     "tour.dragon.4.title": "ヒーロー一覧",
     "tour.dragon.4.body": "この戦闘で使用可能なヒーローを選択してください。",
     "tour.dragon.5.title": "Charms 、装備、そして力",
-    "tour.dragon.5.body": "魅力レベルとGovernor Gearを設定し、次にパワー数値とMystic Trial合計スコアを入力します。",
+    "tour.dragon.5.body": "スクリーンショットをスキャンするか、ボードをタップしてGovernor Gearとチャームのレベルを設定し、ペットとMastersパワーを入力してください。 Mystic Trialの合計はサインイン情報から読み込まれます。これらの情報はPower Profileにも保存されるため、一度入力すれば済みます。",
     "tour.dragon.6.title": "空き状況と2つの質問",
     "tour.dragon.6.body": "ラリーの企画者が頼りにすべきウィンドウを選択してください。その下に、2つの簡単な質問があります。戦闘中にボイスチャットは可能ですか？また、オートヘルプは利用できますか？",
     "tour.dragon.7.title": "フォームを送信してください",
@@ -417,6 +417,11 @@
     "profile.mystic.login": "Kingshotサインイン画面から",
     "profile.mystic.saved": "現在、 Kingshotログイン画面からはご利用いただけません。登録されている最新の値を表示しています。",
     "profile.mystic.missing": "まだ利用できません。Kingshot Kingshotサインインしてゲームが共有すると、ここに表示されます。",
-    "profile.mystic.none": "利用不可"
+    "profile.mystic.none": "利用不可",
+    "dragon.power.shared": "Power Profileにも保存されるので、一度入力すれば済みます。",
+    "dragon.power.fromProfile": "これらの情報は、前回のFlamedragon Tyrantの回答よりも新しい情報が記載されている、あなたのPower Profileから取得しました。",
+    "dragon.power.scanSaving": "装備やチャームをPower Profileに保存する...",
+    "dragon.power.scanSaved": "Power Profileにも保存されました。送信ボタンを押して、 Flamedragon Tyrantフォームを送信してください。",
+    "dragon.power.scanFailed": "現在、 Power Profileに保存できません。値はボード上に表示されています。フォームを送信すると保存されます。"
   }
 }

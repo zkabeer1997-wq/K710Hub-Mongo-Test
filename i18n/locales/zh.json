@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-11T13:38:21.727Z"
+    "generatedAt": "2026-10-12T16:46:26.583Z"
   },
   "strings": {
     "translate.working": "正在翻译……",
@@ -225,7 +225,7 @@
     "tour.dragon.4.title": "英雄名册",
     "tour.dragon.4.body": "选择你可用于这场战斗的英雄。",
     "tour.dragon.5.title": "Charms 、装备和力量",
-    "tour.dragon.5.body": "设置你的魅力等级和Governor Gear ，然后输入你的力量数值和你的Mystic Trial总分。",
+    "tour.dragon.5.body": "扫描屏幕截图或点击面板设置您的Governor Gear和护符等级，然后输入您的宠物和Masters战力。您的Mystic Trial总战力将从您的登录信息中读取。这些信息也会保存到您的Power Profile中，因此您只需输入一次。",
     "tour.dragon.6.title": "可用性和两个问题",
     "tour.dragon.6.body": "选择集结策划者应该依赖的窗口。下方有两个简短的问题：战斗期间是否可以进行语音聊天，以及是否提供自动帮助。",
     "tour.dragon.7.title": "提交表格",
@@ -417,6 +417,11 @@
     "profile.mystic.login": "从您的Kingshot登录",
     "profile.mystic.saved": "目前无法通过您的Kingshot登录账户访问。显示的是存档中的最新值。",
     "profile.mystic.missing": "暂不可用。您使用Kingshot登录后，游戏会将其共享，之后它才会出现在这里。",
-    "profile.mystic.none": "无法使用"
+    "profile.mystic.none": "无法使用",
+    "dragon.power.shared": "已保存到您的Power Profile中，因此您只需输入一次。",
+    "dragon.power.fromProfile": "我们根据您的Power Profile填写了这些信息，其中包含比您上次Flamedragon Tyrant回答更新的详细信息。",
+    "dragon.power.scanSaving": "将您的装备和饰品保存到您的Power Profile中……",
+    "dragon.power.scanSaved": "已保存至您的Power Profile 。点击“提交”按钮发送您的Flamedragon Tyrant申请表。",
+    "dragon.power.scanFailed": "目前无法保存到您的Power Profile 。您的数值已保存：提交表单后即可保存。"
   }
 }
