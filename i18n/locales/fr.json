@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-12T16:46:26.268Z"
+    "generatedAt": "2026-10-14T17:47:15.838Z"
   },
   "strings": {
     "translate.working": "Traduction…",
@@ -422,6 +422,31 @@
     "dragon.power.fromProfile": "Nous avons rempli ces champs à partir de votre Power Profile , qui contient des informations plus récentes que votre dernière réponse Flamedragon Tyrant .",
     "dragon.power.scanSaving": "Sauvegardez votre équipement et vos charmes dans votre Power Profile ...",
     "dragon.power.scanSaved": "Enregistré également dans votre Power Profile . Appuyez sur Soumettre pour envoyer votre formulaire Flamedragon Tyrant .",
-    "dragon.power.scanFailed": "Impossible d'enregistrer vos données dans votre Power Profile pour le moment. Vos valeurs sont enregistrées : elles seront sauvegardées lors de la soumission du formulaire."
+    "dragon.power.scanFailed": "Impossible d'enregistrer vos données dans votre Power Profile pour le moment. Vos valeurs sont enregistrées : elles seront sauvegardées lors de la soumission du formulaire.",
+    "gift.title": "Récompenses Gift Code",
+    "gift.loading": "Chargement des codes cadeaux...",
+    "gift.intro": "Les codes cadeaux New Kingdom 710 sont automatiquement attribués. Si l'option d'utilisation automatique est activée, les codes sont ajoutés à votre compte sans aucune intervention de votre part. Vous pouvez également copier un code et l'utiliser manuellement.",
+    "gift.toggle.label": "Échanger automatiquement les nouveaux codes cadeaux Kingdom 710 sur mon compte",
+    "gift.toggle.hint": "Utilise votre identifiant de joueur {id} sur Kingdom 710 Vous pouvez désactiver cette fonction à tout moment.",
+    "gift.toggle.unavailable": "L'échange automatique n'a pas encore été activé par les administrateurs du royaume. Votre choix est enregistré et sera effectif dès qu'il le sera.",
+    "gift.failed": "Le jeu n'a pas pu vérifier votre identifiant de joueur ; l'échange automatique est donc suspendu pour votre compte. Veuillez contacter un administrateur pour obtenir de l'aide.",
+    "gift.saving": "Économie...",
+    "gift.state.on": "Le remboursement automatique est activé pour votre compte.",
+    "gift.state.off": "Le remboursement automatique est désactivé. Aucun remboursement n'est effectué pour vous.",
+    "gift.codes.heading": "Codes actifs",
+    "gift.codes.none": "Il n'y a actuellement aucun code cadeau actif.",
+    "gift.copy": "Copie",
+    "gift.copied": "Copié",
+    "gift.copy.aria": "Copier le code {code}",
+    "gift.result.redeemed": "Racheté",
+    "gift.result.alreadyHad": "Je l'avais déjà",
+    "gift.result.expired": "Expiré",
+    "gift.result.problem": "Impossible de rembourser",
+    "gift.result.waiting": "En attendant",
+    "gift.result.problemHint": "L'erreur « Impossible d'utiliser le code » indique un problème lié au joueur ou une tentative manquée. Vous pouvez réessayer manuellement sur le site de validation du code.",
+    "gift.manual": "Pour utiliser manuellement le code : copiez le code, ouvrez le site d’échange, puis saisissez votre identifiant de joueur et Kingdom 710 .",
+    "gift.siteLink": "Ouvrir le site de rachat",
+    "gift.error.load": "Impossible de charger vos codes cadeaux. Veuillez réessayer plus tard.",
+    "gift.error.save": "Impossible d'enregistrer votre choix. Veuillez réessayer."
   }
 }

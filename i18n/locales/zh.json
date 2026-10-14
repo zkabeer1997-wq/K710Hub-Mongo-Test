@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-12T16:46:26.583Z"
+    "generatedAt": "2026-10-14T17:47:16.102Z"
   },
   "strings": {
     "translate.working": "正在翻译……",
@@ -422,6 +422,31 @@
     "dragon.power.fromProfile": "我们根据您的Power Profile填写了这些信息，其中包含比您上次Flamedragon Tyrant回答更新的详细信息。",
     "dragon.power.scanSaving": "将您的装备和饰品保存到您的Power Profile中……",
     "dragon.power.scanSaved": "已保存至您的Power Profile 。点击“提交”按钮发送您的Flamedragon Tyrant申请表。",
-    "dragon.power.scanFailed": "目前无法保存到您的Power Profile 。您的数值已保存：提交表单后即可保存。"
+    "dragon.power.scanFailed": "目前无法保存到您的Power Profile 。您的数值已保存：提交表单后即可保存。",
+    "gift.title": "Gift Code奖励",
+    "gift.loading": "正在加载礼品码……",
+    "gift.intro": "新Kingdom 710礼品码会自动生成。如果您开启了自动兑换功能，礼品码将自动兑换到您的账户，无需您进行任何操作。您也可以复制礼品码并自行兑换。",
+    "gift.toggle.label": "自动为我的账号兑换新的Kingdom 710礼品码",
+    "gift.toggle.hint": "使用您在Kingdom 710上的玩家 ID {id} 。您可以随时关闭此功能。",
+    "gift.toggle.unavailable": "王国管理员尚未启用自动兑换功能。您的选择已保存，待管理员启用后即可生效。",
+    "gift.failed": "游戏无法验证您的玩家ID，因此您的账号自动兑换功能已暂停。请联系管理员寻求帮助。",
+    "gift.saving": "保存...",
+    "gift.state.on": "您的账户已开启自动兑换功能。",
+    "gift.state.off": "自动兑换功能已关闭。您无需进行任何兑换。",
+    "gift.codes.heading": "活动代码",
+    "gift.codes.none": "目前没有有效的礼品码。",
+    "gift.copy": "复制",
+    "gift.copied": "已复制",
+    "gift.copy.aria": "复制代码{code}",
+    "gift.result.redeemed": "已赎回",
+    "gift.result.alreadyHad": "已经有了",
+    "gift.result.expired": "已到期",
+    "gift.result.problem": "无法兑换",
+    "gift.result.waiting": "等待",
+    "gift.result.problemHint": "兑换失败表示玩家遇到问题或跳过了一次尝试。您可以尝试在兑换网站上手动输入该代码。",
+    "gift.manual": "手动兑换：复制代码，打开兑换网站，然后输入您的玩家 ID 和Kingdom 710 。",
+    "gift.siteLink": "打开兑换网站",
+    "gift.error.load": "礼品码加载失败，请稍后再试。",
+    "gift.error.save": "无法保存您的选择，请重试。"
   }
 }

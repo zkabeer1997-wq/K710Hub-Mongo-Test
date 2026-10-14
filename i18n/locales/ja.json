@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-12T16:46:27.224Z"
+    "generatedAt": "2026-10-14T17:47:16.807Z"
   },
   "strings": {
     "translate.working": "翻訳中…",
@@ -422,6 +422,31 @@
     "dragon.power.fromProfile": "これらの情報は、前回のFlamedragon Tyrantの回答よりも新しい情報が記載されている、あなたのPower Profileから取得しました。",
     "dragon.power.scanSaving": "装備やチャームをPower Profileに保存する...",
     "dragon.power.scanSaved": "Power Profileにも保存されました。送信ボタンを押して、 Flamedragon Tyrantフォームを送信してください。",
-    "dragon.power.scanFailed": "現在、 Power Profileに保存できません。値はボード上に表示されています。フォームを送信すると保存されます。"
+    "dragon.power.scanFailed": "現在、 Power Profileに保存できません。値はボード上に表示されています。フォームを送信すると保存されます。",
+    "gift.title": "Gift Code特典",
+    "gift.loading": "ギフトコードを読み込んでいます...",
+    "gift.intro": "New Kingdom 710ギフトコードは自動的に検出されます。自動引き換えが有効になっている場合、何も操作しなくてもアカウントに自動的に引き換えられます。また、コードをコピーして自分で引き換えることもできます。",
+    "gift.toggle.label": "私のアカウントに新しいKingdom 710ギフトコードを自動的に引き換える",
+    "gift.toggle.hint": "Kingdom 710であなたのプレイヤーID {id}を使用します。この機能はいつでもオフにできます。",
+    "gift.toggle.unavailable": "王国管理者によって自動引き換え機能がまだ有効化されていません。お客様の選択は保存されており、有効化された時点で有効になります。",
+    "gift.failed": "ゲーム側でプレイヤーIDを確認できなかったため、アカウントの自動引き換え処理が一時停止されました。管理者にお問い合わせください。",
+    "gift.saving": "保存中...",
+    "gift.state.on": "お客様のアカウントでは、自動引き換えが有効になっています。",
+    "gift.state.off": "自動交換はオフになっています。お客様のために交換されるものはありません。",
+    "gift.codes.heading": "有効なコード",
+    "gift.codes.none": "現在、有効なギフトコードはありません。",
+    "gift.copy": "コピー",
+    "gift.copied": "コピーしました",
+    "gift.copy.aria": "コードをコピー{code}",
+    "gift.result.redeemed": "贖われた",
+    "gift.result.alreadyHad": "既に持っていた",
+    "gift.result.expired": "期限切れ",
+    "gift.result.problem": "換金できませんでした",
+    "gift.result.waiting": "待っている",
+    "gift.result.problemHint": "引き換えできなかったということは、プレイヤー側の問題か、試行がスキップされたことを意味します。引き換えサイトで、そのコードを手動で試してみてください。",
+    "gift.manual": "手動で引き換えるには、コードをコピーし、引き換えサイトを開き、プレイヤーIDとKingdom 710を入力します。",
+    "gift.siteLink": "引き換えサイトを開く",
+    "gift.error.load": "ギフトコードを読み込めませんでした。しばらくしてからもう一度お試しください。",
+    "gift.error.save": "選択内容を保存できませんでした。もう一度お試しください。"
   }
 }

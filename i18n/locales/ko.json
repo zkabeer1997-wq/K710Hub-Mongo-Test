@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-12T16:46:25.404Z"
+    "generatedAt": "2026-10-14T17:47:14.853Z"
   },
   "strings": {
     "translate.working": "번역 중…",
@@ -422,6 +422,31 @@
     "dragon.power.fromProfile": "저희는 귀하의 Power Profile 에는 지난번 Flamedragon Tyrant 답변보다 최신 정보가 포함되어 있습니다.",
     "dragon.power.scanSaving": "장비와 장신구를 Power Profile 에 저장하는 방법...",
     "dragon.power.scanSaved": "Power Profile 에도 저장됩니다. 제출 버튼을 눌러 Flamedragon Tyrant 형태를 전송하세요.",
-    "dragon.power.scanFailed": "지금은 Power Profile 에 저장할 수 없습니다. 값은 보드에 표시되어 있으며, 양식을 제출하면 저장됩니다."
+    "dragon.power.scanFailed": "지금은 Power Profile 에 저장할 수 없습니다. 값은 보드에 표시되어 있으며, 양식을 제출하면 저장됩니다.",
+    "gift.title": "Gift Code 리워드",
+    "gift.loading": "선물 코드를 불러오는 중...",
+    "gift.intro": "뉴 Kingdom 710 기프트 코드는 자동으로 생성됩니다. 자동 등록 기능이 켜져 있으면 별도의 조치 없이 계정에 자동으로 등록됩니다. 코드를 복사하여 직접 사용할 수도 있습니다.",
+    "gift.toggle.label": "새로운 Kingdom 710 기프트 코드를 내 계정에 자동으로 등록해 주세요.",
+    "gift.toggle.hint": "Kingdom 710 에서 플레이어 ID {id} 사용합니다. 언제든지 이 기능을 끌 수 있습니다.",
+    "gift.toggle.unavailable": "왕국 관리자들이 아직 자동 사용 기능을 활성화하지 않았습니다. 선택 사항은 저장되며 관리자들이 활성화하는 대로 작동하기 시작합니다.",
+    "gift.failed": "게임에서 플레이어 ID를 확인할 수 없어 계정의 자동 보상 지급이 일시 중단되었습니다. 관리자에게 문의하세요.",
+    "gift.saving": "절약...",
+    "gift.state.on": "귀하의 계정에서는 자동 환급 기능이 활성화되어 있습니다.",
+    "gift.state.off": "자동 환전 기능이 꺼져 있습니다. 따라서 아무것도 환전되지 않습니다.",
+    "gift.codes.heading": "활성 코드",
+    "gift.codes.none": "현재 사용 가능한 선물 코드가 없습니다.",
+    "gift.copy": "복사",
+    "gift.copied": "복사됨",
+    "gift.copy.aria": "코드 복사 {code}",
+    "gift.result.redeemed": "구원받은",
+    "gift.result.alreadyHad": "이미 가지고 있었어요",
+    "gift.result.expired": "만료됨",
+    "gift.result.problem": "환불할 수 없었습니다",
+    "gift.result.waiting": "대기 중",
+    "gift.result.problemHint": "\"코드를 사용할 수 없습니다\"라는 메시지는 플레이어 문제이거나 시도가 건너뛰어졌음을 의미합니다. 해당 코드를 사용하시려면 사용 사이트에서 직접 시도해 보세요.",
+    "gift.manual": "수동으로 코드를 사용하려면 코드를 복사한 다음, 교환 사이트를 열고 플레이어 ID와 Kingdom 710 입력하세요.",
+    "gift.siteLink": "교환 사이트를 여세요",
+    "gift.error.load": "선물 코드를 불러올 수 없습니다. 나중에 다시 시도해 주세요.",
+    "gift.error.save": "선택 사항을 저장할 수 없습니다. 다시 시도해 주세요."
   }
 }

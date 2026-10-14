@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-12T16:46:26.051Z"
+    "generatedAt": "2026-10-14T17:47:15.568Z"
   },
   "strings": {
     "translate.working": "Traductorio…",
@@ -422,6 +422,31 @@
     "dragon.power.fromProfile": "Hemos rellenado estos campos a partir de tu Power Profile , que contiene información más reciente que tu última respuesta Flamedragon Tyrant .",
     "dragon.power.scanSaving": "Guarda tu equipo y amuletos en tu Power Profile ...",
     "dragon.power.scanSaved": "También se guardará en tu Power Profile . Pulsa Enviar para enviar tu formulario Flamedragon Tyrant .",
-    "dragon.power.scanFailed": "No se pudo guardar en tu Power Profile en este momento. Tus valores están en el tablero: se guardan cuando envías el formulario."
+    "dragon.power.scanFailed": "No se pudo guardar en tu Power Profile en este momento. Tus valores están en el tablero: se guardan cuando envías el formulario.",
+    "gift.title": "Recompensas Gift Code",
+    "gift.loading": "Cargando códigos de regalo...",
+    "gift.intro": "Los códigos de regalo de New Kingdom 710 se encuentran automáticamente. Si tienes activada la opción de canje automático, se añadirán a tu cuenta sin que tengas que hacer nada. También puedes copiar cualquier código y canjearlo tú mismo.",
+    "gift.toggle.label": "Canjea automáticamente los nuevos códigos de regalo Kingdom 710 para mi cuenta.",
+    "gift.toggle.hint": "Utiliza tu ID de jugador {id} en Kingdom 710 Puedes desactivarlo en cualquier momento.",
+    "gift.toggle.unavailable": "Los administradores del reino aún no han activado el canje automático. Tu elección se guardará y comenzará a funcionar cuando lo hagan.",
+    "gift.failed": "El juego no pudo verificar tu ID de jugador, por lo que el canje automático está suspendido para tu cuenta. Solicita ayuda a un administrador.",
+    "gift.saving": "Ahorro...",
+    "gift.state.on": "El canje automático está activado para tu cuenta.",
+    "gift.state.off": "El canje automático está desactivado. No se ha canjeado nada por usted.",
+    "gift.codes.heading": "Códigos activos",
+    "gift.codes.none": "Actualmente no hay códigos de regalo activos.",
+    "gift.copy": "Copiar",
+    "gift.copied": "Copiado",
+    "gift.copy.aria": "Copiar código {code}",
+    "gift.result.redeemed": "Redimido",
+    "gift.result.alreadyHad": "Ya lo tenía",
+    "gift.result.expired": "Venció",
+    "gift.result.problem": "No se pudo canjear",
+    "gift.result.waiting": "Espera",
+    "gift.result.problemHint": "El mensaje \"No se pudo canjear\" indica un problema del jugador o un intento omitido. Puedes intentar canjear el código manualmente en el sitio web.",
+    "gift.manual": "Para canjearlo manualmente: copie el código, abra el sitio de canje y luego ingrese su ID de jugador y Kingdom 710 .",
+    "gift.siteLink": "Abra el sitio de canje",
+    "gift.error.load": "No se pudieron cargar tus códigos de regalo. Inténtalo de nuevo más tarde.",
+    "gift.error.save": "No se pudo guardar tu selección. Inténtalo de nuevo."
   }
 }

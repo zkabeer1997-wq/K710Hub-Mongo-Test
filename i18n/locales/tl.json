@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-12T16:46:25.651Z"
+    "generatedAt": "2026-10-14T17:47:15.081Z"
   },
   "strings": {
     "translate.working": "Nagsasalin…",
@@ -422,6 +422,31 @@
     "dragon.power.fromProfile": "Pinunan namin ang mga ito mula sa iyong Power Profile , na may mas bagong mga detalye kaysa sa iyong huling sagot Flamedragon Tyrant .",
     "dragon.power.scanSaving": "Sine-save ang iyong mga gamit at charms sa iyong Power Profile ...",
     "dragon.power.scanSaved": "Na-save na rin sa iyong Power Profile . Pindutin ang Submit para ipadala ang iyong Flamedragon Tyrant form.",
-    "dragon.power.scanFailed": "Hindi ma-save sa iyong Power Profile ngayon. Nasa board ang iyong mga value: sine-save ang mga ito kapag isinumite mo ang form."
+    "dragon.power.scanFailed": "Hindi ma-save sa iyong Power Profile ngayon. Nasa board ang iyong mga value: sine-save ang mga ito kapag isinumite mo ang form.",
+    "gift.title": "Mga Gantimpala Gift Code",
+    "gift.loading": "Naglo-load ng mga gift code...",
+    "gift.intro": "Awtomatikong matatagpuan ang mga gift code ng New Kingdom 710 Kapag naka-on ang awtomatikong pag-redeem para sa iyo, ang mga ito ay ire-redeem para sa iyong account nang hindi mo ginagawa ang anumang bagay. Maaari mo ring kopyahin ang anumang code at i-redeem ito mismo.",
+    "gift.toggle.label": "Awtomatikong gamitin ang mga bagong Kingdom 710 gift code para sa aking account",
+    "gift.toggle.hint": "Ginagamit ang iyong Player ID {id} sa Kingdom 710 Maaari mo itong i-off anumang oras.",
+    "gift.toggle.unavailable": "Hindi pa nabubuksan ng mga admin ng kaharian ang awtomatikong pag-redeem. Naka-save na ang iyong napili at magsisimulang gumana kapag ginawa na nila ito.",
+    "gift.failed": "Hindi ma-verify ng laro ang iyong Player ID, kaya nakahinto ang awtomatikong pag-redeem para sa iyong account. Humingi ng tulong sa isang admin.",
+    "gift.saving": "Nagse-save...",
+    "gift.state.on": "Naka-on ang awtomatikong pag-redeem para sa iyong account.",
+    "gift.state.off": "Naka-off ang awtomatikong pag-redeem. Walang na-redeem para sa iyo.",
+    "gift.codes.heading": "Mga aktibong code",
+    "gift.codes.none": "Walang aktibong gift code sa ngayon.",
+    "gift.copy": "Kopyahin",
+    "gift.copied": "Kinopya",
+    "gift.copy.aria": "Kopyahin ang code {code}",
+    "gift.result.redeemed": "Natubos",
+    "gift.result.alreadyHad": "Nakuha ko na ito",
+    "gift.result.expired": "Nag-expire na",
+    "gift.result.problem": "Hindi ma-redeem",
+    "gift.result.waiting": "Naghihintay",
+    "gift.result.problemHint": "Ang ibig sabihin ng \"hindi ma-redeem\" ay problema sa manlalaro o hindi nasubukang pagtatangka. Maaari mong subukan ang code na iyon nang manu-mano sa site ng pag-redeem.",
+    "gift.manual": "Para manu-manong mag-redeem: kopyahin ang code, buksan ang redemption site, pagkatapos ay ilagay ang iyong Player ID at Kingdom 710 .",
+    "gift.siteLink": "Buksan ang site ng pag-redeem",
+    "gift.error.load": "Hindi ma-load ang iyong mga gift code. Pakisubukang muli mamaya.",
+    "gift.error.save": "Hindi ma-save ang iyong napili. Pakisubukang muli."
   }
 }

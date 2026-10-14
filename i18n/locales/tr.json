@@ -5,7 +5,7 @@
     "machineTranslated": true,
     "reviewed": false,
     "engine": "google-cloud-translation-v2",
-    "generatedAt": "2026-10-12T16:46:26.757Z"
+    "generatedAt": "2026-10-14T17:47:16.318Z"
   },
   "strings": {
     "translate.working": "Çevriliyor…",
@@ -422,6 +422,31 @@
     "dragon.power.fromProfile": "Bu bilgileri, son Flamedragon Tyrant cevabınızdan daha yeni ayrıntılar içeren Power Profile doldurduk.",
     "dragon.power.scanSaving": "Ekipmanlarınızı ve tılsımlarınızı Power Profile kaydetme...",
     "dragon.power.scanSaved": "Power Profile de kaydedildi. Flamedragon Tyrant formunuzu göndermek için Gönder'e basın.",
-    "dragon.power.scanFailed": "Şu anda Power Profile Profile'ınıza kaydedilemedi. Değerleriniz panoda: formu gönderdiğinizde kaydedilirler."
+    "dragon.power.scanFailed": "Şu anda Power Profile Profile'ınıza kaydedilemedi. Değerleriniz panoda: formu gönderdiğinizde kaydedilirler.",
+    "gift.title": "Gift Code Ödülleri",
+    "gift.loading": "Hediye kodları yükleniyor...",
+    "gift.intro": "New Kingdom 710 hediye kodları otomatik olarak bulunur. Otomatik kullanım sizin için açıksa, siz hiçbir şey yapmadan kodlar hesabınıza otomatik olarak yüklenir. Ayrıca herhangi bir kodu kopyalayıp kendiniz de kullanabilirsiniz.",
+    "gift.toggle.label": "Hesabım için yeni Kingdom 710 hediye kodlarını otomatik olarak kullan.",
+    "gift.toggle.hint": "Kingdom 710 oyuncu kimliğinizi {id} kullanır. Bunu istediğiniz zaman kapatabilirsiniz.",
+    "gift.toggle.unavailable": "Krallık yöneticileri henüz otomatik ödeme özelliğini etkinleştirmedi. Seçiminiz kaydedildi ve onlar etkinleştirdiğinde çalışmaya başlayacak.",
+    "gift.failed": "Oyun, oyuncu kimliğinizi doğrulayamadığı için hesabınız için otomatik ödül alma işlemi duraklatıldı. Lütfen bir yöneticiden yardım isteyin.",
+    "gift.saving": "Tasarruf...",
+    "gift.state.on": "Hesabınızda otomatik ödeme özelliği açık.",
+    "gift.state.off": "Otomatik ödül kullanımı kapalı. Sizin için hiçbir ödül kullanılmayacak.",
+    "gift.codes.heading": "Aktif kodlar",
+    "gift.codes.none": "Şu anda aktif hediye kodu bulunmamaktadır.",
+    "gift.copy": "Kopyala",
+    "gift.copied": "Kopyalandı",
+    "gift.copy.aria": "Kodu kopyala {code}",
+    "gift.result.redeemed": "Kullanıldı",
+    "gift.result.alreadyHad": "Zaten sahiptim.",
+    "gift.result.expired": "Günü geçmiş",
+    "gift.result.problem": "Kullanılamadı",
+    "gift.result.waiting": "Beklemek",
+    "gift.result.problemHint": "\"Kullanılamadı\" hatası, oyuncu sorunu veya atlanmış bir deneme anlamına gelir. Bu kodu, kullanım sitesinde manuel olarak deneyebilirsiniz.",
+    "gift.manual": "Elle kullanmak için: kodu kopyalayın, kullanım sitesini açın, ardından Oyuncu Kimliğinizi ve Kingdom 710 girin.",
+    "gift.siteLink": "Ödül kazanma sitesini açın",
+    "gift.error.load": "Hediye kodlarınız yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+    "gift.error.save": "Seçiminiz kaydedilemedi. Lütfen tekrar deneyin."
   }
 }
