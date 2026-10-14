@@ -17,12 +17,12 @@ export default function IntegrationsPage() {
   useEffect(() => {
     let live = true;
     fetch('/api/admin-drive/status', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { if (live) setDrive(d); });
-    fetch('/api/admin-gift-codes', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { if (live) setGifts(d ? d.sources || [] : null); });
+    fetch('/api/admin-gift-codes', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { if (live) setGifts(d ? { sources: d.sources || [], redeem: { config: d.config, runner: d.runner } } : null); });
     return () => { live = false; };
   }, []);
 
   const driveLine = driveHealth(drive || null);
-  const giftLine = giftCodeHealth(gifts || []);
+  const giftLine = giftCodeHealth(gifts?.sources || [], Date.now(), gifts?.redeem);
   const chip = (kind) => (kind === 'ok' ? { k: 'open', t: 'Working' } : kind === 'warn' ? { k: 'warn', t: 'Needs attention' } : { k: 'none', t: 'Unknown' });
 
   return (

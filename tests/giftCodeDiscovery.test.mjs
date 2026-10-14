@@ -16,7 +16,7 @@ registerHooks({
   load(u, c, next) {
     if (u === 'test:gift-mongo') {
       const helperUrl = new URL('./helpers/fakeMongo.mjs', import.meta.url).href;
-      return { format: 'module', shortCircuit: true, source: `import {createFakeMongo} from ${JSON.stringify(helperUrl)}; export const {getCollection,ensureIndexes}=createFakeMongo(globalThis.__giftTest.tables, {external_snapshots:['_id'], gift_codes:['code']});` };
+      return { format: 'module', shortCircuit: true, source: `import {createFakeMongo} from ${JSON.stringify(helperUrl)}; export const {getCollection,getDb,ensureIndexes}=createFakeMongo(globalThis.__giftTest.tables, {external_snapshots:['_id'], gift_codes:['code'], gift_players:['player_id']});` };
     }
     return next(u, c);
   },

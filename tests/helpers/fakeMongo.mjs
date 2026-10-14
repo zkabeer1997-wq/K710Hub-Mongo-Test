@@ -103,6 +103,7 @@ function makeCollection(tables, name, uniqueFields = []) {
       let projection = null;
       let sortSpec = null;
       let limitN = null;
+      let skipN = 0;
       const cursor = {
         project(p) {
           projection = p;
@@ -114,6 +115,10 @@ function makeCollection(tables, name, uniqueFields = []) {
         },
         limit(n) {
           limitN = n;
+          return cursor;
+        },
+        skip(n) {
+          skipN = n;
           return cursor;
         },
         async toArray() {
@@ -128,6 +133,7 @@ function makeCollection(tables, name, uniqueFields = []) {
               return 0;
             });
           }
+          if (skipN) out = out.slice(skipN);
           if (limitN) out = out.slice(0, limitN);
           return out.map((d) => project(d, projection));
         },
@@ -137,6 +143,24 @@ function makeCollection(tables, name, uniqueFields = []) {
     async findOne(filter = {}, opts = {}) {
       const doc = rows().find((d) => matches(d, filter));
       return doc ? project(doc, opts.projection) : null;
+    },
+    // Only the shape the gift redeem store uses: [{ $group: { _id: { a: '$a', b: '$b' }, n: { $sum: 1 } } }].
+    aggregate(pipeline) {
+      return {
+        async toArray() {
+          const group = pipeline.find((stage) => stage.$group)?.$group;
+          if (!group) return rows().map((d) => ({ ...d }));
+          const buckets = new Map();
+          for (const d of rows()) {
+            const id = Object.fromEntries(Object.entries(group._id).map(([k, ref]) => [k, d[String(ref).slice(1)]]));
+            const key = JSON.stringify(id);
+            const bucket = buckets.get(key) || { _id: id, n: 0 };
+            bucket.n += 1;
+            buckets.set(key, bucket);
+          }
+          return [...buckets.values()];
+        },
+      };
     },
     async countDocuments(filter = {}) {
       return rows().filter((d) => matches(d, filter)).length;
@@ -237,6 +261,9 @@ export function createFakeMongo(tables, uniqueIndexes = {}) {
   return {
     async getCollection(name) {
       return makeCollection(tables, name, uniqueIndexes[name] || []);
+    },
+    async getDb() {
+      return { collection: (name) => makeCollection(tables, name, uniqueIndexes[name] || []) };
     },
     async ensureIndexes() {
       // no-op: index creation is meaningless against the in-memory fake

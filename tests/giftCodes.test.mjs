@@ -1,104 +1,64 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  parseWikiGiftCodes,
-  summarizeGiftCodeStatusByMember,
-  mergeGiftCodeStatusIntoRows,
-} from '../lib/giftCodes.mjs';
+import { summarizeGiftCodeStatusByMember, mergeGiftCodeStatusIntoRows } from '../lib/giftCodes.mjs';
+import { giftCodeHealth, giftRedeemPhrase } from '../lib/adminOverview.mjs';
 
-// A trimmed but structurally verbatim sample of kingshotwiki.com/giftcodes/,
-// as captured 2026-09-03.
-const REAL_WIKI_HTML = `
-<div style="font-family: Arial, Tahoma, sans-serif;">
-<strong>Hello, Governors!</strong><br>
-We'll keep this page updated with any new codes.<strong>Active Codes:</strong><p></p>
-<ul>
-<li><span class="code">Kingshot888</span><button class="copy-btn">Copy</button></li>
-<li><span class="code">VIP777</span><button class="copy-btn">Copy</button></li>
-</ul>
-<p><strong><strong class="svelte-x57wqa"><span class="svelte-x57wqa fade-in">Concierge</span></strong><span class="svelte-x57wqa fade-in"> member codes:</span></strong></p>
-<ul>
-<li></li>
-</ul>
-</div>
-`;
-
-describe('parseWikiGiftCodes', () => {
-  it('extracts active codes from the real kingshotwiki.com markup, preserving case', () => {
-    const { codes, warning } = parseWikiGiftCodes(REAL_WIKI_HTML);
-    assert.equal(warning, undefined);
-    assert.deepEqual(codes, ['Kingshot888', 'VIP777']);
-    // Case must survive exactly - the redemption spec requires original spelling.
-    assert.ok(!codes.includes('KINGSHOT888'));
-  });
-
-  it('does not pick up codes from the Concierge (VIP-only) section', () => {
-    const html = REAL_WIKI_HTML.replace(
-      '<li></li>',
-      '<li><span class="code">VIPONLYCODE</span></li>'
-    );
-    const { codes } = parseWikiGiftCodes(html);
-    assert.ok(!codes.includes('VIPONLYCODE'));
-  });
-
-  it('flags unexpected structure when there is no Active Codes heading', () => {
-    const { codes, warning } = parseWikiGiftCodes('<html><body>hello</body></html>');
-    assert.equal(codes.length, 0);
-    assert.equal(warning, 'unexpected_page_structure');
-  });
-
-  it('flags unexpected structure when the heading exists but no codes parse out', () => {
-    const html = '<strong>Active Codes:</strong><ul><li>no span here</li></ul>';
-    const { codes, warning } = parseWikiGiftCodes(html);
-    assert.equal(codes.length, 0);
-    assert.equal(warning, 'unexpected_page_structure');
-  });
-});
+const players = [
+  { player_id: '106599852', member_id: '106599852', enabled: true, failed: false },
+  { player_id: '222222', enabled: false, failed: false },
+  { player_id: '333333', member_id: '333333', enabled: true, failed: true },
+];
+const redemptions = [
+  { player_id: '106599852', code: 'NEWEST', status: 'success', updated_at: '2026-01-03T00:00:00Z' },
+  { player_id: '106599852', code: 'OLDER', status: 'expired', updated_at: '2026-01-02T00:00:00Z' },
+];
+const activeCodes = [{ code: 'NEWEST' }, { code: 'OLDER' }, { code: 'FRESH' }];
 
 describe('summarizeGiftCodeStatusByMember', () => {
-  const enrollments = [
-    { member_id: '106599852', player_id: '106599852', enabled: true },
-    { member_id: 'DISABLED_MEMBER', player_id: 'DISABLED_PLAYER', enabled: false },
-  ];
-  const redemptions = [
-    { player_id: '106599852', code: 'NEWEST', status: 'redeemed', created_at: '2026-01-03T00:00:00Z' },
-    { player_id: '106599852', code: 'OLDER', status: 'expired', created_at: '2026-01-02T00:00:00Z' },
-    { player_id: '106599852', code: 'OLDEST', status: 'pending', created_at: '2026-01-01T00:00:00Z' },
-  ];
-
-  it('summarizes counts and picks the newest-first history entry as latest', () => {
-    const summaries = summarizeGiftCodeStatusByMember(enrollments, redemptions);
-    const mine = summaries.get('106599852');
+  it('summarizes real redemption rows, newest first, and counts waiting codes', () => {
+    const mine = summarizeGiftCodeStatusByMember(players, redemptions, activeCodes).get('106599852');
     assert.equal(mine.enrolled, true);
     assert.equal(mine.enabled, true);
     assert.equal(mine.redeemed, 1);
-    assert.equal(mine.pending, 1);
     assert.equal(mine.failed, 1);
-    assert.equal(mine.latestStatus, 'redeemed');
+    assert.equal(mine.pending, 1);
+    assert.equal(mine.latestStatus, 'success');
     assert.equal(mine.latestCode, 'NEWEST');
   });
-
-  it('reports enrolled members with no redemption history yet', () => {
-    const summaries = summarizeGiftCodeStatusByMember(enrollments, []);
-    const disabled = summaries.get('DISABLED_MEMBER');
-    assert.equal(disabled.enrolled, true);
-    assert.equal(disabled.enabled, false);
-    assert.equal(disabled.latestStatus, null);
+  it('keys admin-added players by player id and flags paused and failed ones', () => {
+    const s = summarizeGiftCodeStatusByMember(players, [], activeCodes);
+    assert.equal(s.get('222222').enabled, false);
+    assert.equal(s.get('222222').pending, 0);
+    assert.equal(s.get('333333').playerFailed, true);
+    assert.equal(s.get('333333').pending, 0);
   });
 });
 
 describe('mergeGiftCodeStatusIntoRows', () => {
-  it('attaches gift_code status to matching rows and a not-enrolled default otherwise', () => {
-    const summaries = summarizeGiftCodeStatusByMember(
-      [{ member_id: '106599852', player_id: '106599852', enabled: true }],
-      [{ player_id: '106599852', code: 'FAMILY25', status: 'redeemed', created_at: '2026-01-01T00:00:00Z' }]
-    );
+  it('attaches gift_code status and a not-enrolled default otherwise', () => {
     const rows = mergeGiftCodeStatusIntoRows(
       [{ member_id: '106599852' }, { member_id: 'NOBODY' }],
-      summaries
+      summarizeGiftCodeStatusByMember(players, redemptions, activeCodes),
     );
     assert.equal(rows[0].gift_code.enrolled, true);
-    assert.equal(rows[0].gift_code.latestCode, 'FAMILY25');
+    assert.equal(rows[0].gift_code.latestCode, 'NEWEST');
     assert.equal(rows[1].gift_code.enrolled, false);
+  });
+});
+
+describe('gift health line includes the auto-redeem state', () => {
+  const now = Date.parse('2026-10-10T12:00:00Z');
+  const sources = [{ enabled: true, last_checked_at: '2026-10-10T10:00:00Z', result: 'ok' }];
+  const redeem = (runner, config = { secret_present: true }) => ({ runner, config });
+  it('says what the switch is doing', () => {
+    assert.match(giftCodeHealth(sources, now, redeem({ auto_redeem_enabled: false })).text, /auto-redeem off$/);
+    assert.match(giftCodeHealth(sources, now, redeem({ auto_redeem_enabled: true, state: 'idle' })).text, /auto-redeem on$/);
+    assert.match(giftCodeHealth(sources, now, redeem({ auto_redeem_enabled: true, state: 'running' })).text, /running$/);
+    assert.match(giftCodeHealth(sources, now, redeem({ auto_redeem_enabled: true }, { secret_present: false })).text, /needs setup$/);
+  });
+  it('turns warn when the last run failed, and is unchanged without redeem info', () => {
+    assert.equal(giftCodeHealth(sources, now, redeem({ auto_redeem_enabled: true, last_error: 'x' })).kind, 'warn');
+    assert.equal(giftCodeHealth(sources, now).text, 'Gift codes: checked 2 h ago');
+    assert.equal(giftRedeemPhrase(null), '');
   });
 });

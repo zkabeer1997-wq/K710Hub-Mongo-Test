@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { readMemberSession } from '../../../lib/memberAuth';
+import { getDb } from '../../../lib/mongo';
 import { getGiftSourceStatuses } from '../../../lib/giftCodeDiscovery.mjs';
-import {
-  getMemberGiftStatus,
-  enrollMemberForGiftCodes,
-  confirmMemberRedemption,
-  MEMBER_CONFIRM_RESULTS,
-} from '../../../lib/giftCodes.mjs';
+import { createMongoStore } from '../../../lib/giftRedeem/mongoStore.mjs';
+import { memberStatus, setMemberOptIn } from '../../../lib/giftRedeem/service.mjs';
+import { requestNextRun, selfOrigin } from '../../../lib/giftRedeem/run.mjs';
+import { runInBackground } from '../../../lib/giftRedeem/background.js';
 
 function noStoreJson(body, init = {}) {
   const response = NextResponse.json(body, init);
@@ -26,6 +25,8 @@ async function memberSourceHint() {
   }
 }
 
+// Member view: only the signed-in member's own opt-in and results. The player ID always comes from
+// the session, Kingdom is always 710, and nothing about other players is ever returned.
 export async function GET(request) {
   try {
     const session = await readMemberSession(request);
@@ -33,7 +34,8 @@ export async function GET(request) {
     if (!memberId) {
       return noStoreJson({ error: 'Sign in required.' }, { status: 401 });
     }
-    const status = await getMemberGiftStatus(memberId);
+    const store = createMongoStore(await getDb());
+    const status = await memberStatus(store, memberId);
     return noStoreJson({ ok: true, ...status, codeSource: await memberSourceHint() });
   } catch (error) {
     console.error('gift-codes GET failed', error);
@@ -55,47 +57,21 @@ export async function PATCH(request) {
     } catch {
       return noStoreJson({ error: 'Invalid request.' }, { status: 400 });
     }
-
-    const enabled = Boolean(body?.enabled);
-    if (enabled) {
-      await enrollMemberForGiftCodes(memberId, memberId, 710);
+    if (typeof body?.enabled !== 'boolean') {
+      return noStoreJson({ error: 'Invalid request.' }, { status: 400 });
     }
-    // Disable is a no-op on Mongo test stack (no enrollments collection wired).
 
-    const status = await getMemberGiftStatus(memberId);
+    const store = createMongoStore(await getDb());
+    const res = await setMemberOptIn(store, memberId, body.enabled);
+    if (!res.ok) return noStoreJson({ error: res.error }, { status: 400 });
+    if (body.enabled) {
+      const origin = selfOrigin(request);
+      runInBackground(() => requestNextRun({ origin, depth: 0 }));
+    }
+    const status = await memberStatus(store, memberId);
     return noStoreJson({ ok: true, ...status });
   } catch (error) {
     console.error('gift-codes PATCH failed', error);
     return noStoreJson({ error: 'Unable to update gift code preference.' }, { status: 500 });
-  }
-}
-
-export async function POST(request) {
-  try {
-    const session = await readMemberSession(request);
-    const memberId = session?.memberId;
-    if (!memberId) {
-      return noStoreJson({ error: 'Sign in required.' }, { status: 401 });
-    }
-
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return noStoreJson({ error: 'Invalid request.' }, { status: 400 });
-    }
-
-    const redemptionId = String(body?.redemptionId || '').trim();
-    const result = String(body?.result || '').trim();
-    if (!redemptionId || !MEMBER_CONFIRM_RESULTS.has(result)) {
-      return noStoreJson({ error: 'Invalid confirmation.' }, { status: 400 });
-    }
-
-    await confirmMemberRedemption({ memberId, redemptionId, result });
-    const status = await getMemberGiftStatus(memberId);
-    return noStoreJson({ ok: true, ...status });
-  } catch (error) {
-    console.error('gift-codes POST failed', error);
-    return noStoreJson({ error: 'Unable to update redemption.' }, { status: 500 });
   }
 }
