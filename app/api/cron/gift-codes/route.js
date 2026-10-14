@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 import { refreshGiftCodes } from '../../../../lib/giftCodeDiscovery.mjs';
+import { getDb } from '../../../../lib/mongo';
+import { createMongoStore } from '../../../../lib/giftRedeem/mongoStore.mjs';
+import { runAndChain, selfOrigin } from '../../../../lib/giftRedeem/run.mjs';
+import { runInBackground } from '../../../../lib/giftRedeem/background.js';
+
+// The redeem run started after discovery works inside GIFT_REDEEM_BUDGET_MS and chains itself.
+export const maxDuration = 300;
 
 function noStoreJson(body, init = {}) {
   const response = NextResponse.json(body, init);
@@ -10,7 +17,8 @@ function noStoreJson(body, init = {}) {
 /**
  * Daily gift code check against kingshot.net (primary) and, if the owner enabled it,
  * kingshotmastery.com - see lib/giftCodeDiscovery.mjs. Each source is attempted at most
- * once per 30 minutes; failures never remove codes. There is no automated redemption step.
+ * once per 30 minutes; failures never remove codes. After discovery the redeem runner is started
+ * (it only does anything when an admin switched automatic redeeming on and GIFT_REDEEM_SIGN_SECRET is set).
  * Secured with CRON_SECRET (Vercel Cron sends it as a Bearer token).
  */
 export async function GET(request) {
@@ -28,6 +36,9 @@ export async function GET(request) {
 
   try {
     const discovery = await refreshGiftCodes();
+    const origin = selfOrigin(request);
+    // Also resumes unfinished work, so this daily call doubles as a safety net for the chained runs.
+    runInBackground(async () => runAndChain({ store: createMongoStore(await getDb()), origin, depth: 0 }));
     return noStoreJson({ ok: true, discovery });
   } catch (error) {
     console.error('gift-codes cron failed', error);

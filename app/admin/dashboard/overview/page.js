@@ -82,7 +82,7 @@ export default function AdminOverviewPage() {
       ...EVENTS.map((e) => fetchEventState(e.type)),
     ]);
     setCounts(countsResult.status === 'fulfilled' ? countsResult.value : null);
-    setHealth({ drive: driveResult.status === 'fulfilled' ? driveResult.value : null, gifts: giftResult.status === 'fulfilled' ? giftResult.value.sources || [] : null });
+    setHealth({ drive: driveResult.status === 'fulfilled' ? driveResult.value : null, gifts: giftResult.status === 'fulfilled' ? giftResult.value.sources || [] : null, giftRedeem: giftResult.status === 'fulfilled' ? { config: giftResult.value.config, runner: giftResult.value.runner } : null });
     setGates(gatesResult.status === 'fulfilled' ? gatesResult.value.gates || [] : []);
     setEvents(EVENTS.map((e, i) => ({
       ...e,
@@ -120,7 +120,7 @@ export default function AdminOverviewPage() {
         </section>
 
         <section aria-label="Integrations health" className="ov-health">
-          {[driveHealth(health.drive), health.gifts ? giftCodeHealth(health.gifts) : { kind: 'none', text: 'Gift codes: status unavailable' }].map((h) => (
+          {[driveHealth(health.drive), health.gifts ? giftCodeHealth(health.gifts, Date.now(), health.giftRedeem) : { kind: 'none', text: 'Gift codes: status unavailable' }].map((h) => (
             <span key={h.text} className="ov-health-item"><StatusChip kind={h.kind === 'warn' ? 'warn' : h.kind === 'ok' ? 'open' : 'none'}>{h.kind === 'warn' ? 'Check' : h.kind === 'ok' ? 'OK' : '-'}</StatusChip> {h.text}</span>
           ))}
           <Link className="ov-cta" href="/admin/dashboard/integrations">Integrations</Link>

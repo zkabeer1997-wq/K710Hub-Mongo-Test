@@ -6,6 +6,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { loadLoginMysticMap } from '../../../lib/loginMystic.server.js';
 import { mergePowerProfilesIntoRows } from '../../../lib/powerProfiles.mjs';
+import { mergeGiftCodeStatusIntoRows, summarizeGiftCodeStatusByMember } from '../../../lib/giftCodes.mjs';
 
 const BCRYPT_HASH_RE = /^\$2[aby]\$\d{2}\$/;
 const SIX_DIGIT_PIN_RE = /^\d{6}$/;
@@ -72,8 +73,22 @@ export async function GET(request) {
 
     const merged = mergePowerProfilesIntoRows(data || [], profiles || [], await loadLoginMysticMap());
 
+    // Auto-redeem enrolment + this member's results (real data; empty if the redeem collections are unreachable).
+    let giftSummaries = new Map();
+    try {
+      const ids = merged.map((r) => String(r.member_id || '')).filter(Boolean);
+      const [giftPlayers, giftReds, giftCodes] = await Promise.all([
+        getCollection(COLLECTIONS.GIFT_PLAYERS).then((c) => c.find({ $or: [{ member_id: { $in: ids } }, { player_id: { $in: ids } }] }).toArray()),
+        getCollection(COLLECTIONS.GIFT_REDEMPTIONS).then((c) => c.find({ player_id: { $in: ids } }).toArray()),
+        getCollection(COLLECTIONS.GIFT_CODES).then((c) => c.find({ active: { $ne: false } }).project({ code: 1 }).toArray()),
+      ]);
+      giftSummaries = summarizeGiftCodeStatusByMember(giftPlayers, giftReds, giftCodes);
+    } catch (error) {
+      console.error('admin-member-pins gift summary failed', error);
+    }
+
     return noStoreJson({
-      rows: merged.map(({ pin_hash, power_profile, ...row }) => ({
+      rows: mergeGiftCodeStatusIntoRows(merged, giftSummaries).map(({ pin_hash, power_profile, ...row }) => ({
         ...row,
         name: row.name || '',
         member_id: row.member_id || '',

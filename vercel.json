@@ -5,6 +5,10 @@
       "schedule": "0 14 * * *"
     },
     {
+      "path": "/api/cron/gift-redeem",
+      "schedule": "30 14 * * *"
+    },
+    {
       "path": "/api/cron/refresh-external",
       "schedule": "20 5 * * *"
     }

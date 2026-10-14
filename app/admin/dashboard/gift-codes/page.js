@@ -1,9 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '../../../../components/admin/AdminShell';
-import { Button, Callout, Field, Input, Panel, Table, Tag, Textarea } from '../../../../components/ui';
+import ConfirmDialog from '../../../../components/admin/ConfirmDialog';
+import StatusBand from '../../../../components/admin/giftRedeem/StatusBand';
+import CodesPanel from '../../../../components/admin/giftRedeem/CodesPanel';
+import PlayersPanel from '../../../../components/admin/giftRedeem/PlayersPanel';
+import HistoryPanel from '../../../../components/admin/giftRedeem/HistoryPanel';
+import { ago, giftGet, giftPost, startRunNow } from '../../../../components/admin/giftRedeem/giftApi';
+import { Button, Callout, Panel, Tag } from '../../../../components/ui';
+import {
+  BULK_PAUSE_EVERY, BULK_PAUSE_MS, DEFAULT_DELAY_MS, MAX_RETRIES, RETRY_DELAY_MS,
+} from '../../../../lib/giftRedeem/constants.mjs';
 
 const RESULT_TEXT = {
   ok: ['OK', 'success'],
@@ -14,14 +23,23 @@ const RESULT_TEXT = {
   never_checked: ['Not checked yet', 'neutral'],
 };
 
-function ago(iso) {
-  if (!iso) return 'never';
-  const min = Math.round((Date.now() - Date.parse(iso)) / 60000);
-  if (min < 2) return 'just now';
-  if (min < 90) return `${min} min ago`;
-  const h = Math.round(min / 60);
-  return h < 36 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
-}
+const AUDIT_LABEL = {
+  auto_redeem_on: 'Switched automatic redeeming on',
+  auto_redeem_off: 'Switched automatic redeeming off',
+  add_players: 'Added players',
+  import_players: 'Imported players',
+  enable_player: 'Enabled a player',
+  disable_player: 'Paused a player',
+  remove_player: 'Removed a player',
+  reenable_player: 'Re-enabled a failed player',
+  add_codes: 'Added codes',
+  enable_code: 'Switched a code on',
+  disable_code: 'Switched a code off',
+  delete_code: 'Deleted a code',
+  reprocess_code: 'Reprocessed a code',
+  member_opt_in: 'Member turned auto-redeem on',
+  member_opt_out: 'Member turned auto-redeem off',
+};
 
 function describeResult(action, json) {
   if (action === 'check_sources') {
@@ -33,6 +51,13 @@ function describeResult(action, json) {
     const bad = json.rejected?.length ? ` Skipped ${json.rejected.length} that were not valid codes.` : '';
     return `Added ${json.added}, re-enabled ${json.reactivated}, already had ${json.already}.${bad}`;
   }
+  if (action === 'add_players') {
+    const bad = json.rejected?.length ? ` Skipped ${json.rejected.length} line(s) that were not valid.` : '';
+    return `Added ${json.added} player(s). ${json.existing} were already enrolled.${bad}`;
+  }
+  if (action === 'delete_code') return 'Code deleted.';
+  if (action === 'reprocess_code') return `Queued again. ${json.removed} skipped result(s) will be retried.`;
+  if (action === 'set_auto_redeem') return json.auto_redeem_enabled ? 'Automatic redeeming is on.' : 'Automatic redeeming is off.';
   return 'Done.';
 }
 
@@ -41,52 +66,69 @@ export default function AdminGiftCodesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
-  const [data, setData] = useState(null);
-  const [query, setQuery] = useState('');
-  const [history, setHistory] = useState([]);
-  const [newCode, setNewCode] = useState('');
-  const [enrollId, setEnrollId] = useState('');
+  const [overview, setOverview] = useState(null);
   const [busy, setBusy] = useState('');
-  const [pasteText, setPasteText] = useState('');
+  const [confirmState, setConfirmState] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const pollRef = useRef(null);
 
-  const load = useCallback(async (q = '') => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async () => {
     try {
-      const url = q ? `/api/admin-gift-codes?q=${encodeURIComponent(q)}` : '/api/admin-gift-codes';
-      const res = await fetch(url, { cache: 'no-store' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load');
-      setData(json);
-      setHistory(json.history || []);
+      const json = await giftGet();
+      setOverview(json);
+      setError('');
+      return json;
     } catch (err) {
       setError(err.message || 'Unable to load gift codes.');
+      return null;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  async function runAction(action, payload = {}) {
+  // Poll while a run is going (or just asked for); otherwise stay quiet.
+  const running = overview?.runner?.state === 'running';
+  const [watching, setWatching] = useState(0);
+  useEffect(() => {
+    if (!running && !watching) return undefined;
+    pollRef.current = setInterval(async () => {
+      const json = await load();
+      setReloadKey((k) => k + 1);
+      if (json && json.runner.state !== 'running') setWatching((w) => (w > 0 ? w - 1 : 0));
+    }, 4000);
+    return () => clearInterval(pollRef.current);
+  }, [running, watching, load]);
+
+  async function runAction(action, payload = {}, { quiet = false } = {}) {
     setBusy(action);
     setStatus('');
     setError('');
     try {
-      const res = await fetch('/api/admin-gift-codes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ...payload }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Action failed');
-      setStatus(describeResult(action, json));
-      await load(query);
+      const json = await giftPost(action, payload);
+      if (!quiet) setStatus(describeResult(action, json));
+      await load();
+      setReloadKey((k) => k + 1);
       return json;
     } catch (err) {
       setError(err.message || 'Action failed');
+      return null;
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function runNow() {
+    setBusy('run');
+    setError('');
+    try {
+      await startRunNow();
+      setStatus('Started. Progress shows below.');
+      setWatching(3);
+      setTimeout(load, 1200);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setBusy('');
     }
@@ -98,221 +140,165 @@ export default function AdminGiftCodesPage() {
     router.refresh();
   }
 
-  const totals = data?.totals || {};
-  const codes = data?.codes || [];
+  const c = overview?.counters;
+  const dash = (v) => (c ? v : '—');
+  const sources = overview?.sources || [];
 
   return (
     <AdminShell
       title="Gift codes"
-      subtitle="Automatic code discovery + member alerts for Kingdom 710 — members redeem themselves"
+      subtitle="Finds new Kingdom 710 gift codes and redeems them for enrolled players automatically"
       onLogout={handleLogout}
       counters={[
-        { label: 'Ready to redeem', value: totals.pending ?? '—' },
-        { label: 'Redeemed', value: totals.redeemed ?? '—' },
-        { label: 'Already had it', value: totals.already_redeemed ?? '—' },
-        { label: 'Skipped', value: totals.skipped ?? '—' },
+        { label: 'Ready', value: dash(c?.ready) },
+        { label: 'Redeemed', value: dash(c?.redeemed) },
+        { label: 'Already had it', value: dash(c?.already_had) },
+        { label: 'Expired', value: dash(c?.expired) },
+        { label: 'Login failed', value: dash(c?.login_failed) },
+        { label: 'Skipped', value: dash(c?.skipped) },
       ]}
     >
-      {error ? <Callout tone="danger">{error}</Callout> : null}
-      {status ? <Callout tone="success">{status}</Callout> : null}
+      <div className="gift-page">
+        {error ? <Callout tone="danger">{error}</Callout> : null}
+        {status ? <Callout tone="success">{status}</Callout> : null}
 
-      <Panel title="Code sources">
-        <p style={{ marginBottom: '0.75rem' }}>
-          Codes are read from public lists once a day (and on request below). Each site is contacted at most once
-          every 30 minutes, and if a site fails or refuses, your existing codes stay exactly as they are. Members
-          redeem themselves at Century Games and confirm the result in their own panel.
-        </p>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.75rem' }}>
-          {(data?.sources || []).map((src, i) => {
-            const [label, tone] = RESULT_TEXT[src.result] || RESULT_TEXT.failed;
-            return (
-              <li key={src.id} style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: '0.75rem' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1rem', alignItems: 'center' }}>
-                  <a href={src.url} target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>{src.label}</a>
-                  <Tag>{i === 0 ? 'Primary' : 'Backup'}</Tag>
-                  <Tag tone={tone}>{label}</Tag>
-                  <span>Last checked: {ago(src.last_checked_at)}</span>
-                  <span>Codes found: {src.codes_found ?? '—'}</span>
-                </div>
-                {!src.enabled ? <p className="hint" style={{ margin: '0.35rem 0 0' }}>{src.note} Use the link to copy codes by hand.</p> : null}
-                {src.paused_until && src.result === 'blocked' ? <p className="hint" style={{ margin: '0.35rem 0 0' }}>Paused until {new Date(src.paused_until).toLocaleString()}.</p> : null}
-              </li>
-            );
-          })}
-        </ul>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem' }}>
-          <Button disabled={!!busy} onClick={() => runAction('check_sources')}>
-            {busy === 'check_sources' ? 'Checking…' : 'Check now'}
-          </Button>
-          <details className="roster-more">
-            <summary aria-label="More ways to check">More</summary>
-            <div className="roster-more-menu">
-              <button
-                type="button"
-                disabled={!!busy}
-                title="Ignores the 30 minute wait and contacts the gift code sites right now. Use sparingly; a site that refuses access is never forced."
-                onClick={() => {
-                  if (window.confirm('Force check? This ignores the 30 minute wait and contacts the gift code sites again right now. Use it sparingly; a site that refuses access is never forced.')) {
-                    runAction('check_sources', { force: true });
-                  }
-                }}
-              >
-                Force check
-              </button>
-            </div>
-          </details>
-          <Button variant="quiet" href="https://kingshot.net/gift-codes" target="_blank" rel="noreferrer">Open kingshot.net/gift-codes</Button>
-          <Button variant="quiet" href="https://kingshotmastery.com/gift-codes" target="_blank" rel="noreferrer">Open kingshotmastery.com/gift-codes</Button>
-        </div>
-      </Panel>
+        <StatusBand
+          overview={overview}
+          busy={busy}
+          onToggle={(enabled) => runAction('set_auto_redeem', { enabled })}
+          onRun={runNow}
+        />
 
-      <Panel title="Paste codes">
-        <p style={{ marginBottom: '0.5rem' }}>
-          Copy codes from either site and paste them here, one per line or separated by spaces or commas. Spelling and
-          capital letters are kept exactly as typed. Only letters and digits (4 to 32 characters) are accepted.
-        </p>
-        <Field label="Codes to add">
-          <Textarea rows={4} value={pasteText} onChange={(e) => setPasteText(e.target.value)} aria-label="Codes to add" placeholder={'Kingshot888\nVIP777'} />
-        </Field>
-        <Button
-          disabled={!!busy || !pasteText.trim()}
-          onClick={async () => {
-            const r = await runAction('add_codes', { text: pasteText });
-            if (r) setPasteText('');
-          }}
-        >
-          {busy === 'add_codes' ? 'Adding…' : 'Add these codes'}
-        </Button>
-      </Panel>
+        <CodesPanel overview={overview} loading={loading} busy={busy} onAction={runAction} onConfirm={setConfirmState} />
 
-      <Panel title="Active codes">
-        {loading && !codes.length ? (
-          <p>Loading…</p>
-        ) : codes.length === 0 ? (
-          <p>No codes stored yet. Use “Check now” or paste codes above.</p>
-        ) : (
-          <Table className="stack-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Source</th>
-                <th>Active</th>
-                <th>Discovered</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {codes.map((c) => (
-                <tr key={c.id || c.code}>
-                  <td>
-                    <code>{c.code}</code>
-                  </td>
-                  <td>{c.source}</td>
-                  <td>
-                    <Tag tone={c.active ? 'success' : 'neutral'}>{c.active ? 'Active' : 'Off'}</Tag>
-                  </td>
-                  <td>{c.discovered_at ? new Date(c.discovered_at).toLocaleString() : '—'}</td>
-                  <td>
-                    <Button
-                      size="sm"
-                      disabled={!!busy}
-                      onClick={() =>
-                        runAction('set_code_active', { code: c.code, active: !c.active })
-                      }
-                    >
-                      {c.active ? 'Disable' : 'Enable'}
-                    </Button>
-                  </td>
-                </tr>
+        <PlayersPanel busy={busy} reloadKey={reloadKey} onAction={runAction} onConfirm={setConfirmState} onNotice={setStatus} />
+
+        <HistoryPanel reloadKey={reloadKey} />
+
+        <Panel title="Code sources" description="Where new codes are found. Each site is contacted at most once every 30 minutes, and if a site fails or refuses, your existing codes stay exactly as they are.">
+          <ul className="gift-sources">
+            {sources.map((src, i) => {
+              const [label, tone] = RESULT_TEXT[src.result] || RESULT_TEXT.failed;
+              return (
+                <li key={src.id}>
+                  <div className="gift-source-row">
+                    <a href={src.url} target="_blank" rel="noreferrer">{src.label}</a>
+                    <Tag>{i === 0 ? 'Primary' : 'Backup'}</Tag>
+                    <Tag tone={tone}>{label}</Tag>
+                    <span>Last checked: {ago(src.last_checked_at)}</span>
+                    <span>Codes found: {src.codes_found ?? '—'}</span>
+                  </div>
+                  {!src.enabled ? <p className="hint">{src.note} Use the link to copy codes by hand.</p> : null}
+                  {src.paused_until && src.result === 'blocked' ? <p className="hint">Paused until {new Date(src.paused_until).toLocaleString()}.</p> : null}
+                </li>
+              );
+            })}
+          </ul>
+          <div className="gift-actions">
+            <Button disabled={Boolean(busy)} onClick={() => runAction('check_sources')}>
+              {busy === 'check_sources' ? 'Checking…' : 'Check now'}
+            </Button>
+            <Button
+              variant="quiet"
+              disabled={Boolean(busy)}
+              title="Ignores the 30 minute wait and contacts the gift code sites right now. A site that refuses access is never forced."
+              onClick={() => setConfirmState({
+                title: 'Force a check?',
+                message: 'This ignores the 30 minute wait and contacts the gift code sites again right now. Use it sparingly; a site that refuses access is never forced.',
+                confirmLabel: 'Force check',
+                danger: false,
+                onConfirm: () => runAction('check_sources', { force: true }),
+              })}
+            >
+              Force check
+            </Button>
+          </div>
+        </Panel>
+
+        <Panel title="Pacing" description="Fixed delays, copied from the Discord bot. They cannot be changed here.">
+          <ul className="gift-pacing">
+            <li><strong>{DEFAULT_DELAY_MS / 1000} s</strong> pause after every player</li>
+            <li><strong>{RETRY_DELAY_MS / 1000} s</strong> between tries for the same player, up to <strong>{MAX_RETRIES}</strong> tries</li>
+            <li><strong>{BULK_PAUSE_MS / 1000} s</strong> extra pause after every <strong>{BULK_PAUSE_EVERY}th</strong> player</li>
+            <li>If the game says a code is expired, that code stops for everyone and is switched off</li>
+            <li>If the game says a player cannot log in, that player is marked failed and skipped until you re-enable them</li>
+            <li>Long lists are done in several short runs; each run picks up where the last one stopped</li>
+          </ul>
+        </Panel>
+
+        <Panel title="Recent changes" description="Who changed what on this page, newest first.">
+          {(overview?.audit || []).length === 0 ? (
+            <p>No changes recorded yet.</p>
+          ) : (
+            <ul className="gift-audit">
+              {overview.audit.map((a, i) => (
+                <li key={`${a.at}-${i}`}>
+                  <span className="hint">{ago(a.at)}</span>
+                  <span>{AUDIT_LABEL[a.action] || a.action}{a.target && a.target !== 'switch' ? `: ${a.target}` : ''}</span>
+                  <span className="hint">by {a.actor}{a.detail ? ` · ${a.detail}` : ''}</span>
+                </li>
               ))}
-            </tbody>
-          </Table>
-        )}
+            </ul>
+          )}
+        </Panel>
+      </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'flex-end' }}>
-          <Field label="Add code">
-            <Input
-              value={newCode}
-              onChange={(e) => setNewCode(e.target.value)}
-              aria-label="e.g. Kingshot888 (exact spelling matters)" placeholder="e.g. Kingshot888 (exact spelling matters)"
-            />
-          </Field>
-          <Button
-            disabled={!!busy || newCode.trim().length < 4}
-            onClick={async () => {
-              await runAction('add_code', { code: newCode.trim() });
-              setNewCode('');
-            }}
-          >
-            Add code
-          </Button>
-        </div>
-      </Panel>
+      <ConfirmDialog
+        open={Boolean(confirmState)}
+        title={confirmState?.title}
+        message={confirmState?.message}
+        confirmLabel={confirmState?.confirmLabel}
+        danger={confirmState?.danger !== false}
+        onCancel={() => setConfirmState(null)}
+        onConfirm={() => {
+          const fn = confirmState?.onConfirm;
+          setConfirmState(null);
+          if (fn) fn();
+        }}
+      />
 
-      <Panel title="Enroll existing member">
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <Field label="Member ID / Player ID">
-            <Input value={enrollId} onChange={(e) => setEnrollId(e.target.value)} aria-label="In-game ID" placeholder="In-game ID" />
-          </Field>
-          <Button
-            disabled={!!busy || !enrollId.trim()}
-            onClick={async () => {
-              await runAction('enroll_member', { memberId: enrollId.trim(), playerId: enrollId.trim() });
-              setEnrollId('');
-            }}
-          >
-            Enroll + queue active codes
-          </Button>
-        </div>
-      </Panel>
-
-      <Panel title="Redemption history search">
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Player ID or code" placeholder="Player ID or code"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') load(query);
-            }}
-          />
-          <Button onClick={() => load(query)}>Search</Button>
-        </div>
-        {history.length === 0 ? (
-          <p style={{ opacity: 0.8 }}>No matching history. Search by player ID or code.</p>
-        ) : (
-          <Table className="stack-table">
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Code</th>
-                <th>Status</th>
-                <th>Attempts</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((h) => (
-                <tr key={h.id}>
-                  <td>{h.player_id}</td>
-                  <td>
-                    <code>{h.code}</code>
-                  </td>
-                  <td>
-                    <Tag>{h.status}</Tag>
-                  </td>
-                  <td>{h.attempts}</td>
-                  <td>
-                    {h.completed_at || h.created_at
-                      ? new Date(h.completed_at || h.created_at).toLocaleString()
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </Panel>
+      <style>{`
+        .gift-page{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+        .gift-page .hint{margin:2px 0 0;font-size:12px}
+        .gift-band{display:grid;gap:10px;border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;background:rgba(255,255,255,0.02)}
+        .gift-band-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;align-items:start}
+        .gift-band-cell{min-width:0}
+        .gift-band-label{margin:0 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:700}
+        .gift-band-value{margin:0;font-size:14px}
+        .gift-band-action{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+        .gift-num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+        .gift-sub{display:block}
+        .gift-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+        .gift-codes-table .gift-actions{flex-direction:column;align-items:stretch}
+        .gift-codes-table .gift-actions .ui-btn{white-space:normal;height:auto;min-height:34px;padding-block:6px;text-align:left;justify-content:flex-start}
+        .gift-codes-table td:last-child{min-width:170px}
+        .gift-danger{color:var(--ember-bright)}
+        .gift-add{margin-bottom:14px}
+        .gift-add summary{cursor:pointer;font-weight:700;margin-bottom:8px;min-height:32px;display:flex;align-items:center}
+        .gift-add summary:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
+        .gift-add-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:16px}
+        .gift-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px}
+        .gift-flag{margin-left:8px}
+        .gift-pager{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+        .gift-search{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+        .gift-search .ui-input{flex:1;min-width:180px}
+        .gift-sources{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:10px}
+        .gift-sources li{border-top:1px solid var(--line);padding-top:10px}
+        .gift-source-row{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+        .gift-source-row a{color:inherit;font-weight:700;text-decoration:underline}
+        .gift-pacing{margin:0;padding-left:18px;display:grid;gap:4px}
+        .gift-audit{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+        .gift-audit li{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1.2fr);gap:12px;align-items:baseline;border-top:1px solid var(--line);padding-top:6px}
+        @media (max-width: 900px){
+          .gift-band-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+          .gift-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+        }
+        @media (max-width: 640px){
+          .gift-band-grid,.gift-add-grid{grid-template-columns:minmax(0,1fr)}
+          .gift-audit li{grid-template-columns:minmax(0,1fr);gap:2px}
+          .gift-pager{justify-content:space-between}
+        }
+      `}</style>
     </AdminShell>
   );
 }

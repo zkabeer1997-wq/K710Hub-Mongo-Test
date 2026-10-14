@@ -15,14 +15,12 @@ const EMPTY_MEMBER = { name: '', memberId: '' };
 
 function giftStatusLabel(status) {
   switch (status) {
-    case 'redeemed': return 'Redeemed';
-    case 'already_redeemed': return 'Already redeemed';
-    case 'pending':
-    case 'processing': return 'Pending';
-    case 'temporary_failure': return 'Retrying';
-    case 'expired':
-    case 'invalid_code': return 'Code invalid/expired';
-    case 'invalid_player': return 'Player issue';
+    case 'success': return 'Redeemed';
+    case 'received': return 'Already had it';
+    case 'expired': return 'Expired';
+    case 'login_failed': return 'Player issue';
+    case 'skipped':
+    case 'unknown': return 'Skipped';
     default: return status || '—';
   }
 }
@@ -233,8 +231,8 @@ export default function AdminMembersPage() {
                   <td>
                     {row.gift_code?.enrolled ? (
                       <div className="member-gift-code-cell">
-                        <Tag tone={row.gift_code.enabled ? 'success' : 'neutral'}>
-                          {row.gift_code.enabled ? 'Enrolled' : 'Paused'}
+                        <Tag tone={row.gift_code.playerFailed ? 'danger' : row.gift_code.enabled ? 'success' : 'neutral'}>
+                          {row.gift_code.playerFailed ? 'Player issue' : row.gift_code.enabled ? 'Enrolled' : 'Paused'}
                         </Tag>
                         <span className="hint">
                           {row.gift_code.latestStatus
@@ -242,8 +240,8 @@ export default function AdminMembersPage() {
                             : 'No attempts yet'}
                         </span>
                         <span className="hint">
-                          {row.gift_code.redeemed} redeemed · {row.gift_code.pending} pending
-                          {row.gift_code.failed ? ` · ${row.gift_code.failed} failed` : ''}
+                          {row.gift_code.redeemed} redeemed · {row.gift_code.pending} waiting
+                          {row.gift_code.failed ? ` · ${row.gift_code.failed} not redeemed` : ''}
                         </span>
                       </div>
                     ) : (
