@@ -50,6 +50,8 @@ export default function GiftCodeRewards({ className = '' }) {
   async function setEnabled(enabled) {
     setSaving(true);
     setError('');
+    const before = data;
+    setData((d) => (d ? { ...d, enabled } : d)); // show the choice at once; undone below if saving fails
     try {
       const res = await fetch('/api/gift-codes', {
         method: 'PATCH',
@@ -60,6 +62,7 @@ export default function GiftCodeRewards({ className = '' }) {
       if (!res.ok) throw new Error(json.error || 'save');
       setData(json);
     } catch {
+      setData(before);
       setError(t('gift.error.save'));
     } finally {
       setSaving(false);

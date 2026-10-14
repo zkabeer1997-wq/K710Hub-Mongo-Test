@@ -165,6 +165,13 @@ describe('runPending pacing', () => {
     assert.deepEqual(t.sleeps, expected);
     assert.equal(t.sleeps.filter((s) => s === 5000).length, 2);
   });
+  it('a resumed code keeps the every-15th rhythm (players finished earlier count)', async () => {
+    const ids = Array.from({ length: 17 }, (_, i) => 4000 + i);
+    const { run, store, t } = await setup({ players: ids });
+    for (const id of ids.slice(0, 14)) await store.saveRedemption({ code: 'CODEA', player_id: String(id), kingdom_id: '710', status: 'success', attempts: 1, updated_at: new Date() });
+    await run();
+    assert.deepEqual(t.sleeps, [800, 5000, 800, 800]);
+  });
   it('retry sleeps come before the 800ms player delay', async () => {
     const { run, t } = await setup({ players: [1001], script: { 1001: [99999, 20000] } });
     await run();

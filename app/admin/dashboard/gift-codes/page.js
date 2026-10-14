@@ -234,7 +234,7 @@ export default function AdminGiftCodesPage() {
               {overview.audit.map((a, i) => (
                 <li key={`${a.at}-${i}`}>
                   <span className="hint">{ago(a.at)}</span>
-                  <span>{AUDIT_LABEL[a.action] || a.action}{a.target ? `: ${a.target}` : ''}</span>
+                  <span>{AUDIT_LABEL[a.action] || a.action}{a.target && a.target !== 'switch' ? `: ${a.target}` : ''}</span>
                   <span className="hint">by {a.actor}{a.detail ? ` · ${a.detail}` : ''}</span>
                 </li>
               ))}
@@ -258,7 +258,7 @@ export default function AdminGiftCodesPage() {
       />
 
       <style>{`
-        .gift-page{display:grid;gap:18px}
+        .gift-page{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
         .gift-page .hint{margin:2px 0 0;font-size:12px}
         .gift-band{display:grid;gap:10px;border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;background:rgba(255,255,255,0.02)}
         .gift-band-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;align-items:start}
@@ -269,6 +269,9 @@ export default function AdminGiftCodesPage() {
         .gift-num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
         .gift-sub{display:block}
         .gift-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+        .gift-codes-table .gift-actions{flex-direction:column;align-items:stretch}
+        .gift-codes-table .gift-actions .ui-btn{white-space:normal;height:auto;min-height:34px;padding-block:6px;text-align:left;justify-content:flex-start}
+        .gift-codes-table td:last-child{min-width:170px}
         .gift-danger{color:var(--ember-bright)}
         .gift-add{margin-bottom:14px}
         .gift-add summary{cursor:pointer;font-weight:700;margin-bottom:8px;min-height:32px;display:flex;align-items:center}
