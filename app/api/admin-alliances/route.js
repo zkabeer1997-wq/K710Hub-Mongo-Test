@@ -6,6 +6,8 @@ import { validateLeaders, resolveLeaders, usesLegacyLeaders } from '../../../lib
 import { isAdminRequest } from '../../../lib/adminAuth';
 import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
+import { orderAlliances } from '../../../lib/alliances.mjs';
+import { nextSortOrder } from '../../../lib/allianceOrder.mjs';
 import { checkAllianceImage, parseAllianceImageFields } from '../../../lib/allianceImages.mjs';
 
 const STATUSES = ['open', 'selective', 'closed'];
@@ -24,7 +26,8 @@ export async function GET(request) {
 
   try {
     const coll = await getCollection(COLLECTIONS.ALLIANCES);
-    const data = await coll.find({}).sort({ sort_order: 1 }).toArray();
+    // Listed in the public website order (see lib/alliances.mjs orderAlliances).
+    const data = orderAlliances((await coll.find({}).toArray()) || []);
     // strip Mongo _id for cleaner JSON
     // Alliances that predate `leaders` get a suggested list (the R5 from the old Home page text) so the
     // editor opens with it instead of empty; it only becomes stored data when an admin saves.
@@ -35,7 +38,13 @@ export async function GET(request) {
     const alliances = (data || []).map(({ _id, ...rest }) => (
       usesLegacyLeaders(rest) ? { ...rest, leaders_suggested: resolveLeaders(rest, home) } : rest
     ));
-    return NextResponse.json({ alliances });
+    const marked = data.find((a) => a.order_updated_at);
+    const order = {
+      saved: Boolean(marked),
+      updated_at: marked ? [...data].map((a) => a.order_updated_at).filter(Boolean).sort().pop() : null,
+      updated_by: marked ? marked.order_updated_by || null : null,
+    };
+    return NextResponse.json({ alliances, order });
   } catch (error) {
     console.error('admin-alliances' + ' failed', error);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
@@ -105,7 +114,8 @@ export async function POST(request) {
           ? Number(body.roster_size)
           : null,
       active: body.active !== false,
-      sort_order: Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0,
+      // A new alliance goes last; only a superadmin changes the order (PUT /api/admin-alliances/order).
+      sort_order: nextSortOrder(await coll.find({}).project({ sort_order: 1, _id: 0 }).toArray()),
       created_at: new Date(),
       updated_at: new Date(),
     };

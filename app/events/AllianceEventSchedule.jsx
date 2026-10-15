@@ -49,7 +49,9 @@ export default function AllianceEventSchedule({ initialEvents, initialNow }) {
   }, []);
 
   const scheduled = currentAllianceEvents(events || [], now);
-  const tags = [...new Set(scheduled.map(event => event.alliance_tag))].sort();
+  // Filter choices follow the alliance order saved by a superadmin (alliance_rank), not the alphabet.
+  const rankOf = new Map(scheduled.map(event => [event.alliance_tag, Number.isFinite(event.alliance_rank) ? event.alliance_rank : Infinity]));
+  const tags = [...rankOf.keys()].sort((a, b) => (rankOf.get(a) === rankOf.get(b) ? 0 : rankOf.get(a) < rankOf.get(b) ? -1 : 1) || a.localeCompare(b));
   const selected = tags.includes(alliance) ? alliance : '';
   const visible = scheduled.filter(event => !selected || event.alliance_tag === selected);
   return (
