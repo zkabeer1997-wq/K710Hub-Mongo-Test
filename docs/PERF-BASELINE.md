@@ -119,3 +119,10 @@ run lint` (0 errors, same 2 pre-existing warnings as before), production
 build, and a boot + Playwright pass across all 15 public routes plus the
 authenticated admin dashboard (dnd-kit rally board) — zero console errors
 or crashes on any of them, including the previously-broken Gate scene.
+
+## Route status update — 2026-10-15
+
+The `/gate` page has been removed. The homepage at `/` is the public entry
+point and no current homepage or site-navigation links send visitors to
+`/gate`. The Gate scene components remain in the source tree but are no longer
+exposed as a page route.

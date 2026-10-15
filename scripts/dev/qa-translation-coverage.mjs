@@ -22,7 +22,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require(path.join(ROOT, 'node_modules/playwright'));
 const LANGS = ['ko', 'tl', 'ar', 'es', 'fr', 'zh', 'tr', 'hi', 'ja'];
 
-export const PUBLIC_ROUTES = ['/', '/about', '/timeline', '/events', '/guides', '/alliances', '/gallery', '/glossary', '/help', '/interest', '/interest/status', '/login', '/gate', '/dashboard', '/tools'];
+export const PUBLIC_ROUTES = ['/', '/about', '/timeline', '/events', '/guides', '/alliances', '/gallery', '/glossary', '/help', '/interest', '/interest/status', '/login', '/dashboard', '/tools'];
 export const MEMBER_ROUTES = ['/dashboard', '/forms', '/forms/kvk', '/forms/kvk-appointments', '/forms/flamedragon-tyrant', '/forms/flamedragon-tyrant/noble-advisor', '/forms/flamedragon-tyrant/my-appointment', '/forms/requests', '/power-profile', '/prep-phase-backpack', '/flamedragon', '/dashboard/form', '/tools/pet-pack-optimizer', '/tools/masters-pack-optimizer', '/tools/account-progression', '/tools/charms', '/tools/governor-gear', '/tools/hero-gear', '/tools/research', '/tools/construction', '/tools/adventure-stall', '/tools/pets', '/tools/masters'];
 
 function parseArgs(argv) {

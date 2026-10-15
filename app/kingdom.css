@@ -373,7 +373,7 @@
 
 /* ============================================================
    GATE BACKDROP — the decorative homepage layer (GateBackdrop.jsx).
-   Not the cinematic (/gate, .gate-scene above) - a quiet, inert
+   Not the standalone cinematic (.gate-scene above) - a quiet, inert
    background sitting behind real page content. Absolutely
    positioned to the nearest positioned ancestor (the homepage sets
    position:relative on its hero section), never to the viewport,

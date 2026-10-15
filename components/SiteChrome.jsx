@@ -6,11 +6,9 @@ import SiteFooter from './SiteFooter';
 import SiteAtmosphere from './SiteAtmosphere';
 import DeadlineTicker from './member/DeadlineTicker';
 import MemberSidebar from './member/MemberSidebar';
-import LanguageSwitcher from './i18n/LanguageSwitcher';
 import { useT } from './i18n/LanguageProvider';
 
 function wantsChrome(pathname) {
-  if (pathname === '/gate') return false;
   // Admin login + full war-room shell own their chrome; public header/footer look wrong here.
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return false;
   return true;
@@ -38,8 +36,6 @@ export default function SiteChrome({ children }) {
       <>
         {skipLink}
         <div id="main" className={`site-route site-route-${tone}`}>{children}</div>
-        {/* Public entry pages without the site header (/gate) still need a way to change language. */}
-        {!(pathname === '/admin' || pathname.startsWith('/admin/')) && <LanguageSwitcher className="lang-switch--floating" />}
       </>
     );
   }

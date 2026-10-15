@@ -11,7 +11,7 @@ const WIDTHS = [375, 768, 1440];
 const MEMBER_ID = 'qa-sitewide-member';
 const ROUTES = [
   '/', '/about', '/timeline', '/alliances', '/alliances/710', '/alliances/red', '/alliances/sky',
-  '/gate', '/guides', '/guides/rally-joiner', '/guides/kvk-preparation', '/guides/rally-lead',
+  '/guides', '/guides/rally-joiner', '/guides/kvk-preparation', '/guides/rally-lead',
   '/events', '/events/castle-battle', '/events/flamedragon-tyrant-battle', '/interest', '/dashboard',
   '/forms', '/dashboard/form', '/power-profile', '/flamedragon', '/prep-phase-backpack', '/tools',
   '/tools/adventure-stall', '/tools/charm-pack-optimizer', '/tools/dragons-caravan-optimizer', '/tools/pet-pack-optimizer', '/tools/charm-sailing-optimizer',

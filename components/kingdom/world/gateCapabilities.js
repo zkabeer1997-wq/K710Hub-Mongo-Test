@@ -1,7 +1,4 @@
-// Shared device-capability detection for the Gate experience. Used by both
-// the full cinematic at /gate (GateExperience.jsx) and the decorative
-// homepage backdrop (GateBackdrop.jsx) so the two don't drift into two
-// slightly-different heuristics for "can this device handle the scene."
+// Capability checks shared by the homepage shield loader and Gate scene.
 
 export function detectWebGL() {
   if (typeof window === 'undefined') return false;
