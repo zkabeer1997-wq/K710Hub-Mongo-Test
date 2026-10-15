@@ -76,9 +76,7 @@ export async function PUT(request, { params: paramsPromise }) {
         : null;
   }
   if (body.active !== undefined) update.active = Boolean(body.active);
-  if (body.sort_order !== undefined) {
-    update.sort_order = Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0;
-  }
+  // sort_order is deliberately not editable here: the order is saved only by PUT /api/admin-alliances/order (superadmin).
   if (body.recruiting_status !== undefined) {
     if (!STATUSES.includes(body.recruiting_status)) {
       return NextResponse.json({ error: 'Unsupported recruiting status.' }, { status: 400 });

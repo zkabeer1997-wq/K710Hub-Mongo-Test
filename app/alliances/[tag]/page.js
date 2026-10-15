@@ -49,7 +49,7 @@ export default async function AlliancePage({ params }) {
 
   return (
     <main className="theme-console alliance-detail-page" style={{ padding: 0, background: 'var(--obsidian)' }}>
-      <AllianceDetail alliance={alliance} blurb={stripLegacyBearCopy(alliance.blurb)} others={others.map((a) => ({ tag: a.tag, name: a.name, sort_order: a.sort_order }))} kvk={kvk} />
+      <AllianceDetail alliance={alliance} blurb={stripLegacyBearCopy(alliance.blurb)} others={others.map((a) => ({ tag: a.tag, name: a.name, sort_order: a.sort_order, order_updated_at: a.order_updated_at }))} kvk={kvk} />
     </main>
   );
 }
