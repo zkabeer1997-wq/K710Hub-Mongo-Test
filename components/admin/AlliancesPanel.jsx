@@ -5,6 +5,7 @@ import AllianceEventEditor from './AllianceEventEditor';
 import { validateAllianceEvents } from '../../lib/allianceEvents.mjs';
 import AllianceLeadersEditor from './AllianceLeadersEditor';
 import { validateLeaders } from '../../lib/allianceLeaders.mjs';
+import AllianceOrderPanel from './AllianceOrderPanel';
 import ConfirmDialog from './ConfirmDialog';
 import DriveStatusBanner from './DriveStatusBanner';
 import ImageUploadField from './ImageUploadField';
@@ -19,7 +20,7 @@ import { notifyBearScheduleChanged } from '../BearScheduleProvider';
 const STATUSES = ['open', 'selective', 'closed'];
 const EMPTY_FORM = {
   tag: '', name: '', blurb: '', leader_player_id: '', timezone_focus: '',
-  recruiting_status: 'open', language: '', roster_size: '', active: true, sort_order: 0, bear_times_utc: [], scheduled_events: [], leaders: [], image_id: '', image_alt: '',
+  recruiting_status: 'open', language: '', roster_size: '', active: true, bear_times_utc: [], scheduled_events: [], leaders: [], image_id: '', image_alt: '',
 };
 
 // Crop settings for the alliance photo: centred 16:9, 1600 x 900, refuse sources under 800 px wide.
@@ -30,6 +31,7 @@ const PHOTO_CROP = {
 
 export default function AlliancesPanel() {
   const [rows, setRows] = useState([]);
+  const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
@@ -59,6 +61,7 @@ export default function AlliancesPanel() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to load alliances.');
       setRows(result.alliances || []);
+      setOrder(result.order || null);
     } catch (err) {
       setError(err.message || 'Unable to load alliances.');
     } finally {
@@ -82,7 +85,7 @@ export default function AlliancesPanel() {
       tag: row.tag, name: row.name, blurb: row.blurb || '',
       leader_player_id: row.leader_player_id || '', timezone_focus: row.timezone_focus || '',
       recruiting_status: row.recruiting_status, language: row.language || '',
-      roster_size: row.roster_size ?? '', active: row.active, sort_order: row.sort_order,
+      roster_size: row.roster_size ?? '', active: row.active,
       image_id: row.image_id || '', image_alt: row.image_alt || '',
     });
     liveImageId.current = row.image_id || '';
@@ -145,6 +148,8 @@ export default function AlliancesPanel() {
       <div style={{ marginBottom: 16 }}>
         <Button onClick={openCreate} disabled={editingTag !== null}>+ New alliance</Button>
       </div>
+
+      {(!loading || rows.length > 0) && <AllianceOrderPanel rows={rows} order={order} onSaved={async () => { notifyBearScheduleChanged(); await load(); }} />}
 
       {editingTag !== null && (
         <div className="k-plate" style={{ padding: 20, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
