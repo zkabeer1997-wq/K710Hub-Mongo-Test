@@ -60,6 +60,12 @@
 .intake-period-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,0.02); }
 .intake-period-activate { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
 .intake-period-form-actions { display: flex; gap: 8px; }
+.intake-current-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin: 0 0 14px; font-size: 13px; }
+.intake-current-bar label { font-weight: 600; color: var(--text); }
+.intake-current-bar select { width: auto; min-width: 180px; }
+.intake-current-bar .hint, .intake-current-bar .guide-message { margin: 0; }
+.intake-row-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.intake-row-edit select { width: auto; min-width: 180px; }
 
 /* Tables / filters used across admin pages */
 .admin-filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
