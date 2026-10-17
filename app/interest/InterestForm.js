@@ -316,7 +316,7 @@ function clearVerifiedValues(current, previous) {
   return next;
 }
 
-export default function InterestForm({ initialPeriod }) {
+export default function InterestForm({ initialPeriod, initialProjection = null }) {
   const migrateOptions = migrateOptionsFor(useAlliances());
   const [form, setForm] = useState(initialForm);
   const [screenshots, setScreenshots] = useState([]);
@@ -344,6 +344,7 @@ export default function InterestForm({ initialPeriod }) {
   const hasInitial = initialPeriod !== undefined;
   const [activePeriod, setActivePeriod] = useState(hasInitial ? initialPeriod : null);
   const [activePeriodLoaded, setActivePeriodLoaded] = useState(hasInitial);
+  const [projection, setProjection] = useState(hasInitial ? initialProjection : null);
   const { fields: editableFields } = useFormFieldMeta('interest');
   const editableLabel = (key, fallback) => String(editableFields.find((f) => f.key === key)?.label || fallback).replace(/\s*\(optional\)\s*$/i, '');
   const L = (key) => editableLabel(key, DEFAULT_LABELS[key] || key);
@@ -412,7 +413,7 @@ export default function InterestForm({ initialPeriod }) {
     let cancelled = false;
     fetch('/api/intake-periods/active')
       .then((r) => r.json())
-      .then((data) => { if (!cancelled) setActivePeriod(data.label || null); })
+      .then((data) => { if (!cancelled) { setActivePeriod(data.label || null); setProjection(data.projection || null); } })
       .catch(() => { if (!cancelled) setActivePeriod(null); })
       .finally(() => { if (!cancelled) setActivePeriodLoaded(true); });
     return () => { cancelled = true; };
@@ -792,6 +793,16 @@ export default function InterestForm({ initialPeriod }) {
             <button type="button" className="k-btn k-btn-quiet" onClick={startOver}>Start over</button>
           </div>
         </section>
+      )}
+
+      {projection && (
+        <aside className={`apply-projection is-${projection.status}`} aria-label="Projected transfer status">
+          <span className="apply-projection-kicker">{activePeriod ? `${activePeriod} window` : 'This window'}</span>
+          <strong className="apply-projection-status">Projected {projection.name} Status</strong>
+          {projection.cap && (
+            <span className="apply-projection-cap">Power cap <strong>{projection.cap}</strong></span>
+          )}
+        </aside>
       )}
 
       <StepProgress step={step} onJump={jumpTo} />

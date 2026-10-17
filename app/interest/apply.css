@@ -19,6 +19,14 @@
 .apply-step.is-done { color: var(--brass-bright, var(--color-accent-strong)); }
 @media (max-width: 520px) { .apply-step-name { font-size: 11px; } }
 
+/* ---- Projected transfer status ----------------------------------- */
+.apply-projection { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 12px 14px; border: 1px solid var(--color-border-strong, var(--line)); border-left: 3px solid var(--color-accent); border-radius: 6px; background: rgba(255,255,255,0.03); }
+.apply-projection-kicker { flex-basis: 100%; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-muted); }
+.apply-projection-status { font-family: var(--font-editorial); font-size: 20px; font-weight: 600; color: var(--parchment); }
+.apply-projection-cap { font-size: 16px; color: var(--color-ink-muted); }
+.apply-projection-cap strong { color: var(--gold-bright); font-variant-numeric: tabular-nums; }
+.apply-projection.is-ordinary .apply-projection-cap strong { color: var(--parchment); }
+
 /* ---- Step heading ------------------------------------------------ */
 .apply-step-body { display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 20px; }
 .apply-head { display: grid; gap: 6px; }
