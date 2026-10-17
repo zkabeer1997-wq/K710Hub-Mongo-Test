@@ -188,6 +188,10 @@ export default function AdminInterestPage() {
   const [newPeriodActivate, setNewPeriodActivate] = useState(true);
   const [savingPeriod, setSavingPeriod] = useState(false);
   const [periodError, setPeriodError] = useState('');
+  const [periodNotice, setPeriodNotice] = useState('');
+  const [activatingPeriod, setActivatingPeriod] = useState(false);
+  const [rowIntakeDraft, setRowIntakeDraft] = useState('');
+  const [savingRowIntake, setSavingRowIntake] = useState(false);
   const [waitingForDrive, setWaitingForDrive] = useState(0);
   const [moveState, setMoveState] = useState({ running: false, message: '' });
   const router = useRouter();
@@ -270,7 +274,10 @@ export default function AdminInterestPage() {
   }
 
   async function activatePeriod(period) {
+    if (!period || period.is_active) return;
     setPeriodError('');
+    setPeriodNotice('');
+    setActivatingPeriod(true);
     try {
       const response = await fetch(`/api/admin-intake-periods/${period.id}`, {
         method: 'PATCH',
@@ -280,8 +287,33 @@ export default function AdminInterestPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to activate intake period.');
       await loadPeriods();
+      setPeriodNotice(`${period.label} is now the current intake period. New Transfer Requests will be filed under it.`);
     } catch (err) {
       setPeriodError(err.message || 'Unable to activate intake period.');
+    } finally {
+      setActivatingPeriod(false);
+    }
+  }
+
+  async function changeRowIntake(row, periodId) {
+    const period = periods.find((p) => p.id === periodId);
+    if (!period || period.label === row.intake_period) return;
+    setSavingRowIntake(true);
+    setRowMessage((prev) => ({ ...prev, [row.id]: '' }));
+    try {
+      const response = await fetch('/api/admin-interest-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: row.id, period_id: period.id }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to change intake period.');
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, intake_period: result.intake_period, intake_period_id: result.intake_period_id } : r)));
+      setRowMessage((prev) => ({ ...prev, [row.id]: `Moved to ${result.intake_period}.` }));
+    } catch (err) {
+      setRowMessage((prev) => ({ ...prev, [row.id]: err.message || 'Unable to change intake period.' }));
+    } finally {
+      setSavingRowIntake(false);
     }
   }
 
@@ -347,6 +379,8 @@ export default function AdminInterestPage() {
   }
   function openRow(id) {
     setSelectedId(id);
+    const row = rows.find((r) => r.id === id);
+    setRowIntakeDraft(periods.find((p) => p.label === row?.intake_period)?.id || '');
     setPendingDecision(null);
     setAccepted(null);
     setCopied(false);
@@ -633,6 +667,26 @@ export default function AdminInterestPage() {
             </form>
           )}
 
+          {!periodsLoading && periods.length > 0 && (
+            <div className="intake-current-bar">
+              <label htmlFor="current-intake-select">Current intake period</label>
+              <Select
+                id="current-intake-select"
+                tone="console"
+                value={periods.find((p) => p.is_active)?.id || ''}
+                disabled={activatingPeriod}
+                onChange={(e) => activatePeriod(periods.find((p) => p.id === e.target.value))}
+              >
+                {!periods.some((p) => p.is_active) && <option value="">None (intake closed)</option>}
+                {sortPeriodsNewestFirst(periods).map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </Select>
+              <span className="hint">New Transfer Requests are filed under this period.</span>
+              {activatingPeriod && <span className="hint" role="status">Saving…</span>}
+              {periodNotice && !activatingPeriod && <span className="hint" role="status">{periodNotice}</span>}
+              {periodError && !showAddPeriod && <span className="guide-message error" role="alert">{periodError}</span>}
+            </div>
+          )}
+
           <div className="admin-subtabs" role="tablist" aria-label="Status">
             {STATUS_TABS.map((tab) => (
               <button
@@ -832,6 +886,34 @@ export default function AdminInterestPage() {
                   )}
                   {selectedRow.admin_note && !pendingDecision && <p className="admin-row-message">Note: {selectedRow.admin_note}</p>}
                   {rowMessage[selectedRow.id] && <p className="admin-row-message">{rowMessage[selectedRow.id]}</p>}
+                </div>
+
+                <div className="admin-drawer-section">
+                  <h3>Intake period</h3>
+                  <div className="intake-row-edit">
+                    <Select
+                      tone="console"
+                      aria-label="Intake period for this request"
+                      value={rowIntakeDraft}
+                      disabled={savingRowIntake}
+                      onChange={(e) => setRowIntakeDraft(e.target.value)}
+                    >
+                      {!periods.some((p) => p.label === selectedRow.intake_period) && (
+                        <option value="">{selectedRow.intake_period || 'Not set'}</option>
+                      )}
+                      {sortPeriodsNewestFirst(periods).map((p) => (
+                        <option key={p.id} value={p.id}>{p.label}{p.is_active ? ' (current)' : ''}</option>
+                      ))}
+                    </Select>
+                    <button
+                      type="button"
+                      className="status-action-btn"
+                      disabled={savingRowIntake || !rowIntakeDraft || periods.find((p) => p.id === rowIntakeDraft)?.label === selectedRow.intake_period}
+                      onClick={() => changeRowIntake(selectedRow, rowIntakeDraft)}
+                    >
+                      {savingRowIntake ? 'Saving...' : 'Move to this period'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="admin-drawer-section">
