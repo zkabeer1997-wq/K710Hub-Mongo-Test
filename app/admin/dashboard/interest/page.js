@@ -191,6 +191,10 @@ export default function AdminInterestPage() {
   const [periodNotice, setPeriodNotice] = useState('');
   const [activatingPeriod, setActivatingPeriod] = useState(false);
   const [rowIntakeDraft, setRowIntakeDraft] = useState('');
+  const [showManagePeriods, setShowManagePeriods] = useState(false);
+  const [periodDrafts, setPeriodDrafts] = useState({});
+  const [periodBusyId, setPeriodBusyId] = useState('');
+  const [periodRowMessage, setPeriodRowMessage] = useState({});
   const [savingRowIntake, setSavingRowIntake] = useState(false);
   const [waitingForDrive, setWaitingForDrive] = useState(0);
   const [moveState, setMoveState] = useState({ running: false, message: '' });
@@ -292,6 +296,62 @@ export default function AdminInterestPage() {
       setPeriodError(err.message || 'Unable to activate intake period.');
     } finally {
       setActivatingPeriod(false);
+    }
+  }
+
+  function periodDraft(period) {
+    return periodDrafts[period.id] || {
+      transfer_status: period.transfer_status || '',
+      leading_cap: period.leading_cap || '',
+      ordinary_cap: period.ordinary_cap || '',
+    };
+  }
+  function editPeriodDraft(period, key, value) {
+    setPeriodDrafts((prev) => ({ ...prev, [period.id]: { ...periodDraft(period), [key]: value } }));
+    setPeriodRowMessage((prev) => ({ ...prev, [period.id]: '' }));
+  }
+  function periodDraftChanged(period) {
+    const d = periodDraft(period);
+    return d.transfer_status !== (period.transfer_status || '') || d.leading_cap.trim() !== (period.leading_cap || '') || d.ordinary_cap.trim() !== (period.ordinary_cap || '');
+  }
+  function requestsInPeriod(period) {
+    const sharedLabel = periods.filter((p) => p.label === period.label).length > 1;
+    return rows.filter((r) => r.intake_period_id === period.id || (!sharedLabel && r.intake_period === period.label)).length;
+  }
+  async function savePeriodSettings(period) {
+    setPeriodBusyId(period.id);
+    setPeriodRowMessage((prev) => ({ ...prev, [period.id]: '' }));
+    try {
+      const response = await fetch(`/api/admin-intake-periods/${period.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(periodDraft(period)),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to save.');
+      await loadPeriods();
+      setPeriodDrafts((prev) => { const next = { ...prev }; delete next[period.id]; return next; });
+      setPeriodRowMessage((prev) => ({ ...prev, [period.id]: 'Saved.' }));
+    } catch (err) {
+      setPeriodRowMessage((prev) => ({ ...prev, [period.id]: err.message || 'Unable to save.' }));
+    } finally {
+      setPeriodBusyId('');
+    }
+  }
+  async function removePeriod(period) {
+    if (!window.confirm(`Remove the ${period.label} intake period? This cannot be undone.`)) return;
+    setPeriodBusyId(period.id);
+    setPeriodRowMessage((prev) => ({ ...prev, [period.id]: '' }));
+    try {
+      const response = await fetch(`/api/admin-intake-periods/${period.id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to remove intake period.');
+      if (intakeFilter === period.label && periods.filter((p) => p.label === period.label).length === 1) setIntakeFilter('');
+      await loadPeriods();
+    } catch (err) {
+      setPeriodRowMessage((prev) => ({ ...prev, [period.id]: err.message || 'Unable to remove intake period.' }));
+    } finally {
+      setPeriodBusyId('');
     }
   }
 
@@ -644,9 +704,16 @@ export default function AdminInterestPage() {
               </button>
             ))}
             {!periodsLoading && (
-              <button type="button" className="admin-subtab admin-subtab-add" onClick={() => setShowAddPeriod((v) => !v)}>
-                + Add Intake Period
-              </button>
+              <>
+                <button type="button" className="admin-subtab admin-subtab-add" onClick={() => setShowAddPeriod((v) => !v)}>
+                  + Add Intake Period
+                </button>
+                {periods.length > 0 && (
+                  <button type="button" className="admin-subtab admin-subtab-manage" aria-expanded={showManagePeriods} aria-controls="manage-intake-periods" onClick={() => setShowManagePeriods((v) => !v)}>
+                    {showManagePeriods ? 'Close settings' : 'Period settings'}
+                  </button>
+                )}
+              </>
             )}
           </div>
 
@@ -665,6 +732,65 @@ export default function AdminInterestPage() {
                 <Button variant="quiet" onClick={() => { setShowAddPeriod(false); setPeriodError(''); }} disabled={savingPeriod}>Cancel</Button>
               </div>
             </form>
+          )}
+
+          {showManagePeriods && periods.length > 0 && (
+            <section id="manage-intake-periods" className="intake-manage" aria-labelledby="intake-manage-title">
+              <h2 id="intake-manage-title" className="intake-manage-title">Intake period settings</h2>
+              <p className="hint">The projected status and its power cap show on the Interest form while that period is current. A period can be removed only when it is not current and has no requests.</p>
+              <div className="intake-manage-scroll">
+                <table className="intake-manage-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Period</th>
+                      <th scope="col">Projected status</th>
+                      <th scope="col">Leading power cap</th>
+                      <th scope="col">Ordinary power cap</th>
+                      <th scope="col">Requests</th>
+                      <th scope="col"><span className="sr-only">Actions</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortPeriodsNewestFirst(periods).map((period) => {
+                      const d = periodDraft(period);
+                      const busy = periodBusyId === period.id;
+                      const count = requestsInPeriod(period);
+                      const removeBlocked = period.is_active ? 'This is the current period' : count > 0 ? 'Move its requests to another period first' : '';
+                      return (
+                        <tr key={period.id}>
+                          <th scope="row">{period.label}{period.is_active ? <span className="admin-subtab-current"> (current)</span> : null}</th>
+                          <td>
+                            <Select tone="console" aria-label={`Projected status for ${period.label}`} value={d.transfer_status} disabled={busy} onChange={(e) => editPeriodDraft(period, 'transfer_status', e.target.value)}>
+                              <option value="">Not set</option>
+                              <option value="leading">Leading</option>
+                              <option value="ordinary">Ordinary</option>
+                            </Select>
+                          </td>
+                          <td>
+                            <Input tone="console" aria-label={`Leading power cap for ${period.label}`} placeholder="e.g. 250M" maxLength={20} value={d.leading_cap} disabled={busy} onChange={(e) => editPeriodDraft(period, 'leading_cap', e.target.value)} />
+                          </td>
+                          <td>
+                            <Input tone="console" aria-label={`Ordinary power cap for ${period.label}`} placeholder="e.g. 400M" maxLength={20} value={d.ordinary_cap} disabled={busy} onChange={(e) => editPeriodDraft(period, 'ordinary_cap', e.target.value)} />
+                          </td>
+                          <td className="intake-manage-count">{count}</td>
+                          <td>
+                            <div className="intake-manage-actions">
+                              <button type="button" className="status-action-btn" disabled={busy || !periodDraftChanged(period)} onClick={() => savePeriodSettings(period)}>
+                                {busy ? 'Saving...' : 'Save'}
+                              </button>
+                              <button type="button" className="status-action-btn intake-remove-btn" disabled={busy || Boolean(removeBlocked)} title={removeBlocked || `Remove ${period.label}`} onClick={() => removePeriod(period)}>
+                                Remove
+                              </button>
+                            </div>
+                            {periodRowMessage[period.id] && <p className="admin-row-message" role="status">{periodRowMessage[period.id]}</p>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
 
           {!periodsLoading && periods.length > 0 && (

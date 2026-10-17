@@ -3,6 +3,7 @@ import EditableSection from '../../components/EditableSection';
 import { getBlocks, checkIsAdmin } from '../../lib/contentBlocks';
 import InterestForm from './InterestForm';
 import { getActiveIntakePeriod } from '../../lib/transferIntakePeriods.server';
+import { projectionFor } from '../../lib/intakeProjection.mjs';
 import PageHero from '../../components/ui/PageHero';
 import TourLauncher from '../../components/tour/TourLauncher';
 
@@ -13,12 +14,14 @@ export const metadata = {
 };
 
 export default async function InterestPage() {
-  const [introBlocks, isAdmin, initialPeriod] = await Promise.all([
+  const [introBlocks, isAdmin, activePeriod] = await Promise.all([
     getBlocks('interest-intro'),
     checkIsAdmin(),
     // undefined = unknown (the form then asks the API itself).
-    getActiveIntakePeriod().then((p) => p?.label || null).catch(() => undefined),
+    getActiveIntakePeriod().catch(() => undefined),
   ]);
+  const initialPeriod = activePeriod === undefined ? undefined : activePeriod?.label || null;
+  const initialProjection = activePeriod ? projectionFor(activePeriod) : null;
 
   // Single column focused on the form. The editable block is still rendered
   // (admins can add a notice above the form) but reserves no space when empty.
@@ -47,7 +50,7 @@ export default async function InterestPage() {
           />
         )}
 
-        <InterestForm initialPeriod={initialPeriod} />
+        <InterestForm initialPeriod={initialPeriod} initialProjection={initialProjection} />
       </div>
     </main>
   );
