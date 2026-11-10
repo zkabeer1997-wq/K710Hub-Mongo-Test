@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import CatalogText from './i18n/CatalogText';
 
 /**
  * Shared breadcrumb trail (Members › Tools & Calculators › Current page).
@@ -11,7 +12,7 @@ export default function Breadcrumbs({ items = [], current }) {
         <ol>
           {items.map((crumb) => (
             <li key={crumb.href}>
-              <Link href={crumb.href}>{crumb.label}</Link>
+              <Link href={crumb.href}>{crumb.href === '/' ? <CatalogText k="chrome.nav.home" text={crumb.label} defaultText="Home" /> : crumb.label}</Link>
             </li>
           ))}
           <li aria-current="page">
