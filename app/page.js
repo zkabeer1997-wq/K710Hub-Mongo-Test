@@ -7,6 +7,8 @@ import { liveAllianceCopy } from '../lib/allianceCopy.mjs';
 import { loadLandingAlliances } from '../lib/alliancesPublic.server';
 import Link from 'next/link';
 import { getPageText } from '../lib/pageText.server';
+import { HOME_TEXT_DEFAULTS } from '../lib/pageText.mjs';
+import CatalogText from '../components/i18n/CatalogText';
 import HomeForgeIntro from '../components/kingdom/world/HomeForgeIntro';
 import RealmShieldLoader from '../components/kingdom/world/RealmShieldLoader';
 import GalleryCarousel from '../components/gallery/GalleryCarousel';
@@ -118,9 +120,9 @@ export default async function HomePage() {
               <h1>{t.hero_title}</h1>
               <p>{liveCopy(t.hero_sub)}</p>
               <div className="home-v2-actions home-v2-actions-guest">
-                <Link href="/interest" className="home-v2-primary">{t.hero_apply_label}</Link>
+                <Link href="/interest" className="home-v2-primary"><CatalogText k="home.hero.apply" text={t.hero_apply_label} defaultText={HOME_TEXT_DEFAULTS.hero_apply_label} /></Link>
                 <HeroSignInLink />
-                <a href="#alliances" className="home-v2-secondary">{t.hero_schedules_label}</a>
+                <a href="#alliances" className="home-v2-textlink"><CatalogText k="home.hero.schedules" text={t.hero_schedules_label} defaultText={HOME_TEXT_DEFAULTS.hero_schedules_label} /></a>
               </div>
               <dl className="home-v2-facts" aria-label="Kingdom 710 at a glance">
                 <div><dt>{t.fact_alliances_label}</dt><dd>{allianceTags.length || 3}</dd></div>

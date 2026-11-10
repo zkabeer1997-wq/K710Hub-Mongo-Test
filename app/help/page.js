@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import HelpFigure from '../../components/help/HelpFigure';
 import PageHero from '../../components/ui/PageHero';
 import { HELP_SECTIONS, chunkRows } from '../../lib/helpSections.mjs';
 import { planHelpSections } from '../../lib/helpImages.mjs';
@@ -170,11 +171,7 @@ export default async function HelpPage() {
             <h2 id={`${s.id}-title`}>{s.title}</h2>
             <div className="help-text">{BODY_BY_ID[s.id]}</div>
             {s.image ? (
-              <figure className="help-figure">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.image.url} alt={s.image.alt} loading="lazy" decoding="async" {...(s.image.width && s.image.height ? { width: s.image.width, height: s.image.height } : { width: 640, height: 480 })} />
-                {s.image.caption ? <figcaption>{s.image.caption}</figcaption> : null}
-              </figure>
+              <HelpFigure url={s.image.url} alt={s.image.alt} caption={s.image.caption} width={s.image.width} height={s.image.height} />
             ) : null}
           </section>
         ))}

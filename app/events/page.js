@@ -7,6 +7,7 @@ import { loadPublicBearScheduleOrNull } from '../../lib/publicBearSchedule';
 import { loadPublicAllianceEventsOrNull } from '../../lib/publicAllianceEvents';
 import AllianceEventSchedule from './AllianceEventSchedule';
 import BearHuntSchedule from './BearHuntSchedule';
+import './events.css';
 import EventsExplorer from '../../components/events/EventsExplorer';
 import { mergeDefaultEvents } from '../../lib/defaultEvents.mjs';
 

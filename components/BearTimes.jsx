@@ -41,9 +41,14 @@ export default function BearTimes({ times, emptyLabel = 'No Bear Hunt times set.
       </span>
     );
   }
+  // Chips read in the viewer's day order (a 02:00 UTC hunt can be 9 PM the evening before).
+  // Rows keep UTC order: alliances refer to "Hunt 1 / Hunt 2" by that order.
+  const offset = now === null ? 0 : new Date(now).getTimezoneOffset();
+  const localMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return (((h * 60 + m - offset) % 1440) + 1440) % 1440; };
+  const chipOrder = now === null ? sorted : [...sorted].sort((a, b) => localMin(a) - localMin(b));
   return (
     <span className={`bear-times ${className}`.trim()} role="list">
-      {sorted.map(time => {
+      {chipOrder.map(time => {
         const local = now === null ? null : utcHmToLocal(time);
         const isNext = time === next;
         return (

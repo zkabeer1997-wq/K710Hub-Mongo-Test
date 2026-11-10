@@ -7,7 +7,7 @@ import { getCollection } from '../../../lib/mongo';
 import { COLLECTIONS } from '../../../lib/mongoCollections';
 import { Button, Tag } from '../../../components/ui';
 
-import { RECURRENCE_FIELDS } from '../../../lib/eventRecurrence.mjs';
+import { RECURRENCE_FIELDS, nextEventOccurrence } from '../../../lib/eventRecurrence.mjs';
 import EventSchedule from '../EventSchedule';
 import { findDefaultEvent } from '../../../lib/defaultEvents.mjs';
 import { loadPublicBearScheduleOrNull } from '../../../lib/publicBearSchedule';
@@ -22,6 +22,14 @@ const KIND_LABEL = {
 
 // Root layout reads headers() (CSP nonce) so this route is always dynamic.
 export const dynamic = 'force-dynamic';
+
+// A recurring series with no current or future occurrence (or a one-off that is over).
+function hasEnded(event, now = Date.now()) {
+  const recurring = event.recurrence_frequency && event.recurrence_frequency !== 'none';
+  if (recurring) return !nextEventOccurrence(event, now);
+  const end = event.ends_at || event.starts_at;
+  return Boolean(end) && new Date(end).getTime() < now;
+}
 
 async function loadEvent(slug) {
   const coll = await getCollection(COLLECTIONS.EVENTS);
@@ -48,6 +56,7 @@ export async function generateMetadata({ params }) {
     if (!event) return { title: 'Event' };
     return {
       title: event.title,
+      ...(hasEnded(event) ? { robots: { index: false, follow: true } } : {}),
       description: event.description || undefined,
       openGraph: { title: event.title, description: event.description || undefined },
       twitter: { card: 'summary_large_image', title: event.title, description: event.description || undefined },
@@ -76,6 +85,7 @@ export default async function EventPage({ params }) {
     );
   }
   if (!event) notFound();
+  const ended = hasEnded(event);
 
   return (
     <main className="theme-realm event-page">
@@ -83,12 +93,17 @@ export default async function EventPage({ params }) {
         <Link href="/events" className="event-back">← Events</Link>
         <Tag tone="accent">{KIND_LABEL[event.kind] || event.kind}</Tag>
         <h1 className="event-title">{event.title}</h1>
-        <EventSchedule event={event} />
+        {ended ? (
+          <div className="event-ended" role="status">
+            <p><strong>This event series has ended.</strong> The current dates are on the Events page.</p>
+          </div>
+        ) : <EventSchedule event={event} />}
         {event.description && <p className="event-description">{event.description}</p>}
 
         <div className="event-actions">
-          {event.guide_slug && <Button href={`/guides/${event.guide_slug}`}>Read the guide</Button>}
-          <Button href={`/api/events/${event.slug}/ics`} variant="quiet">📅 Add to calendar (.ics)</Button>
+          {ended && <Button href="/events">See upcoming events</Button>}
+          {event.guide_slug && <Button href={`/guides/${event.guide_slug}`} variant={ended ? 'quiet' : undefined}>Read the guide</Button>}
+          {!ended && <Button href={`/api/events/${event.slug}/ics`} variant="quiet">📅 Add to calendar (.ics)</Button>}
         </div>
 
         {event.body_md && (
@@ -107,6 +122,8 @@ export default async function EventPage({ params }) {
         .event-back:hover{text-decoration:underline}
         .event-title{margin:6px 0 0;font-family:var(--font-display);font-size:clamp(28px,4.5vw,44px)}
         .event-when{margin:0;color:var(--color-ink-muted);font-size:15px}
+        .event-ended{margin:8px 0 0;padding:14px 16px;border:1px solid var(--color-border-strong);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-ink);font-size:16px;line-height:1.5}
+        .event-ended p{margin:0}
         .event-description{margin:8px 0 0;font-size:16px;line-height:1.6;max-width:65ch}
         .event-actions{margin:10px 0}
         .event-body{margin-top:20px;font-size:16px;line-height:1.7;max-width:70ch}

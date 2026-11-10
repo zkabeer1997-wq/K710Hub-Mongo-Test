@@ -7,7 +7,7 @@
 
   "footer.nav.aria": {"text":"Footer","note":"Screen-reader name of the footer navigation."},
   "footer.name": {"text":"Kingdom 710","note":"Name of the kingdom in the footer. Keep Kingdom 710 as is."},
-  "footer.tag": {"text":"Many alliances. One kingdom. KvK-first.","note":"Short slogan under the kingdom name. KvK stays KvK."},
+  "footer.tag": {"text":"A multilingual Kingshot kingdom.","note":"Short line under the kingdom name in the footer."},
   "footer.group.explore": {"text":"Explore","note":"Footer column heading."},
   "footer.group.about": {"text":"About","note":"Footer column heading."},
   "footer.group.members": {"text":"Members","note":"Footer column heading for pages that need a member sign-in."},
@@ -319,6 +319,8 @@
 
   "signin.link": {"text":"Sign in","note":"Link and button text for members to sign in to the website. Short. Keep it a clear action word."},
   "signin.hero.cta": {"text":"Already in 710? Sign in","note":"Button on the home page for existing kingdom members. 710 is the kingdom number; keep it."},
+  "home.hero.apply": {"text":"Apply to transfer","note":"Main home page button for players who want to move their account into the kingdom (a game server transfer, not a school or bank transfer)."},
+  "home.hero.schedules": {"text":"See alliance schedules","note":"Home page link that scrolls to the Bear Hunt times of each alliance."},
   "signin.tag.members": {"text":"Members","note":"Small tag next to a link, shown to visitors who are not signed in, meaning the page is only for signed-in kingdom members."},
   "signin.tag.membersSr": {"text":"Sign in needed","note":"Hidden text for screen readers after the Members tag: this page needs sign-in."},
   "signin.next.forms": {"text":"Sign in to open Forms","note":"Banner on the sign-in card when the visitor tried to open the member Forms page. Keep the word Forms as the page name."},

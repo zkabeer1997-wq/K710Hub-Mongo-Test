@@ -47,7 +47,7 @@ export default function EasyViewToggle({ className = '' }) {
       onClick={toggle}
       title={t('signin.easy.title')}
     >
-      <span className="easy-view-aa" aria-hidden="true">Aa</span>
+      <span className="easy-view-aa" aria-hidden="true" translate="no">Aa</span>
       <span className="easy-view-label">{label}</span>
     </button>
   );

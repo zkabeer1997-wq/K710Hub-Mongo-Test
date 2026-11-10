@@ -41,8 +41,22 @@ export function UpdatedAgo({ iso, serverNow }) {
   return <time dateTime={iso}>{timeAgo(iso, now)}</time>;
 }
 
+// The date badge. Unlocks happen at 00:00 UTC, which is the previous evening in the Americas, so
+// after mount the badge shows the viewer's local date (matching the "local" time beside it).
+// The server render shows the UTC date, so hydration matches.
+function useLocalYmd(isoDate) {
+  const [ymd, setYmd] = useState(() => isoDate.split('-').map(Number));
+  useEffect(() => {
+    const ms = Date.parse(`${isoDate}T00:00:00Z`);
+    if (!Number.isFinite(ms)) return;
+    const local = new Date(ms);
+    setYmd([local.getFullYear(), local.getMonth() + 1, local.getDate()]);
+  }, [isoDate]);
+  return ymd;
+}
+
 function Chapter({ chapter, status, nextChapter, now }) {
-  const [y, m, d] = chapter.date.split('-');
+  const [y, m, d] = useLocalYmd(chapter.date);
   const progress = status === 'current' && nextChapter ? phaseProgress(chapter.startMs, nextChapter.startMs, now) : null;
   const pct = progress === null ? null : Math.round(progress * 100);
   return (

@@ -309,7 +309,7 @@ export default function Tour({ tour, auto, opener, onFinish }) {
           data-side={side}
           style={popStyle}
         >
-          <p className="k-tour-count">{t('tour.ui.stepOf', { current: index + 1, total })}</p>
+          {tour.hideCount ? null : <p className="k-tour-count">{t('tour.ui.stepOf', { current: index + 1, total })}</p>}
           <h2 className="k-tour-title" id={titleId}>{t(step.titleKey)}</h2>
           <p className="k-tour-body" id={bodyId}>{t(step.bodyKey)}</p>
           {pendingMore ? <p className="k-tour-more">{t('tour.ui.more')}</p> : null}

@@ -1,3 +1,4 @@
+import { nextEventOccurrence } from '../lib/eventRecurrence.mjs';
 import { guidesTable } from '../lib/guideAccess.mjs';
 import { getCollection } from '../lib/mongo';
 import { COLLECTIONS } from '../lib/mongoCollections';
@@ -45,8 +46,14 @@ async function guideEntries() {
 async function eventEntries() {
   try {
     const coll = await getCollection(COLLECTIONS.EVENTS);
-    const data = await coll.find({ published: true }).project({ slug: 1, updated_at: 1, _id: 0 }).toArray();
-    return (data || []).filter((e) => e.slug).map((e) => ({
+    const data = await coll.find({ published: true }).project({ slug: 1, updated_at: 1, starts_at: 1, ends_at: 1, recurrence_frequency: 1, recurrence_interval: 1, recurrence_until: 1, recurrence_count: 1, recurrence_weekdays: 1, exdates: 1, all_day: 1, _id: 0 }).toArray();
+    const now = Date.now();
+    const live = (e) => {
+      if (e.recurrence_frequency && e.recurrence_frequency !== 'none') return Boolean(nextEventOccurrence(e, now));
+      const end = e.ends_at || e.starts_at;
+      return !end || new Date(end).getTime() >= now;
+    };
+    return (data || []).filter((e) => e.slug && live(e)).map((e) => ({
       url: `${BASE_URL}/events/${e.slug}`,
       lastModified: e.updated_at ? new Date(e.updated_at) : undefined,
       changeFrequency: 'weekly',
