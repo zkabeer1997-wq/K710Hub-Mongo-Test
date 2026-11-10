@@ -247,14 +247,16 @@ function TextField({ ctx, k, label, hint, mode, type = 'text', placeholder, auto
 }
 
 function StepProgress({ step, onJump }) {
+  const t = useT();
+  const label = (a) => t(`interest.step.${a.id}.label`);
   const pct = Math.round(((step + 1) / ACTS.length) * 100);
   return (
     <nav className="apply-progress" aria-label="Application steps" data-tour="interest-progress">
       <p className="apply-progress-label">
         <span>Step {step + 1} of {ACTS.length}</span>
-        <strong>{ACTS[step].label}</strong>
+        <strong>{label(ACTS[step])}</strong>
       </p>
-      <div className="apply-bar" role="progressbar" aria-label="Application progress" aria-valuemin={1} aria-valuemax={ACTS.length} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${ACTS.length}: ${ACTS[step].label}`}>
+      <div className="apply-bar" role="progressbar" aria-label="Application progress" aria-valuemin={1} aria-valuemax={ACTS.length} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${ACTS.length}: ${label(ACTS[step])}`}>
         <span style={{ width: `${pct}%` }} />
       </div>
       <ol className="apply-steps">
@@ -264,11 +266,11 @@ function StepProgress({ step, onJump }) {
               type="button"
               className={`apply-step ${i === step ? 'is-current' : ''} ${i < step ? 'is-done' : ''}`}
               aria-current={i === step ? 'step' : undefined}
-              aria-label={`Step ${i + 1}: ${a.label}${i < step ? ' (done)' : ''}`}
+              aria-label={`Step ${i + 1}: ${label(a)}${i < step ? ' (done)' : ''}`}
               onClick={() => onJump(i)}
             >
               <span className="apply-step-num" aria-hidden="true">{i < step ? '✓' : i + 1}</span>
-              <span className="apply-step-name">{a.short}</span>
+              <span className="apply-step-name">{t(`interest.step.${a.id}.short`)}</span>
             </button>
           </li>
         ))}

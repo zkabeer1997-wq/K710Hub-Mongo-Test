@@ -78,7 +78,19 @@
       "home.hero.apply",
       "home.hero.schedules",
       "interest.nav.continue",
-      "interest.nav.back"
+      "interest.nav.back",
+      "interest.step.identity.label",
+      "interest.step.identity.short",
+      "interest.step.intake.label",
+      "interest.step.intake.short",
+      "interest.step.troops.label",
+      "interest.step.troops.short",
+      "interest.step.commitment.label",
+      "interest.step.commitment.short",
+      "interest.step.battle-report.label",
+      "interest.step.battle-report.short",
+      "interest.step.review.label",
+      "interest.step.review.short"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -526,6 +538,18 @@
     "home.hero.apply": "申请迁入",
     "home.hero.schedules": "查看联盟时间表",
     "interest.nav.continue": "下一步",
-    "interest.nav.back": "上一步"
+    "interest.nav.back": "上一步",
+    "interest.step.identity.label": "你的账号",
+    "interest.step.identity.short": "账号",
+    "interest.step.intake.label": "你的迁移",
+    "interest.step.intake.short": "迁移",
+    "interest.step.troops.label": "你的战力",
+    "interest.step.troops.short": "战力",
+    "interest.step.commitment.label": "你的游戏风格",
+    "interest.step.commitment.short": "风格",
+    "interest.step.battle-report.label": "截图",
+    "interest.step.battle-report.short": "图片",
+    "interest.step.review.label": "检查并提交",
+    "interest.step.review.short": "提交"
   }
 }

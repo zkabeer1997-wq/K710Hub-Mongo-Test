@@ -78,7 +78,19 @@
       "home.hero.apply",
       "home.hero.schedules",
       "interest.nav.continue",
-      "interest.nav.back"
+      "interest.nav.back",
+      "interest.step.identity.label",
+      "interest.step.identity.short",
+      "interest.step.intake.label",
+      "interest.step.intake.short",
+      "interest.step.troops.label",
+      "interest.step.troops.short",
+      "interest.step.commitment.label",
+      "interest.step.commitment.short",
+      "interest.step.battle-report.label",
+      "interest.step.battle-report.short",
+      "interest.step.review.label",
+      "interest.step.review.short"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -526,6 +538,18 @@
     "home.hero.apply": "Solicitar traslado",
     "home.hero.schedules": "Ver horarios de las alianzas",
     "interest.nav.continue": "Continuar",
-    "interest.nav.back": "Atrás"
+    "interest.nav.back": "Atrás",
+    "interest.step.identity.label": "Tu cuenta",
+    "interest.step.identity.short": "Cuenta",
+    "interest.step.intake.label": "Tu traslado",
+    "interest.step.intake.short": "Traslado",
+    "interest.step.troops.label": "Tu poder",
+    "interest.step.troops.short": "Poder",
+    "interest.step.commitment.label": "Tu estilo de juego",
+    "interest.step.commitment.short": "Estilo",
+    "interest.step.battle-report.label": "Capturas",
+    "interest.step.battle-report.short": "Imágenes",
+    "interest.step.review.label": "Revisar y enviar",
+    "interest.step.review.short": "Enviar"
   }
 }

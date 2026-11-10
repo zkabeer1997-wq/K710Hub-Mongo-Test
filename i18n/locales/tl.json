@@ -78,7 +78,19 @@
       "home.hero.apply",
       "home.hero.schedules",
       "interest.nav.continue",
-      "interest.nav.back"
+      "interest.nav.back",
+      "interest.step.identity.label",
+      "interest.step.identity.short",
+      "interest.step.intake.label",
+      "interest.step.intake.short",
+      "interest.step.troops.label",
+      "interest.step.troops.short",
+      "interest.step.commitment.label",
+      "interest.step.commitment.short",
+      "interest.step.battle-report.label",
+      "interest.step.battle-report.short",
+      "interest.step.review.label",
+      "interest.step.review.short"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -526,6 +538,18 @@
     "home.hero.apply": "Mag-apply na lumipat",
     "home.hero.schedules": "Tingnan ang schedule ng alliance",
     "interest.nav.continue": "Magpatuloy",
-    "interest.nav.back": "Bumalik"
+    "interest.nav.back": "Bumalik",
+    "interest.step.identity.label": "Ang account mo",
+    "interest.step.identity.short": "Account",
+    "interest.step.intake.label": "Ang paglipat mo",
+    "interest.step.intake.short": "Paglipat",
+    "interest.step.troops.label": "Ang power mo",
+    "interest.step.troops.short": "Power",
+    "interest.step.commitment.label": "Ang istilo mo sa paglalaro",
+    "interest.step.commitment.short": "Istilo",
+    "interest.step.battle-report.label": "Mga screenshot",
+    "interest.step.battle-report.short": "Mga larawan",
+    "interest.step.review.label": "Suriin at ipadala",
+    "interest.step.review.short": "Ipadala"
   }
 }

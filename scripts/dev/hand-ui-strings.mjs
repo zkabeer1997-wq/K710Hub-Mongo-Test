@@ -36,6 +36,18 @@ const KEYS = [
   'signin.easy.on', 'signin.easy.off', 'signin.easy.title', 'signin.hero.cta',
   'home.hero.apply', 'home.hero.schedules',
   'interest.nav.continue', 'interest.nav.back',
+  'interest.step.identity.label',
+  'interest.step.identity.short',
+  'interest.step.intake.label',
+  'interest.step.intake.short',
+  'interest.step.troops.label',
+  'interest.step.troops.short',
+  'interest.step.commitment.label',
+  'interest.step.commitment.short',
+  'interest.step.battle-report.label',
+  'interest.step.battle-report.short',
+  'interest.step.review.label',
+  'interest.step.review.short',
 ];
 
 // One row per key, in KEYS order: ko, ja, zh, es, fr, tr, hi, ar, tl.
@@ -112,6 +124,18 @@ const ROWS = [
   ['연맹 일정 보기', '同盟のスケジュールを見る', '查看联盟时间表', 'Ver horarios de las alianzas', 'Voir les horaires des alliances', 'İttifak programlarını gör', 'एलायंस का शेड्यूल देखें', 'اعرض جداول التحالفات', 'Tingnan ang schedule ng alliance'],
   ['다음', '次へ', '下一步', 'Continuar', 'Continuer', 'Devam', 'आगे', 'متابعة', 'Magpatuloy'],
   ['이전', '戻る', '上一步', 'Atrás', 'Retour', 'Geri', 'पीछे', 'رجوع', 'Bumalik'],
+  ['내 계정', 'あなたのアカウント', '你的账号', 'Tu cuenta', 'Votre compte', 'Hesabın', 'आपका अकाउंट', 'حسابك', 'Ang account mo'],
+  ['계정', 'アカウント', '账号', 'Cuenta', 'Compte', 'Hesap', 'अकाउंट', 'الحساب', 'Account'],
+  ['이동 정보', '移籍について', '你的迁移', 'Tu traslado', 'Votre transfert', 'Taşınman', 'आपका ट्रांसफ़र', 'انتقالك', 'Ang paglipat mo'],
+  ['이동', '移籍', '迁移', 'Traslado', 'Transfert', 'Taşınma', 'ट्रांसफ़र', 'الانتقال', 'Paglipat'],
+  ['내 전투력', 'あなたの戦力', '你的战力', 'Tu poder', 'Votre puissance', 'Gücün', 'आपकी पावर', 'قوتك', 'Ang power mo'],
+  ['전투력', '戦力', '战力', 'Poder', 'Puissance', 'Güç', 'पावर', 'القوة', 'Power'],
+  ['플레이 스타일', 'プレイスタイル', '你的游戏风格', 'Tu estilo de juego', 'Votre style de jeu', 'Oyun tarzın', 'आपका खेलने का तरीका', 'أسلوب لعبك', 'Ang istilo mo sa paglalaro'],
+  ['플레이', 'プレイ', '风格', 'Estilo', 'Style', 'Tarz', 'खेल शैली', 'الأسلوب', 'Istilo'],
+  ['스크린샷', 'スクリーンショット', '截图', 'Capturas', 'Captures d’écran', 'Ekran görüntüleri', 'स्क्रीनशॉट', 'لقطات الشاشة', 'Mga screenshot'],
+  ['사진', '画像', '图片', 'Imágenes', 'Images', 'Resimler', 'तस्वीरें', 'الصور', 'Mga larawan'],
+  ['확인 후 보내기', '確認して送信', '检查并提交', 'Revisar y enviar', 'Vérifier et envoyer', 'Kontrol et ve gönder', 'जाँचें और भेजें', 'راجع وأرسل', 'Suriin at ipadala'],
+  ['보내기', '送信', '提交', 'Enviar', 'Envoi', 'Gönder', 'भेजें', 'الإرسال', 'Ipadala'],
 ];
 const LANGS = ['ko', 'ja', 'zh', 'es', 'fr', 'tr', 'hi', 'ar', 'tl'];
 

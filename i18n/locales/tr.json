@@ -78,7 +78,19 @@
       "home.hero.apply",
       "home.hero.schedules",
       "interest.nav.continue",
-      "interest.nav.back"
+      "interest.nav.back",
+      "interest.step.identity.label",
+      "interest.step.identity.short",
+      "interest.step.intake.label",
+      "interest.step.intake.short",
+      "interest.step.troops.label",
+      "interest.step.troops.short",
+      "interest.step.commitment.label",
+      "interest.step.commitment.short",
+      "interest.step.battle-report.label",
+      "interest.step.battle-report.short",
+      "interest.step.review.label",
+      "interest.step.review.short"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -526,6 +538,18 @@
     "home.hero.apply": "Transfer için başvur",
     "home.hero.schedules": "İttifak programlarını gör",
     "interest.nav.continue": "Devam",
-    "interest.nav.back": "Geri"
+    "interest.nav.back": "Geri",
+    "interest.step.identity.label": "Hesabın",
+    "interest.step.identity.short": "Hesap",
+    "interest.step.intake.label": "Taşınman",
+    "interest.step.intake.short": "Taşınma",
+    "interest.step.troops.label": "Gücün",
+    "interest.step.troops.short": "Güç",
+    "interest.step.commitment.label": "Oyun tarzın",
+    "interest.step.commitment.short": "Tarz",
+    "interest.step.battle-report.label": "Ekran görüntüleri",
+    "interest.step.battle-report.short": "Resimler",
+    "interest.step.review.label": "Kontrol et ve gönder",
+    "interest.step.review.short": "Gönder"
   }
 }

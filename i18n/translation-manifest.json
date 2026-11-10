@@ -443,7 +443,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "tl": {
     "translate.working": "ae47b9e3823e",
@@ -889,7 +901,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "ar": {
     "translate.working": "ae47b9e3823e",
@@ -1335,7 +1359,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "es": {
     "translate.working": "ae47b9e3823e",
@@ -1781,7 +1817,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "fr": {
     "translate.working": "ae47b9e3823e",
@@ -2227,7 +2275,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "zh": {
     "translate.working": "ae47b9e3823e",
@@ -2673,7 +2733,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "tr": {
     "translate.working": "ae47b9e3823e",
@@ -3119,7 +3191,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "hi": {
     "translate.working": "ae47b9e3823e",
@@ -3565,7 +3649,19 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   },
   "ja": {
     "translate.working": "ae47b9e3823e",
@@ -4011,6 +4107,18 @@
     "home.hero.apply": "b4ecb730e81e",
     "home.hero.schedules": "0d13ecdb5e0f",
     "interest.nav.continue": "2e02623966f9",
-    "interest.nav.back": "b52b36b7269f"
+    "interest.nav.back": "b52b36b7269f",
+    "interest.step.identity.label": "4ab291020939",
+    "interest.step.identity.short": "85dfa32c97d8",
+    "interest.step.intake.label": "44470e508a5d",
+    "interest.step.intake.short": "76cdb9507216",
+    "interest.step.troops.label": "4e6042c0d78a",
+    "interest.step.troops.short": "7548ab52c3d1",
+    "interest.step.commitment.label": "282094d29d84",
+    "interest.step.commitment.short": "21aafdcc9644",
+    "interest.step.battle-report.label": "597b6356e6ce",
+    "interest.step.battle-report.short": "935edbe91f7d",
+    "interest.step.review.label": "313e70ac4898",
+    "interest.step.review.short": "9bc2575c3930"
   }
 }

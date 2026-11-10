@@ -78,7 +78,19 @@
       "home.hero.apply",
       "home.hero.schedules",
       "interest.nav.continue",
-      "interest.nav.back"
+      "interest.nav.back",
+      "interest.step.identity.label",
+      "interest.step.identity.short",
+      "interest.step.intake.label",
+      "interest.step.intake.short",
+      "interest.step.troops.label",
+      "interest.step.troops.short",
+      "interest.step.commitment.label",
+      "interest.step.commitment.short",
+      "interest.step.battle-report.label",
+      "interest.step.battle-report.short",
+      "interest.step.review.label",
+      "interest.step.review.short"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -526,6 +538,18 @@
     "home.hero.apply": "قدّم طلب الانتقال",
     "home.hero.schedules": "اعرض جداول التحالفات",
     "interest.nav.continue": "متابعة",
-    "interest.nav.back": "رجوع"
+    "interest.nav.back": "رجوع",
+    "interest.step.identity.label": "حسابك",
+    "interest.step.identity.short": "الحساب",
+    "interest.step.intake.label": "انتقالك",
+    "interest.step.intake.short": "الانتقال",
+    "interest.step.troops.label": "قوتك",
+    "interest.step.troops.short": "القوة",
+    "interest.step.commitment.label": "أسلوب لعبك",
+    "interest.step.commitment.short": "الأسلوب",
+    "interest.step.battle-report.label": "لقطات الشاشة",
+    "interest.step.battle-report.short": "الصور",
+    "interest.step.review.label": "راجع وأرسل",
+    "interest.step.review.short": "الإرسال"
   }
 }

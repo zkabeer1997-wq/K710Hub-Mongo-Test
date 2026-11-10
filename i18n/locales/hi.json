@@ -78,7 +78,19 @@
       "home.hero.apply",
       "home.hero.schedules",
       "interest.nav.continue",
-      "interest.nav.back"
+      "interest.nav.back",
+      "interest.step.identity.label",
+      "interest.step.identity.short",
+      "interest.step.intake.label",
+      "interest.step.intake.short",
+      "interest.step.troops.label",
+      "interest.step.troops.short",
+      "interest.step.commitment.label",
+      "interest.step.commitment.short",
+      "interest.step.battle-report.label",
+      "interest.step.battle-report.short",
+      "interest.step.review.label",
+      "interest.step.review.short"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -526,6 +538,18 @@
     "home.hero.apply": "ट्रांसफ़र के लिए आवेदन करें",
     "home.hero.schedules": "एलायंस का शेड्यूल देखें",
     "interest.nav.continue": "आगे",
-    "interest.nav.back": "पीछे"
+    "interest.nav.back": "पीछे",
+    "interest.step.identity.label": "आपका अकाउंट",
+    "interest.step.identity.short": "अकाउंट",
+    "interest.step.intake.label": "आपका ट्रांसफ़र",
+    "interest.step.intake.short": "ट्रांसफ़र",
+    "interest.step.troops.label": "आपकी पावर",
+    "interest.step.troops.short": "पावर",
+    "interest.step.commitment.label": "आपका खेलने का तरीका",
+    "interest.step.commitment.short": "खेल शैली",
+    "interest.step.battle-report.label": "स्क्रीनशॉट",
+    "interest.step.battle-report.short": "तस्वीरें",
+    "interest.step.review.label": "जाँचें और भेजें",
+    "interest.step.review.short": "भेजें"
   }
 }

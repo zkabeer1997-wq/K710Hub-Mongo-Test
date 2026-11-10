@@ -78,7 +78,19 @@
       "home.hero.apply",
       "home.hero.schedules",
       "interest.nav.continue",
-      "interest.nav.back"
+      "interest.nav.back",
+      "interest.step.identity.label",
+      "interest.step.identity.short",
+      "interest.step.intake.label",
+      "interest.step.intake.short",
+      "interest.step.troops.label",
+      "interest.step.troops.short",
+      "interest.step.commitment.label",
+      "interest.step.commitment.short",
+      "interest.step.battle-report.label",
+      "interest.step.battle-report.short",
+      "interest.step.review.label",
+      "interest.step.review.short"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -526,6 +538,18 @@
     "home.hero.apply": "이전 신청하기",
     "home.hero.schedules": "연맹 일정 보기",
     "interest.nav.continue": "다음",
-    "interest.nav.back": "이전"
+    "interest.nav.back": "이전",
+    "interest.step.identity.label": "내 계정",
+    "interest.step.identity.short": "계정",
+    "interest.step.intake.label": "이동 정보",
+    "interest.step.intake.short": "이동",
+    "interest.step.troops.label": "내 전투력",
+    "interest.step.troops.short": "전투력",
+    "interest.step.commitment.label": "플레이 스타일",
+    "interest.step.commitment.short": "플레이",
+    "interest.step.battle-report.label": "스크린샷",
+    "interest.step.battle-report.short": "사진",
+    "interest.step.review.label": "확인 후 보내기",
+    "interest.step.review.short": "보내기"
   }
 }
