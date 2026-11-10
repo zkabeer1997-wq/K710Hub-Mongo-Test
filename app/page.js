@@ -157,11 +157,11 @@ export default async function HomePage() {
 
       <section className="home-v2-command">
         <div className="home-v2-command-copy">
-          <SectionHeader eyebrow={t.deck_head_kicker} title={t.deck_head_title} lede={t.deck_head_sub} />
+          <SectionHeader title={t.deck_head_title} lede={t.deck_head_sub} />
         </div>
         <div className="home-v2-command-list">
           {COMMAND.map((item) => (
-            <Link key={item.href} href={item.href}><b>{item.n}</b><span><strong>{t[item.titleKey]}</strong><small>{t[item.subKey]}</small>{!isMember && routeNeedsSignIn(item.href) && <MembersTag />}</span><i>↗</i></Link>
+            <Link key={item.href} href={item.href}><span><strong>{t[item.titleKey]}</strong><small>{t[item.subKey]}</small>{!isMember && routeNeedsSignIn(item.href) && <MembersTag />}</span><i>↗</i></Link>
           ))}
         </div>
       </section>
@@ -169,23 +169,23 @@ export default async function HomePage() {
       <section className="home-v2-story">
         <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
         <div className="home-v2-story-copy">
-          <SectionHeader eyebrow={t.why_head_kicker} title={t.why_head_title} lede={liveCopy(t.why_head_sub)} />
+          <SectionHeader title={t.why_head_title} lede={liveCopy(t.why_head_sub)} />
           <div className="home-v2-doctrine">
-            {DOCTRINE.map((d) => <div key={d.n}><b>{d.n}</b><span><strong>{t[d.titleKey]}</strong><small>{t[d.bodyKey]}</small></span></div>)}
+            {DOCTRINE.map((d) => <div key={d.n}><span><strong>{t[d.titleKey]}</strong><small>{t[d.bodyKey]}</small></span></div>)}
           </div>
           <Link href="/about" className="home-v2-story-link">{t.story_link} →</Link>
         </div>
       </section>
 
       <section className="home-v2-alliances" id="alliances">
-        <SectionHeader eyebrow={t.wb_head_kicker} title={t.wb_head_title} />
+        <SectionHeader title={t.wb_head_title} />
         <PublicBearAlliances initialAlliances={bearAlliances} notes={buildBearNotes({ alliances: bearAlliances || [], textNotes: bearAllianceNotes(content), details, stripBlurb: stripLegacyBearCopy })} />
       </section>
 
       <LatestLoreTeaser story={latestStory} />
 
       <section className="home-v2-final">
-        <div><span className="k-mark">{t.final_kicker}</span><h2>{t.final_title.split('\n').map((line, i) => <Fragment key={i}>{i > 0 && <br />}{line}</Fragment>)}</h2></div>
+        <div><h2>{t.final_title.split('\n').map((line, i) => <Fragment key={i}>{i > 0 && <br />}{line}</Fragment>)}</h2></div>
         <Link href="/interest">{t.final_button}</Link>
       </section>
     </main>

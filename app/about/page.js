@@ -64,7 +64,6 @@ export default async function AboutPage() {
 
       <section className="about-story about-wrap" aria-labelledby="about-story-h">
         <div className="about-story-head">
-          <p className="about-kicker">{t.story_kicker}</p>
           <h2 id="about-story-h">{t.story_heading}</h2>
         </div>
         <div className="about-story-body">
@@ -79,7 +78,6 @@ export default async function AboutPage() {
         <span id="kingdom-rankings" aria-hidden="true" />
         <div className="about-wrap">
           <div className="about-record-head">
-            <p className="about-kicker">{t.record_kicker}</p>
             <h2 id="about-record-h">{t.record_heading}</h2>
             <Paras text={t.record_intro} />
           </div>
@@ -90,7 +88,6 @@ export default async function AboutPage() {
 
       <section className="about-alliances about-wrap" id="alliances" aria-labelledby="about-alliances-h">
         <div className="about-section-head">
-          <p className="about-kicker">{t.alliances_kicker}</p>
           <h2 id="about-alliances-h">{t.alliances_heading}</h2>
           <Paras text={t.alliances_intro} />
         </div>
@@ -113,7 +110,6 @@ export default async function AboutPage() {
 
       <section className="about-join about-wrap" id="how-to-transfer" aria-labelledby="about-join-h">
         <div className="about-join-intro">
-          <p className="about-kicker">{t.join_kicker}</p>
           <h2 id="about-join-h">{t.join_heading}</h2>
           <ol className="about-steps">
             {steps.map((s, i) => (

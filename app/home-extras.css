@@ -81,3 +81,7 @@
   .home-v2-copy { padding: 48px 20px 0; }
   .home-v2-copy h1 { font-size: clamp(38px, 11.5vw, 52px); line-height: 0.95; letter-spacing: -0.03em; text-transform: none; }
 }
+
+/* Doctrine and member links are not sequences: no I/II/III or 01-04 column (UI audit F19). */
+.home-v2-doctrine > div { grid-template-columns: 1fr; }
+.home-v2-command-list a { grid-template-columns: 1fr auto; }

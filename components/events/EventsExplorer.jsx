@@ -23,7 +23,6 @@ export default function EventsExplorer({ events, initialNow }) {
     <>
       <section className="events-section" aria-labelledby="upcoming-events-heading">
         <div className="events-sh">
-          <p className="events-eyebrow">Next up</p>
           <h2 id="upcoming-events-heading" className="events-h2">Upcoming events</h2>
           <p className="events-lede">The next date of every event, in your local time and in UTC. Select an event name to open its guide.</p>
         </div>
@@ -48,7 +47,6 @@ export default function EventsExplorer({ events, initialNow }) {
 
       <section className="events-section" aria-labelledby="event-calendar-heading">
         <div className="events-sh">
-          <p className="events-eyebrow">Calendar</p>
           <h2 id="event-calendar-heading" className="events-h2">Event calendar</h2>
           <p className="events-lede">Repeating events are shown on every date they happen. Select an event to open its guide.</p>
         </div>

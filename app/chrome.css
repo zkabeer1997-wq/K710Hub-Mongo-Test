@@ -72,3 +72,14 @@
 :root:lang(zh-Hans) { --font-display: var(--font-fraunces-loaded), 'Noto Serif SC', 'Songti SC', 'SimSun', serif; }
 :root:lang(ar) { --font-display: var(--font-fraunces-loaded), 'Noto Naskh Arabic', 'Geeza Pro', 'Traditional Arabic', serif; }
 :root:lang(hi) { --font-display: var(--font-fraunces-loaded), 'Noto Serif Devanagari', 'Kohinoor Devanagari', 'Mangal', serif; }
+
+/* ---- Buttons use the site font (some fell back to the browser's Arial) — family only ---- */
+button, input, select, textarea { font-family: inherit; }
+
+/* ---- Realm headings in sentence case: as written, no forced capitals (UI audit F18).
+   Console (Cinzel) headings keep their small capitals. ---- */
+.theme-realm :is(h1, h2, h3),
+.site-route-realm :is(h1, h2, h3) {
+  text-transform: none;
+  letter-spacing: -0.01em;
+}

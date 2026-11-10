@@ -123,7 +123,7 @@ export default async function GuidesPage({ searchParams }) {
       </section>
 
       <section className="guides-archive" id="archive">
-        <SectionHeader eyebrow={t.archive_eyebrow} title={t.archive_title} lede={t.archive_lede} className="guides-archive-head" />
+        <SectionHeader title={t.archive_title} lede={t.archive_lede} className="guides-archive-head" />
 
         {loadError ? (
           <div className="guides-error">{loadError}</div>

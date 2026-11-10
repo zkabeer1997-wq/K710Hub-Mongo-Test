@@ -82,12 +82,12 @@ export default async function EventsPage() {
       />
       <div className="events-page-inner">
         <section className="events-section events-section-hunts">
-          <SectionHeader eyebrow="Daily rhythm" title="Bear Hunt schedule" lede="Daily times set by each alliance. Times are shown locally on your device." className="events-sh" />
+          <SectionHeader title="Bear Hunt schedule" lede="Daily times set by each alliance. Times are shown locally on your device." className="events-sh" />
           <BearHuntSchedule initialAlliances={bearAlliances} />
         </section>
 
         <section className="events-section" aria-labelledby="alliance-events-heading">
-          <SectionHeader eyebrow="By alliance" title="Alliance events" id="alliance-events-heading" lede="Swordland, Tri-Alliance, and Vikings Vengeance dates set by each alliance. Today’s events and upcoming dates, with both your local time and UTC." className="events-sh" />
+          <SectionHeader title="Alliance events" id="alliance-events-heading" lede="Swordland, Tri-Alliance, and Vikings Vengeance dates set by each alliance. Today’s events and upcoming dates, with both your local time and UTC." className="events-sh" />
           <AllianceEventSchedule initialEvents={allianceEvents} initialNow={Date.now()} />
         </section>
 
