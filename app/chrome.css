@@ -83,3 +83,6 @@ button, input, select, textarea { font-family: inherit; }
   text-transform: none;
   letter-spacing: -0.01em;
 }
+
+/* Breadcrumb links are tappable: at least 14px (UI audit F17). */
+html body .cost-tool-crumbs a, html body .cost-tool-crumbs span { font-size: 14px; }

@@ -77,11 +77,6 @@ export default async function GuidesPage({ searchParams }) {
     loadError = t.load_error;
   }
 
-  const categoryCount = categories.length;
-  const latest = guides
-    .filter((guide) => guide.updated_at)
-    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
-
   const directoryCopy = Object.fromEntries(['search_label', 'search_placeholder', 'filter_label', 'filter_all', 'empty_search', 'empty_category', 'badge_start', 'entry_read_suffix', 'entry_updated_prefix', 'entry_open'].map((k) => [k, t[k]]));
 
   return (
@@ -92,35 +87,7 @@ export default async function GuidesPage({ searchParams }) {
         title={t.hero_title}
         lede={t.hero_lede}
         actions={<><a href="#archive">{t.hero_browse_label}</a><Link href="/events">{t.hero_events_label}</Link></>}
-        aside={
-          <aside className="guides-index" aria-label="Guide summary">
-            <div>
-              <span>{t.summary_guides_label}</span>
-              <strong>{guides.length || '—'}</strong>
-            </div>
-            <div>
-              <span>{t.summary_categories_label}</span>
-              <strong>{categoryCount || '—'}</strong>
-            </div>
-            <div>
-              <span>{t.summary_latest_label}</span>
-              <strong className="guides-index-small">
-                {latest?.updated_at ? formatGuideDate(guideUpdatedAt(latest)) : t.summary_latest_empty}
-              </strong>
-            </div>
-          </aside>
-        }
       />
-
-      <section className="guides-intro-band">
-        {[1, 2, 3].map((n) => (
-          <div key={n}>
-            <span className="k-mark">{t[`band_${n}_kicker`]}</span>
-            <strong>{t[`band_${n}_title`]}</strong>
-            <p>{t[`band_${n}_text`]}</p>
-          </div>
-        ))}
-      </section>
 
       <section className="guides-archive" id="archive">
         <SectionHeader title={t.archive_title} lede={t.archive_lede} className="guides-archive-head" />
@@ -175,8 +142,8 @@ export default async function GuidesPage({ searchParams }) {
         .guide-entry-title{font-family:var(--font-fraunces-loaded),Georgia,serif;font-size:clamp(24px,3vw,34px);line-height:1.02;letter-spacing:-.025em;color:#2b1a10}
         .guide-description{margin-top:9px;color:#72553b;font-size:15px;line-height:1.55;max-width:62ch}
         .guide-entry-sub{margin-top:10px;color:#967452;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-        .guide-entry-meta{display:flex;flex-direction:column;align-items:flex-end;gap:10px;color:#8d562d;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase}
-        .guide-entry-meta b{font-size:25px;font-family:var(--font-body);font-weight:400;color:#8e5229}
+        .guide-entry-meta{display:flex;flex-direction:row;align-items:center;gap:8px;color:#7a4219;font-family:var(--font-body);font-size:15px;font-weight:700;letter-spacing:normal;text-transform:none}
+        .guide-entry-meta b{font-size:20px;font-family:var(--font-body);font-weight:400;color:#8e5229}
         .guides-ledger{margin-top:38px;padding-top:22px;border-top:1px solid rgba(77,48,24,.18);max-width:68ch}
         .guides-ledger p{margin:8px 0 0;color:#765a40;font-size:14px;line-height:1.55}
         .guides-back{display:inline-block;margin-top:34px;color:#754723;font-size:12px;font-weight:800;text-decoration:none;letter-spacing:.05em;text-transform:uppercase}

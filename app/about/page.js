@@ -138,7 +138,7 @@ export default async function AboutPage() {
       <section className="about-close about-wrap" aria-labelledby="about-close-h">
         <h2 id="about-close-h">{t.close_heading}</h2>
         <Paras text={t.close_line} />
-        <Link href="/interest" className="ui-btn">{t.close_button}</Link>
+        <Link href="/interest" className="about-close-cta">{t.close_button}</Link>
       </section>
     </main>
   );

@@ -260,24 +260,10 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
             <PageHero
               tone="console"
               className={styles.hero}
-              eyebrow="Secure player access · Kingdom 710"
               title="Sign in"
-              lede="Type your Player ID. We will send a short code to your Kingshot game. Type that code here and you are in. You stay signed in for 30 days."
+              lede="Type your Player ID. We send a short code to your Kingshot game, and you stay signed in for 30 days."
             />
 
-            <div className={styles.assurance}>
-              <span className={styles.assuranceMark} aria-hidden="true">◆</span>
-              <div>
-                <strong>
-                  {view === 'personalCode' ? 'Personal code sign-in' : 'Checked by the game itself'}
-                </strong>
-                <span>
-                  {view === 'personalCode'
-                    ? 'Your personal code is kept private and safe.'
-                    : 'The code goes to your Kingshot game. We never keep it.'}
-                </span>
-              </div>
-            </div>
           </section>
         </div>
 
@@ -496,6 +482,19 @@ export default function PlayerRecordGate({ banner, next, adminAccessRequested = 
           )}
 
           </section>
+          <div className={styles.assurance}>
+              <span className={styles.assuranceMark} aria-hidden="true">◆</span>
+              <div>
+                <strong>
+                  {view === 'personalCode' ? 'Personal code sign-in' : 'Checked by the game itself'}
+                </strong>
+                <span>
+                  {view === 'personalCode'
+                    ? 'Your personal code is kept private and safe.'
+                    : 'The code goes to your Kingshot game. We never keep it.'}
+                </span>
+              </div>
+            </div>
         </div>
       </div>
 

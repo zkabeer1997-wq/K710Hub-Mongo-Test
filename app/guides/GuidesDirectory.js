@@ -20,9 +20,12 @@ export default function GuidesDirectory({ copy, guides, categories: savedCategor
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState(null);
 
+  // Only categories that hold at least one guide (an empty filter is a dead end).
   const categories = useMemo(() => {
-    return guideCategories(guides, savedCategories);
+    return guideCategories(guides, savedCategories).filter((c) => guides.some((g) => String(g.category || '').trim() === c));
   }, [guides, savedCategories]);
+  // Search and filters help once the list is long; with a handful of guides they are clutter.
+  const showControls = guides.length >= 8;
 
   // Computed from the full, unfiltered list so the badge stays put on the
   // same guide regardless of the current search/category filter.
@@ -42,7 +45,7 @@ export default function GuidesDirectory({ copy, guides, categories: savedCategor
 
   return (
     <>
-      <div className="guides-toolbar">
+      {showControls && <div className="guides-toolbar">
         <Field label={copy.search_label} htmlFor="guide-search" className="guides-search">
           <Input
             id="guide-search"
@@ -65,7 +68,7 @@ export default function GuidesDirectory({ copy, guides, categories: savedCategor
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {filtered.length === 0 ? (
         <div className="guides-error k-narrative">{search.trim() ? copy.empty_search : copy.empty_category}</div>

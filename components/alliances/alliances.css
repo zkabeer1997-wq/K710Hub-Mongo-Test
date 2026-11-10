@@ -240,3 +240,12 @@
 @media(min-width:1280px) and (max-height:700px){
   :root:not([data-easy='true']) .al-rail-left .al-rail-card:nth-child(2){display:none}
 }
+
+/* ---------- UI audit F20: alliances read as equals ----------
+   Three across on wide screens (no orphan on a second row), as many columns as fit otherwise. */
+@media(min-width:1024px){
+  .al-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+}
+/* The outlined tag watermark is cut off by the page edge on the landing list; keep it for the
+   alliance detail pages only. */
+.al-stage .al-watermark{display:none}

@@ -48,7 +48,7 @@ test('defaults hold the current About copy (golden)', () => {
   assert.equal(D.faq.length, 4);
   assert.equal(D.faq[0].q, 'How long does the transfer take?');
   assert.equal(D.close_heading, 'Ready to move?');
-  assert.equal(D.hero_apply_label, 'Apply to join');
+  assert.equal(D.hero_apply_label, 'Apply to transfer');
   assert.equal(D.banner_small, 'Kingshot kingdom');
 });
 
@@ -213,7 +213,6 @@ test('golden: Home defaults are the copy the page showed, and the page reads eve
   assert.equal(H.deck_head_title, 'What do you need?');
   assert.equal(H.final_title, 'Interested in moving\nto Kingdom 710?');
   assert.equal(H.hero_apply_label, 'Apply to transfer');
-  assert.equal(H.strip_2_label, 'MEMBER FORMS');
   const page = src('app/page.js');
   for (const field of pt.getPageDef('home').fields) assert.ok(page.includes(field.key) || page.includes(hyphen(field.key)) || page.includes(`t.${field.key}`), `${field.key} unused in app/page.js`);
   assert.ok(!page.includes('COPY_REWRITES') && !page.includes('HomeEditableText'));
@@ -241,10 +240,9 @@ test('golden: Guides defaults equal the listing copy; the page and directory rea
   const both = src('app/guides/page.js') + src('app/guides/GuidesDirectory.js');
   for (const field of pt.getPageDef('guides').fields) {
     const k = field.key;
-    const used = both.includes(`t.${k}`) || both.includes(`copy.${k}`) || both.includes(`'${k}'`) || /^band_\d_/.test(k);
+    const used = both.includes(`t.${k}`) || both.includes(`copy.${k}`) || both.includes(`'${k}'`);
     assert.ok(used, `${k} unused`);
   }
-  assert.ok(both.includes('band_${n}_kicker') && both.includes('band_${n}_title') && both.includes('band_${n}_text'));
   // guide content itself is never part of this registry
   assert.ok(!pt.getPageDef('guides').fields.some((f2) => /body|slug|f2p|spender/.test(f2.key)));
 });

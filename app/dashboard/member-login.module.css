@@ -21,25 +21,11 @@
   display: grid;
   gap: 24px;
 }
-@media (min-width: 900px) {
-  .shell {
-    grid-template-columns: 1.1fr 0.9fr;
-    align-items: start;
-  }
-  .leftColumn {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .rightColumn {
-    grid-column: 2;
-    grid-row: 1;
-  }
-}
-/* Phones: the Player ID card comes first so the box is on screen without
-   scrolling. The DOM keeps the heading first (reading order for screen readers);
-   there is nothing focusable in the intro, so the Tab order is unaffected. */
+/* One centred column in reading order: heading and one-line explainer, the Player ID card, then
+   the reassurance note (UI audit F24). The heading block is short, so on phones the card is still
+   near the top. */
+.shell { max-width: 560px; }
 @media (max-width: 640px) {
-  .leftColumn { order: -1; }
   .page { padding-top: 20px; }
 }
 .leftColumn,
@@ -588,3 +574,6 @@
 /* Easy view: the shared rule asks for 52px controls. */
 :global(:root[data-easy="true"]) .inputWrap input,
 :global(:root[data-easy="true"]) .codeInput { height: 54px; font-size: 20px; }
+
+/* The card step titles are sentence case and smaller than the page H1 (UI audit F24). */
+.card h2 { text-transform: none; letter-spacing: -0.005em; font-size: clamp(20px, 2.4vw, 24px); }
