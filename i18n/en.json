@@ -320,6 +320,8 @@
   "signin.link": {"text":"Sign in","note":"Link and button text for members to sign in to the website. Short. Keep it a clear action word."},
   "signin.hero.cta": {"text":"Already in 710? Sign in","note":"Button on the home page for existing kingdom members. 710 is the kingdom number; keep it."},
   "home.hero.apply": {"text":"Apply to transfer","note":"Main home page button for players who want to move their account into the kingdom (a game server transfer, not a school or bank transfer)."},
+  "interest.nav.continue": {"text":"Continue","note":"Button that moves the application form to its next step."},
+  "interest.nav.back": {"text":"Back","note":"Button that returns the application form to the previous step."},
   "home.hero.schedules": {"text":"See alliance schedules","note":"Home page link that scrolls to the Bear Hunt times of each alliance."},
   "signin.tag.members": {"text":"Members","note":"Small tag next to a link, shown to visitors who are not signed in, meaning the page is only for signed-in kingdom members."},
   "signin.tag.membersSr": {"text":"Sign in needed","note":"Hidden text for screen readers after the Members tag: this page needs sign-in."},

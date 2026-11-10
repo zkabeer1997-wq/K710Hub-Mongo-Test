@@ -76,7 +76,9 @@
       "signin.easy.title",
       "signin.hero.cta",
       "home.hero.apply",
-      "home.hero.schedules"
+      "home.hero.schedules",
+      "interest.nav.continue",
+      "interest.nav.back"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -522,6 +524,8 @@
     "gift.error.load": "Hindi ma-load ang iyong mga gift code. Pakisubukang muli mamaya.",
     "gift.error.save": "Hindi ma-save ang iyong napili. Pakisubukang muli.",
     "home.hero.apply": "Mag-apply na lumipat",
-    "home.hero.schedules": "Tingnan ang schedule ng alliance"
+    "home.hero.schedules": "Tingnan ang schedule ng alliance",
+    "interest.nav.continue": "Magpatuloy",
+    "interest.nav.back": "Bumalik"
   }
 }

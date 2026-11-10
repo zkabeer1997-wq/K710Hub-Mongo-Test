@@ -7,7 +7,7 @@
 .previewInner { padding-top: 40px; }
 
 .header { max-width: 800px; margin-bottom: 46px; }
-.title { margin: 9px 0 10px; font-size: clamp(40px, 6vw, 72px); line-height: .96; letter-spacing: -.03em; color: #fff2da; text-wrap: balance; }
+.title { margin: 9px 0 10px; font-family: var(--font-editorial); text-transform: none; font-size: clamp(40px, 6vw, 72px); line-height: .96; letter-spacing: -.03em; color: #fff2da; text-wrap: balance; }
 .subtitle { margin: 0; color: #dfcdb1; font-size: 18px; line-height: 1.6; max-width: 65ch; }
 .rule { width: 120px; height: 1px; margin-top: 24px; background: linear-gradient(90deg, #d39a54, transparent); }
 .adminBar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 26px; padding-bottom: 14px; border-bottom: 1px solid rgba(243,217,154,.28); }
@@ -68,7 +68,7 @@
 .prose > :first-child { margin-top: 0; }
 .prose > :last-child { margin-bottom: 0; }
 .prose p { margin: 0 0 1.1em; }
-.prose h2, .prose h3, .prose h4 { font-family: var(--font-display); letter-spacing: -.01em; color: var(--g-head); margin: 1.2em 0 .5em; }
+.prose h2, .prose h3, .prose h4 { font-family: var(--font-editorial); text-transform: none; letter-spacing: -.01em; color: var(--g-head); margin: 1.2em 0 .5em; }
 .prose h2 { font-size: 24px; } .prose h3 { font-size: 19px; } .prose h4 { font-size: 16px; }
 .prose ul, .prose ol { margin: 0 0 1.1em; padding-left: 1.4em; }
 .prose li { margin: .3em 0; }
@@ -81,7 +81,7 @@
 .prose th, .prose td { border: 1px solid var(--g-edge); padding: 8px 10px; text-align: left; }
 .prose img { display: block; max-width: 100%; height: auto; margin: 1.2em auto; border-radius: 6px; }
 
-.heading { margin: 1.5em 0 .5em; font-family: var(--font-display); letter-spacing: -.02em; color: var(--g-head); line-height: 1.12; scroll-margin-top: 96px; text-wrap: balance; }
+.heading { margin: 1.5em 0 .5em; font-family: var(--font-editorial); text-transform: none; letter-spacing: -.02em; color: var(--g-head); line-height: 1.12; scroll-margin-top: 96px; text-wrap: balance; }
 h2.heading { font-size: clamp(26px, 3.4vw, 34px); }
 h3.heading { font-size: clamp(20px, 2.6vw, 24px); }
 .block:first-child .heading { margin-top: 0; }

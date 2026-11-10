@@ -1058,12 +1058,12 @@ export default function InterestForm({ initialPeriod, initialProjection = null }
         <p className="apply-saved">{isFinalStep ? 'Nothing is sent until you press the button.' : 'Your answers are saved on this device.'}</p>
         <div className="petition-step-actions">
           {step > 0 && (
-            <button type="button" className="k-btn k-btn-quiet" onClick={goBack} disabled={loading}>Back</button>
+            <button type="button" className="k-btn k-btn-quiet" onClick={goBack} disabled={loading}>{t('interest.nav.back')}</button>
           )}
           {isFinalStep ? (
             <button key="send" type="submit" className="k-btn k-btn-struck" disabled={loading || processingImages} aria-busy={loading || undefined}>{loading ? 'Sending… keep this page open' : 'Send my application'}</button>
           ) : (
-            <button key="continue" type="button" className="k-btn" disabled={processingImages} onClick={(e) => { e.preventDefault(); goNext(); }}>{processingImages ? 'Please wait…' : 'Continue'}</button>
+            <button key="continue" type="button" className="k-btn" disabled={processingImages} onClick={(e) => { e.preventDefault(); goNext(); }}>{processingImages ? 'Please wait…' : t('interest.nav.continue')}</button>
           )}
         </div>
       </div>

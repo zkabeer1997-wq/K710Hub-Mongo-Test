@@ -76,7 +76,9 @@
       "signin.easy.title",
       "signin.hero.cta",
       "home.hero.apply",
-      "home.hero.schedules"
+      "home.hero.schedules",
+      "interest.nav.continue",
+      "interest.nav.back"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -522,6 +524,8 @@
     "gift.error.load": "선물 코드를 불러올 수 없습니다. 나중에 다시 시도해 주세요.",
     "gift.error.save": "선택 사항을 저장할 수 없습니다. 다시 시도해 주세요.",
     "home.hero.apply": "이전 신청하기",
-    "home.hero.schedules": "연맹 일정 보기"
+    "home.hero.schedules": "연맹 일정 보기",
+    "interest.nav.continue": "다음",
+    "interest.nav.back": "이전"
   }
 }

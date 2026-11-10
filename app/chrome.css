@@ -99,3 +99,19 @@ html body .ui-term, html body .ui-term-trigger { font-size: inherit !important; 
 
 /* The crest-only logo on phones is still a 44px target (UI audit F29). */
 .site-brand { min-width: 44px; }
+
+/* Bigger text on phones: the header bar keeps its five controls on one line. Controls stay 44px
+   tall; the text inside them stays at 16px so they fit beside each other. */
+@media (max-width: 480px) {
+  :root[data-easy="true"] .site-header-inner { gap: 6px; padding-inline: 10px; }
+  :root[data-easy="true"] .site-header-inner > a,
+  :root[data-easy="true"] .site-header-inner > button,
+  :root[data-easy="true"] .site-header-inner > a span,
+  :root[data-easy="true"] .site-header-inner > button span { font-size: 16px !important; }
+  :root[data-easy="true"] .site-header-inner > a,
+  :root[data-easy="true"] .site-header-inner > button { min-height: 44px; padding-inline: 10px; }
+  :root[data-easy="true"] .site-header .lang-switch--header .lang-switch-caret { display: none; }
+}
+/* Bigger text keeps the hero numbers larger than their labels. */
+:root[data-easy="true"] .home-v2-facts dd { font-size: clamp(32px, 3.4vw, 42px); }
+:root[data-easy="true"] .home-v2-facts dd small { font-size: 16px; }

@@ -76,7 +76,9 @@
       "signin.easy.title",
       "signin.hero.cta",
       "home.hero.apply",
-      "home.hero.schedules"
+      "home.hero.schedules",
+      "interest.nav.continue",
+      "interest.nav.back"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -522,6 +524,8 @@
     "gift.error.load": "आपके गिफ्ट कोड लोड नहीं हो सके। कृपया बाद में पुनः प्रयास करें।",
     "gift.error.save": "आपका चयन सहेजा नहीं जा सका। कृपया पुनः प्रयास करें।",
     "home.hero.apply": "ट्रांसफ़र के लिए आवेदन करें",
-    "home.hero.schedules": "एलायंस का शेड्यूल देखें"
+    "home.hero.schedules": "एलायंस का शेड्यूल देखें",
+    "interest.nav.continue": "आगे",
+    "interest.nav.back": "पीछे"
   }
 }

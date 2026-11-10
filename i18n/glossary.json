@@ -2,8 +2,10 @@
   "_readme": "Game words that must stay in English in EVERY language. scripts/translate-catalog.mjs masks these before machine translation and restores them after. Add a term here (one line) when the game adds a hero or feature. Matching is whole-word and case-sensitive; longest term wins. {placeholders} are protected automatically.",
   "brand": [
     "Century Games",
+    "Interest Form",
     "K710",
     "K710 Hub",
+    "K710 Interest",
     "Kingdom 710",
     "Kingshot"
   ],

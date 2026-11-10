@@ -76,7 +76,9 @@
       "signin.easy.title",
       "signin.hero.cta",
       "home.hero.apply",
-      "home.hero.schedules"
+      "home.hero.schedules",
+      "interest.nav.continue",
+      "interest.nav.back"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -522,6 +524,8 @@
     "gift.error.load": "تعذر تحميل رموز الهدايا الخاصة بك. يرجى المحاولة مرة أخرى لاحقاً.",
     "gift.error.save": "لم يتم حفظ اختيارك. يرجى المحاولة مرة أخرى.",
     "home.hero.apply": "قدّم طلب الانتقال",
-    "home.hero.schedules": "اعرض جداول التحالفات"
+    "home.hero.schedules": "اعرض جداول التحالفات",
+    "interest.nav.continue": "متابعة",
+    "interest.nav.back": "رجوع"
   }
 }

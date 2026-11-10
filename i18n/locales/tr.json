@@ -76,7 +76,9 @@
       "signin.easy.title",
       "signin.hero.cta",
       "home.hero.apply",
-      "home.hero.schedules"
+      "home.hero.schedules",
+      "interest.nav.continue",
+      "interest.nav.back"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -522,6 +524,8 @@
     "gift.error.load": "Hediye kodlarınız yüklenemedi. Lütfen daha sonra tekrar deneyin.",
     "gift.error.save": "Seçiminiz kaydedilemedi. Lütfen tekrar deneyin.",
     "home.hero.apply": "Transfer için başvur",
-    "home.hero.schedules": "İttifak programlarını gör"
+    "home.hero.schedules": "İttifak programlarını gör",
+    "interest.nav.continue": "Devam",
+    "interest.nav.back": "Geri"
   }
 }

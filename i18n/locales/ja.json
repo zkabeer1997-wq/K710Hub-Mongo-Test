@@ -76,7 +76,9 @@
       "signin.easy.title",
       "signin.hero.cta",
       "home.hero.apply",
-      "home.hero.schedules"
+      "home.hero.schedules",
+      "interest.nav.continue",
+      "interest.nav.back"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -522,6 +524,8 @@
     "gift.error.load": "ギフトコードを読み込めませんでした。しばらくしてからもう一度お試しください。",
     "gift.error.save": "選択内容を保存できませんでした。もう一度お試しください。",
     "home.hero.apply": "移籍を申請する",
-    "home.hero.schedules": "同盟のスケジュールを見る"
+    "home.hero.schedules": "同盟のスケジュールを見る",
+    "interest.nav.continue": "次へ",
+    "interest.nav.back": "戻る"
   }
 }

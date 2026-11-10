@@ -14,10 +14,16 @@ const COMPONENTS = {
   ),
 };
 
+// Some guides were saved with list numbers escaped as "\1." (an editor escaping "1." at a line
+// start). Show them as the number the author typed.
+function unescapeListNumbers(text) {
+  return String(text).replace(/^(\s*)\\(\d+)\./gm, '$1$2\\.');
+}
+
 export default function GuideMarkdown({ children }) {
   return (
     <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={COMPONENTS}>
-      {linkifyBareUrls(children || '')}
+      {linkifyBareUrls(unescapeListNumbers(children || ''))}
     </ReactMarkdown>
   );
 }

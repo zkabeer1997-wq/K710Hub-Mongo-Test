@@ -76,7 +76,9 @@
       "signin.easy.title",
       "signin.hero.cta",
       "home.hero.apply",
-      "home.hero.schedules"
+      "home.hero.schedules",
+      "interest.nav.continue",
+      "interest.nav.back"
     ],
     "handAuthoredStatus": "hand-authored by Claude, not yet confirmed by a native speaker"
   },
@@ -522,6 +524,8 @@
     "gift.error.load": "No se pudieron cargar tus códigos de regalo. Inténtalo de nuevo más tarde.",
     "gift.error.save": "No se pudo guardar tu selección. Inténtalo de nuevo.",
     "home.hero.apply": "Solicitar traslado",
-    "home.hero.schedules": "Ver horarios de las alianzas"
+    "home.hero.schedules": "Ver horarios de las alianzas",
+    "interest.nav.continue": "Continuar",
+    "interest.nav.back": "Atrás"
   }
 }

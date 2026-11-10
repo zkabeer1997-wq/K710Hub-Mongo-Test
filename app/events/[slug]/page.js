@@ -98,7 +98,7 @@ export default async function EventPage({ params }) {
             <p><strong>This event series has ended.</strong> The current dates are on the Events page.</p>
           </div>
         ) : <EventSchedule event={event} />}
-        {event.description && <p className="event-description">{event.description}</p>}
+        {!ended && event.description && <p className="event-description">{event.description}</p>}
 
         <div className="event-actions">
           {ended && <Button href="/events">See upcoming events</Button>}

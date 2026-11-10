@@ -35,6 +35,7 @@ const KEYS = [
   'signin.link', 'signin.member.link', 'signin.member.sub', 'signin.apply.title',
   'signin.easy.on', 'signin.easy.off', 'signin.easy.title', 'signin.hero.cta',
   'home.hero.apply', 'home.hero.schedules',
+  'interest.nav.continue', 'interest.nav.back',
 ];
 
 // One row per key, in KEYS order: ko, ja, zh, es, fr, tr, hi, ar, tl.
@@ -109,6 +110,8 @@ const ROWS = [
   ['이미 710에 있나요? 로그인', 'すでに 710 のメンバー? サインイン', '已经在 710? 登录', '¿Ya estás en 710? Entra', 'Déjà dans 710 ? Connectez-vous', 'Zaten 710’da mısın? Giriş yap', 'पहले से 710 में हैं? साइन इन करें', 'أنت في 710 بالفعل؟ سجّل الدخول', 'Nasa 710 ka na? Mag-sign in'],
   ['이전 신청하기', '移籍を申請する', '申请迁入', 'Solicitar traslado', 'Demander un transfert', 'Transfer için başvur', 'ट्रांसफ़र के लिए आवेदन करें', 'قدّم طلب الانتقال', 'Mag-apply na lumipat'],
   ['연맹 일정 보기', '同盟のスケジュールを見る', '查看联盟时间表', 'Ver horarios de las alianzas', 'Voir les horaires des alliances', 'İttifak programlarını gör', 'एलायंस का शेड्यूल देखें', 'اعرض جداول التحالفات', 'Tingnan ang schedule ng alliance'],
+  ['다음', '次へ', '下一步', 'Continuar', 'Continuer', 'Devam', 'आगे', 'متابعة', 'Magpatuloy'],
+  ['이전', '戻る', '上一步', 'Atrás', 'Retour', 'Geri', 'पीछे', 'رجوع', 'Bumalik'],
 ];
 const LANGS = ['ko', 'ja', 'zh', 'es', 'fr', 'tr', 'hi', 'ar', 'tl'];
 
