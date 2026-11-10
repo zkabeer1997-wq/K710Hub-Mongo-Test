@@ -216,3 +216,31 @@
     transition: none;
   }
 }
+
+/* ---- UI audit F25: the photo fills its half; controls are big enough to find and tap ---- */
+.home-gallery.is-embedded .home-gallery-stage img { object-fit: cover; }
+.home-gallery.is-embedded .home-gallery-arrow {
+  top: 50%; bottom: auto; transform: translateY(-50%);
+  width: 44px; height: 44px;
+  background: rgba(8, 9, 12, 0.72); border: 1px solid rgba(243, 217, 154, 0.35);
+}
+.home-gallery.is-embedded .home-gallery-dots {
+  top: auto; bottom: 12px; left: 50%; transform: translateX(-50%); gap: 2px;
+}
+.home-gallery-dots button {
+  position: relative; width: 24px; height: 24px; background: transparent;
+}
+.home-gallery-dots button::before {
+  content: ''; position: absolute; inset: 8px; border-radius: 50%; background: var(--steel-bright);
+}
+.home-gallery-dots button.is-active { background: transparent; }
+.home-gallery-dots button.is-active::before { background: var(--brass-bright); }
+.home-gallery-dots button:focus-visible { outline: 2px solid var(--gold-hot); outline-offset: 1px; border-radius: 50%; }
+.home-gallery.is-embedded .home-gallery-embedded-link {
+  top: auto; right: auto; bottom: 12px; left: 16px;
+  display: inline-flex; align-items: center; min-height: 40px; font-size: 14px;
+  background: rgba(8, 9, 12, 0.78); border: 1px solid rgba(243, 217, 154, 0.3);
+}
+@media (max-width: 640px) {
+  .home-gallery.is-embedded .home-gallery-dots { left: auto; right: 12px; transform: none; }
+}

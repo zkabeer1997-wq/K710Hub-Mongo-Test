@@ -73,12 +73,12 @@ export default function GuidesDirectory({ copy, guides, categories: savedCategor
       {filtered.length === 0 ? (
         <div className="guides-error k-narrative">{search.trim() ? copy.empty_search : copy.empty_category}</div>
       ) : (
-        <div className="guides-directory" role="list">
+        <ul className="guides-directory">
           {filtered.map((guide, index) => {
             const difficulty = guideDifficultyLabel(guide);
             const isStartHere = Boolean(guide.slug) && guide.slug === startHere;
             return (
-              <a key={guide.slug} href={`/guides/${guide.slug}${query}`} className="guide-entry" role="listitem">
+              <li key={guide.slug} className="guide-entry-item"><a href={`/guides/${guide.slug}${query}`} className="guide-entry">
                 <GuideIcon index={index} imageUrl={guide.image_url} />
                 <span className="guide-entry-copy">
                   <span className="guide-entry-tags">
@@ -103,10 +103,10 @@ export default function GuidesDirectory({ copy, guides, categories: savedCategor
                   <span>{copy.entry_open}</span>
                   <b aria-hidden="true">→</b>
                 </span>
-              </a>
+              </a></li>
             );
           })}
-        </div>
+        </ul>
       )}
 
     </>

@@ -29,9 +29,19 @@ export default async function LorePage() {
             <p>Danko and the Alpaca are still on the road. The first tales will appear here.</p>
           </section>
         ) : (
+          <>
+          <nav className="lore-jump" aria-label="Stories">
+            <a className="lore-jump-latest" href={`#${stories[stories.length - 1].slug}`}>Latest: Story {stories[stories.length - 1].number} — {stories[stories.length - 1].title}</a>
+            <ol className="lore-jump-list">
+              {stories.map((story) => (
+                <li key={story.number}><a href={`#${story.slug}`}><span aria-hidden="true">{story.number}</span> {story.title}</a></li>
+              ))}
+            </ol>
+          </nav>
           <div className="lore-list">
             {stories.map((story, i) => <LoreStory key={story.number} story={story} priority={i === 0} />)}
           </div>
+          </>
         )}
       </div>
     </main>

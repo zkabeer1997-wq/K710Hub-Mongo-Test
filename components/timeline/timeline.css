@@ -31,8 +31,8 @@
 .tl-in { font-weight: 700; }
 .tl-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .tl-items li { min-width: 0; }
-.tl-items h3 { margin: 0; text-transform: none; font: 600 clamp(19px, 2.6vw, 25px)/1.2 var(--font-display); letter-spacing: -.01em; text-wrap: balance; overflow-wrap: anywhere; }
-.tl-current .tl-items h3 { font-size: clamp(22px, 3.2vw, 30px); }
+.tl-items h2, .tl-items h3 { margin: 0; text-transform: none; font: 600 clamp(19px, 2.6vw, 25px)/1.2 var(--font-display); letter-spacing: -.01em; text-wrap: balance; overflow-wrap: anywhere; }
+.tl-current .tl-items h2, .tl-items h3 { font-size: clamp(22px, 3.2vw, 30px); }
 .tl-cat { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-ink-muted); }
 .tl-items p { margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: var(--color-ink-muted); max-width: 62ch; }
 .tl-progress { margin-top: 16px; max-width: 520px; }

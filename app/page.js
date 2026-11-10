@@ -122,7 +122,7 @@ export default async function HomePage() {
               <dl className="home-v2-facts" aria-label="Kingdom 710 at a glance">
                 <div><dt>{t.fact_alliances_label}</dt><dd>{allianceTags.length || 3}</dd></div>
                 <div><dt>{t.fact_record_label}</dt><dd>{kvk.record.wins}–{kvk.record.losses}</dd></div>
-                <div><dt>{t.fact_rank_label}</dt><dd>#{kvk.ranking.rank}</dd></div>
+                <div><dt><Link href="/glossary" className="home-v2-fact-link">{t.fact_rank_label}</Link></dt><dd>#{kvk.ranking.rank}{kvk.ranking.of ? <small className="home-v2-fact-of"> of {kvk.ranking.of.toLocaleString('en-US')}</small> : null}</dd></div>
               </dl>
             </>
           )}

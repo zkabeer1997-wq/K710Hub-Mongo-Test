@@ -86,3 +86,16 @@ button, input, select, textarea { font-family: inherit; }
 
 /* Breadcrumb links are tappable: at least 14px (UI audit F17). */
 html body .cost-tool-crumbs a, html body .cost-tool-crumbs span { font-size: 14px; }
+
+/* ---- Footer on phones: two link columns aligned to the page edge (UI audit F26) ---- */
+@media (max-width: 640px) {
+  .site-footer { padding-inline: 16px; }
+  .site-footer-inner { padding-inline: 0 !important; }
+  .site-footer-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+}
+
+/* Glossary words in a sentence keep the sentence's size; only the dotted underline marks them (F27). */
+html body .ui-term, html body .ui-term-trigger { font-size: inherit !important; line-height: inherit; letter-spacing: inherit; }
+
+/* The crest-only logo on phones is still a 44px target (UI audit F29). */
+.site-brand { min-width: 44px; }

@@ -75,7 +75,7 @@ function Chapter({ chapter, status, nextChapter, now }) {
         <ul className="tl-items">
           {chapter.items.map((item) => (
             <li key={item.slug}>
-              <h3>{item.title}</h3>
+              <h2>{item.title}</h2>
               <span className="tl-cat">{item.category}</span>
               {item.notes && <p>{item.notes}</p>}
             </li>

@@ -39,7 +39,7 @@ export default function KvkRecord({ data, now = Date.now(), headingId = 'kvk-rec
         </div>
         <dl className="kvr-facts">
           <div>
-            <dt>Optimizer rank</dt>
+            <dt>Kingdom rank</dt>
             <dd>#{ranking.rank}{ranking.of ? <small> of {ranking.of.toLocaleString('en-US')}</small> : null}</dd>
           </div>
           {ranking.rating !== null && (

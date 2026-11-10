@@ -71,7 +71,7 @@ function SectionNav() {
 
 export function LeftRail({ alliances, currentTag }) {
   return (
-    <aside className="al-rail al-rail-left">
+    <aside className="al-rail al-rail-left" aria-label="Other alliances and page sections">
       <Switcher alliances={alliances} currentTag={currentTag} />
       <SectionNav />
     </aside>
@@ -125,7 +125,7 @@ function KvkCard({ kvk }) {
 export function RightRail({ tag, bearTimes, kvk }) {
   const t = useT();
   return (
-    <aside className="al-rail al-rail-right">
+    <aside className="al-rail al-rail-right" aria-label="Alliance facts">
       <NextHunt tag={tag} initialTimes={bearTimes} />
       <KvkCard kvk={kvk} />
       <Link href="/interest" className="al-cta">{t('alliances.rail.apply')}</Link>

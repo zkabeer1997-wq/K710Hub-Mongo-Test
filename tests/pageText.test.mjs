@@ -207,7 +207,7 @@ test('golden: Home defaults are the copy the page showed, and the page reads eve
   assert.equal(H.hero_kicker, 'Kingshot · Kingdom 710');
   assert.match(H.hero_sub, /^We are a multilingual Kingshot kingdom with three alliances: 710, RED, and SKY\./);
   assert.equal(H.why_1_title, 'Alliance Bear Hunt times');
-  assert.equal(H.why_2_title, 'Vetted for commitment, not just power');
+  assert.equal(H.why_2_title, 'Transfers are reviewed');
   assert.equal(H.wb_1_desc, 'Two Bear Hunts each day.\n\nR5: Yumin');
   assert.equal(H.wb_2_desc, 'Three Bear Hunts each day.\n\nR5: Woff');
   assert.equal(H.deck_head_title, 'What do you need?');
