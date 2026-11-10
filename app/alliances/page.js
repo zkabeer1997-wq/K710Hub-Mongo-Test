@@ -41,7 +41,7 @@ export default async function AlliancesPage() {
         {list.length === 0 ? (
           <p className="al-muted">{failed ? 'The alliance directory is unavailable right now. Please try again shortly.' : 'No alliances are listed yet.'}</p>
         ) : (
-          <AllianceGrid alliances={list} />
+          <AllianceGrid alliances={list} headingLevel={2} />
         )}
       </section>
       </div>

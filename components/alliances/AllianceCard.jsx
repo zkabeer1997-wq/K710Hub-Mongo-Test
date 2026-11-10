@@ -12,7 +12,8 @@ import useAlliancePhoto, { AlliancePhotoImg } from './useAlliancePhoto';
 import { STATUS_TONE, allianceMetaParts, bandProps } from '../../lib/alliances.mjs';
 import './alliances.css';
 
-export default function AllianceCard({ alliance, compact = false }) {
+export default function AllianceCard({ alliance, compact = false, headingLevel = 3 }) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const t = useT();
   const photo = useAlliancePhoto(alliance.image_url || '');
   const tag = String(alliance.tag);
@@ -32,7 +33,7 @@ export default function AllianceCard({ alliance, compact = false }) {
           <span className="al-chip" data-kind="band"><span className="al-gem" aria-hidden="true" />{tag}</span>
           {status && <span className="al-chip" data-tone={STATUS_TONE[alliance.recruiting_status] || 'neutral'}><span className="al-dot" aria-hidden="true" />{status}</span>}
         </div>
-        <h3 id={headingId} className="al-box-name"><Link href={href}>{alliance.name}</Link></h3>
+        <Heading id={headingId} className="al-box-name"><Link href={href}>{alliance.name}</Link></Heading>
         {!compact && alliance.blurb && <p className="al-box-blurb">{alliance.blurb}</p>}
         {meta.length > 0 && <p className="al-box-meta">{meta.join(' · ')}</p>}
         {!compact && <AllianceLeaders leaders={alliance.leaders} variant="r5" />}
