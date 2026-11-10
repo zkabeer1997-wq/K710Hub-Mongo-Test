@@ -38,3 +38,7 @@
   text-underline-offset: 3px;
 }
 .events-page .events-table tbody th[scope="row"] a:hover { color: var(--color-accent-strong); }
+.events-page .events-table thead th { background: transparent !important; color: var(--color-ink-muted); }
+/* Let long dates wrap so the Guide column stays on screen. */
+.events-page .events-table td { white-space: normal; overflow-wrap: anywhere; }
+.events-page .events-table { width: 100%; table-layout: auto; }
