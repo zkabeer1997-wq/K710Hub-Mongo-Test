@@ -281,9 +281,11 @@ export default function SiteHeader() {
         first.focus();
       }
     }
-    // If the viewport grows past the mobile breakpoint, drop the menu state.
+    // If the viewport grows past the menu breakpoint (app/chrome.css), drop the menu state.
+    // Bigger text keeps the menu up to 1280px.
     function onResize() {
-      if (window.innerWidth >= 760) setOpen(false);
+      const easy = document.documentElement.getAttribute('data-easy') === 'true';
+      if (window.innerWidth >= (easy ? 1280 : 1024)) setOpen(false);
     }
     document.addEventListener('keydown', onKeyDown);
     window.addEventListener('resize', onResize);
@@ -341,21 +343,11 @@ export default function SiteHeader() {
           )}
           <Link
             href="/interest"
-            className="site-nav-cta"
+            className="site-nav-cta site-nav-apply"
             title={t('signin.apply.title')}
             aria-label={t('signin.apply.title')}
           >
             {t('chrome.nav.apply')}
-          </Link>
-          <Link
-            href={SUPPORT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="site-nav-support"
-            title="Support K710 Hub (opens Ko-fi donation page in a new tab)"
-            aria-label="Support K710 Hub (opens Ko-fi donation page in a new tab)"
-          >
-            ☕ {t('chrome.nav.donate')}
           </Link>
         </nav>
 
@@ -396,8 +388,6 @@ export default function SiteHeader() {
         <>
         <div className="site-nav-backdrop" aria-hidden="true" onClick={() => setOpen(false)} />
         <nav className="site-nav-mobile" id="site-nav-mobile" ref={mobileRef} aria-label="Mobile site">
-          <LanguageSwitcher className="lang-switch--mobile" variant="menu" onOpen={() => setOpen(false)} />
-          <EasyViewToggle className="easy-view-toggle--mobile" />
           {NAV_ITEMS.map((item) => {
             if (item.type === 'group') {
               const kids = item.id === 'members' ? membersChildren(item.children, memberStatus, signedOut) : item.children;

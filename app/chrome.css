@@ -1,0 +1,74 @@
+/* Site chrome after the Nov 2026 UI audit: header actions, Bigger text, translation status and
+   the fonts used for non-Latin headings. Loaded last so these few rules settle the cascade of
+   the older sheets (globals, sitewide-*, comfort, signin-ux) without editing each of them. */
+
+/* ---- Header: one filled action (Member sign in); Apply outlined; utilities compact ---- */
+.site-nav .site-nav-cta.site-nav-apply {
+  background: transparent !important;
+  color: var(--gold-bright) !important;
+  border-color: var(--gold);
+}
+.site-nav .site-nav-cta.site-nav-apply:hover { background: rgba(217, 169, 78, 0.14) !important; border-color: var(--gold-bright); }
+/* Utilities show their essence only: "Aa" (state in aria-pressed + fill) and the language name. */
+.site-header .easy-view-toggle--header .easy-view-label { display: none; }
+.site-header .easy-view-toggle--header[aria-pressed="true"] { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.site-header .lang-switch--header .lang-switch-word { display: none; }
+.site-header-inner > .lang-switch, .site-header-inner > .easy-view-toggle { flex-shrink: 0; }
+.site-nav { flex-wrap: nowrap; }
+.site-nav a, .site-nav-group-trigger { white-space: nowrap; }
+@media (min-width: 1024px) and (max-width: 1100px) {
+  .site-header-inner { gap: 10px; padding-inline: 16px; }
+  .site-header .lang-switch--header .lang-switch-name { display: none; }
+  .site-header .lang-switch--header .lang-switch-code { display: inline; }
+}
+/* Tablets: the full nav does not fit beside the utilities, so they get the phone menu
+   (SiteHeader closes that menu once the window grows past 1024px). */
+@media (min-width: 760px) and (max-width: 1023px) {
+  .site-nav { display: none; }
+  .site-nav-toggle { display: flex; }
+  .site-nav-mobile { display: flex; }
+  .site-nav-backdrop { display: block; }
+  .site-header-signin { display: inline-flex; }
+}
+
+/* Bigger text: the full nav cannot fit below 1280px at that size, so use the phone menu. */
+@media (min-width: 760px) and (max-width: 1279px) {
+  :root[data-easy="true"] .site-nav { display: none; }
+  :root[data-easy="true"] .site-nav-toggle { display: flex; }
+  :root[data-easy="true"] .site-nav-mobile { display: flex; }
+  :root[data-easy="true"] .site-nav-backdrop { display: block; }
+  :root[data-easy="true"] .site-header-signin { display: inline-flex; }
+}
+
+/* Bigger text keeps the dates strip (as plain text: no motion) and grows body text by 25%. */
+:root[data-easy="true"] .deadline-ticker { display: block !important; }
+:root[data-easy="true"] p,
+:root[data-easy="true"] li,
+:root[data-easy="true"] label,
+:root[data-easy="true"] td,
+:root[data-easy="true"] th,
+:root[data-easy="true"] dd,
+:root[data-easy="true"] dt,
+:root[data-easy="true"] small,
+:root[data-easy="true"] input,
+:root[data-easy="true"] select,
+:root[data-easy="true"] textarea,
+:root[data-easy="true"] button,
+:root[data-easy="true"] a { font-size: max(1.25rem, 1em); }
+:root[data-easy="true"] span { font-size: max(1.25rem, 1em); }
+:root[data-easy="true"] .site-nav-mobile a,
+:root[data-easy="true"] .site-nav-mobile .site-nav-mobile-heading { font-size: 1.125rem; }
+
+/* ---- "Translating…" status: a small chip under the header, by the language button ---- */
+.rt-status-wrap {
+  inset-block-end: auto;
+  inset-block-start: 80px;
+  justify-content: flex-end;
+}
+
+/* ---- Headings in non-Latin scripts: a heavy local face next to Fraunces/Inter ---- */
+:root:lang(ko) { --font-display: var(--font-fraunces-loaded), 'Noto Serif KR', 'Nanum Myeongjo', 'Apple SD Gothic Neo', 'Malgun Gothic', serif; }
+:root:lang(ja) { --font-display: var(--font-fraunces-loaded), 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
+:root:lang(zh-Hans) { --font-display: var(--font-fraunces-loaded), 'Noto Serif SC', 'Songti SC', 'SimSun', serif; }
+:root:lang(ar) { --font-display: var(--font-fraunces-loaded), 'Noto Naskh Arabic', 'Geeza Pro', 'Traditional Arabic', serif; }
+:root:lang(hi) { --font-display: var(--font-fraunces-loaded), 'Noto Serif Devanagari', 'Kohinoor Devanagari', 'Mangal', serif; }

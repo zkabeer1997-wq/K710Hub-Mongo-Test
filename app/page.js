@@ -51,11 +51,6 @@ const COMMAND = [
   { n: '04', href: '/power-profile', titleKey: 'cmd_4_title', subKey: 'cmd_4_sub' },
 ];
 
-const STRIP = [
-  { n: '01', labelKey: 'strip_1_label', textKey: 'strip_1_text' },
-  { n: '02', labelKey: 'strip_2_label', textKey: 'strip_2_text' },
-  { n: '03', labelKey: 'strip_3_label', textKey: 'strip_3_text' },
-];
 
 const MEMBER_QUICK_LINKS = [
   { href: '/power-profile', label: 'Power Profile' },
@@ -160,21 +155,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="home-v2-story">
-        <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
-        <div className="home-v2-story-copy">
-          <SectionHeader eyebrow={t.why_head_kicker} title={t.why_head_title} lede={liveCopy(t.why_head_sub)} />
-          <div className="home-v2-doctrine">
-            {DOCTRINE.map((d) => <div key={d.n}><b>{d.n}</b><span><strong>{t[d.titleKey]}</strong><small>{t[d.bodyKey]}</small></span></div>)}
-          </div>
-          <Link href="/about" className="home-v2-story-link">{t.story_link} →</Link>
-        </div>
-      </section>
-
-      <section className="home-v2-strip">
-        {STRIP.map((item) => <div key={item.n}><span>{item.n}</span><b>{t[item.labelKey]}</b><p>{t[item.textKey]}</p></div>)}
-      </section>
-
       <section className="home-v2-command">
         <div className="home-v2-command-copy">
           <SectionHeader eyebrow={t.deck_head_kicker} title={t.deck_head_title} lede={t.deck_head_sub} />
@@ -183,6 +163,17 @@ export default async function HomePage() {
           {COMMAND.map((item) => (
             <Link key={item.href} href={item.href}><b>{item.n}</b><span><strong>{t[item.titleKey]}</strong><small>{t[item.subKey]}</small>{!isMember && routeNeedsSignIn(item.href) && <MembersTag />}</span><i>↗</i></Link>
           ))}
+        </div>
+      </section>
+
+      <section className="home-v2-story">
+        <div className="home-v2-story-scene home-v2-story-gallery"><GalleryCarousel images={galleryImages} embedded /></div>
+        <div className="home-v2-story-copy">
+          <SectionHeader eyebrow={t.why_head_kicker} title={t.why_head_title} lede={liveCopy(t.why_head_sub)} />
+          <div className="home-v2-doctrine">
+            {DOCTRINE.map((d) => <div key={d.n}><b>{d.n}</b><span><strong>{t[d.titleKey]}</strong><small>{t[d.bodyKey]}</small></span></div>)}
+          </div>
+          <Link href="/about" className="home-v2-story-link">{t.story_link} →</Link>
         </div>
       </section>
 

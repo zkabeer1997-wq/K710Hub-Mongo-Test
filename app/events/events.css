@@ -17,3 +17,24 @@
   .events-hunts-group { grid-template-columns: 1fr; gap: var(--space-2); }
   .events-hunts-times { gap: var(--space-3) var(--space-5); }
 }
+
+/* Upcoming events: the event name is the thing to tap, so it reads as a dark, bold link on the
+   parchment row instead of a navy header cell with small orange capitals (UI audit F14). */
+.events-page .events-table tbody th[scope="row"] {
+  background: transparent !important;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.events-page .events-table tbody th[scope="row"] a {
+  color: var(--color-ink);
+  text-transform: none;
+  letter-spacing: normal;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-accent-strong) 60%, transparent);
+  text-underline-offset: 3px;
+}
+.events-page .events-table tbody th[scope="row"] a:hover { color: var(--color-accent-strong); }

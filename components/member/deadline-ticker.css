@@ -38,3 +38,14 @@
   html body .deadline-ticker .deadline-ticker-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   html body .deadline-ticker.deadline-ticker--gate { display: none; }
 }
+
+/* Phones show only the next date; "+2 more" says the others exist and opens the Events page. */
+.deadline-ticker-more { display: none; }
+@media (max-width: 640px) {
+  html body .deadline-ticker { display: flex; align-items: center; }
+  html body .deadline-ticker .deadline-ticker-list { flex: 1 1 auto; min-width: 0; }
+  html body .deadline-ticker-more {
+    display: inline-flex; align-items: center; flex: none; min-height: 44px; padding: 0 16px 0 8px;
+    font-size: 14px; font-weight: 700; color: var(--gold-bright); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap;
+  }
+}

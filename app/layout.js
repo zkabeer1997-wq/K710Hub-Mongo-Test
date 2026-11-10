@@ -10,6 +10,7 @@ import './home-gallery.css';
 import './member-center.css';
 import './comfort.css';
 import './signin-ux.css';
+import './chrome.css';
 import { Cinzel, Inter, JetBrains_Mono, Cormorant_Garamond, Fraunces } from 'next/font/google';
 import LanguageProvider from '../components/i18n/LanguageProvider';
 import BearScheduleProvider from '../components/BearScheduleProvider';

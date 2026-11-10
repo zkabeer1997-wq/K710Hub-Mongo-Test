@@ -59,6 +59,9 @@ export default function DeadlineTicker() {
           );
         })}
       </ul>
+      {live.length > 1 && (
+        <Link href="/events" prefetch={false} className="deadline-ticker-more">+{live.length - 1} more</Link>
+      )}
     </aside>
   );
 }
