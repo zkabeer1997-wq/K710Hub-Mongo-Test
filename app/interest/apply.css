@@ -36,7 +36,9 @@
 .apply-lede { margin: 0; font-size: 17px; line-height: 1.55; color: var(--color-ink-muted); max-width: 60ch; }
 
 /* ---- Before you start / resume ----------------------------------- */
-.apply-ready, .apply-resume { padding: 16px 18px; border: 1px solid var(--color-border-strong); border-left: 3px solid var(--color-accent); border-radius: 6px; background: rgba(217,169,78,0.07); }
+.apply-resume { padding: 16px 18px; border: 1px solid var(--color-border-strong); border-left: 3px solid var(--color-accent); border-radius: 6px; background: rgba(217,169,78,0.07); }
+/* "Before you start" is plain text under the verify box, not a second bordered box (UI audit F04). */
+.apply-ready { padding: 4px 0 0; }
 .apply-ready h3, .apply-resume h2 { margin: 0 0 6px; font-family: var(--font-editorial); font-weight: 600; font-size: 22px; color: var(--parchment); text-transform: none; letter-spacing: normal; }
 .apply-ready p, .apply-resume p { margin: 0 0 8px; font-size: 17px; line-height: 1.55; }
 .apply-ready ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 17px; }
@@ -194,3 +196,24 @@
 :root[data-easy="true"] .verify-link { min-height: 48px; font-size: 18px; }
 @media (max-width: 520px) { .verify-panel { padding: 16px 14px; } .registry .verify-primary { width: 100%; justify-self: stretch; } }
 @media (prefers-reduced-motion: no-preference) { .verify-panel { animation: apply-in 200ms ease both; } }
+
+/* ---- UI audit F04: visible fields and a clear main button ---------- */
+/* Empty fields need an edge you can see on the dark page (>= 3:1 against the background). */
+.registry .apply-form .apply-field input,
+.registry .apply-form .apply-reveal input,
+.registry .apply-form .verify-input,
+.registry .apply-form select,
+.registry .apply-form textarea {
+  border: 1px solid rgba(214, 178, 104, 0.62);
+  background-color: rgba(255, 255, 255, 0.045);
+}
+.registry .apply-form .apply-field input:focus,
+.registry .apply-form .verify-input:focus { border-color: var(--color-accent); }
+/* Continue / Send is the one filled button; Back stays quiet. */
+.registry .apply-bar-nav .petition-step-actions .k-btn:not(.k-btn-quiet) {
+  background: var(--color-accent); border-color: var(--color-accent); color: #1a1305;
+}
+.registry .apply-bar-nav .petition-step-actions .k-btn:not(.k-btn-quiet):hover:not(:disabled) { background: var(--gold-bright); border-color: var(--gold-bright); }
+@media (max-width: 720px) {
+  .registry .apply-bar-nav { background: #0a0c13; }
+}

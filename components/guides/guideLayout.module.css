@@ -17,7 +17,9 @@
 .volume { position: relative; min-height: 320px; padding: clamp(28px, 5vw, 58px); background: rgba(255,248,234,.74); border: 1px solid rgba(83,55,28,.16); border-radius: 3px; box-shadow: 0 28px 80px rgba(74,42,18,.12); }
 .volume::before { content: ''; position: absolute; inset: 10px; border: 1px solid rgba(83,55,28,.08); pointer-events: none; }
 .spine { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: linear-gradient(90deg, #4a2d16, #a56a31, #5a351b); border-radius: 3px 0 0 3px; }
-.body { position: relative; z-index: 1; color: var(--g-ink); font-size: 17px; line-height: 1.8; }
+/* Guide text is read on phones and through translation: Inter at 17px in dark ink. Serif stays for headings (UI audit F10). */
+.body { position: relative; z-index: 1; color: #2f2419; font-family: var(--font-body); font-size: 17px; line-height: 1.7; }
+.body p, .body li, .body td, .prose p, .prose li, .prose td { font-family: var(--font-body); color: #2f2419; }
 
 .toc { margin: 0 0 28px; padding: 14px 18px; border: 1px solid var(--g-edge); background: var(--g-card); border-radius: 3px; }
 .toc strong { display: block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #8a5a26; }

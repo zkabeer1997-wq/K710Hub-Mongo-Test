@@ -254,7 +254,7 @@ function StepProgress({ step, onJump }) {
         <span>Step {step + 1} of {ACTS.length}</span>
         <strong>{ACTS[step].label}</strong>
       </p>
-      <div className="apply-bar" role="progressbar" aria-valuemin={1} aria-valuemax={ACTS.length} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${ACTS.length}: ${ACTS[step].label}`}>
+      <div className="apply-bar" role="progressbar" aria-label="Application progress" aria-valuemin={1} aria-valuemax={ACTS.length} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${ACTS.length}: ${ACTS[step].label}`}>
         <span style={{ width: `${pct}%` }} />
       </div>
       <ol className="apply-steps">
